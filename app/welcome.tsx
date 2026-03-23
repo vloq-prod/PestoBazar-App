@@ -46,7 +46,13 @@ const SLIDES = [
   },
 ];
 
-function Dot({ index, activeIndex }: { index: number; activeIndex: SharedValue<number> }) {
+function Dot({
+  index,
+  activeIndex,
+}: {
+  index: number;
+  activeIndex: SharedValue<number>;
+}) {
   const style = useAnimatedStyle(() => {
     const isActive = Math.round(activeIndex.value) === index;
     return {
@@ -74,12 +80,15 @@ export default function WelcomeScreen() {
         setActiveIndex(viewableItems[0].index);
         scrollX.value = viewableItems[0].index;
       }
-    }
+    },
   ).current;
 
   const handleNext = () => {
     if (activeIndex < SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
+      flatListRef.current?.scrollToIndex({
+        index: activeIndex + 1,
+        animated: true,
+      });
     }
   };
 
@@ -107,8 +116,11 @@ export default function WelcomeScreen() {
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
         renderItem={({ item }) => (
           <View style={{ width, height }}>
-            <Image source={item.image} style={StyleSheet.absoluteFill} resizeMode="contain" />
-            {/* Dark gradient overlay bottom half */}
+            <Image
+              source={item.image}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
+            />
             <LinearGradient
               colors={["transparent", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.85)"]}
               locations={[0.3, 0.6, 1]}
@@ -120,16 +132,13 @@ export default function WelcomeScreen() {
 
       {/* Bottom content */}
       <View
-        style={[
-          styles.bottomContent,
-          { paddingBottom: insets.bottom + 24 },
-        ]}
+        style={[styles.bottomContent, { paddingBottom: insets.bottom + 24 }]}
         pointerEvents="box-none"
       >
         {/* Title & subtitle — animate per active slide */}
         <View style={styles.textBlock}>
           <Text style={styles.title}>{SLIDES[activeIndex].title}</Text>
-        <Text style={styles.subtitle}>{SLIDES[activeIndex].subtitle}</Text>
+          <Text style={styles.subtitle}>{SLIDES[activeIndex].subtitle}</Text>
         </View>
 
         {/* Dots + Button row */}
@@ -147,7 +156,9 @@ export default function WelcomeScreen() {
             onPress={isLast ? handleGetStarted : handleNext}
             activeOpacity={0.85}
           >
-            <Text style={styles.btnText}>{isLast ? "Get Started" : "Next"}</Text>
+            <Text style={styles.btnText}>
+              {isLast ? "Get Started" : "Next"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -211,5 +222,9 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     fontSize: 15,
     color: "#fff",
+  },
+  image: {
+    width: width,
+    height: height,
   },
 });

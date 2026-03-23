@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import {  StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
@@ -9,8 +9,6 @@ import Animated, {
   runOnJS,
   Easing,
 } from "react-native-reanimated";
-
-const { width, height } = Dimensions.get("window");
 
 interface Props {
   onFinish: () => void;
