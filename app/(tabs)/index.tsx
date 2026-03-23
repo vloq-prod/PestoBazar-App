@@ -1,0 +1,22 @@
+import { ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../src/theme";
+
+export default function HomeScreen() {
+  const { colors } = useTheme();
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View className="flex-1 items-center justify-center py-10">
+          <Text style={{ color: colors.text }} className="font-poppins-bold text-2xl">
+            Home
+          </Text>
+          <Text style={{ color: colors.textSecondary }} className="font-poppins text-sm mt-2">
+            Your feed will appear here
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

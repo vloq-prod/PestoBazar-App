@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: #f9f9f9;
+    --color-surface: #ffffff;
+    --color-surface-elevated: #ffffff;
+    --color-text: #171717;
+    --color-text-secondary: #525252;
+    --color-border: #e8e8e8;
+  }
+
+  .dark {
+    --color-background: #171717;
+    --color-surface: #262626;
+    --color-surface-elevated: #3d3d3d;
+    --color-text: #f9f9f9;
+    --color-text-secondary: #a8a8a8;
+    --color-border: #3d3d3d;
+  }
+}
