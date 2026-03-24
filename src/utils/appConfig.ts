@@ -1,7 +1,9 @@
+// src/utils/appConfig.ts
+
+import { Platform } from "react-native";
 import Constants from "expo-constants";
 
 type AppConfig = {
-  app_name: string;
   app_version: string;
   app_code: number;
 };
@@ -9,9 +11,9 @@ type AppConfig = {
 const extra = Constants.expoConfig?.extra as AppConfig;
 
 export const AppConfigUtil = {
-  appName: extra?.app_name,
-  appVersion: extra?.app_version,
+  appName: Platform.OS,
+  appVersion: extra?.app_version || "1.0.0",
   appCode: extra?.app_code || 1,
 
-  fullVersion: `${extra?.app_version} (${extra?.app_code || 1})`,
+  fullVersion: `${extra?.app_version || "1.0.0"} (${extra?.app_code || 1})`,
 };

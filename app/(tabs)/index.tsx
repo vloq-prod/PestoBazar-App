@@ -3,12 +3,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { navbarConfig } from "../../src/config/navbarConfig";
-import { AppConfigUtil } from "../../src/utils/appConfig";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const token = useAppVisitorStore((state) => state.token);
 
-  const { appName, appVersion, appCode, fullVersion } = AppConfigUtil;
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -29,12 +30,9 @@ export default function HomeScreen() {
           >
             Your feed will appear here
           </Text>
-
           <View>
-            <Text>App Name: {appName}</Text>
-            <Text>App Version: {appVersion}</Text>
-            <Text>App Code: {appCode}</Text>
-            <Text>App Full Versionn: {fullVersion} </Text>
+            <Text style={{ color: colors.text }}>visitor id: {visitorId}</Text>
+            <Text style={{ color: colors.text }}>Token: {token}</Text>
           </View>
         </View>
       </ScrollView>

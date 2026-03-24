@@ -22,6 +22,9 @@ import Animated, {
   type SharedValue,
 } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
+import { useAppVisitorStore } from "../src/store/auth";
+import { useVisitor } from "../src/hooks/useAuthHooks";
+import { StorageUtil } from "../src/utils/storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -65,6 +68,10 @@ function Dot({
 }
 
 export default function WelcomeScreen() {
+  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const { createVisitor, loading } = useVisitor();
+  const setVisitor = useAppVisitorStore((state) => state.setVisitor);
+
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -93,8 +100,24 @@ export default function WelcomeScreen() {
   };
 
   const handleGetStarted = async () => {
-    await AsyncStorage.setItem("@onboarded", "true");
-    router.replace("/(tabs)");
+    try {
+      const res = await createVisitor({
+        visitor_id: visitorId || "",
+      });
+
+      console.log("API RESPONSE:", res);
+
+      const { visitor_id, token } = res;
+
+      // Zustand
+      setVisitor(visitor_id, token);
+
+      await StorageUtil.setVisitor(visitor_id, token);
+
+      router.replace("/(tabs)");
+    } catch (error) {
+      console.log("Get Started Error:", error);
+    }
   };
 
   const isLast = activeIndex === SLIDES.length - 1;

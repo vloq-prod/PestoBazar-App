@@ -1,6 +1,6 @@
 export default {
   expo: {
-    name: "Pestobazaar",
+    name: "pestobazaar",
     slug: "pestobazaar",
     version: "1.0.0",
     ios: {
@@ -11,7 +11,7 @@ export default {
     },
 
     extra: {
-      app_name: "Pestobazaar",
+      app_name: "pestobazaar",
       app_version: "1.0.0",
       app_code: 1,
     },

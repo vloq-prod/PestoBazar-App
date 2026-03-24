@@ -2,28 +2,39 @@ import "../global.css";
 import { useEffect, useRef, useState } from "react";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemeProvider, useTheme } from "../src/theme";
 import { useFonts } from "../src/hooks/useFonts";
 import { SplashScreen } from "../src/components/SplashScreen";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useAppVisitorStore } from "../src/store/auth";
+import { StorageUtil } from "../src/utils/storage";
 
 function RootLayoutNav() {
   const { colors } = useTheme();
   const [splashDone, setSplashDone] = useState(false);
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
-  // Resolve initial route from storage
   useEffect(() => {
-    AsyncStorage.getItem("@onboarded")
-      .then((value) => {
-        setInitialRoute(value === "true" ? "/(tabs)" : "/welcome");
-      })
-      .catch(() => {
+    const initApp = async () => {
+      try {
+        // ✅ Single source of truth
+        await useAppVisitorStore.getState().hydrateVisitor();
+
+        const { visitorId, token } = useAppVisitorStore.getState();
+
+        if (visitorId && token) {
+          setInitialRoute("/(tabs)");
+        } else {
+          setInitialRoute("/welcome");
+        }
+      } catch (error) {
         setInitialRoute("/welcome");
-      });
+      }
+    };
+
+    initApp();
   }, []);
 
-  // Navigate only when BOTH splash is done AND route is resolved
   useEffect(() => {
     if (splashDone && initialRoute) {
       router.replace(initialRoute as any);
@@ -45,11 +56,15 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const { fontsLoaded } = useFonts();
 
+  const queryClient = new QueryClient();
+
   if (!fontsLoaded) return null;
 
   return (
-    <ThemeProvider>
-      <RootLayoutNav />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <RootLayoutNav />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

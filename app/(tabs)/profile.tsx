@@ -1,26 +1,37 @@
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useTheme } from "../../src/theme";
+import { useAppVisitorStore } from "../../src/store/auth";
+import { StorageUtil } from "../../src/utils/storage";
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
 
-  const resetOnboarding = async () => {
-    Alert.alert("Reset Onboarding", "Show welcome screen on next launch?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Reset",
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.removeItem("@onboarded");
-          router.replace("/welcome");
-        },
-      },
-    ]);
-  };
+const resetOnboarding = async () => {
+  Alert.alert("Reset Onboarding", "Show welcome screen on next launch?", [
+    { text: "Cancel", style: "cancel" },
+    {
+      text: "Reset",
+      style: "destructive",
+      onPress: async () => {
+        try {
 
+          // 1. Clear secure storage (token + visitor)
+          await StorageUtil.clearVisitor();
+
+          // 2. Clear Zustand state
+          useAppVisitorStore.getState().clearVisitor();
+
+          // 3. Navigate cleanly
+          router.replace("/welcome");
+        } catch (error) {
+          console.error("Reset failed:", error);
+        }
+      },
+    },
+  ]);
+};
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
