@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { VisitorApiResponse, VisitorRequest } from "../utils/auth.types";
+import { VisitorApiResponse, VisitorRequest } from "../types/auth.types";
 
 export const createVisitor = async (
   payload: VisitorRequest,

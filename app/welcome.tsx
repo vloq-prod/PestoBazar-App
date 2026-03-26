@@ -14,7 +14,6 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -105,11 +104,8 @@ export default function WelcomeScreen() {
         visitor_id: visitorId || "",
       });
 
-      console.log("API RESPONSE:", res);
-
       const { visitor_id, token } = res;
 
-      // Zustand
       setVisitor(visitor_id, token);
 
       await StorageUtil.setVisitor(visitor_id, token);

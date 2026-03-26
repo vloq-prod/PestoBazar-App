@@ -1,54 +1,52 @@
 import "../global.css";
-import { useEffect, useRef, useState } from "react";
-import { Stack, router } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
+import { Stack } from "expo-router";
 import { ThemeProvider, useTheme } from "../src/theme";
 import { useFonts } from "../src/hooks/useFonts";
 import { SplashScreen } from "../src/components/SplashScreen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAppVisitorStore } from "../src/store/auth";
-import { StorageUtil } from "../src/utils/storage";
+import AppStatusBar from "../src/components/AppStatusBar";
 
 function RootLayoutNav() {
   const { colors } = useTheme();
+
+  const [isReady, setIsReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
-  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+
+  const { visitorId, token } = useAppVisitorStore();
 
   useEffect(() => {
     const initApp = async () => {
-      try {
-        // ✅ Single source of truth
-        await useAppVisitorStore.getState().hydrateVisitor();
-
-        const { visitorId, token } = useAppVisitorStore.getState();
-
-        if (visitorId && token) {
-          setInitialRoute("/(tabs)");
-        } else {
-          setInitialRoute("/welcome");
-        }
-      } catch (error) {
-        setInitialRoute("/welcome");
-      }
+      await useAppVisitorStore.getState().hydrateVisitor();
+      setIsReady(true);
     };
 
     initApp();
   }, []);
 
-  useEffect(() => {
-    if (splashDone && initialRoute) {
-      router.replace(initialRoute as any);
-    }
-  }, [splashDone, initialRoute]);
+  // 🚨 Step 1: wait for hydration
+  if (!isReady) {
+    return <SplashScreen onFinish={() => setSplashDone(true)} />;
+  }
+
+  // 🚨 Step 2: show splash FIRST (block UI)
+  if (!splashDone) {
+    return <SplashScreen onFinish={() => setSplashDone(true)} />;
+  }
 
   return (
     <>
-      <StatusBar style={colors.statusBar} />
+
+    {/* <AppStatusBar /> */}
+
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="welcome" options={{ animation: "fade" }} />
-        <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+        {visitorId && token ? (
+          <Stack.Screen name="(tabs)" />
+        ) : (
+          <Stack.Screen name="welcome" />
+        )}
       </Stack>
-      {!splashDone && <SplashScreen onFinish={() => setSplashDone(true)} />}
     </>
   );
 }

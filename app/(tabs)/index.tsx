@@ -1,41 +1,43 @@
-import { ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+// app/(tabs)/index.tsx
+import { View, ScrollView } from "react-native";
 import { useTheme } from "../../src/theme";
-import AppNavbar from "../../src/components/comman/AppNavbar";
 import { navbarConfig } from "../../src/config/navbarConfig";
-import { useAppVisitorStore } from "../../src/store/auth";
+import AppNavbar from "../../src/components/comman/AppNavbar";
+import { SafeAreaView } from "react-native-safe-area-context";
+import AppSearchBar from "../../src/components/home/AppSearchBar";
+import SlidingBanners from "../../src/components/home/SlidingBanners";
+import CategoryList from "../../src/components/home/CategoryList";
+import HomProduct from "../../src/components/home/HomProduct";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
-  const token = useAppVisitorStore((state) => state.token);
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: colors.background }}
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
       edges={["top"]}
     >
-      <AppNavbar {...navbarConfig.home} />
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 items-center justify-center py-10">
-          <Text
-            style={{ color: colors.text }}
-            className="font-poppins-bold text-2xl"
-          >
-            Home
-          </Text>
-          <Text
-            style={{ color: colors.textSecondary }}
-            className="font-poppins text-sm mt-2"
-          >
-            Your feed will appear here
-          </Text>
-          <View>
-            <Text style={{ color: colors.text }}>visitor id: {visitorId}</Text>
-            <Text style={{ color: colors.text }}>Token: {token}</Text>
-          </View>
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+        <AppNavbar {...navbarConfig.home} />
+        <View className="px-4 pb-2">
+          <AppSearchBar />
         </View>
-      </ScrollView>
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: 24,
+            paddingTop: 8,
+            gap: 5,
+          }}
+        >
+          <CategoryList />
+          <SlidingBanners />
+
+          <HomProduct />
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

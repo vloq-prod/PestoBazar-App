@@ -1,0 +1,60 @@
+export interface BannerItem {
+  s3_image_path: string;
+  app_redirect_key: string;
+  app_redirect_value: string;
+}
+
+export interface BannerData {
+  sliding_banners: BannerItem[];
+  featured_banner: BannerItem[];
+  home_bottom_banners: BannerItem[];
+}
+
+export interface BannerApiResponse {
+  message: string;
+  status: number;
+  data: BannerData;
+}
+
+
+// category
+export interface CategoryItem {
+  category_name: string;
+  slug: string;
+  category_image: string;
+  s3_image_path: string;
+}
+
+export interface CategoryData {
+  category_master: CategoryItem[];
+}
+
+export interface CategoryApiResponse {
+  message: string;
+  status: number;
+  data: CategoryData;
+}
+
+// home product
+export interface ProductItem {
+  id: number;
+  slug: string;
+  overview: string;
+  selling_price: string;
+  mrp: string;
+  product_name: string;
+  total_reviews: number;
+  avg_rating: string;
+  s3_image_path: string;
+}
+
+export interface ProductSection {
+  title: string;
+  products: ProductItem[];
+}
+
+export interface HomeProductApiResponse {
+  message: string;
+  status: number;
+  data: ProductSection[];
+}

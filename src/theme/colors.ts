@@ -34,10 +34,11 @@ export const palette = {
 
 export const lightTheme = {
   // Backgrounds
-  background: palette.gray50,
+  background: palette.white,
   surface: palette.white,
   surfaceElevated: palette.white,
   overlay: "rgba(0,0,0,0.5)",
+  backgroundSkeleton:  palette.gray200,
 
   // Brand
   primary: palette.purple,
@@ -93,6 +94,7 @@ export const darkTheme = {
   primaryDark: palette.purple,
   primaryMuted: palette.purpleMuted,
   primaryForeground: palette.white,
+  backgroundSkeleton:  palette.gray200,
 
   secondary: palette.redLight,
   secondaryLight: palette.redMuted,
