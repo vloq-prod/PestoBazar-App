@@ -58,3 +58,25 @@ export interface HomeProductApiResponse {
   status: number;
   data: ProductSection[];
 }
+
+
+// deals of the day 
+export interface DealItem {
+  id: number;
+  product_id: number;
+  selling_price: string;
+  mrp: string;
+  slug: string;
+  product_name: string;
+  avg_rating: string;
+  s3_image_path: string;
+  overview: string | null;
+  expiry_date: string;
+  images: string[];
+}
+
+export interface DealsApiResponse {
+  message: string;
+  status: number;
+  data: DealItem[];
+}

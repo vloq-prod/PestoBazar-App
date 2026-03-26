@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { BannerApiResponse, CategoryApiResponse, HomeProductApiResponse } from "../types/home.types";
+import { BannerApiResponse, CategoryApiResponse, DealsApiResponse, HomeProductApiResponse } from "../types/home.types";
 
 
 // banner api
@@ -25,6 +25,14 @@ export const getHomeCategories = async (): Promise<CategoryApiResponse> => {
 export const getHomeProducts = async (): Promise<HomeProductApiResponse> => {
   const response = await apiClient.get<HomeProductApiResponse>(
     "/app-api/v1/app-home-product"
+  );
+
+  return response.data;
+};
+
+export const getDealsOfTheDay = async (): Promise<DealsApiResponse> => {
+  const response = await apiClient.get<DealsApiResponse>(
+    "/app-api/v1/app-home-deals-of-the-day"
   );
 
   return response.data;

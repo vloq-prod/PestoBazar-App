@@ -1,9 +1,20 @@
 // src/components/comman/AppNavbar.tsx
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  ChevronLeft,
+  Menu,
+  Search,
+  ShoppingCart,
+  Bell,
+  Sun,
+  Moon,
+  TextAlignJustify,
+} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../theme";
+import { Image } from "expo-image";
+import profile from "../../../assets/profile.jpeg";
 
 type NavbarProps = {
   title?: string;
@@ -21,47 +32,43 @@ type NavbarProps = {
   rightComponent?: React.ReactNode;
 };
 
-const START_COLOR = { r: 74, g: 50, b: 128 };
-const END_COLOR   = { r: 225, g: 3, b: 32 };
-const LOGO_TEXT   = "PestoBazaar";
+// ─── Brand Logo ──────────────────────────────────────────────────────────────
 
-const interpolateColor = (start: typeof START_COLOR, end: typeof START_COLOR, t: number) => {
-  const r = Math.round(start.r + (end.r - start.r) * t);
-  const g = Math.round(start.g + (end.g - start.g) * t);
-  const b = Math.round(start.b + (end.b - start.b) * t);
-  return `rgb(${r},${g},${b})`;
+
+
+
+
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 21) return "Good Evening";
+  return "Good Night";
 };
 
-const BRAND_COLORS = LOGO_TEXT.split("").map((_, i) =>
-  interpolateColor(START_COLOR, END_COLOR, i / (LOGO_TEXT.length - 1))
-);
 
-const LogoText = () => (
-  <Text style={{ fontSize: 20, fontWeight: "700", letterSpacing: -0.3, lineHeight: 24 }}>
-    {LOGO_TEXT.split("").map((char, i) => (
-      <Text key={i} style={{ color: BRAND_COLORS[i] }}>
-        {char}
-      </Text>
-    ))}
-  </Text>
-);
+// ─── Icon Button ─────────────────────────────────────────────────────────────
 
-const IconButton = ({
-  name,
-  onPress,
-  color,
-}: {
-  name: any;
+type IconButtonProps = {
+  icon: React.ReactNode;
   onPress?: () => void;
-  color: string;
-}) => (
+};
+
+const IconButton: React.FC<IconButtonProps> = ({ icon, onPress }) => (
   <TouchableOpacity
     onPress={onPress}
-    style={{ width: 36, height: 36, alignItems: "center", justifyContent: "center" }}
+    style={{
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    }}
   >
-    <Ionicons name={name} size={22} color={color} />
+    {icon}
   </TouchableOpacity>
 );
+
+// ─── AppNavbar ────────────────────────────────────────────────────────────────
 
 const AppNavbar: React.FC<NavbarProps> = ({
   title = "",
@@ -80,27 +87,51 @@ const AppNavbar: React.FC<NavbarProps> = ({
 }) => {
   const router = useRouter();
   const { colors, toggleTheme, isDark } = useTheme();
-  const iconColor = colors.text;
+  const iconColor = colors.primary;
+  const ICON_SIZE = 24;
 
   return (
-    <View
-      className="px-4 py-2 flex flex-row justify-between items-center"
-    >
-      {/* LEFT */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+    <View className="px-4 py-2 flex flex-row justify-between items-center">
+      {/* ── LEFT ── */}
+      <View className="flex flex-row items-center  gap-2"
+      >
         {showBack && !showMenu && (
           <IconButton
-            name="chevron-back"
             onPress={() => router.back()}
-            color={BRAND_COLORS[0]}
+            icon={<ChevronLeft size={ICON_SIZE} color={colors.primary} />}
           />
         )}
+
         {showMenu && !showBack && (
-          <IconButton name="menu-outline" onPress={onMenuPress} color={iconColor} />
+          <IconButton
+            onPress={onMenuPress}
+            icon={<TextAlignJustify size={ICON_SIZE} color={colors.text} />}
+          />
         )}
 
         {showLogo ? (
-          <LogoText />
+          <View className="flex flex-row gap-3">
+            <View
+              className="w-12 h-12 rounded-full border items-center justify-center overflow-hidden"
+              style={{ borderColor: colors.border }}
+            >
+              <Image
+                source={profile}
+                contentFit="cover"
+                style={{ width: "100%", height: "100%" }}
+              />
+            </View>
+
+            <View>
+             <Text className="text-md">{getGreeting()}</Text>
+              <Text
+                className="font-bold"
+                style={{ color: colors.primary, fontSize: 20, lineHeight: 20 }}
+              >
+                Guest
+              </Text>
+            </View>
+          </View>
         ) : (
           <Text style={{ fontSize: 17, fontWeight: "600", color: colors.text }}>
             {title}
@@ -108,24 +139,41 @@ const AppNavbar: React.FC<NavbarProps> = ({
         )}
       </View>
 
-      {/* RIGHT */}
+      {/* ── RIGHT ── */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
         {rightComponent ?? (
           <>
             {showSearch && (
-              <IconButton name="search-outline" onPress={onSearchPress} color={iconColor} />
+              <IconButton
+                onPress={onSearchPress}
+                icon={<Search size={ICON_SIZE} color={iconColor} />}
+              />
             )}
+
             {showCart && (
-              <IconButton name="cart-outline" onPress={onCartPress} color={iconColor} />
+              <IconButton
+                onPress={onCartPress}
+                icon={<ShoppingCart size={ICON_SIZE} color={iconColor} />}
+              />
             )}
+
             {showNotification && (
-              <IconButton name="notifications-outline" onPress={onNotificationPress} color={iconColor} />
+              <IconButton
+                onPress={onNotificationPress}
+                icon={<Bell size={ICON_SIZE} color={iconColor} />}
+              />
             )}
+
             {showThemeToggle && (
               <IconButton
-                name={isDark ? "sunny-outline" : "moon-outline"}
                 onPress={toggleTheme}
-                color={iconColor}
+                icon={
+                  isDark ? (
+                    <Sun size={ICON_SIZE} color={iconColor} />
+                  ) : (
+                    <Moon size={ICON_SIZE} color={iconColor} />
+                  )
+                }
               />
             )}
           </>

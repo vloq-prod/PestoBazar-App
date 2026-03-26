@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBanners, getHomeCategories, getHomeProducts } from "../api/home.api";
+import { getBanners, getDealsOfTheDay, getHomeCategories, getHomeProducts } from "../api/home.api";
 
 // useBanner hook
 export const useBanner = () => {
@@ -42,6 +42,32 @@ export const useHomeProduct = () => {
 
   return {
     sections: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
+
+export const useHomeBanners = () => {
+  const { banners, loading } = useBanner();
+
+  return {
+    loading,
+    slidingbanners: banners?.sliding_banners ?? [],
+    featureBanners: banners?.featured_banner ?? [],
+    homeBottomBanners: banners?.home_bottom_banners ?? [],
+  };
+};
+
+export const useDeals = () => {
+  const query = useQuery({
+    queryKey: ["deals-of-the-day"],
+    queryFn: getDealsOfTheDay,
+  });
+
+  return {
+    deals: query.data?.data || [],
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

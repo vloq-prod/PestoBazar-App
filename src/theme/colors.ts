@@ -1,6 +1,6 @@
 export const palette = {
   // Brand
-  purple: "#3a286c",
+  purple: "#8a2be2",
   purpleLight: "#4e3a8e",
   purpleDark: "#261b4a",
   purpleMuted: "#5c4a9e",

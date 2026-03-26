@@ -1,53 +1,46 @@
-import { useState, useEffect, useRef } from "react";
+import React from "react";
 import {
   View,
-  Image,
   TouchableOpacity,
+  Image,
   Dimensions,
-  Animated,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useTheme } from "../../theme";
-import { useBanner } from "../../hooks/homeHooks";
 import { BannerItem } from "../../types/home.types";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const ITEM_WIDTH = SCREEN_WIDTH * 0.96;
-const ITEM_HEIGHT = ITEM_WIDTH;
+const { width } = Dimensions.get("window");
+
 interface Props {
   data: BannerItem[];
-  onBannerPress?: (banner: BannerItem) => void;
+  onPress?: (item: BannerItem) => void;
 }
 
-export default function SlidingBanners({ onBannerPress, data }: Props) {
+export default function HomeBottomCarousel({ data, onPress }: Props) {
   const { colors } = useTheme();
 
+  if (!data?.length) return null;
+
   return (
-    <View >
+    <View style={{ marginTop: 10 }}>
       <Carousel
-        width={SCREEN_WIDTH}
-        height={ITEM_HEIGHT}
+        width={width}
+        height={160}
         data={data}
         loop
         autoPlay
-        autoPlayInterval={3000}
+        autoPlayInterval={3500}
         scrollAnimationDuration={800}
-        mode="parallax"
-          modeConfig={{
-    parallaxScrollingScale: 0.92,  
-    parallaxScrollingOffset: 50,  
-    parallaxAdjacentItemScale: 0.85,
-  }}
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => onBannerPress?.(item)}
+            onPress={() => onPress?.(item)}
             style={{
-              width: ITEM_WIDTH,
-              height: ITEM_HEIGHT,
-              borderRadius: 14,
-              overflow: "hidden",
+              width: width * 0.92,
+              height: 160,
               alignSelf: "center",
+              borderRadius: 12,
+              overflow: "hidden",
               backgroundColor: colors.surfaceElevated,
             }}
           >

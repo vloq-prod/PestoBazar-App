@@ -55,8 +55,6 @@ const SectionHeader = ({
   const { colors } = useTheme();
   return (
     <View className="flex-row items-center justify-between px-4">
-      {/* Left: accent bar + title */}
-      <View className="flex-row items-center" style={{ gap: 8 }}>
     
         <Text
           style={{
@@ -69,8 +67,6 @@ const SectionHeader = ({
           {title}
         </Text>
       </View>
-
-    </View>
   );
 };
 
@@ -81,7 +77,7 @@ const HomeProduct = () => {
 
   if (loading) {
     return (
-      <View style={{ gap: 24 }}>
+      <View style={{ gap: 15 }}>
         <SkeletonSection />
         <SkeletonSection />
         <SkeletonSection />
@@ -134,7 +130,7 @@ const HomeProduct = () => {
   return (
     <View style={{ gap: 24 }}>
       {sections.map((section, sIndex) => (
-        <View key={sIndex} style={{ gap: 12 }}>
+        <View key={sIndex} style={{ gap: 3 }}>
           <SectionHeader
             title={section.title}
             onViewAll={() => console.log("View All →", section.title)}
@@ -144,7 +140,7 @@ const HomeProduct = () => {
             data={section.products}
             keyExtractor={(item) => String(item.id)}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
             renderItem={({ item }) => (
               <ItemCard
                 item={item as ItemData}
