@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBanners, getDealsOfTheDay, getHomeCategories, getHomeProducts } from "../api/home.api";
+import { getBanners, getDealsOfTheDay, getFeaturedProducts, getHomeCategories, getHomeProducts } from "../api/home.api";
 
 // useBanner hook
 export const useBanner = () => {
@@ -71,5 +71,18 @@ export const useDeals = () => {
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
+  };
+};
+
+export const useFeatured = () => {
+  const query = useQuery({
+    queryKey: ["featured-products"],
+    queryFn: getFeaturedProducts,
+  });
+
+  return {
+    featured: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
   };
 };

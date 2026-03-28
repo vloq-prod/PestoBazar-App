@@ -24,9 +24,6 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const appHeaders = getAppHeaders();
-
-    console.log("📦 HEADERS:", appHeaders);
-
     Object.entries(appHeaders).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         config.headers?.set(key, String(value));

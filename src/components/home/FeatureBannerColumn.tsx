@@ -17,7 +17,7 @@ export default function FeatureBannerColumn({ data, onPress }: Props) {
 
   return (
     <View
-      className="p-5 gap-2"
+      className="px-4 gap-2"
     >
       {data.map((item, index) => (
         <TouchableOpacity
@@ -26,18 +26,21 @@ export default function FeatureBannerColumn({ data, onPress }: Props) {
           onPress={() => onPress?.(item)}
           style={{
             width: "100%",
-            height: 120,
+            height: 99,
             borderWidth: 1,
-            borderRadius: 12,
+            padding: 2,
             overflow: "hidden",
+
             backgroundColor: colors.surfaceElevated,
             borderColor: colors.border
           }}
+          className="rounded-lg"
         >
           <Image
             source={{ uri: item.s3_image_path }}
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: "100%", height: "100%"}}
             resizeMode="cover"
+            className="rounded-md"
           />
         </TouchableOpacity>
       ))}

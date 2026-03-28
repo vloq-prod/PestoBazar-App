@@ -69,51 +69,80 @@ export default function ItemCard({ item, onPress, onAddToCart }: Props) {
       activeOpacity={0.88}
       onPress={() => onPress?.(item)}
       style={{ width: CARD_WIDTH, borderColor: colors.border }}
-      className="border p-2 rounded-2xl"
+      className=""
     >
       {/* ── Image ── */}
-      <View className="rounded-2xl overflow-hidden">
+
+      <View
+        style={{
+          overflow: "hidden",
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+        }}
+        className="border rounded-lg"
+      >
         <Image
           source={{ uri: item.s3_image_path }}
           style={{
-            width: CARD_WIDTH,
-            height: CARD_WIDTH,
+            width: "100%",
+            aspectRatio: 1,
             backgroundColor: colors.surfaceElevated,
           }}
-          className="rounded-2xl"
+          className="rounded-lg"
           contentFit="cover"
         />
-
-        {/* Discount badge */}
-        {/* {discount && (
-          <View
-            style={{ backgroundColor: colors.secondary }}
-            className="absolute top-2.5 right-0 pl-2.5 pr-2 py-1 rounded-l-2xl"
-          >
-            <Text
-              style={{
-                fontSize: 10,
-                fontFamily: "Poppins_700Bold",
-                letterSpacing: 0.2,
-                color: "#fff",
-              }}
-            >
-              {discount}% off
-            </Text>
-          </View>
-        )} */}
       </View>
 
       {/* ── Body ── */}
       <View className="px-0.5 pt-2" style={{ gap: 3 }}>
+        <View className="flex-row items-end justify-between">
+          <View className="flex-row items-baseline" style={{ gap: 4 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.primary,
+                lineHeight: 23,
+              }}
+            >
+              ₹{parseInt(item.selling_price)}
+            </Text>
+
+            <Text
+              style={{
+                fontSize: 14,
+                fontFamily: "Poppins_500Medium",
+                color: colors.textTertiary,
+                textDecorationLine: "line-through",
+                lineHeight: 20,
+                marginBottom: 1,
+              }}
+            >
+              ₹{parseInt(item.mrp)}
+            </Text>
+            {discount && (
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Poppins_500Medium",
+                  color: colors.error,
+                  letterSpacing: 0.2,
+                  lineHeight: 20,
+                }}
+              >
+                {discount}% off
+              </Text>
+            )}
+          </View>
+        </View>
         {/* Name */}
         <Text
           numberOfLines={2}
           style={{
-            fontSize: 13,
+            fontSize: 14,
             lineHeight: 18,
             height: 36,
-            fontFamily: "Poppins_600SemiBold",
+            fontFamily: "Poppins_500Medium",
             color: colors.text,
           }}
         >
@@ -124,7 +153,7 @@ export default function ItemCard({ item, onPress, onAddToCart }: Props) {
         <Text
           numberOfLines={2}
           style={{
-            fontSize: 10,
+            fontSize: 12,
             color: colors.textTertiary,
             lineHeight: 14,
             height: 28,
@@ -135,45 +164,6 @@ export default function ItemCard({ item, onPress, onAddToCart }: Props) {
         </Text>
 
         {/* Price row */}
-        <View className="flex-row items-end justify-between">
-          <View className="flex-row items-end " style={{ gap: 4 }}>
-            <Text
-              style={{
-                fontSize: 20,
-                fontFamily: "Poppins_700Bold",
-                color: colors.text,
-                lineHeight: 26,
-              }}
-            >
-              ₹{parseInt(item.selling_price)}
-            </Text>
-
-            <Text
-              style={{
-                fontSize: 13,
-                fontFamily: "Poppins_400Regular",
-                color: colors.textTertiary,
-                textDecorationLine: "line-through",
-                lineHeight: 22,
-              }}
-            >
-              ₹{parseInt(item.mrp)}
-            </Text>
-            {discount && (
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontFamily: "Poppins_700Bold",
-                  color: colors.error,
-                  letterSpacing: 0.2,
-                  lineHeight: 22,
-                }}
-              >
-                {discount}% off
-              </Text>
-            )}
-          </View>
-        </View>
       </View>
 
       {/* ── Add to Cart / Qty Controller ── */}
@@ -188,13 +178,13 @@ export default function ItemCard({ item, onPress, onAddToCart }: Props) {
           }}
           activeOpacity={0.82}
           style={{ backgroundColor: colors.primary }}
-          className="flex-row items-center justify-center gap-2 py-2.5 mt-3 rounded-xl"
+          className="flex-row items-center justify-center gap-2 py-2.5 mt-3 rounded-lg"
         >
           <ShoppingCart size={14} color="#fff" strokeWidth={2.5} />
           <Text
             style={{
               color: "#fff",
-              fontFamily: "Poppins_600SemiBold",
+              fontFamily: "Poppins_500Medium",
               fontSize: 13,
               lineHeight: 22,
             }}
@@ -205,7 +195,7 @@ export default function ItemCard({ item, onPress, onAddToCart }: Props) {
       ) : (
         /* Quantity Controller */
         <View
-          className="flex-row items-center justify-between mt-3 rounded-xl overflow-hidden"
+          className="flex-row items-center justify-between mt-3 rounded-lg overflow-hidden"
           style={{
             backgroundColor: colors.primary,
             height: 40,

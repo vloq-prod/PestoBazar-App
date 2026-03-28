@@ -1,7 +1,8 @@
+// src/components/TabBar.tsx
 import { useEffect } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
+import { Home, LayoutGrid, Store, User } from "lucide-react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,17 +12,19 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme";
 
-type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
-
-const TAB_CONFIG: Record<string, { label: string; icon: IoniconName; iconActive: IoniconName }> = {
-  index:       { label: "Home",      icon: "home-outline",           iconActive: "home" },
-  shop:        { label: "Shop",      icon: "storefront-outline",     iconActive: "storefront" },
-  "buy-again": { label: "Buy Again", icon: "refresh-circle-outline", iconActive: "refresh-circle" },
-  orders:      { label: "Orders",    icon: "receipt-outline",        iconActive: "receipt" },
-  profile:     { label: "Profile",   icon: "person-outline",         iconActive: "person" },
+type TabCfg = {
+  label: string;
+  Icon: React.ComponentType<{ size: number; color: string }>;
 };
 
-const DURATION = 200;
+const TAB_CONFIG: Record<string, TabCfg> = {
+  index:    { label: "Home",     Icon: Home },
+  orders:   { label: "Category", Icon: LayoutGrid },
+  shop:     { label: "Shop",     Icon: Store },
+  profile:  { label: "Profile",  Icon: User },
+};
+
+const DURATION = 220;
 const EASING = Easing.out(Easing.quad);
 
 function TabItem({
@@ -39,20 +42,32 @@ function TabItem({
   const progress = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    progress.value = withTiming(isFocused ? 1 : 0, { duration: DURATION, easing: EASING });
+    progress.value = withTiming(isFocused ? 1 : 0, {
+      duration: DURATION,
+      easing: EASING,
+    });
   }, [isFocused]);
 
-  const activeColor = colors.primary;
+  const activeColor   = colors.primary;
   const inactiveColor = colors.tabBarInactive;
 
-  // Animate icon color via opacity layering: inactive icon fades out, active fades in
-  const activeIconStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
-  const inactiveIconStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
+  const cfg = TAB_CONFIG[route.name] ?? {
+    label: route.name,
+    Icon: Home,
+  };
 
-  const labelActiveStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
-  const labelInactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
+  // Top border animated style
+  const borderStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ scaleX: progress.value }],
+  }));
 
-  const cfg = TAB_CONFIG[route.name] ?? { label: route.name, icon: "ellipse-outline", iconActive: "ellipse" };
+  // Icon & label color
+  const iconColor = isFocused ? activeColor : inactiveColor;
+
+  const labelStyle = useAnimatedStyle(() => ({
+    color: isFocused ? activeColor : inactiveColor,
+  }));
 
   return (
     <Pressable
@@ -61,25 +76,22 @@ function TabItem({
       style={styles.tabItem}
       android_ripple={null}
     >
-      {/* Icon layer */}
-      <View style={styles.iconContainer}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.iconCenter, inactiveIconStyle]}>
-          <Ionicons name={cfg.icon} size={22} color={inactiveColor} />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.iconCenter, activeIconStyle]}>
-          <Ionicons name={cfg.iconActive} size={22} color={activeColor} />
-        </Animated.View>
-      </View>
+      {/* ── Top active border ── */}
+      <Animated.View
+        style={[
+          styles.topBorder,
+          { backgroundColor: activeColor },
+          borderStyle,
+        ]}
+      />
 
-      {/* Label layer */}
-      <View style={styles.labelContainer}>
-        <Animated.Text style={[styles.label, { color: inactiveColor }, labelInactiveStyle]} numberOfLines={1}>
-          {cfg.label}
-        </Animated.Text>
-        <Animated.Text style={[styles.label, { color: activeColor }, StyleSheet.absoluteFill, labelActiveStyle]} numberOfLines={1}>
-          {cfg.label}
-        </Animated.Text>
-      </View>
+      {/* ── Icon ── */}
+      <cfg.Icon size={22} color={iconColor} />
+
+      {/* ── Label ── */}
+      <Animated.Text style={[styles.label, labelStyle]} numberOfLines={1}>
+        {cfg.label}
+      </Animated.Text>
     </Pressable>
   );
 }
@@ -131,26 +143,23 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 10,
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 6,
+    paddingTop: 10,
+    paddingBottom: 6,
     gap: 4,
   },
-  iconContainer: {
-    width: 24,
-    height: 24,
-  },
-  iconCenter: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  labelContainer: {
-    position: "relative",
-    alignItems: "center",
+  topBorder: {
+    position: "absolute",
+    top: 0,
+    left: "10%",
+    right: "10%",
+    height: 2.5,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
   },
   label: {
     fontSize: 10,

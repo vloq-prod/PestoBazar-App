@@ -5,7 +5,6 @@ export const navbarConfig = {
     showCart: true,
     showMenu: true,
     showThemeToggle: false,
-
   },
 
   product: {

@@ -1,6 +1,6 @@
 export const palette = {
   // Brand
-  purple: "#8a2be2",
+  purple: "#3a286c",
   purpleLight: "#4e3a8e",
   purpleDark: "#261b4a",
   purpleMuted: "#5c4a9e",
@@ -64,6 +64,7 @@ export const lightTheme = {
   // Borders
   border: palette.gray200,
   borderStrong: palette.gray300,
+  borderblack: palette.black,
 
   // States
   success: palette.success,
@@ -113,6 +114,7 @@ export const darkTheme = {
   // Borders
   border: palette.gray700,
   borderStrong: palette.gray600,
+    borderblack: palette.white,
 
   // States
   success: palette.success,

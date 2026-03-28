@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { BannerApiResponse, CategoryApiResponse, DealsApiResponse, HomeProductApiResponse } from "../types/home.types";
+import { BannerApiResponse, CategoryApiResponse, DealsApiResponse, FeaturedApiResponse, HomeProductApiResponse } from "../types/home.types";
 
 
 // banner api
@@ -8,6 +8,7 @@ export const getBanners = async (): Promise<BannerApiResponse> => {
     "/app-api/v1/app-banner"
   );
 
+  console.log("response: ", response.data)
   return response.data;
 };
 
@@ -33,6 +34,15 @@ export const getHomeProducts = async (): Promise<HomeProductApiResponse> => {
 export const getDealsOfTheDay = async (): Promise<DealsApiResponse> => {
   const response = await apiClient.get<DealsApiResponse>(
     "/app-api/v1/app-home-deals-of-the-day"
+  );
+
+  return response.data;
+};
+
+
+export const getFeaturedProducts = async (): Promise<FeaturedApiResponse> => {
+  const response = await apiClient.get<FeaturedApiResponse>(
+    "/app-api/v1/app-home-featured-day"
   );
 
   return response.data;

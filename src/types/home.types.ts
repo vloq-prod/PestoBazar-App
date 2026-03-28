@@ -80,3 +80,24 @@ export interface DealsApiResponse {
   status: number;
   data: DealItem[];
 }
+
+// Feature items 
+export interface FeaturedItem {
+  id: number;
+  product_id: number;
+  mrp: string;
+  selling_price: string;
+  slug: string;
+  product_name: string;
+  avg_rating: string;
+  overview: string | null;
+  s3_image_path: string;
+  expiry_date: string;
+  images: string[];
+}
+
+export interface FeaturedApiResponse {
+  message: string;
+  status: number;
+  data: FeaturedItem[];
+}

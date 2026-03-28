@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../../theme";
 
@@ -23,15 +29,15 @@ type StaticCategory = {
 };
 
 const STATIC_CATEGORIES: StaticCategory[] = [
-  { id: 1, name: "Ant",       image: image1 },
-  { id: 2, name: "Bad Bugs",  image: image2 },
+  { id: 1, name: "Ant", image: image1 },
+  { id: 2, name: "Bad Bugs", image: image2 },
   { id: 3, name: "Cockroach", image: image3 },
-  { id: 4, name: "Fly / Wood",image: image4 },
-  { id: 5, name: "Lizard",    image: image5 },
-  { id: 6, name: "Mosquito",  image: image6 },
-  { id: 7, name: "Rat",       image: image7 },
-  { id: 8, name: "Snake",     image: image8 },
-  { id: 9, name: "Termite",   image: image9 },
+  { id: 4, name: "Fly / Wood", image: image4 },
+  { id: 5, name: "Lizard", image: image5 },
+  { id: 6, name: "Mosquito", image: image6 },
+  { id: 7, name: "Rat", image: image7 },
+  { id: 8, name: "Snake", image: image8 },
+  { id: 9, name: "Termite", image: image9 },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -55,23 +61,17 @@ const CategoryListStatic: React.FC<Props> = ({ onSelect, selectedId }) => {
         style={styles.itemWrapper}
         // className="bg-red-600"
       >
-
-          <View
-            style={[
-              styles.imageCircle,
-              {
-                borderColor: isSelected ? colors.primary : colors.border,
-                backgroundColor: colors.surface,
-                shadowColor: colors.primary,
-              },
-            ]}
-          >
-            <Image
-              source={item.image}
-              style={styles.image}
-              contentFit="cover"
-            />
-       
+        <View
+          style={[
+            styles.imageCircle,
+            {
+              borderColor: isSelected ? colors.primary : colors.border,
+              backgroundColor: colors.surface,
+              shadowColor: colors.primary,
+            },
+          ]}
+        >
+          <Image source={item.image} style={styles.image} contentFit="cover" />
         </View>
 
         <Text
@@ -79,7 +79,9 @@ const CategoryListStatic: React.FC<Props> = ({ onSelect, selectedId }) => {
           style={[
             styles.label,
             {
-              fontFamily: isSelected ? "Poppins_600SemiBold" : "Poppins_500Medium",
+              fontFamily: isSelected
+                ? "Poppins_600SemiBold"
+                : "Poppins_500Medium",
               fontSize: getResponsiveFontSize(10),
               color: isSelected ? colors.primary : colors.text,
             },
@@ -92,14 +94,13 @@ const CategoryListStatic: React.FC<Props> = ({ onSelect, selectedId }) => {
   };
 
   return (
-    <View >
+    <View>
       <FlatList
         data={STATIC_CATEGORIES}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
       />
     </View>
   );
@@ -110,17 +111,13 @@ export default CategoryListStatic;
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
- 
   itemWrapper: {
     alignItems: "center",
-
-
   },
 
   imageCircle: {
     width: 90,
     height: 56,
-    // borderWidth: 2,
     overflow: "hidden",
   },
   image: {
@@ -128,7 +125,6 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   label: {
-   
     textAlign: "center",
     lineHeight: 14,
   },

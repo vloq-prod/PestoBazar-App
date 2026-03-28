@@ -3,7 +3,6 @@ import { View, Text, FlatList, TouchableOpacity, Dimensions } from "react-native
 import { useHomeProduct } from "../../hooks/homeHooks";
 import ItemCard, { ItemData } from "../comman/ItemCard";
 import { useTheme } from "../../theme";
-import { Ionicons } from "@expo/vector-icons";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - 16 * 2 - 12) / 2;
@@ -58,10 +57,10 @@ const SectionHeader = ({
     
         <Text
           style={{
-            fontSize: 20,
+            fontSize: 24,
             color: colors.text,
-            fontFamily: "Poppins_700Bold",
-            letterSpacing: 0.1,
+            fontFamily: "Poppins_600SemiBold",
+            
           }}
         >
           {title}
@@ -128,12 +127,12 @@ const HomeProduct = () => {
   }
 
   return (
-    <View style={{ gap: 24 }}>
+    <View style={{ gap: 25 }}>
       {sections.map((section, sIndex) => (
-        <View key={sIndex} style={{ gap: 3 }}>
+        <View key={sIndex} style={{ gap: 10 }}>
           <SectionHeader
             title={section.title}
-            onViewAll={() => console.log("View All →", section.title)}
+           
           />
           <FlatList
             horizontal

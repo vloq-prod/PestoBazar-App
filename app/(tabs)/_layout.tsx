@@ -8,9 +8,8 @@ export default function TabLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="shop" />
-      <Tabs.Screen name="buy-again" />
       <Tabs.Screen name="orders" />
+      <Tabs.Screen name="shop" />
       <Tabs.Screen name="profile" />
     </Tabs>
   );

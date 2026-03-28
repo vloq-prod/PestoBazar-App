@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../../theme";
 import { useCategory } from "../../hooks/homeHooks";
@@ -7,65 +13,96 @@ import { useResponsive } from "../../utils/useResponsive";
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
-const SkeletonItem = () => {
+const SkeletonItem: React.FC<{ size: number }> = ({ size }) => {
   const { colors } = useTheme();
   return (
-    <View style={styles.itemWrapper}>
+    <View>
       <View
-        style={[
-          styles.imageCircle,
-          { backgroundColor: colors.backgroundSkeleton },
-        ]}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: colors.backgroundSkeleton,
+        }}
       />
       <View
-        style={[
-          styles.skeletonLabel,
-          { backgroundColor: colors.backgroundSkeleton },
-        ]}
+        style={{
+          width: size - 8,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: colors.backgroundSkeleton,
+          marginTop: 7,
+        }}
+      />
+      <View
+        style={{
+          width: (size - 8) * 0.6,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: colors.backgroundSkeleton,
+          marginTop: 3,
+        }}
       />
     </View>
   );
 };
 
+const formatCategoryName = (name: string) => {
+  if (!name) return "";
+
+  return name
+    .replace(/control/gi, "") // remove "control"
+    .replace(/controll/gi, "") // remove wrong spelling
+    .trim();
+};
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const CategoryList = () => {
+const CategoryList: React.FC = () => {
   const { categories, loading, error, refetch } = useCategory();
   const { colors } = useTheme();
-  const { getResponsiveFontSize } = useResponsive();
+  const { getResponsiveFontSize: fs, wp } = useResponsive();
 
   const renderItem = ({ item }: any) => (
-    <TouchableOpacity activeOpacity={0.7} style={styles.itemWrapper}>
-      {/* Circle container with border */}
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={{ alignItems: "center", gap: 5 }}
+    >
+      {/* Image Circle */}
       <View
-        style={[
-          styles.imageCircle,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.surface,
-            shadowColor: colors.primary,
-          },
-        ]}
+        style={{
+          width: 60,
+          height: 60,
+          borderRadius: 40,
+          overflow: "hidden",
+          borderWidth: 1.2,
+          borderColor: colors.borderblack,
+          backgroundColor: colors.surfaceElevated,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
         <Image
           source={{ uri: item.s3_image_path }}
-          style={styles.image}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
           contentFit="cover"
         />
       </View>
 
+      {/* Category Name */}
       <Text
         numberOfLines={2}
-        style={[
-          styles.label,
-          {
-            color: colors.text,
-            fontFamily: "Poppins_500Medium",
-            fontSize: getResponsiveFontSize(10),
-          },
-        ]}
+        style={{
+          fontFamily: "Poppins_500Medium",
+          fontSize: fs(12),
+          textAlign: "center",
+          width: 70, // keeps text aligned nicely under circle
+        }}
       >
-        {item.category_name}
+        {formatCategoryName(item.category_name)}
       </Text>
     </TouchableOpacity>
   );
@@ -76,34 +113,32 @@ const CategoryList = () => {
         <Text
           style={{
             color: colors.textTertiary,
-            fontSize: getResponsiveFontSize(12),
+            fontSize: fs(12),
             fontFamily: "Poppins_400Regular",
           }}
         >
-          Categories load nahi ho sakiin.{" "}
+          Unable to load categories.{" "}
         </Text>
+        <TouchableOpacity activeOpacity={0.7}>
           <Text
             style={{
               color: colors.primary,
-              fontSize: getResponsiveFontSize(12),
+              fontSize: fs(12),
               fontFamily: "Poppins_600SemiBold",
               textDecorationLine: "underline",
             }}
           >
             Retry
           </Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.wrapper} >
+    <View>
       {loading ? (
-        <View style={styles.skeletonRow}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonItem key={i} />
-          ))}
-        </View>
+        <View style={styles.skeletonRow}></View>
       ) : (
         <FlatList
           data={categories}
@@ -111,7 +146,7 @@ const CategoryList = () => {
           renderItem={renderItem}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 14, gap: 20 }}
         />
       )}
     </View>
@@ -120,48 +155,18 @@ const CategoryList = () => {
 
 export default CategoryList;
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  wrapper: {
-    paddingTop: 6,
-    paddingBottom: 4,
-  },
   skeletonRow: {
     flexDirection: "row",
-    paddingHorizontal: 16,
-    gap: 16,
+    paddingHorizontal: 14,
+    gap: 6,
   },
-  itemWrapper: {
-    alignItems: "center",
-    width: 64,
-  },
-  imageCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 1.5,
-    overflow: "hidden",
-    // shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
+
   image: {
     width: "100%",
     height: "100%",
-  },
-  label: {
-    marginTop: 6,
-    textAlign: "center",
-    lineHeight: 14,
-  },
-  skeletonLabel: {
-    marginTop: 6,
-    width: 44,
-    height: 10,
-    borderRadius: 5,
   },
   errorRow: {
     flexDirection: "row",

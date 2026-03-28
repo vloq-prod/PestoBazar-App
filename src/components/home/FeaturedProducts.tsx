@@ -1,15 +1,15 @@
 import React, { useCallback } from "react";
 import { View, Text, FlatList, ListRenderItemInfo } from "react-native";
-import { useDeals } from "../../hooks/homeHooks";
-import { DealItem } from "../../types/home.types";
+import { useFeatured } from "../../hooks/homeHooks";
+import { FeaturedItem } from "../../types/home.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import ProductCard, { SkeletonCard } from "../comman/ProductCard";
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const DealsOfTheDay: React.FC = () => {
-  const { deals, loading } = useDeals();
+const FeaturedProducts: React.FC = () => {
+  const { featured, loading } = useFeatured();
   const { colors } = useTheme();
   const { wp, getResponsiveFontSize: fs } = useResponsive();
 
@@ -17,7 +17,7 @@ const DealsOfTheDay: React.FC = () => {
   const SEPARATOR = wp(3.5);
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<DealItem>) => (
+    ({ item }: ListRenderItemInfo<FeaturedItem>) => (
       <ProductCard
         item={{
           id: item.id,
@@ -31,7 +31,7 @@ const DealsOfTheDay: React.FC = () => {
         }}
         cardWidth={CARD_WIDTH}
         onPress={() => {
-          // TODO: navigate to product detail
+          // TODO: navigate to product detail using item.slug
         }}
       />
     ),
@@ -39,18 +39,20 @@ const DealsOfTheDay: React.FC = () => {
   );
 
   return (
-    <View className="flex-col "  style={{gap: 10}}>
+    <View style={{ gap: 10 }}>
       {/* ── Header ── */}
-      <View className="flex-row items-center justify-between px-4 ">
-        <Text
-          style={{
-           fontSize: 24,
-            color: colors.text,
-            fontFamily: "Poppins_600SemiBold",
-          }}
-        >
-          Deals of the Day
-        </Text>
+      <View className="flex-row items-center justify-between px-4">
+        <View>
+          <Text
+            style={{
+              fontSize: 24,
+              color: colors.text,
+              fontFamily: "Poppins_600SemiBold",
+            }}
+          >
+            Featured Products
+          </Text>
+        </View>
       </View>
 
       {/* ── Cards ── */}
@@ -65,12 +67,12 @@ const DealsOfTheDay: React.FC = () => {
         </View>
       ) : (
         <FlatList
-          data={deals}
+          data={featured}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: SEPARATOR}}
+          contentContainerStyle={{ paddingHorizontal: SEPARATOR }}
           ItemSeparatorComponent={() => <View style={{ width: SEPARATOR }} />}
           snapToInterval={CARD_WIDTH + SEPARATOR}
           decelerationRate="fast"
@@ -81,4 +83,4 @@ const DealsOfTheDay: React.FC = () => {
   );
 };
 
-export default DealsOfTheDay;
+export default FeaturedProducts;

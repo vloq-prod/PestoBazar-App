@@ -9,5 +9,7 @@ export const createVisitor = async (
     payload,
   );
 
+  console.log("responnse: ", response)
+
   return response.data;
 };

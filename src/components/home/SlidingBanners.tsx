@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+
 import {
   View,
   Image,
@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useTheme } from "../../theme";
-import { useBanner } from "../../hooks/homeHooks";
 import { BannerItem } from "../../types/home.types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -33,11 +32,12 @@ export default function SlidingBanners({ onBannerPress, data }: Props) {
         autoPlayInterval={3000}
         scrollAnimationDuration={800}
         mode="parallax"
-          modeConfig={{
-    parallaxScrollingScale: 0.92,  
-    parallaxScrollingOffset: 50,  
-    parallaxAdjacentItemScale: 0.85,
-  }}
+        modeConfig={{
+          parallaxScrollingScale: 0.92,
+          parallaxScrollingOffset: 50,
+          parallaxAdjacentItemScale: 0.85,
+        }}
+        
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.9}
@@ -45,7 +45,7 @@ export default function SlidingBanners({ onBannerPress, data }: Props) {
             style={{
               width: ITEM_WIDTH,
               height: ITEM_HEIGHT,
-              borderRadius: 14,
+              borderRadius: 8,
               overflow: "hidden",
               alignSelf: "center",
               backgroundColor: colors.surfaceElevated,

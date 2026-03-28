@@ -1,54 +1,72 @@
 // app/(tabs)/index.tsx
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, StatusBar } from "react-native";
 import { useTheme } from "../../src/theme";
-import { navbarConfig } from "../../src/config/navbarConfig";
-import AppNavbar from "../../src/components/comman/AppNavbar";
+import HomeNavbar from "../../src/components/home/HomeNavbar"; // 👈 naya
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppSearchBar from "../../src/components/home/AppSearchBar";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
-import CategoryList from "../../src/components/home/CategoryList";
 import HomProduct from "../../src/components/home/HomProduct";
 import { useHomeBanners } from "../../src/hooks/homeHooks";
 import FeatureBannerColumn from "../../src/components/home/FeatureBannerColumn";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
-import CategoryListStatic from "../../src/components/home/Categoryliststatic";
+import CategoryList from "../../src/components/home/CategoryList";
+import FeaturedProducts from "../../src/components/home/FeaturedProducts";
+import MiniCart from "../../src/components/home/MiniCart";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-
-  const { loading, slidingbanners, featureBanners, homeBottomBanners } =
-    useHomeBanners();
+  const { slidingbanners, featureBanners } = useHomeBanners();
 
   return (
-    <SafeAreaView
-      className="flex-1"
-      style={{ backgroundColor: colors.background }}
-      edges={["top"]}
-    >
-      <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <AppNavbar {...navbarConfig.home} />
-        <View className="px-4 py-2">
-          <AppSearchBar />
-        </View>
+    <View style={{ flex: 1 }}>
+      {/* 🔥 Gradient Header */}
+      <View
+        style={{
+          backgroundColor: "#3a286c",
+          paddingBottom: 14,
+        }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ gap: 12 }}>
+            <StatusBar
+              barStyle={"light-content"}
+              backgroundColor={colors.primary}
+            />
+            <HomeNavbar
+              name="Guest"
+              onMenuPress={() => {}}
+              onCartPress={() => {}}
+              onNotificationPress={() => {}}
+              onProfilePress={() => {}}
+            />
+
+            <View style={{ paddingHorizontal: 16 }}>
+              <AppSearchBar />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView
-          className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: 24,
-            paddingTop: 8,
-            gap: 5,
+            paddingBottom: 80, // 👈 80 karo taaki MiniCart content hide na kare
+            paddingTop: 20,
           }}
         >
-          {/* <CategoryList /> */}
-          <CategoryListStatic />
-          <SlidingBanners data={slidingbanners} />
-
-          <HomProduct />
-          <FeatureBannerColumn data={featureBanners} />
-          {/* <HomeBottomCarousel data={homeBottomBanners} /> */}
-          <DealsOfTheDay />
+          <CategoryList />
+          <View style={{ gap: 10 }}>
+            <SlidingBanners data={slidingbanners} />
+            <HomProduct />
+            <FeatureBannerColumn data={featureBanners} />
+            <DealsOfTheDay />
+            <FeaturedProducts />
+          </View>
         </ScrollView>
+
+        <MiniCart />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
