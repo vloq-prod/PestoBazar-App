@@ -7,6 +7,8 @@ import { SplashScreen } from "../src/components/SplashScreen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAppVisitorStore } from "../src/store/auth";
 import AppStatusBar from "../src/components/AppStatusBar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 function RootLayoutNav() {
   const { colors } = useTheme();
@@ -37,8 +39,7 @@ function RootLayoutNav() {
 
   return (
     <>
-
-    {/* <AppStatusBar /> */}
+      {/* <AppStatusBar /> */}
 
       <Stack screenOptions={{ headerShown: false }}>
         {visitorId && token ? (
@@ -59,10 +60,14 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <RootLayoutNav />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <BottomSheetModalProvider>
+            <RootLayoutNav />
+          </BottomSheetModalProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

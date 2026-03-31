@@ -56,7 +56,7 @@ export const useHomeBanners = () => {
     loading,
     slidingbanners: banners?.sliding_banners ?? [],
     featureBanners: banners?.featured_banner ?? [],
-    homeBottomBanners: banners?.home_bottom_banners ?? [],
+    homeBottomBanners: banners?.home_bottom_banners?.[0] ?? [],
   };
 };
 

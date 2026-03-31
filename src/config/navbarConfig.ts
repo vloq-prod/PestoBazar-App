@@ -22,10 +22,9 @@ export const navbarConfig = {
 
   shop: {
     title: "Shop",
-    showBack: false,
+    showBack: true,
     showCart: true,
     showSearch: true,
-    showNotification: true,
   },
 
   buyAgain: {
@@ -42,4 +41,5 @@ export const navbarConfig = {
     showSearch: false,
     showNotification: true,
   },
+  
 };

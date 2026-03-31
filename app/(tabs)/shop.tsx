@@ -1,14 +1,140 @@
-import { View, ScrollView } from "react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  ListRenderItem,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { navbarConfig } from "../../src/config/navbarConfig";
-import AppSearchBar from "../../src/components/home/AppSearchBar";
-import CategoryList from "../../src/components/home/CategoryList";
-import HomProduct from "../../src/components/home/HomProduct";
+import {
+  ArrowDownUp,
+  SlidersHorizontal,
+  LayoutGrid,
+  List,
+} from "lucide-react-native";
+import { useListing } from "../../src/hooks/shopHooks";
+import FilterBottomSheet, {
+  FilterBottomSheetRef,
+} from "../../src/modals/shop/FilterBottomSheet";
+import SortBottomSheet, {
+  SortBottomSheetRef,
+} from "../../src/modals/shop/SortBottomSheet";
+import ShopItemCard from "../../src/components/comman/ShopItemCard";
+import { ListingItem } from "../../src/types/shop.types";
+import { useLocalSearchParams } from "expo-router";
+
+type GridMode = "grid" | "list";
 
 export default function ShopScreen() {
+  const { search } = useLocalSearchParams();
   const { colors } = useTheme();
+  const [gridMode, setGridMode] = useState<GridMode>("grid");
+  const [sortBy, setSortBy] = useState<number>(1);
+
+  const searchText = Array.isArray(search) ? search[0] : search;
+
+
+  const filterRef = useRef<FilterBottomSheetRef>(null);
+  const sortRef = useRef<SortBottomSheetRef>(null);
+
+  const { products, loading, loadingMore, hasMore, loadMore } = useListing({
+    sort_by: sortBy,
+    type: searchText || "", /// search text heare
+  });
+
+  const onEndReachedCalledDuringMomentum = useRef(false);
+
+  const isGrid = gridMode === "grid";
+
+  const toggleGridMode = useCallback(() => {
+    setGridMode((p) => (p === "grid" ? "list" : "grid"));
+  }, []);
+
+  const handleSortSelect = useCallback((id: number) => setSortBy(id), []);
+
+  const numColumns = isGrid ? 2 : 1;
+
+  const columnWrapperStyle = useMemo(
+    () => (isGrid ? { gap: 10 } : undefined),
+    [isGrid],
+  );
+
+  const contentContainerStyle = useMemo(() => ({ padding: 10, gap: 10 }), []);
+
+  const renderItem: ListRenderItem<ListingItem> = useCallback(
+    ({ item }) => <ShopItemCard item={item} mode={gridMode} />,
+    [gridMode],
+  );
+
+  const keyExtractor = useCallback(
+    (item: ListingItem) => item.id.toString(),
+    [],
+  );
+
+  const onMomentumScrollBegin = useCallback(() => {
+    onEndReachedCalledDuringMomentum.current = false;
+  }, []);
+
+  const onEndReached = useCallback(() => {
+    if (!onEndReachedCalledDuringMomentum.current && hasMore && !loadingMore) {
+      loadMore();
+      onEndReachedCalledDuringMomentum.current = true;
+    }
+  }, [hasMore, loadingMore, loadMore]);
+
+  const ListEmpty = useMemo(
+    () =>
+      loading ? (
+        <View className="items-center justify-center py-20">
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : null,
+    [loading, colors.primary],
+  );
+
+  const ListFooter = useMemo(() => {
+    if (loadingMore) {
+      return (
+        <View className="items-center py-6">
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text
+            className="mt-2 text-[11px]"
+            style={{
+              fontFamily: "Poppins_400Regular",
+              color: colors.textTertiary,
+            }}
+          >
+            Loading more...
+          </Text>
+        </View>
+      );
+    }
+    if (!hasMore && products.length > 0) {
+      return (
+        <Text
+          className="text-center py-5 text-[12px]"
+          style={{
+            fontFamily: "Poppins_400Regular",
+            color: colors.textTertiary,
+          }}
+        >
+          All products loaded ✓
+        </Text>
+      );
+    }
+    return null;
+  }, [
+    loadingMore,
+    hasMore,
+    products.length,
+    colors.primary,
+    colors.textTertiary,
+  ]);
 
   return (
     <SafeAreaView
@@ -16,21 +142,123 @@ export default function ShopScreen() {
       style={{ backgroundColor: colors.background }}
       edges={["top"]}
     >
-      <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        {/* 🔥 Navbar */}
-        <AppNavbar {...navbarConfig.shop} />
+      <AppNavbar {...navbarConfig.shop} />
 
-        {/* 📦 Content */}
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: 24,
-            paddingTop: 8,
-            gap: 12,
+      {/* ── Filter Bar ── */}
+      <View
+        className="flex-row items-center justify-between px-4 py-2.5 border-b"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
+        {/* Product count */}
+        <Text
+          className="text-[13px]"
+          style={{
+            fontFamily: "Poppins_400Regular",
+            color: colors.textSecondary,
           }}
-        ></ScrollView>
+        >
+          <Text
+            style={{ fontFamily: "Poppins_600SemiBold", color: colors.text }}
+          >
+            {loading ? "..." : products.length}{" "}
+          </Text>
+          Products
+        </Text>
+
+        <View className="flex-row items-center gap-2">
+          {/* Grid / List toggle */}
+          <TouchableOpacity
+            onPress={toggleGridMode}
+            className="w-9 h-9 rounded-full border items-center justify-center"
+            style={{
+              borderColor: colors.primary,
+              backgroundColor: colors.primary + "15",
+            }}
+          >
+            {isGrid ? (
+              <LayoutGrid size={17} color={colors.primary} />
+            ) : (
+              <List size={17} color={colors.primary} />
+            )}
+          </TouchableOpacity>
+
+          {/* Filter */}
+          <TouchableOpacity
+            onPress={() => filterRef.current?.open()}
+            className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border"
+            style={{
+              borderColor: colors.border,
+              backgroundColor: colors.background,
+            }}
+          >
+            <SlidersHorizontal size={15} color={colors.primary} />
+            <Text
+              className="text-[12px]"
+              style={{ fontFamily: "Poppins_500Medium", color: colors.text }}
+            >
+              Filter
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sort */}
+          <TouchableOpacity
+            onPress={() => sortRef.current?.open()}
+            className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border"
+            style={{
+              borderColor: sortBy !== 1 ? colors.primary : colors.border,
+              backgroundColor:
+                sortBy !== 1 ? colors.primary + "12" : colors.background,
+            }}
+          >
+            <ArrowDownUp
+              size={15}
+              color={sortBy !== 1 ? colors.primary : colors.textSecondary}
+            />
+            <Text
+              className="text-[12px]"
+              style={{
+                fontFamily: "Poppins_500Medium",
+                color: sortBy !== 1 ? colors.primary : colors.text,
+              }}
+            >
+              Sort
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <FlatList
+        key={gridMode}
+        data={products}
+        keyExtractor={keyExtractor}
+        numColumns={numColumns}
+        showsVerticalScrollIndicator={false}
+        onEndReachedThreshold={0.5}
+        removeClippedSubviews={false}
+        windowSize={10}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        contentContainerStyle={contentContainerStyle}
+        columnWrapperStyle={columnWrapperStyle}
+        ListEmptyComponent={ListEmpty}
+        ListFooterComponent={ListFooter}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        onEndReached={onEndReached}
+        renderItem={renderItem}
+      />
+
+      <FilterBottomSheet
+        ref={filterRef}
+        onApply={(filters) => console.log("Applied filters:", filters)}
+      />
+      <SortBottomSheet
+        ref={sortRef}
+        selected={sortBy}
+        onSelect={handleSortSelect}
+      />
     </SafeAreaView>
   );
 }

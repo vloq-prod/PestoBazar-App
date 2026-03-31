@@ -1,6 +1,5 @@
-// src/components/TabBar.tsx
-import { useEffect } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useEffect } from "react";
+import { Platform, Pressable, View } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Home, LayoutGrid, Store, User } from "lucide-react-native";
 import Animated, {
@@ -18,98 +17,121 @@ type TabCfg = {
 };
 
 const TAB_CONFIG: Record<string, TabCfg> = {
-  index:    { label: "Home",     Icon: Home },
-  orders:   { label: "Category", Icon: LayoutGrid },
-  shop:     { label: "Shop",     Icon: Store },
-  profile:  { label: "Profile",  Icon: User },
+  index: { label: "Home", Icon: Home },
+  category: { label: "Category", Icon: LayoutGrid },
+  shop: { label: "Shop", Icon: Store },
+  profile: { label: "Profile", Icon: User },
 };
 
-const DURATION = 220;
-const EASING = Easing.out(Easing.quad);
+const FALLBACK_CFG: TabCfg = { label: "", Icon: Home };
 
+const TIMING_CFG = {
+  duration: 220,
+  easing: Easing.out(Easing.quad),
+} as const;
+
+// ── TabItem ───────────────────────────────────────────────
 function TabItem({
-  route,
+  routeName,
   isFocused,
+  activeColor,
+  inactiveColor,
   onPress,
   onLongPress,
 }: {
-  route: { name: string; key: string };
+  routeName: string;
   isFocused: boolean;
+  activeColor: string;
+  inactiveColor: string;
   onPress: () => void;
   onLongPress: () => void;
 }) {
-  const { colors } = useTheme();
   const progress = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    progress.value = withTiming(isFocused ? 1 : 0, {
-      duration: DURATION,
-      easing: EASING,
-    });
-  }, [isFocused]);
+    progress.value = withTiming(isFocused ? 1 : 0, TIMING_CFG);
+  }, [isFocused, progress]);
 
-  const activeColor   = colors.primary;
-  const inactiveColor = colors.tabBarInactive;
+  const cfg = TAB_CONFIG[routeName] ?? FALLBACK_CFG;
+  const iconColor = isFocused ? activeColor : inactiveColor;
 
-  const cfg = TAB_CONFIG[route.name] ?? {
-    label: route.name,
-    Icon: Home,
-  };
-
-  // Top border animated style
   const borderStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [{ scaleX: progress.value }],
   }));
 
-  // Icon & label color
-  const iconColor = isFocused ? activeColor : inactiveColor;
-
-  const labelStyle = useAnimatedStyle(() => ({
-    color: isFocused ? activeColor : inactiveColor,
-  }));
+  const labelColor = isFocused ? activeColor : inactiveColor;
 
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
-      style={styles.tabItem}
       android_ripple={null}
+      className="flex-1 items-center justify-center pt-2.5 pb-1.5 gap-1"
     >
-      {/* ── Top active border ── */}
       <Animated.View
+        className="absolute top-0 h-[2.5px] rounded-b-sm"
         style={[
-          styles.topBorder,
-          { backgroundColor: activeColor },
+          {
+            left: "10%",
+            right: "10%",
+            backgroundColor: activeColor,
+          },
           borderStyle,
         ]}
       />
 
-      {/* ── Icon ── */}
+      {/* Icon */}
       <cfg.Icon size={22} color={iconColor} />
 
-      {/* ── Label ── */}
-      <Animated.Text style={[styles.label, labelStyle]} numberOfLines={1}>
+      <Animated.Text
+        numberOfLines={1}
+        className="text-[10px] text-center leading-[14px]"
+        style={{
+          fontFamily: "Poppins_500Medium",
+          color: labelColor,
+        }}
+      >
         {cfg.label}
       </Animated.Text>
     </Pressable>
   );
 }
 
+// ── TabBar ────────────────────────────────────────────────
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const handlePress = useCallback(
+    (routeKey: string, routeName: string, isFocused: boolean) => {
+      const event = navigation.emit({
+        type: "tabPress",
+        target: routeKey,
+        canPreventDefault: true,
+      });
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(routeName);
+      }
+    },
+    [navigation],
+  );
+
+  const handleLongPress = useCallback(
+    (routeKey: string) => {
+      navigation.emit({ type: "tabLongPress", target: routeKey });
+    },
+    [navigation],
+  );
+
   return (
     <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
-          paddingBottom: insets.bottom || (Platform.OS === "android" ? 10 : 0),
-        },
-      ]}
+      className="flex-row border-t"
+      style={{
+        backgroundColor: colors.tabBar,
+        borderTopColor: colors.border,
+        paddingBottom: insets.bottom || (Platform.OS === "android" ? 10 : 0),
+      }}
     >
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;
@@ -117,54 +139,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         return (
           <TabItem
             key={route.key}
-            route={route}
+            routeName={route.name}
             isFocused={isFocused}
-            onPress={() => {
-              const event = navigation.emit({
-                type: "tabPress",
-                target: route.key,
-                canPreventDefault: true,
-              });
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name);
-              }
-            }}
-            onLongPress={() =>
-              navigation.emit({ type: "tabLongPress", target: route.key })
-            }
+            activeColor={colors.primary}
+            inactiveColor={colors.tabBarInactive}
+            onPress={() => handlePress(route.key, route.name, isFocused)}
+            onLongPress={() => handleLongPress(route.key)}
           />
         );
       })}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 10,
-    paddingBottom: 6,
-    gap: 4,
-  },
-  topBorder: {
-    position: "absolute",
-    top: 0,
-    left: "10%",
-    right: "10%",
-    height: 2.5,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-  },
-  label: {
-    fontSize: 10,
-    fontFamily: "Poppins_500Medium",
-    lineHeight: 14,
-    textAlign: "center",
-  },
-});

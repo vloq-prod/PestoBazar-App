@@ -1,7 +1,7 @@
 export const palette = {
   // Brand
   purple: "#3a286c",
-  purpleLight: "#4e3a8e",
+  purpleLight: "#E0D9F3",
   purpleDark: "#261b4a",
   purpleMuted: "#5c4a9e",
 
@@ -38,7 +38,7 @@ export const lightTheme = {
   surface: palette.white,
   surfaceElevated: palette.white,
   overlay: "rgba(0,0,0,0.5)",
-  backgroundSkeleton:  palette.gray200,
+  backgroundSkeleton: palette.gray200,
 
   // Brand
   primary: palette.purple,
@@ -65,6 +65,7 @@ export const lightTheme = {
   border: palette.gray200,
   borderStrong: palette.gray300,
   borderblack: palette.black,
+  borderPrimary: palette.purple,
 
   // States
   success: palette.success,
@@ -73,7 +74,7 @@ export const lightTheme = {
   info: palette.info,
 
   // UI
-  inputBackground: palette.white,
+  inputBackground: palette.gray100,
   inputBorder: palette.gray300,
   cardBackground: palette.white,
   tabBar: palette.white,
@@ -95,7 +96,7 @@ export const darkTheme = {
   primaryDark: palette.purple,
   primaryMuted: palette.purpleMuted,
   primaryForeground: palette.white,
-  backgroundSkeleton:  palette.gray200,
+  backgroundSkeleton: palette.gray200,
 
   secondary: palette.redLight,
   secondaryLight: palette.redMuted,
@@ -114,7 +115,8 @@ export const darkTheme = {
   // Borders
   border: palette.gray700,
   borderStrong: palette.gray600,
-    borderblack: palette.white,
+  borderblack: palette.white,
+  borderPrimary: palette.purple,
 
   // States
   success: palette.success,
@@ -123,7 +125,7 @@ export const darkTheme = {
   info: palette.info,
 
   // UI
-  inputBackground: palette.gray800,
+  inputBackground: palette.gray100,
   inputBorder: palette.gray700,
   cardBackground: palette.gray800,
   tabBar: palette.gray900,
@@ -133,5 +135,7 @@ export const darkTheme = {
 } as const;
 
 export type ThemeColors = {
-  [K in keyof typeof lightTheme]: K extends "statusBar" ? "dark" | "light" : string;
+  [K in keyof typeof lightTheme]: K extends "statusBar"
+    ? "dark" | "light"
+    : string;
 };

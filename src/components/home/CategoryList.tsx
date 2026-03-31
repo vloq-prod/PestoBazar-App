@@ -98,6 +98,7 @@ const CategoryList: React.FC = () => {
         style={{
           fontFamily: "Poppins_500Medium",
           fontSize: fs(12),
+          color: colors.textInverse,
           textAlign: "center",
           width: 70, // keeps text aligned nicely under circle
         }}
@@ -136,7 +137,7 @@ const CategoryList: React.FC = () => {
   }
 
   return (
-    <View>
+    <View >
       {loading ? (
         <View style={styles.skeletonRow}></View>
       ) : (

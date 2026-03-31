@@ -9,7 +9,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
-
+import { useRouter } from "expo-router";
 const SEARCH_HINTS = [
   "Rat Control",
   "Mosquito Control",
@@ -37,6 +37,7 @@ export default function AppSearchBar({ onPress }: Props) {
   const [displayText, setDisplayText] = useState(SEARCH_HINTS[0]);
   const [phase, setPhase] = useState<"typing" | "erasing">("typing");
 
+  const router = useRouter();
   const text = SEARCH_HINTS[hintIndex];
 
   useEffect(() => {
@@ -46,16 +47,22 @@ export default function AppSearchBar({ onPress }: Props) {
 
   useEffect(() => {
     if (phase === "typing") {
-      const t = setTimeout(() => {
-        setPhase("erasing");
-      }, text.length * CHAR_DELAY + PAUSE);
+      const t = setTimeout(
+        () => {
+          setPhase("erasing");
+        },
+        text.length * CHAR_DELAY + PAUSE,
+      );
       return () => clearTimeout(t);
     }
 
     if (phase === "erasing") {
-      const t = setTimeout(() => {
-        setHintIndex((prev) => (prev + 1) % SEARCH_HINTS.length);
-      }, text.length * ERASE_DELAY + 200);
+      const t = setTimeout(
+        () => {
+          setHintIndex((prev) => (prev + 1) % SEARCH_HINTS.length);
+        },
+        text.length * ERASE_DELAY + 200,
+      );
       return () => clearTimeout(t);
     }
   }, [phase]);
@@ -63,7 +70,13 @@ export default function AppSearchBar({ onPress }: Props) {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      onPress={onPress}
+      onPress={() => {
+        if (onPress) {
+          onPress();
+        } else {
+          router.push("/search");
+        }
+      }}
       className="flex-row items-center rounded-full px-4 py-3 border"
       style={{
         backgroundColor: colors.surface,
@@ -82,7 +95,7 @@ export default function AppSearchBar({ onPress }: Props) {
         }}
       >
         <Text style={{ fontSize: 14, color: colors.textTertiary }}>
-          Search by {" "}
+          Search by{" "}
         </Text>
 
         <View style={{ flexDirection: "row" }}>
@@ -104,20 +117,14 @@ export default function AppSearchBar({ onPress }: Props) {
   );
 }
 
-function FadeChar({
-  char,
-  index,
-  totalLength,
-  phase,
-  colors,
-}: any) {
+function FadeChar({ char, index, totalLength, phase, colors }: any) {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (phase === "typing") {
       opacity.value = withDelay(
         index * CHAR_DELAY,
-        withTiming(1, { duration: 200 })
+        withTiming(1, { duration: 200 }),
       );
     } else {
       // reverse order for erase
@@ -125,7 +132,7 @@ function FadeChar({
 
       opacity.value = withDelay(
         reverseIndex * ERASE_DELAY,
-        withTiming(0, { duration: 150 })
+        withTiming(0, { duration: 150 }),
       );
     }
   }, [phase]);
