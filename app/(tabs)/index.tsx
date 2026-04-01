@@ -98,11 +98,11 @@ export default function HomeScreen() {
         <View
           style={{
             position: "absolute",
-            top: -10,
-            right: 20,
-            width: 90,
-            height: 90,
-            borderRadius: 45,
+            top: -20,
+            right: -10,
+            width: 160,
+            height: 160,
+            borderRadius: 100,
             backgroundColor: "rgba(167,139,250,0.15)",
           }}
         />
@@ -110,7 +110,7 @@ export default function HomeScreen() {
         <View
           style={{
             position: "absolute",
-            top: 100,
+            top: 150,
             left: -60,
             width: 200,
             height: 200,

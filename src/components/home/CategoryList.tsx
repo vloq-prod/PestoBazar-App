@@ -65,31 +65,40 @@ const CategoryList: React.FC = () => {
 
   const renderItem = ({ item }: any) => (
     <TouchableOpacity
-      activeOpacity={0.7}
-      style={{ alignItems: "center", gap: 5 }}
+      activeOpacity={0.75}
+      style={{ alignItems: "center", gap: 8 }}
     >
-      {/* Image Circle */}
+      {/* Outer glow ring */}
       <View
         style={{
-          width: 50,
-          height: 50,
-          borderRadius: 40,
-          overflow: "hidden",
-          borderWidth: 1.2,
-          borderColor: colors.borderblack,
-          backgroundColor: colors.surfaceElevated,
+          width: 66,
+          height: 66,
+          borderRadius: 33,
+          backgroundColor: "rgba(167,139,250,0.15)",
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <Image
-          source={{ uri: item.s3_image_path }}
+        {/* Frosted glass circle */}
+        <View
           style={{
-            width: "100%",
-            height: "100%",
+            width: 58,
+            height: 58,
+            borderRadius: 29,
+            overflow: "hidden",
+            borderWidth: 1.5,
+            borderColor: "rgba(255,255,255,0.28)",
+            backgroundColor: "rgba(255,255,255,0.13)",
+            justifyContent: "center",
+            alignItems: "center",
           }}
-          contentFit="cover"
-        />
+        >
+          <Image
+            source={{ uri: item.s3_image_path }}
+            style={{ width: "82%", height: "82%" }}
+            contentFit="contain"
+          />
+        </View>
       </View>
 
       {/* Category Name */}
@@ -97,10 +106,11 @@ const CategoryList: React.FC = () => {
         numberOfLines={2}
         style={{
           fontFamily: "Poppins_500Medium",
-          fontSize: fs(12),
-          color: colors.textInverse,
+          fontSize: fs(10),
+          color: "rgba(255,255,255,0.88)",
           textAlign: "center",
-          width: 70, // keeps text aligned nicely under circle
+          width: 66,
+          lineHeight: 14,
         }}
       >
         {formatCategoryName(item.category_name)}
@@ -137,9 +147,9 @@ const CategoryList: React.FC = () => {
   }
 
   return (
-    <View >
+    <View style={{ paddingVertical: 4 }}>
       {loading ? (
-        <View style={styles.skeletonRow}></View>
+        <View style={styles.skeletonRow} />
       ) : (
         <FlatList
           data={categories}
@@ -147,7 +157,7 @@ const CategoryList: React.FC = () => {
           renderItem={renderItem}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 14, gap: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
         />
       )}
     </View>
