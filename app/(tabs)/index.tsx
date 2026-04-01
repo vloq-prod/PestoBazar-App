@@ -179,6 +179,7 @@ export default function HomeScreen() {
             }
           />
           <Testimonial />
+          <HomeUsp />
         </Animated.ScrollView>
 
         {/* <MiniCart /> */}

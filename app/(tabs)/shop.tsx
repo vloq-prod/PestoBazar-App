@@ -45,7 +45,7 @@ export default function ShopScreen() {
     to: 50000,
   });
 
-  console.log("price filter: ", priceFilter)
+
 
   const searchText = Array.isArray(search) ? search[0] : search;
 
@@ -76,7 +76,7 @@ export default function ShopScreen() {
       brands: number[];
       priceRange: { min: number; max: number };
     }) => {
-      console.log("Applied filters:", filters);
+     
       setPriceFilter({
         from: filters.priceRange.min,
         to: filters.priceRange.max,

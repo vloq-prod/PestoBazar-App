@@ -6,9 +6,7 @@ import { createVisitor } from "../api/auth.api";
 export const useVisitor = () => {
   const mutation = useMutation({
     mutationFn: createVisitor,
-    onError: (error: any) => {
-      console.log("Visitor API error:", error?.message);
-    },
+   
   });
 
   return {

@@ -13,7 +13,7 @@ export const getListing = async (
     }
   );
 
-  // console.log("response: ", response)
+
 
   return response.data;
 };

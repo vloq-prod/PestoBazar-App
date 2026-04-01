@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = useCallback(() => {
     setModeState((prev) => {
       if (prev === "system") return isDark ? "light" : "dark";
-      return prev === "dark" ? "light" : "dark";
+      return prev !== "dark" ? "light" : "dark";
     });
   }, [isDark]);
 

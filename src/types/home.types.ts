@@ -116,3 +116,33 @@ export interface TestimonialApiResponse {
   status: number;
   data: TestimonialItem[];
 }
+
+
+
+
+
+
+export interface UspItem {
+  image: string;
+  text: string;
+}
+
+export interface UspApiResponse {
+  message: string;
+  status: number;
+  data: UspItem[];
+}
+
+
+export interface BranchItem {
+  order_count: number;
+  branch_id: number;
+  branch_name: string;
+  state_name: string;
+}
+
+export interface BranchApiResponse {
+  message: string;
+  status: number;
+  data: BranchItem[];
+}

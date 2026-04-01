@@ -112,7 +112,7 @@ export default function WelcomeScreen() {
 
       router.replace("/(tabs)");
     } catch (error) {
-      console.log("Get Started Error:", error);
+   
     }
   };
 
