@@ -101,3 +101,18 @@ export interface FeaturedApiResponse {
   status: number;
   data: FeaturedItem[];
 }
+
+
+// TestimonialItem
+export interface TestimonialItem {
+  name: string;
+  comment: string;
+  img: string;
+  ratings: string;
+}
+
+export interface TestimonialApiResponse {
+  message: string;
+  status: number;
+  data: TestimonialItem[];
+}

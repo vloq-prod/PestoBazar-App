@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBanners, getDealsOfTheDay, getFeaturedProducts, getHomeCategories, getHomeProducts } from "../api/home.api";
+import { getBanners, getDealsOfTheDay, getFeaturedProducts, getHomeCategories, getHomeProducts, getTestimonials } from "../api/home.api";
 
 // useBanner hook
 export const useBanner = () => {
@@ -84,5 +84,22 @@ export const useFeatured = () => {
     featured: query.data?.data || [],
     loading: query.isLoading,
     error: query.error,
+  };
+};
+
+
+// testimonials
+export const useTestimonial = () => {
+  const query = useQuery({
+    queryKey: ["testimonials"],
+    queryFn: getTestimonials,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  return {
+    testimonials: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
   };
 };

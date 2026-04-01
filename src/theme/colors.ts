@@ -1,6 +1,6 @@
 export const palette = {
   // Brand
-  purple: "#3a286c",
+  purple: "#5f16e9", //5f16e9.  // 3a286c
   purpleLight: "#E0D9F3",
   purpleDark: "#261b4a",
   purpleMuted: "#5c4a9e",
@@ -28,6 +28,7 @@ export const palette = {
   // Semantic
   success: "#22c55e",
   warning: "#f59e0b",
+  yellow: "#FBC30B",
   error: "#ef4444",
   info: "#3b82f6",
 } as const;
@@ -80,6 +81,9 @@ export const lightTheme = {
   tabBar: palette.white,
   tabBarActive: palette.purple,
   tabBarInactive: palette.gray400,
+  
+
+  starColor: palette.yellow,
   statusBar: "dark" as const,
 } as const;
 
@@ -131,6 +135,9 @@ export const darkTheme = {
   tabBar: palette.gray900,
   tabBarActive: palette.purpleLight,
   tabBarInactive: palette.gray600,
+
+
+    starColor: palette.yellow,
   statusBar: "light" as const,
 } as const;
 

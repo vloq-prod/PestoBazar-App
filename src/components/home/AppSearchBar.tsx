@@ -147,7 +147,7 @@ function FadeChar({ char, index, totalLength, phase, colors }: any) {
         {
           fontSize: 14,
           color: colors.primary,
-          fontWeight: "500",
+          fontWeight: "700",
         },
         style,
       ]}

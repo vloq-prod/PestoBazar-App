@@ -22,7 +22,9 @@ import Animated, {
 } from "react-native-reanimated";
 import HomeBottomCarousel from "../../src/components/home/HomeBottomCarousel";
 import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
-
+import AppNavbar from "../../src/components/comman/AppNavbar";
+import { navbarConfig } from "../../src/config/navbarConfig";
+import Testimonial from "../../src/components/home/Testimonial";
 const SEARCH_HEIGHT = 56;
 const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
@@ -31,7 +33,6 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const { slidingbanners, featureBanners, homeBottomBanners } =
     useHomeBanners();
-  console.log("home bottom banner: ", homeBottomBanners);
 
   const lastScrollY = useSharedValue(0);
   const searchVisible = useSharedValue(1);
@@ -73,24 +74,29 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1 }}>
       {/* ── HEADER ── */}
-      <View style={{ backgroundColor: "#3a286c" }}>
-        <SafeAreaView edges={["top"]}>
-          <StatusBar barStyle="light-content" backgroundColor="#3a286c" />
+      <View style={{ backgroundColor: colors.primary, paddingBottom: 10 }}>
+        <SafeAreaView edges={["top"]} className=" gap-2">
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor={colors.primary}
+          />
+
           <HomeNavbar
             name="Guest"
-            onMenuPress={() => {}}
             onCartPress={() => {}}
             onNotificationPress={() => {}}
             onProfilePress={() => {}}
           />
+
+          {/* <AppNavbar {...navbarConfig.home} /> */}
           <Animated.View style={searchAnimStyle}>
-            <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
+            <View style={{ paddingHorizontal: 16 }}>
               <AppSearchBar />
             </View>
           </Animated.View>
         </SafeAreaView>
+
         <CategoryList />
-        <View style={{ height: 10 }} />
       </View>
 
       {/* ── SCROLL CONTENT ── */}
@@ -102,7 +108,7 @@ export default function HomeScreen() {
           contentContainerStyle={{
             paddingBottom: 80,
             paddingTop: 16,
-            gap: 10,
+            gap: 30,
           }}
         >
           <SlidingBanners data={slidingbanners} />
@@ -117,11 +123,11 @@ export default function HomeScreen() {
                 : homeBottomBanners
             }
           />
-           <BulkOrderFAB scrollVisible={searchVisible}/>
+          <Testimonial />
         </Animated.ScrollView>
 
         {/* <MiniCart /> */}
-       
+        {/* <BulkOrderFAB scrollVisible={searchVisible} /> */}
       </View>
     </View>
   );

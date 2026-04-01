@@ -72,8 +72,9 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
         >
           <Image
             source={profile}
-            contentFit="cover"
-            style={{ width: "100%", height: "100%" }}
+            contentFit="fill"
+           
+            style={{ width: "105%", height: "105%",  }}
           />
         </TouchableOpacity>
 

@@ -4,7 +4,7 @@ export const navbarConfig = {
     showNotification: true,
     showCart: true,
     showMenu: true,
-    showThemeToggle: false,
+    showThemeToggle: true,
   },
 
   product: {

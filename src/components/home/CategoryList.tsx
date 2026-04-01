@@ -71,8 +71,8 @@ const CategoryList: React.FC = () => {
       {/* Image Circle */}
       <View
         style={{
-          width: 60,
-          height: 60,
+          width: 50,
+          height: 50,
           borderRadius: 40,
           overflow: "hidden",
           borderWidth: 1.2,

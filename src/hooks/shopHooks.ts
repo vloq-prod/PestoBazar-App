@@ -31,13 +31,13 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
     const newItems = data.data?.data ?? [];
 
     // 🔥 DEBUG LOGS
-    console.log("---- PAGINATION DEBUG ----");
-    console.log("Page:", page);
-    console.log("New Items Length:", newItems.length);
-    console.log("Total Products (before):", products.length);
-    console.log("Has More (before):", hasMore);
-    console.log("Is Fetching:", isFetching);
-    console.log("--------------------------");
+    // console.log("---- PAGINATION DEBUG ----");
+    // console.log("Page:", page);
+    // console.log("New Items Length:", newItems.length);
+    // console.log("Total Products (before):", products.length);
+    // console.log("Has More (before):", hasMore);
+    // console.log("Is Fetching:", isFetching);
+    // console.log("--------------------------");
 
     processedPages.current.add(page);
 

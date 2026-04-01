@@ -259,7 +259,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <View
-      className="rounded-lg border overflow-hidden"
+      className="rounded-2xl border overflow-hidden"
       style={{
         width: cardWidth,
         backgroundColor: colors.cardBackground,
@@ -270,7 +270,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <View className="flex-row p-2" style={{ gap: GAP }}>
         {/* Main carousel */}
         <View
-          className="rounded-lg overflow-hidden"
+          className="rounded-xl overflow-hidden"
           style={{ width: IMG_SIZE, height: IMG_SIZE }}
         >
           <Carousel
@@ -288,6 +288,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 source={{ uri }}
                 style={{ width: IMG_SIZE, height: IMG_SIZE }}
                 resizeMode="cover"
+               
               />
             )}
           />

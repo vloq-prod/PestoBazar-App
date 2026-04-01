@@ -34,13 +34,13 @@ export default function FeatureBannerColumn({ data, onPress }: Props) {
             backgroundColor: colors.surfaceElevated,
             borderColor: colors.border
           }}
-          className="rounded-lg"
+          className="rounded-2xl"
         >
           <Image
             source={{ uri: item.s3_image_path }}
             style={{ width: "100%", height: "100%"}}
             resizeMode="cover"
-            className="rounded-md"
+            className="rounded-xl"
           />
         </TouchableOpacity>
       ))}

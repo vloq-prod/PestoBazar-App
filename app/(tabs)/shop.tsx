@@ -36,19 +36,31 @@ export default function ShopScreen() {
   const [gridMode, setGridMode] = useState<GridMode>("grid");
   const [sortBy, setSortBy] = useState<number>(1);
 
-  const searchText = Array.isArray(search) ? search[0] : search;
+  // ✅ Price filter state add karo
+  const [priceFilter, setPriceFilter] = useState<{
+    from: number;
+    to: number;
+  }>({
+    from: 200,
+    to: 50000,
+  });
 
+  console.log("price filter: ", priceFilter)
+
+  const searchText = Array.isArray(search) ? search[0] : search;
 
   const filterRef = useRef<FilterBottomSheetRef>(null);
   const sortRef = useRef<SortBottomSheetRef>(null);
 
+  // ✅ priceFilter useListing mein pass karo
   const { products, loading, loadingMore, hasMore, loadMore } = useListing({
     sort_by: sortBy,
-    type: searchText || "", /// search text heare
+    type: searchText || "",
+    filter_from_price: priceFilter.from,
+    filter_to_price: priceFilter.to,
   });
 
   const onEndReachedCalledDuringMomentum = useRef(false);
-
   const isGrid = gridMode === "grid";
 
   const toggleGridMode = useCallback(() => {
@@ -57,6 +69,22 @@ export default function ShopScreen() {
 
   const handleSortSelect = useCallback((id: number) => setSortBy(id), []);
 
+  // ✅ onApply mein price set karo
+  const handleApplyFilter = useCallback(
+    (filters: {
+      categories: number[];
+      brands: number[];
+      priceRange: { min: number; max: number };
+    }) => {
+      console.log("Applied filters:", filters);
+      setPriceFilter({
+        from: filters.priceRange.min,
+        to: filters.priceRange.max,
+      });
+    },
+    [],
+  );
+
   const numColumns = isGrid ? 2 : 1;
 
   const columnWrapperStyle = useMemo(
@@ -64,7 +92,7 @@ export default function ShopScreen() {
     [isGrid],
   );
 
-  const contentContainerStyle = useMemo(() => ({ padding: 10, gap: 10 }), []);
+  const contentContainerStyle = useMemo(() => ({ padding: 13, gap: 10 }), []);
 
   const renderItem: ListRenderItem<ListingItem> = useCallback(
     ({ item }) => <ShopItemCard item={item} mode={gridMode} />,
@@ -128,13 +156,7 @@ export default function ShopScreen() {
       );
     }
     return null;
-  }, [
-    loadingMore,
-    hasMore,
-    products.length,
-    colors.primary,
-    colors.textTertiary,
-  ]);
+  }, [loadingMore, hasMore, products.length, colors.primary, colors.textTertiary]);
 
   return (
     <SafeAreaView
@@ -185,19 +207,38 @@ export default function ShopScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Filter */}
+          {/* Filter — ✅ active indicator jab price filter laga ho */}
           <TouchableOpacity
             onPress={() => filterRef.current?.open()}
             className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border"
             style={{
-              borderColor: colors.border,
-              backgroundColor: colors.background,
+              borderColor:
+                priceFilter.from > 0 || priceFilter.to > 0
+                  ? colors.primary
+                  : colors.border,
+              backgroundColor:
+                priceFilter.from > 0 || priceFilter.to > 0
+                  ? colors.primary + "12"
+                  : colors.background,
             }}
           >
-            <SlidersHorizontal size={15} color={colors.primary} />
+            <SlidersHorizontal
+              size={15}
+              color={
+                priceFilter.from > 0 || priceFilter.to > 0
+                  ? colors.primary
+                  : colors.textSecondary
+              }
+            />
             <Text
               className="text-[12px]"
-              style={{ fontFamily: "Poppins_500Medium", color: colors.text }}
+              style={{
+                fontFamily: "Poppins_500Medium",
+                color:
+                  priceFilter.from > 0 || priceFilter.to > 0
+                    ? colors.primary
+                    : colors.text,
+              }}
             >
               Filter
             </Text>
@@ -250,9 +291,10 @@ export default function ShopScreen() {
         renderItem={renderItem}
       />
 
+      {/* ✅ handleApplyFilter pass karo */}
       <FilterBottomSheet
         ref={filterRef}
-        onApply={(filters) => console.log("Applied filters:", filters)}
+        onApply={handleApplyFilter}
       />
       <SortBottomSheet
         ref={sortRef}

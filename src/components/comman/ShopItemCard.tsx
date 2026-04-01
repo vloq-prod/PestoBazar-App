@@ -14,8 +14,10 @@ import {
   Minus,
   Trash2,
   StarIcon,
+  Tag,
 } from "lucide-react-native";
 import { ListingItem } from "../../types/shop.types";
+import { Platform } from "react-native";
 
 const CARD_WIDTH = (Dimensions.get("window").width - 16 * 2 - 12) / 2;
 
@@ -40,6 +42,7 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
   const inputRef = useRef<TextInput>(null);
+  const OS = Platform.OS === "android";
 
   const handleQtyInput = (val: string) => {
     setInputVal(val);
@@ -141,7 +144,7 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
       }}
       activeOpacity={0.82}
       style={{ backgroundColor: colors.primary }}
-      className="flex-row items-center justify-center gap-2 py-2.5 rounded-lg"
+      className="flex-row items-center justify-center gap-2 py-2.5 rounded-xl"
     >
       <ShoppingCart size={14} color="#fff" strokeWidth={2.5} />
       <Text
@@ -160,72 +163,98 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
   if (mode === "grid") {
     return (
       <TouchableOpacity
-      className="flex-1"
+        className="flex-1 border p-2.5 rounded-2xl"
         activeOpacity={0.88}
         onPress={() => onPress?.(item)}
-        style={{ width: CARD_WIDTH, borderColor: colors.border}}
+        style={{ width: CARD_WIDTH, borderColor: colors.border }}
       >
         {/* Image + Rating Badge */}
         <View
           style={{
-            overflow: "hidden",
             backgroundColor: colors.background,
             borderColor: colors.border,
           }}
-          className="border rounded-lg"
         >
           <Image
             source={{ uri: item.image_path }}
             style={{
               width: "100%",
               aspectRatio: 1,
+              borderRadius: 12,
               backgroundColor: colors.surfaceElevated,
             }}
-            className="rounded-lg"
             contentFit="cover"
+            className="rounded-xl"
           />
-          {rating > 0 && (
+          {discount && (
             <View
-              className="absolute bottom-2 left-2 flex-row items-center gap-1.5 px-1.5 py-0.5 rounded-md"
-              style={{ backgroundColor: colors.primary }}
+              className="absolute top-0 left-0 flex-row items-center justify-center gap-1.5 px-2 py-1 rounded-lg"
+              style={{ backgroundColor: colors.error }}
             >
-              <StarIcon
-                size={9}
-                color={colors.background}
-                fill={colors.background}
-              />
+              <Tag size={14} color={colors.textInverse} strokeWidth={2.5} />
               <Text
                 style={{
-                  fontSize: 10,
-                  lineHeight: 15,
+                  fontSize: OS ? 14 : 12,
                   fontFamily: "Poppins_600SemiBold",
                   color: colors.textInverse,
+                  includeFontPadding: false,
+                  textAlignVertical: "center",
                 }}
               >
-                {rating.toFixed(1)}
+                {discount}%
               </Text>
             </View>
           )}
         </View>
 
-        {/* Body */}
-         <View className="px-0.5 pt-2" style={{ gap: 3 }}>
-        <View className="flex-row items-end justify-between">
+        {/* name and overview */}
+        <View className="px-0.5 pt-2" style={{ gap: 3 }}>
+          <Text
+            numberOfLines={2}
+            style={{
+              fontSize: 14,
+              lineHeight: 17,
+              height: 36,
+
+              fontFamily: "Poppins_600SemiBold",
+              color: colors.text,
+            }}
+          >
+            {item.product_name}
+          </Text>
+
+          <Text
+            numberOfLines={2}
+            style={{
+              fontSize: 11,
+              color: colors.textTertiary,
+              lineHeight: 14,
+              height: 28,
+              textAlign: "left",
+              fontFamily: "Poppins_400Regular",
+            }}
+          >
+            {item.overview ?? ""}
+          </Text>
+        </View>
+
+        {/* Price row */}
+        <View className="flex-row items-center justify-between mt-1">
           <View className="flex-row items-baseline" style={{ gap: 4 }}>
             <Text
               style={{
-                fontSize: 16,
+                fontSize: OS ? 18 : 16,
                 fontFamily: "Poppins_600SemiBold",
                 color: colors.primary,
                 lineHeight: 23,
               }}
             >
-              ₹{parseInt(item.selling_price)}
+              ₹ {Number(item.selling_price).toLocaleString("en-IN")}
             </Text>
 
             <Text
               style={{
-                fontSize: 14,
+                fontSize: OS ? 12 : 10,
                 fontFamily: "Poppins_500Medium",
                 color: colors.textTertiary,
                 textDecorationLine: "line-through",
@@ -235,52 +264,33 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
             >
               ₹{parseInt(item.mrp)}
             </Text>
-            {discount && (
+          </View>
+
+          {rating > 1 && (
+            <View className="flex-row items-center">
+              <StarIcon
+                size={13}
+                color={colors.starColor}
+                fill={colors.starColor}
+              />
               <Text
+                className=""
                 style={{
-                  fontSize: 14,
-                  fontFamily: "Poppins_500Medium",
-                  color: colors.error,
-                  letterSpacing: 0.2,
-                  lineHeight: 20,
+                  fontSize: 13,
+                  includeFontPadding: false,
+                  textAlignVertical: "center",
+                  fontFamily: "Poppins_600SemiBold",
                 }}
               >
-                {discount}% off
+                {" "}
+                {rating.toFixed(1)}
               </Text>
-            )}
-          </View>
+            </View>
+          )}
         </View>
-        {/* Name */}
-        <Text
-          numberOfLines={2}
-          style={{
-            fontSize: 14,
-            lineHeight: 18,
-            height: 36,
-            fontFamily: "Poppins_500Medium",
-            color: colors.text,
-          }}
-        >
-          {item.product_name}
-        </Text>
 
-        {/* Overview */}
-        <Text
-          numberOfLines={2}
-          style={{
-            fontSize: 12,
-            color: colors.textTertiary,
-            lineHeight: 14,
-            height: 28,
-            fontFamily: "Poppins_400Regular",
-          }}
-        >
-          {item.overview ?? ""}
-        </Text>
-
-        {/* Price row */}
-      </View>
-        <View className="mt-3">{qty === 0 ? AddButton : QtyController}</View>
+        {/* button */}
+        <View className="mt-1">{qty === 0 ? AddButton : QtyController}</View>
       </TouchableOpacity>
     );
   }
