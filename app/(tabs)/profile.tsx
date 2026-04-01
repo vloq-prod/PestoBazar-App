@@ -29,7 +29,7 @@ export default function ProfileScreen() {
             useAppVisitorStore.getState().clearVisitor();
             router.replace("/welcome");
           } catch (error) {
-            console.error("Reset failed:", error);
+           
           }
         },
       },

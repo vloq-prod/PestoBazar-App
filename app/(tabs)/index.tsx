@@ -25,6 +25,7 @@ import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { navbarConfig } from "../../src/config/navbarConfig";
 import Testimonial from "../../src/components/home/Testimonial";
+import HomeUsp from "../../src/components/home/HomeUsp";
 const SEARCH_HEIGHT = 56;
 const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
@@ -124,6 +125,7 @@ export default function HomeScreen() {
             }
           />
           <Testimonial />
+          <HomeUsp />
         </Animated.ScrollView>
 
         {/* <MiniCart /> */}

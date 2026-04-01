@@ -116,3 +116,19 @@ export interface TestimonialApiResponse {
   status: number;
   data: TestimonialItem[];
 }
+
+
+
+
+
+
+export interface UspItem {
+  image: string;
+  text: string;
+}
+
+export interface UspApiResponse {
+  message: string;
+  status: number;
+  data: UspItem[];
+}

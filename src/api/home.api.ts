@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { BannerApiResponse, CategoryApiResponse, DealsApiResponse, FeaturedApiResponse, HomeProductApiResponse, TestimonialApiResponse } from "../types/home.types";
+import { BannerApiResponse, CategoryApiResponse, DealsApiResponse, FeaturedApiResponse, HomeProductApiResponse, TestimonialApiResponse, UspApiResponse } from "../types/home.types";
 
 
 // banner api
@@ -8,7 +8,7 @@ export const getBanners = async (): Promise<BannerApiResponse> => {
     "/app-api/v1/app-banner"
   );
 
-  console.log("response: ", response.data)
+
   return response.data;
 };
 
@@ -55,5 +55,12 @@ export const getTestimonials = async (): Promise<TestimonialApiResponse> => {
     "/app-api/v1/app-testimonial"
   );
 
+  return response.data;
+};
+
+export const getUsp = async (): Promise<UspApiResponse> => {
+  const response = await apiClient.get<UspApiResponse>(
+    "/app-api/v1/app-usp"
+  );
   return response.data;
 };

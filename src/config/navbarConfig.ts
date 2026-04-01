@@ -18,6 +18,7 @@ export const navbarConfig = {
     showBack: false,
     showCart: false,
     showNotification: true,
+    showThemeToggle: true,
   },
 
   shop: {

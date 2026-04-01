@@ -1,5 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBanners, getDealsOfTheDay, getFeaturedProducts, getHomeCategories, getHomeProducts, getTestimonials } from "../api/home.api";
+import {
+  getBanners,
+  getDealsOfTheDay,
+  getFeaturedProducts,
+  getHomeCategories,
+  getHomeProducts,
+  getTestimonials,
+  getUsp,
+} from "../api/home.api";
 
 // useBanner hook
 export const useBanner = () => {
@@ -16,7 +24,6 @@ export const useBanner = () => {
   };
 };
 
-
 // useCategory hook
 export const useCategory = () => {
   const query = useQuery({
@@ -32,7 +39,6 @@ export const useCategory = () => {
   };
 };
 
-
 // home product hook
 export const useHomeProduct = () => {
   const query = useQuery({
@@ -47,7 +53,6 @@ export const useHomeProduct = () => {
     refetch: query.refetch,
   };
 };
-
 
 export const useHomeBanners = () => {
   const { banners, loading } = useBanner();
@@ -87,8 +92,6 @@ export const useFeatured = () => {
   };
 };
 
-
-// testimonials
 export const useTestimonial = () => {
   const query = useQuery({
     queryKey: ["testimonials"],
@@ -101,5 +104,18 @@ export const useTestimonial = () => {
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
+  };
+};
+
+export const useUsp = () => {
+  const query = useQuery({
+    queryKey: ["usp"],
+    queryFn: getUsp,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  return {
+    uspList: query.data?.data || [],
+    loading: query.isLoading,
   };
 };
