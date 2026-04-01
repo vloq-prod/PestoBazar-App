@@ -27,6 +27,7 @@ import AppNavbar from "../../src/components/comman/AppNavbar";
 import { navbarConfig } from "../../src/config/navbarConfig";
 import Testimonial from "../../src/components/home/Testimonial";
 import CategoryListStatic from "../../src/components/home/Categoryliststatic";
+import HomeUsp from "../../src/components/home/HomeUsp";
 const SEARCH_HEIGHT = 56;
 const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
