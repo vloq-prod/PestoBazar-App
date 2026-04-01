@@ -6,7 +6,7 @@ import HomeNavbar from "../../src/components/home/HomeNavbar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppSearchBar from "../../src/components/home/AppSearchBar";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
-import HomProduct from "../../src/components/home/HomProduct";
+import HomeProduct from "../../src/components/home/HomeProduct";
 import { useHomeBanners } from "../../src/hooks/homeHooks";
 import FeatureBannerColumn from "../../src/components/home/FeatureBannerColumn";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
@@ -26,6 +26,7 @@ import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { navbarConfig } from "../../src/config/navbarConfig";
 import Testimonial from "../../src/components/home/Testimonial";
+import CategoryListStatic from "../../src/components/home/Categoryliststatic";
 const SEARCH_HEIGHT = 56;
 const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
@@ -149,7 +150,8 @@ export default function HomeScreen() {
             marginBottom: 10,
           }}
         />
-        <CategoryList />
+        {/* <CategoryList /> */}
+        <CategoryListStatic/>
       </LinearGradient>
 
       {/* ── SCROLL CONTENT ── */}
@@ -165,7 +167,7 @@ export default function HomeScreen() {
           }}
         >
           <SlidingBanners data={slidingbanners} />
-          <HomProduct />
+          <HomeProduct />
           <FeatureBannerColumn data={featureBanners} />
           <DealsOfTheDay />
           <FeaturedProducts />
