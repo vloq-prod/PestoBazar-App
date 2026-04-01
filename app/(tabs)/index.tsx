@@ -1,5 +1,6 @@
 // app/(tabs)/index.tsx
 import { View, StatusBar } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../src/theme";
 import HomeNavbar from "../../src/components/home/HomeNavbar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -75,11 +76,55 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1 }}>
       {/* ── HEADER ── */}
-      <View style={{ backgroundColor: colors.primary, paddingBottom: 10 }}>
+      <LinearGradient
+        colors={["#0c0225", "#2a0a6b", "#5f16e9", "#9333ea"]}
+        locations={[0, 0.3, 0.7, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={{ paddingBottom: 12, overflow: "hidden" }}
+      >
+        {/* ── Large violet shimmer — top-right ── */}
+        <View
+          style={{
+            position: "absolute",
+            top: -60,
+            right: -40,
+            width: 240,
+            height: 240,
+            borderRadius: 120,
+            backgroundColor: "rgba(139,92,246,0.22)",
+          }}
+        />
+        {/* ── Bright core glow — top-right inner ── */}
+        <View
+          style={{
+            position: "absolute",
+            top: -10,
+            right: 20,
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: "rgba(167,139,250,0.15)",
+          }}
+        />
+        {/* ── Deep indigo bloom — left ── */}
+        <View
+          style={{
+            position: "absolute",
+            top: 100,
+            left: -60,
+            width: 200,
+            height: 200,
+            borderRadius: 100,
+            backgroundColor: "rgba(109,40,217,0.28)",
+          }}
+        />
+
         <SafeAreaView edges={["top"]} className=" gap-2">
           <StatusBar
             barStyle="light-content"
-            backgroundColor={colors.primary}
+            backgroundColor="transparent"
+            translucent
           />
 
           <HomeNavbar
@@ -97,8 +142,16 @@ export default function HomeScreen() {
           </Animated.View>
         </SafeAreaView>
 
+        <View
+          style={{
+            height: 1,
+            backgroundColor: "rgba(255,255,255,0.08)",
+            marginHorizontal: 16,
+            marginBottom: 10,
+          }}
+        />
         <CategoryList />
-      </View>
+      </LinearGradient>
 
       {/* ── SCROLL CONTENT ── */}
       <View style={{ flex: 1, backgroundColor: colors.background }}>

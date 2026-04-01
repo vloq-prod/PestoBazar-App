@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   getBanners,
+  getBranches,
   getDealsOfTheDay,
   getFeaturedProducts,
   getHomeCategories,
@@ -117,5 +118,19 @@ export const useUsp = () => {
   return {
     uspList: query.data?.data || [],
     loading: query.isLoading,
+  };
+};
+
+export const useBranch = () => {
+  const query = useQuery({
+    queryKey: ["branches"],
+    queryFn: getBranches,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  return {
+    branches: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
   };
 };
