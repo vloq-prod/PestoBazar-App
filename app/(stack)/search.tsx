@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   Text,
   Platform,
+  StatusBar,
 } from "react-native";
 import React, { useState, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,6 +22,8 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      
       {/* ─── Header ─────────────────────────────────────────── */}
       <View
         style={{

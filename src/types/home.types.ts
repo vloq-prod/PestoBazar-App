@@ -21,7 +21,8 @@ export interface BannerApiResponse {
 export interface CategoryItem {
   category_name: string;
   slug: string;
-  category_image: string;
+  id: number;
+  category_image?: string;
   s3_image_path: string;
 }
 

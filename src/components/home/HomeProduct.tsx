@@ -1,146 +1,106 @@
 // src/components/home/HomeProduct.tsx
-import { View, Text, FlatList, TouchableOpacity, Dimensions } from "react-native";
+
+import React from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
 import { useHomeProduct } from "../../hooks/homeHooks";
-import ItemCard, { ItemData } from "../comman/ItemCard";
+import ItemCard from "../comman/ItemCard";
 import { useTheme } from "../../theme";
 import { ChevronRight } from "lucide-react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = (SCREEN_WIDTH - 16 * 2 - 12) / 2;
 
-// ── Skeleton Card ──
+const H_PADDING = 16 * 2; 
+const GAP = 10;
+
+const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.2;
+
+// ─────────────────────────────────────────────
+// Skeleton Card (matches real UI)
+// ─────────────────────────────────────────────
 const SkeletonCard = () => {
   const { colors } = useTheme();
+
   return (
-    <View style={{ width: CARD_WIDTH, gap: 8 }}>
+    <View style={{ width: ITEM_WIDTH, gap: 8 }}>
       <View
         style={{
-          width: CARD_WIDTH,
-          height: CARD_WIDTH,
+          width: "100%",
+          aspectRatio: 1,
           borderRadius: 14,
           backgroundColor: colors.backgroundSkeleton,
         }}
       />
-      <View
-        style={{
-          height: 12,
-          borderRadius: 6,
-          backgroundColor: colors.backgroundSkeleton,
-          width: "80%",
-        }}
-      />
-      <View
-        style={{
-          height: 10,
-          borderRadius: 6,
-          backgroundColor: colors.backgroundSkeleton,
-          width: "55%",
-        }}
-      />
-      <View
-        style={{
-          height: 10,
-          borderRadius: 6,
-          backgroundColor: colors.backgroundSkeleton,
-          width: "40%",
-        }}
-      />
-      <View
-        style={{
-          height: 36,
-          borderRadius: 6,
-          backgroundColor: colors.backgroundSkeleton,
-        }}
-      />
+      <View style={{ height: 12, width: "80%", backgroundColor: colors.backgroundSkeleton, borderRadius: 6 }} />
+      <View style={{ height: 10, width: "55%", backgroundColor: colors.backgroundSkeleton, borderRadius: 6 }} />
+      <View style={{ height: 36, backgroundColor: colors.backgroundSkeleton, borderRadius: 8 }} />
     </View>
   );
 };
 
-// ── Skeleton Section ──
+// ─────────────────────────────────────────────
+// Skeleton Section
+// ─────────────────────────────────────────────
 const SkeletonSection = () => {
   return (
     <View style={{ gap: 14 }}>
-      {/* Skeleton header */}
       <View
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
-          alignItems: "center",
           paddingHorizontal: 16,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View
-            style={{
-              width: 3,
-              height: 20,
-              borderRadius: 2,
-              backgroundColor: "#e0d9f3",
-            }}
-          />
-          <View
-            style={{
-              height: 16,
-              width: 130,
-              borderRadius: 8,
-              backgroundColor: "#e8e8e8",
-            }}
-          />
-        </View>
-        <View
-          style={{ height: 13, width: 60, borderRadius: 8, backgroundColor: "#e8e8e8" }}
-        />
+        <View style={{ height: 16, width: 130, backgroundColor: "#e8e8e8", borderRadius: 8 }} />
+        <View style={{ height: 13, width: 60, backgroundColor: "#e8e8e8", borderRadius: 8 }} />
       </View>
+
       <FlatList
         horizontal
         data={[1, 2, 3]}
         keyExtractor={(i) => String(i)}
-        scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+        ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
         renderItem={() => <SkeletonCard />}
       />
     </View>
   );
 };
 
-// ── Section Header ──
-const SectionHeader = ({
-  title,
-  onViewAll,
-}: {
-  title: string;
-  onViewAll?: () => void;
-}) => {
+// ─────────────────────────────────────────────
+// Section Header
+// ─────────────────────────────────────────────
+const SectionHeader = ({ title, onViewAll }: any) => {
   const { colors } = useTheme();
+
   return (
     <View
       style={{
         flexDirection: "row",
-        alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 16,
+        alignItems: "center",
       }}
     >
-      {/* Left: accent bar + title */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Text
-          style={{
-            fontSize: 19,
-            color: colors.text,
-            fontFamily: "Poppins_600SemiBold",
-            lineHeight: 26,
-          }}
-        >
-          {title}
-        </Text>
-      </View>
+      <Text
+        style={{
+          fontSize: 18,
+          color: colors.text,
+          fontFamily: "Poppins_600SemiBold",
+        }}
+      >
+        {title}
+      </Text>
 
-      {/* Right: View All */}
       <TouchableOpacity
         onPress={onViewAll}
-        activeOpacity={0.7}
-        style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+        style={{ flexDirection: "row", alignItems: "center" }}
       >
         <Text
           style={{
@@ -151,78 +111,67 @@ const SectionHeader = ({
         >
           View All
         </Text>
-        <ChevronRight size={15} color={colors.primary} strokeWidth={2.2} />
+        <ChevronRight size={14} color={colors.primary} />
       </TouchableOpacity>
     </View>
   );
 };
 
-// ── Main ──
+// ─────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────
 const HomeProduct = () => {
   const { sections, loading, error, refetch } = useHomeProduct();
   const { colors } = useTheme();
 
+  // ── Loading
   if (loading) {
     return (
-      <View style={{ gap: 28 }}>
-        <SkeletonSection />
+      <View style={{ gap: 24 }}>
         <SkeletonSection />
         <SkeletonSection />
       </View>
     );
   }
 
+  // ── Error
   if (error) {
     return (
       <View
         style={{
           marginHorizontal: 16,
-          alignItems: "center",
-          borderRadius: 16,
-          padding: 24,
-          borderWidth: 0.5,
+          padding: 20,
+          borderRadius: 14,
+          borderWidth: 1,
           borderColor: colors.border,
-          gap: 12,
+          alignItems: "center",
+          gap: 10,
         }}
       >
-        <Text
-          style={{
-            fontSize: 13,
-            color: colors.textSecondary,
-            fontFamily: "Poppins_400Regular",
-            textAlign: "center",
-          }}
-        >
+        <Text style={{ color: colors.textSecondary }}>
           Failed to load products
         </Text>
+
         <TouchableOpacity
-          onPress={() => refetch()}
-          activeOpacity={0.8}
+          // onPress={refetch}
           style={{
             backgroundColor: colors.primary,
-            paddingHorizontal: 20,
+            paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 20,
           }}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontSize: 12,
-              fontFamily: "Poppins_500Medium",
-            }}
-          >
-            Try Again
-          </Text>
+          <Text style={{ color: "#fff" }}>Retry</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  // ── Main UI
   return (
     <View style={{ gap: 20 }}>
-      {sections.map((section, sIndex) => (
-        <View key={sIndex} style={{ gap: 14 }}>
+      {sections.map((section, index) => (
+        <View key={index} style={{ gap: 12 }}>
           <SectionHeader
             title={section.title}
             onViewAll={() => console.log("view all", section.title)}
@@ -232,14 +181,22 @@ const HomeProduct = () => {
             data={section.products}
             keyExtractor={(item) => String(item.id)}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+            ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
             renderItem={({ item }) => (
-              <ItemCard
-                item={item as ItemData}
-                onPress={(p) => console.log("press", p.slug)}
-                onAddToCart={(p) => console.log("cart", p.id)}
-              />
+              <View style={{ width: ITEM_WIDTH }}>
+                <ItemCard
+                  item={item as any}
+                  onPress={(p: any) => console.log("press", p.slug)}
+                  onAddToCart={(p: any) => console.log("cart", p.id)}
+                />
+              </View>
             )}
+     
+            initialNumToRender={4}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            removeClippedSubviews
           />
         </View>
       ))}

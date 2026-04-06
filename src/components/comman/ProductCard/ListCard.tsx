@@ -2,68 +2,70 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput } from "react-native";
 import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
-import { useTheme } from "../../theme";
-import { useResponsive } from "../../utils/useResponsive";
+import { useTheme } from "../../../theme";
+import { useResponsive } from "../../../utils/useResponsive";
 
-export default function ItemCard({ item, onPress, onAddToCart }: any) {
+export default function ListCard({ item, onPress, onAddToCart }: any) {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
 
-  const discount =
-    Number(item.mrp) > Number(item.selling_price)
-      ? Math.round(
-          ((Number(item.mrp) - Number(item.selling_price)) / Number(item.mrp)) *
-            100,
-        )
-      : null;
-
+  const price = Number(item.selling_price);
+  const mrp = Number(item.mrp);
   const rating = Number(item.avg_rating);
+  const showRating = rating > 0;
 
-  const showRating = rating > 0 && Number(item.total_reviews) > 0;
+  const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
 
-  const handleQtyInput = (val: string) => {
-    setInputVal(val);
-    const parsed = parseInt(val);
-    if (!isNaN(parsed) && parsed > 0) setQty(parsed);
-  };
   const getStarType = (index: number, rating: number) => {
     if (index <= Math.floor(rating)) return "full";
     if (index === Math.ceil(rating) && rating % 1 !== 0) return "half";
     return "empty";
   };
 
+  const handleQtyInput = (val: string) => {
+    setInputVal(val);
+    const parsed = parseInt(val);
+    if (!isNaN(parsed) && parsed > 0) setQty(parsed);
+  };
+
+  const imgSize = spacing(130);
+
   return (
     <TouchableOpacity
-      activeOpacity={0.85}
+      activeOpacity={0.88}
       onPress={() => onPress?.(item)}
       style={{
-        flex: 1,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: spacing(14),
-        padding: spacing(10),
+        flexDirection: "row",
+        gap: spacing(8),
+        marginBottom: spacing(10),
       }}
+     
     >
+      {/* ─── IMAGE ─── */}
       <View>
         <Image
-          source={{ uri: item.s3_image_path }}
+          source={{ uri: item.image_path }}
           style={{
-            width: "100%",
-            aspectRatio: 1,
-            borderRadius: spacing(10),
+            width: imgSize,
+            height: imgSize,
+            borderRadius: spacing(12),
+            borderWidth: 1,
+            borderColor: colors.border,
             backgroundColor: colors.surfaceElevated,
           }}
+          contentFit="cover"
         />
 
+        {/* DISCOUNT BADGE (same as grid) */}
         {discount && (
           <View
             style={{
               position: "absolute",
-              top: -spacing(3),
-              left: -spacing(3),
+              top: spacing(5),
+              left: spacing(5),
               flexDirection: "row",
               alignItems: "center",
               gap: spacing(4),
@@ -87,40 +89,39 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
         )}
       </View>
 
-      {/* TITLE */}
-      <View style={{ marginTop: spacing(6) }}>
-        <Text
-          numberOfLines={2}
-          style={{
-            fontSize: font(13),
-            fontWeight: "600",
-            color: colors.text,
-            height: font(34),
-          }}
-        >
-          {item.product_name}
-        </Text>
+      {/* ─── RIGHT CONTENT ─── */}
+      <View style={{ flex: 1, gap: spacing(6) }}>
+        {/* NAME + OVERVIEW */}
+        <View style={{ gap: spacing(3) }}>
+          <Text
+            numberOfLines={2}
+            style={{
+              fontFamily: "Poppins_600SemiBold",
+              fontSize: font(13),
+              lineHeight: font(19),
+              color: colors.text,
+            }}
+          >
+            {item.product_name}
+          </Text>
 
-        <Text
-          numberOfLines={2}
-          style={{
-            fontSize: font(11),
-            color: colors.textTertiary,
-            height: font(28),
-          }}
-        >
-          {item.overview || ""}
-        </Text>
-      </View>
+          {item.overview ? (
+            <Text
+              numberOfLines={2}
+              style={{
+                fontFamily: "Poppins_400Regular",
+                fontSize: font(11),
+                lineHeight: font(16),
+                color: colors.textTertiary,
+              }}
+            >
+              {item.overview}
+            </Text>
+          ) : null}
+        </View>
 
-      <View
-        style={{
-          marginTop: spacing(4),
-          minHeight: spacing(16),
-          justifyContent: "center",
-        }}
-      >
-        {showRating ? (
+      
+        {showRating && (
           <View
             style={{
               flexDirection: "row",
@@ -128,8 +129,7 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
               gap: spacing(4),
             }}
           >
-            {/* Stars */}
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ flexDirection: "row" }}>
               {[1, 2, 3, 4, 5].map((i) => {
                 const type = getStarType(i, rating);
 
@@ -150,87 +150,62 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
                 );
               })}
             </View>
-
-            {/* Reviews */}
-            <Text
-              style={{
-                fontSize: font(11),
-                color: colors.textTertiary,
-              }}
-            >
-              ({item.total_reviews})
-            </Text>
           </View>
-        ) : null}
-      </View>
+        )}
 
-      {/* PRICE */}
-    <View
-         style={{
-           flexDirection: "row",
-           marginTop: spacing(4),
-         }}
-       >
-         <View
-           style={{
-             flexDirection: "row",
-             alignItems: "baseline",
-             gap: spacing(4),
-           }}
-         >
-           <Text
-             style={{
-               fontSize: font(15),
-               color: colors.primary,
-               includeFontPadding: false,
-               lineHeight: font(18),
-               fontFamily: "Poppins_600SemiBold",
-             }}
-           >
-             ₹{Number(item.selling_price)}
-           </Text>
- 
-           <Text
-             style={{
-               fontSize: font(11),
-               color: colors.textTertiary,
-               textDecorationLine: "line-through",
-               includeFontPadding: false,
-               lineHeight: font(14),
-               fontFamily: "Poppins_400Regular",
-             }}
-           >
-             ₹{item.mrp}
-           </Text>
-         </View>
-       </View>
- 
+        {/* PRICE */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "baseline",
+            gap: spacing(5),
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "Poppins_600SemiBold",
+              fontSize: font(15),
+              color: colors.primary,
+            }}
+          >
+            ₹{price.toLocaleString("en-IN")}
+          </Text>
 
-      {/* BUTTON */}
-      <View style={{ marginTop: spacing(8) }}>
+          <Text
+            style={{
+              fontFamily: "Poppins_400Regular",
+              fontSize: font(11),
+              color: colors.textTertiary,
+              textDecorationLine: "line-through",
+            }}
+          >
+            ₹{mrp.toLocaleString("en-IN")}
+          </Text>
+        </View>
+
+        {/* BUTTON */}
         {qty === 0 ? (
           <TouchableOpacity
-            activeOpacity={8}
-            onPress={() => {
+            activeOpacity={0.82}
+            onPress={(e) => {
+              e.stopPropagation();
               setQty(1);
               setInputVal("1");
               onAddToCart?.(item);
             }}
             style={{
               backgroundColor: colors.primary,
-              justifyContent: "center",
               borderRadius: spacing(10),
-              alignItems: "center",
               height: spacing(36),
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Text
               style={{
-                color: colors.background,
+                color: "#fff",
                 fontSize: font(12),
                 fontFamily: "Poppins_500Medium",
-                includeFontPadding: false,
-                textAlignVertical: "center",
               }}
             >
               Add to Cart
@@ -248,7 +223,8 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
             }}
           >
             <TouchableOpacity
-              onPress={() => {
+              onPress={(e) => {
+                e.stopPropagation();
                 if (qty <= 1) {
                   setQty(0);
                   setInputVal("1");
@@ -260,28 +236,30 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
               style={{ width: spacing(36), alignItems: "center" }}
             >
               {qty === 1 ? (
-                <Trash2 size={spacing(14)} color={colors.background} />
+                <Trash2 size={spacing(14)} color="#fff" />
               ) : (
-                <Minus size={spacing(14)} color={colors.background} />
+                <Minus size={spacing(14)} color="#fff" />
               )}
             </TouchableOpacity>
 
             <TextInput
               value={inputVal}
-              onChangeText={handleQtyInput}
+              onChangeText={(val) => handleQtyInput(val)}
               keyboardType="number-pad"
               style={{
-                color: "#fff",
-                textAlign: "center",
-                fontSize: font(13),
                 flex: 1,
+                textAlign: "center",
+                color: "#fff",
+                fontSize: font(13),
               }}
             />
 
             <TouchableOpacity
-              onPress={() => {
+              onPress={(e) => {
+                e.stopPropagation();
                 setQty(qty + 1);
                 setInputVal(String(qty + 1));
+                onAddToCart?.(item);
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >

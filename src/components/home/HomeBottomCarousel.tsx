@@ -1,9 +1,8 @@
 import React from "react";
-import { View, TouchableOpacity, Image, Dimensions } from "react-native";
+import { View, TouchableOpacity, Image } from "react-native";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 import { BannerItem } from "../../types/home.types";
-
-const { width } = Dimensions.get("window");
 
 interface Props {
   item: BannerItem;
@@ -12,30 +11,36 @@ interface Props {
 
 export default function HomeBottomBanner({ item, onPress }: Props) {
   const { colors } = useTheme();
+  const { spacing } = useResponsive();
 
   if (!item) return null;
 
   return (
-    <View style={{ marginTop: 10 }}>
+    <View style={{ paddingHorizontal: spacing(16), marginTop: spacing(10) }}>
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => onPress?.(item)}
         style={{
-          width: width * 0.94,
-          height: 160,
-          alignSelf: "center",
-          borderRadius: 12,
+          borderRadius: spacing(16),
           overflow: "hidden",
-          backgroundColor: colors.surfaceElevated,
+          padding: 2,
+
+          borderWidth: 1,
+          borderColor: colors.border,
+
+          alignSelf: "flex-start",
         }}
       >
         <Image
           source={{ uri: item.s3_image_path }}
-          style={{ width: "100%", height: "100%" }}
-          resizeMode="cover"
+          style={{
+            width: "100%",
+            borderRadius: spacing(12),
+            aspectRatio: 16 / 7,  
+          }}
+          resizeMode="cover" // keeps original proportions
         />
       </TouchableOpacity>
-      
     </View>
   );
 }

@@ -9,6 +9,7 @@ export interface ListingParams {
   filter_from_price?: number;
   filter_to_price?: number;
 }
+
 // 🔹 Product Item
 export interface ListingItem {
   id: number;

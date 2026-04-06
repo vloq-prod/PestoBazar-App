@@ -45,8 +45,8 @@ export default function ProfileScreen() {
       <View className="flex-1" style={{ backgroundColor: colors.background }}>
         
         {/* 🔥 Navbar */}
-        <AppNavbar {...navbarConfig.profile} />
-
+        <AppNavbar title={"Profile"} showBack={true} showThemeToggle={true} />
+ 
         {/* 📦 Content */}
         <ScrollView
           className="flex-1"

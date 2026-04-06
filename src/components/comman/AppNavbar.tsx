@@ -11,42 +11,9 @@ import {
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 
-type NavbarProps = {
-  title?: string;
-  showBack?: boolean;
-  showMenu?: boolean;
-  showSearch?: boolean;
-  showNotification?: boolean;
-  showThemeToggle?: boolean;
-  showCart?: boolean;
-  onMenuPress?: () => void;
-  onSearchPress?: () => void;
-  onNotificationPress?: () => void;
-  onCartPress?: () => void;
-  rightComponent?: React.ReactNode;
-};
-
-type IconButtonProps = {
-  icon: React.ReactNode;
-  onPress?: () => void;
-};
-
-const IconButton: React.FC<IconButtonProps> = ({ icon, onPress }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    style={{
-      width: 36,
-      height: 36,
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    {icon}
-  </TouchableOpacity>
-);
-
-const AppNavbar: React.FC<NavbarProps> = ({
+const AppNavbar = ({
   title = "",
   showBack = false,
   showMenu = false,
@@ -59,11 +26,13 @@ const AppNavbar: React.FC<NavbarProps> = ({
   onNotificationPress,
   onCartPress,
   rightComponent,
-}) => {
+}: any) => {
   const router = useRouter();
   const { colors, toggleTheme, isDark } = useTheme();
-  const ICON_SIZE = 22;
-  const ICON_COLOR = colors.text;
+  const { spacing, font } = useResponsive();
+
+  const ICON_SIZE = spacing(20);
+  const ICON_BOX = spacing(36);
 
   return (
     <View
@@ -71,74 +40,120 @@ const AppNavbar: React.FC<NavbarProps> = ({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        // px-4 = 16px — but icons apna 36px rakhenge, sirf title ke liye gap
-        paddingLeft: showBack || showMenu ? 4 : 16, // icon hai to 4 (icon khud 36 lega), nahi to 16
-        paddingRight: 4, // right me icons hain to 4 kaafi hai
-        paddingVertical: 8,
+        paddingHorizontal: spacing(12),
+        paddingVertical: spacing(8),
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
       }}
     >
-      {/* ── LEFT ── */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      {/* LEFT */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6) }}>
+        
         {showBack && !showMenu && (
-          <IconButton
+          <TouchableOpacity
             onPress={() => router.back()}
-            icon={<ChevronLeft size={ICON_SIZE} color={ICON_COLOR} />}
-          />
+            style={{
+              width: ICON_BOX,
+              height: ICON_BOX,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ChevronLeft size={ICON_SIZE} color={colors.text} />
+          </TouchableOpacity>
         )}
+
         {showMenu && !showBack && (
-          <IconButton
+          <TouchableOpacity
             onPress={onMenuPress}
-            icon={<TextAlignJustify size={ICON_SIZE} color={ICON_COLOR} />}
-          />
+            style={{
+              width: ICON_BOX,
+              height: ICON_BOX,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <TextAlignJustify size={ICON_SIZE} color={colors.text} />
+          </TouchableOpacity>
         )}
-        {title ? (
-          <Text style={{ fontSize: 17, fontWeight: "700", color: ICON_COLOR }}>
+
+        {!!title && (
+          <Text
+            style={{
+              fontSize: font(16),
+              fontWeight: "700",
+              color: colors.text,
+            }}
+          >
             {title}
           </Text>
-        ) : null}
+        )}
       </View>
 
-      {/* ── RIGHT ── */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      {/* RIGHT */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(4) }}>
         {rightComponent ?? (
           <>
             {showSearch && (
-              <IconButton
-                onPress={() => {
-                  if (onSearchPress) {
-                    onSearchPress();
-                  } else {
-                    router.push("/search");
-                  }
-                }}
-                icon={<Search size={ICON_SIZE} color={ICON_COLOR} />}
-              />
-            )}
-            {showCart && (
-              <IconButton
-                onPress={onCartPress}
-                icon={<ShoppingCart size={ICON_SIZE} color={ICON_COLOR} />}
-              />
-            )}
-            {showNotification && (
-              <IconButton
-                onPress={onNotificationPress}
-                icon={<Bell size={ICON_SIZE} color={ICON_COLOR} />}
-              />
-            )}
-            {showThemeToggle && (
-              <IconButton
-                onPress={toggleTheme}
-                icon={
-                  isDark ? (
-                    <Sun size={ICON_SIZE} color={ICON_COLOR} />
-                  ) : (
-                    <Moon size={ICON_SIZE} color={ICON_COLOR} />
-                  )
+              <TouchableOpacity
+                onPress={() =>
+                  onSearchPress ? onSearchPress() : router.push("/search")
                 }
-              />
+                style={{
+                  width: ICON_BOX,
+                  height: ICON_BOX,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Search size={ICON_SIZE} color={colors.text} />
+              </TouchableOpacity>
+            )}
+
+            {showCart && (
+              <TouchableOpacity
+                onPress={onCartPress}
+                style={{
+                  width: ICON_BOX,
+                  height: ICON_BOX,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ShoppingCart size={ICON_SIZE} color={colors.text} />
+              </TouchableOpacity>
+            )}
+
+            {showNotification && (
+              <TouchableOpacity
+                onPress={onNotificationPress}
+                style={{
+                  width: ICON_BOX,
+                  height: ICON_BOX,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Bell size={ICON_SIZE} color={colors.text} />
+              </TouchableOpacity>
+            )}
+
+            {showThemeToggle && (
+              <TouchableOpacity
+                onPress={toggleTheme}
+                style={{
+                  width: ICON_BOX,
+                  height: ICON_BOX,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {isDark ? (
+                  <Sun size={ICON_SIZE} color={colors.text} />
+                ) : (
+                  <Moon size={ICON_SIZE} color={colors.text} />
+                )}
+              </TouchableOpacity>
             )}
           </>
         )}

@@ -2,9 +2,8 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Dimensions,
   TextInput,
-} from "react-native";
+ Platform } from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../../theme";
 import React, { useState, useRef } from "react";
@@ -17,12 +16,10 @@ import {
   Tag,
 } from "lucide-react-native";
 import { ListingItem } from "../../types/shop.types";
-import { Platform } from "react-native";
-
-const CARD_WIDTH = (Dimensions.get("window").width - 16 * 2 - 12) / 2;
 
 interface Props {
   item: ListingItem;
+  border?: boolean;
   mode?: "grid" | "list";
   onPress?: (item: ListingItem) => void;
   onAddToCart?: (item: ListingItem) => void;
@@ -35,7 +32,13 @@ const getDiscount = (mrp: string, selling: string) => {
   return Math.round(((m - s) / m) * 100);
 };
 
-const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
+const ShopItemCard = ({
+  item,
+  mode = "grid",
+  onPress,
+  onAddToCart,
+  border = true,
+}: Props) => {
   const { colors } = useTheme();
   const discount = getDiscount(item.mrp, item.selling_price);
   const rating = parseFloat(item.avg_rating);
@@ -163,10 +166,10 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
   if (mode === "grid") {
     return (
       <TouchableOpacity
-        className="flex-1 border p-2.5 rounded-2xl"
         activeOpacity={0.88}
         onPress={() => onPress?.(item)}
-        style={{ width: CARD_WIDTH, borderColor: colors.border }}
+        className={`flex-1  p-2.5 rounded-2xl ${border ? "border" : "border-none"}`}
+        style={{ borderColor: colors.border }}
       >
         {/* Image + Rating Badge */}
         <View
@@ -299,8 +302,13 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={() => onPress?.(item)}
-      className="flex-row gap-2 "
-      style={{ marginBottom: 10 }}
+      style={{
+        marginBottom: 10,
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 10,
+        // backgroundColor: "red",
+      }}
     >
       <View style={{ position: "relative" }}>
         <View
@@ -350,12 +358,10 @@ const ShopItemCard = ({ item, mode = "grid", onPress, onAddToCart }: Props) => {
         )}
       </View>
 
-      {/* Right — Body */}
       <View
         className="flex-1"
         style={{ gap: 4, justifyContent: "space-between" }}
       >
-        {/* Top */}
         <View style={{ gap: 3 }}>
           {/* Name */}
           <Text

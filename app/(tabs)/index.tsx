@@ -10,7 +10,6 @@ import HomeProduct from "../../src/components/home/HomeProduct";
 import { useHomeBanners } from "../../src/hooks/homeHooks";
 import FeatureBannerColumn from "../../src/components/home/FeatureBannerColumn";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
-import CategoryList from "../../src/components/home/CategoryList";
 import FeaturedProducts from "../../src/components/home/FeaturedProducts";
 import MiniCart from "../../src/components/home/MiniCart";
 import Animated, {
@@ -23,12 +22,14 @@ import Animated, {
 } from "react-native-reanimated";
 import HomeBottomCarousel from "../../src/components/home/HomeBottomCarousel";
 import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
-import AppNavbar from "../../src/components/comman/AppNavbar";
-import { navbarConfig } from "../../src/config/navbarConfig";
 import Testimonial from "../../src/components/home/Testimonial";
-import CategoryListStatic from "../../src/components/home/Categoryliststatic";
 import HomeUsp from "../../src/components/home/HomeUsp";
+import Branches from "../../src/components/home/Branches";
+import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
+import { CategoryList } from "../../src/components/home/CategoryList";
+
 const SEARCH_HEIGHT = 56;
+const CATEGORY_HEIGHT = 120;
 const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
 
@@ -49,8 +50,10 @@ export default function HomeScreen() {
         if (searchVisible.value !== 1)
           searchVisible.value = withTiming(1, TIMING_CONFIG);
       } else if (diff > SCROLL_THRESHOLD && searchVisible.value !== 0) {
+        // scroll DOWN → hide both
         searchVisible.value = withTiming(0, TIMING_CONFIG);
       } else if (diff < -SCROLL_THRESHOLD && searchVisible.value !== 1) {
+        // scroll UP → show both
         searchVisible.value = withTiming(1, TIMING_CONFIG);
       }
 
@@ -58,11 +61,29 @@ export default function HomeScreen() {
     },
   });
 
+  // search bar — unchanged
   const searchAnimStyle = useAnimatedStyle(() => ({
     height: interpolate(
       searchVisible.value,
       [0, 1],
       [0, SEARCH_HEIGHT],
+      Extrapolate.CLAMP,
+    ),
+    opacity: interpolate(
+      searchVisible.value,
+      [0, 0.5, 1],
+      [0, 0, 1],
+      Extrapolate.CLAMP,
+    ),
+    overflow: "hidden",
+  }));
+
+  // category — same driver, hardcoded height so it always renders correctly
+  const categoryAnimStyle = useAnimatedStyle(() => ({
+    height: interpolate(
+      searchVisible.value,
+      [0, 1],
+      [0, CATEGORY_HEIGHT],
       Extrapolate.CLAMP,
     ),
     opacity: interpolate(
@@ -82,9 +103,8 @@ export default function HomeScreen() {
         locations={[0, 0.3, 0.7, 1]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={{ paddingBottom: 12, overflow: "hidden" }}
+        style={{ overflow: "hidden" }}
       >
-        {/* ── Large violet shimmer — top-right ── */}
         <View
           style={{
             position: "absolute",
@@ -135,7 +155,7 @@ export default function HomeScreen() {
             onProfilePress={() => {}}
           />
 
-          {/* <AppNavbar {...navbarConfig.home} /> */}
+          {/* search bar */}
           <Animated.View style={searchAnimStyle}>
             <View style={{ paddingHorizontal: 16 }}>
               <AppSearchBar />
@@ -143,16 +163,10 @@ export default function HomeScreen() {
           </Animated.View>
         </SafeAreaView>
 
-        <View
-          style={{
-            height: 1,
-            backgroundColor: "rgba(255,255,255,0.08)",
-            marginHorizontal: 16,
-            marginBottom: 10,
-          }}
-        />
-        {/* <CategoryList /> */}
-        <CategoryListStatic/>
+        <Animated.View style={categoryAnimStyle}>
+          {/* <CategoryListStatic /> */}
+          <CategoryList  />
+        </Animated.View>
       </LinearGradient>
 
       {/* ── SCROLL CONTENT ── */}
@@ -169,8 +183,9 @@ export default function HomeScreen() {
         >
           <SlidingBanners data={slidingbanners} />
           <HomeProduct />
-          <FeatureBannerColumn data={featureBanners} />
+          <FeatureBanner item={featureBanners?.[0]} />
           <DealsOfTheDay />
+          <FeatureBanner item={featureBanners?.[1]} />
           <FeaturedProducts />
           <HomeBottomCarousel
             item={
@@ -181,10 +196,12 @@ export default function HomeScreen() {
           />
           <Testimonial />
           <HomeUsp />
+
+          <Branches />
         </Animated.ScrollView>
 
         {/* <MiniCart /> */}
-        {/* <BulkOrderFAB scrollVisible={searchVisible} /> */}
+        {/* <BulkOrderFAB  /> */}
       </View>
     </View>
   );

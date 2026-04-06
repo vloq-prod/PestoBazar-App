@@ -6,7 +6,8 @@
     "start": "bunx expo start",
     "android": "bunx expo start --android",
     "ios": "bunx expo start --ios",
-    "web": "bunx expo start --web"
+    "web": "bunx expo start --web",
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",
@@ -45,6 +46,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
   },
   "private": true

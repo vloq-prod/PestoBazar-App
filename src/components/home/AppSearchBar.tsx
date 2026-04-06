@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { Menu } from "lucide-react-native";
+import { useTheme } from "../../theme";
+import { useRouter } from "expo-router";
+import { useResponsive } from "../../utils/useResponsive";
+
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withDelay,
-  runOnJS,
 } from "react-native-reanimated";
-import { useTheme } from "../../theme";
-import { useRouter } from "expo-router";
+
 const SEARCH_HINTS = [
   "Rat Control",
   "Mosquito Control",
@@ -26,98 +29,110 @@ const CHAR_DELAY = 60;
 const ERASE_DELAY = 40;
 const PAUSE = 1200;
 
-interface Props {
-  onPress?: () => void;
-}
-
-export default function AppSearchBar({ onPress }: Props) {
+export default function AppSearchBar({ onPress }: any) {
   const { colors } = useTheme();
+  const { font, spacing } = useResponsive();
+  const router = useRouter();
 
   const [hintIndex, setHintIndex] = useState(0);
-  const [displayText, setDisplayText] = useState(SEARCH_HINTS[0]);
   const [phase, setPhase] = useState<"typing" | "erasing">("typing");
 
-  const router = useRouter();
   const text = SEARCH_HINTS[hintIndex];
+  const characters = text.split("");
 
   useEffect(() => {
-    setDisplayText(text);
     setPhase("typing");
   }, [hintIndex]);
 
   useEffect(() => {
+    let t: any;
+
     if (phase === "typing") {
-      const t = setTimeout(
+      t = setTimeout(
         () => {
           setPhase("erasing");
         },
         text.length * CHAR_DELAY + PAUSE,
       );
-      return () => clearTimeout(t);
-    }
-
-    if (phase === "erasing") {
-      const t = setTimeout(
+    } else {
+      t = setTimeout(
         () => {
           setHintIndex((prev) => (prev + 1) % SEARCH_HINTS.length);
         },
         text.length * ERASE_DELAY + 200,
       );
-      return () => clearTimeout(t);
     }
-  }, [phase]);
+
+    return () => clearTimeout(t);
+  }, [phase, text]);
+
+  const HEIGHT = spacing(44);
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => {
-        if (onPress) {
-          onPress();
-        } else {
-          router.push("/search");
-        }
-      }}
-      className="flex-row items-center rounded-full px-4 py-3 border"
-      style={{
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-      }}
-    >
-      <Feather name="search" size={18} color={colors.primary} />
-
+    <View className="flex-row items-center gap-3">
+      {/* Menu */}
       <View
         style={{
-          flexDirection: "row",
+          height: HEIGHT,
+          width: HEIGHT,
+          borderRadius: spacing(12),
+          backgroundColor: colors.surface,
+          justifyContent: "center",
           alignItems: "center",
-          marginLeft: 8,
-          flex: 1,
-          flexWrap: "nowrap",
         }}
       >
-        <Text style={{ fontSize: 14, color: colors.textTertiary }}>
-          Search by{" "}
-        </Text>
+        <Menu size={spacing(18)} color={colors.primary} />
+      </View>
 
-        <View style={{ flexDirection: "row" }}>
-          {displayText.split("").map((char, index) => {
-            return (
+      {/* Search Bar */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => (onPress ? onPress() : router.push("/search"))}
+        className="flex-1 flex-row items-center rounded-xl border"
+        style={{
+          height: HEIGHT, // ✅ FIX
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          paddingHorizontal: spacing(12),
+        }}
+      >
+        <Feather name="search" size={spacing(16)} color={colors.primary} />
+
+        <View className="flex-row items-center flex-1 ml-2">
+          <Text
+            style={{
+              fontSize: font(14),
+              color: colors.textTertiary,
+            }}
+          >
+            Search by{" "}
+          </Text>
+
+          {/* Animated Text */}
+          <View className="flex-row">
+            {characters.map((char, index) => (
               <FadeChar
-                key={index}
+                key={`${char}-${index}`}
                 char={char}
                 index={index}
-                totalLength={displayText.length}
+                totalLength={characters.length}
                 phase={phase}
-                colors={colors}
               />
-            );
-          })}
+            ))}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 }
 
-function FadeChar({ char, index, totalLength, phase, colors }: any) {
+//
+// ✅ SAFE child component (hooks allowed here)
+//
+const FadeChar = React.memo(({ char, index, totalLength, phase }: any) => {
+  const { font } = useResponsive();
+  const { colors } = useTheme();
+
   const opacity = useSharedValue(0);
 
   useEffect(() => {
@@ -127,7 +142,6 @@ function FadeChar({ char, index, totalLength, phase, colors }: any) {
         withTiming(1, { duration: 200 }),
       );
     } else {
-      // reverse order for erase
       const reverseIndex = totalLength - index - 1;
 
       opacity.value = withDelay(
@@ -137,7 +151,7 @@ function FadeChar({ char, index, totalLength, phase, colors }: any) {
     }
   }, [phase]);
 
-  const style = useAnimatedStyle(() => ({
+  const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));
 
@@ -145,14 +159,14 @@ function FadeChar({ char, index, totalLength, phase, colors }: any) {
     <Animated.Text
       style={[
         {
-          fontSize: 14,
+          fontSize: font(14),
           color: colors.primary,
           fontWeight: "700",
         },
-        style,
+        animatedStyle,
       ]}
     >
       {char}
     </Animated.Text>
   );
-}
+});

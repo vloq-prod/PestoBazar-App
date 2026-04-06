@@ -7,8 +7,8 @@ const ENVIRONMENT =
   process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "STAGING";
 
 const BASE_URLS = {
-  STAGING: "http://pestobazaar.confidevtech.com/",
-  PRODUCTION: "https://api.production.com/api",
+  STAGING: "https://pestobazaar.confidevtech.com/",
+  PRODUCTION: "https://pestobazaar.confidevtech.com/",
 };
 
 const baseURL =

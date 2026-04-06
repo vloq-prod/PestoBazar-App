@@ -1,9 +1,10 @@
-// src/components/home/HomeNavbar.tsx
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { ShoppingCart, Bell, Menu } from "lucide-react-native";
+import { ShoppingCart, Bell } from "lucide-react-native";
 import { Image } from "expo-image";
 import profile from "../../../assets/profile.jpeg";
+import { useResponsive } from "../../utils/useResponsive";
+import { useTheme } from "../../theme";
 
 type HomeNavbarProps = {
   name?: string;
@@ -18,82 +19,69 @@ type IconButtonProps = {
   onPress?: () => void;
 };
 
-const IconButton: React.FC<IconButtonProps> = ({ icon, onPress }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    style={{
-      width: 38,
-      height: 38,
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    {icon}
-  </TouchableOpacity>
-);
+const IconButton = (({ icon, onPress }: IconButtonProps) => {
+  const { spacing } = useResponsive();
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        width: spacing(38),
+        height: spacing(38),
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {icon}
+    </TouchableOpacity>
+  );
+});
 
 const HomeNavbar: React.FC<HomeNavbarProps> = ({
   name = "Guest",
-  onMenuPress,
   onCartPress,
   onNotificationPress,
   onProfilePress,
 }) => {
-  const ICON_SIZE = 24;
-  const ICON_COLOR = "#ffffff";
+  const { font, spacing } = useResponsive();
+  const { colors } = useTheme();
+
+  const ICON_SIZE = spacing(20);
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-      }}
-    >
-      {/* ── LEFT: Menu + Profile + Welcome ── */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <IconButton
-          onPress={onMenuPress}
-          icon={<Menu size={ICON_SIZE} color={ICON_COLOR} />}
-        />
-
+    <View className="flex-row justify-between items-center px-4 py-2">
+      {/* LEFT */}
+      <View className="flex-row items-center gap-3">
         <TouchableOpacity
           onPress={onProfilePress}
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
+            width: spacing(44),
+            height: spacing(44),
+            borderRadius: spacing(22),
             borderWidth: 2,
-            borderColor: "rgba(255,255,255,0.6)",
+            borderColor: colors.borderStrong,
             overflow: "hidden",
           }}
         >
-          <Image
-            source={profile}
-            contentFit="fill"
-           
-            style={{ width: "105%", height: "105%",  }}
-          />
+          <Image source={profile} style={{ width: "100%", height: "100%" }} />
         </TouchableOpacity>
 
         <View>
           <Text
             style={{
-              fontSize: 12,
-              color: "rgba(255,255,255,0.75)",
-              fontWeight: "400",
+              fontSize: font(12),
+              color: colors.textInverse,
             }}
           >
             Welcome back 👋
           </Text>
+
           <Text
             style={{
-              fontSize: 18,
+              fontSize: font(18),
+              color: colors.textInverse,
               fontWeight: "700",
-              color: "#ffffff",
-              lineHeight: 22,
+              lineHeight: font(22),
             }}
           >
             {name}
@@ -101,19 +89,28 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
         </View>
       </View>
 
-      {/* ── RIGHT: Cart + Notification ── */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      {/* RIGHT */}
+      <View className="flex-row items-center">
         <IconButton
           onPress={onCartPress}
-          icon={<ShoppingCart size={ICON_SIZE} color={ICON_COLOR} />}
+          icon={
+            <ShoppingCart
+              size={ICON_SIZE}
+              color={colors.textInverse} 
+            />
+          }
         />
         <IconButton
           onPress={onNotificationPress}
-          icon={<Bell size={ICON_SIZE} color={ICON_COLOR} />}
+          icon={
+            <Bell
+              size={ICON_SIZE}
+              color={colors.textInverse} 
+            />
+          }
         />
       </View>
     </View>
   );
 };
-
-export default HomeNavbar;
+export default React.memo(HomeNavbar);

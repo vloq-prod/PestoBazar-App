@@ -1,20 +1,28 @@
 import React, { useCallback } from "react";
-import { View, Text, FlatList, ListRenderItemInfo } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ListRenderItemInfo,
+} from "react-native";
 import { useFeatured } from "../../hooks/homeHooks";
 import { FeaturedItem } from "../../types/home.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
-import ProductCard, { SkeletonCard } from "../comman/ProductCard";
+import ProductCard, { SkeletonCard } from "../comman/ProductCard/ProductCard";
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+const SKELETON_COUNT = 2;
 
 const FeaturedProducts: React.FC = () => {
   const { featured, loading } = useFeatured();
   const { colors } = useTheme();
-  const { wp, getResponsiveFontSize: fs } = useResponsive();
+  const { font, spacing } = useResponsive();
 
-  const CARD_WIDTH = wp(82);
-  const SEPARATOR = wp(3.5);
+  const CARD_SPACING = spacing(10);
+  const EDGE_PADDING = spacing(16);
+  const CARD_WIDTH = spacing(310);
+  const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<FeaturedItem>) => (
@@ -38,49 +46,82 @@ const FeaturedProducts: React.FC = () => {
     [CARD_WIDTH],
   );
 
+  const keyExtractor = useCallback((item: FeaturedItem) => String(item.id), []);
+
+  const ItemSeparator = useCallback(
+    () => <View style={{ width: CARD_SPACING }} />,
+    [CARD_SPACING],
+  );
+
+  const contentContainerStyle = {
+    paddingHorizontal: EDGE_PADDING,
+  };
+
   return (
-    <View style={{ gap: 10 }}>
+    <View style={[styles.section, { gap: spacing(12) }]}>
       {/* ── Header ── */}
-      <View className="flex-row items-center justify-between px-4">
-        <View>
-          <Text
-            style={{
-              fontSize: 24,
-              color: colors.text,
-              fontFamily: "Poppins_600SemiBold",
-            }}
-          >
-            Featured Products
-          </Text>
-        </View>
+      <View style={[styles.header, { paddingHorizontal: EDGE_PADDING }]}>
+        <Text
+          style={{
+            fontFamily: "Poppins_600SemiBold",
+            fontSize: font(22),
+            color: colors.text,
+            includeFontPadding: false,
+          }}
+        >
+          Featured Products
+        </Text>
       </View>
 
-      {/* ── Cards ── */}
+      {/* ── Cards / Skeleton ── */}
       {loading ? (
         <View
-          className="flex-row"
-          style={{ paddingLeft: SEPARATOR, gap: SEPARATOR }}
+          style={[
+            styles.skeletonRow,
+            {
+              paddingHorizontal: EDGE_PADDING,
+              gap: CARD_SPACING,
+            },
+          ]}
         >
-          {Array.from({ length: 2 }).map((_, i) => (
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
             <SkeletonCard key={i} cardWidth={CARD_WIDTH} />
           ))}
         </View>
       ) : (
         <FlatList
           data={featured}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={keyExtractor}
           renderItem={renderItem}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: SEPARATOR }}
-          ItemSeparatorComponent={() => <View style={{ width: SEPARATOR }} />}
-          snapToInterval={CARD_WIDTH + SEPARATOR}
-          decelerationRate="fast"
+          contentContainerStyle={contentContainerStyle}
+          ItemSeparatorComponent={ItemSeparator}
+          snapToInterval={SNAP_INTERVAL}
           snapToAlignment="start"
+          decelerationRate="fast"
+          initialNumToRender={2}
+          maxToRenderPerBatch={3}
+          windowSize={5}
+          removeClippedSubviews
         />
       )}
     </View>
   );
 };
 
-export default FeaturedProducts;
+export default React.memo(FeaturedProducts);
+
+const styles = StyleSheet.create({
+  section: {
+    flexDirection: "column",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  skeletonRow: {
+    flexDirection: "row",
+  },
+});

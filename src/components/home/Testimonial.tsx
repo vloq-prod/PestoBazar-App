@@ -10,7 +10,7 @@ import Carousel from "react-native-reanimated-carousel";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.75;
 const CARD_MARGIN = 5;
-const CARD_HEIGHT = 230; // ✅ fixed height — carousel ko chahiye
+const CARD_HEIGHT = 230;
 
 // ─── Star Rating ─────────────────────────────────────────
 const StarRating = ({

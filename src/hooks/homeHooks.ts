@@ -26,10 +26,10 @@ export const useBanner = () => {
 };
 
 // useCategory hook
-export const useCategory = () => {
+export const useCategory = (id:number) => {
   const query = useQuery({
-    queryKey: ["home-categories"],
-    queryFn: getHomeCategories,
+    queryKey: ["home-categories", id],
+    queryFn: () => getHomeCategories(id),
   });
 
   return {

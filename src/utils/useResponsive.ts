@@ -1,35 +1,44 @@
-import { useWindowDimensions } from 'react-native';
+import { useWindowDimensions, PixelRatio } from "react-native";
 
+const BASE_WIDTH = 375;
 
 export const useResponsive = () => {
   const { width, height } = useWindowDimensions();
 
   const isTablet = width >= 768;
 
-  const wp = (percentage: number) => {
-    return (width * percentage) / 100;
+  // Core scaling
+  const scale = (size: number) => (width / BASE_WIDTH) * size;
+
+  // Balanced scaling (important)
+  const moderateScale = (size: number, factor = 0.5) => {
+    return size + (scale(size) - size) * factor;
   };
 
-  const hp = (percentage: number) => {
-    return (height * percentage) / 100;
+  // Font (pixel perfect + accessibility safe)
+  const font = (size: number) => {
+    const newSize = moderateScale(size);
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
   };
 
-  const getResponsiveFontSize = (size: number) => {
-    return isTablet ? size * 1.2 : size;
-  };
+  // Spacing
+  const spacing = (size: number) => moderateScale(size);
 
-  const getResponsivePadding = (size: number) => {
-    return isTablet ? size * 1.2 : size;
-  };
+  // Optional helpers
+  const wp = (percentage: number) => (width * percentage) / 100;
+  const hp = (percentage: number) => (height * percentage) / 100;
 
   return {
     width,
     height,
     isTablet,
+
+    scale,
+    moderateScale,
+    font,
+    spacing,
+
     wp,
     hp,
-    getResponsiveFontSize,
-    getResponsivePadding,
   };
 };
-

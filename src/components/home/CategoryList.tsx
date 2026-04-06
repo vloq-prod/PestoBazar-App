@@ -1,188 +1,173 @@
-import React from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import React, { useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../../theme";
 import { useCategory } from "../../hooks/homeHooks";
 import { useResponsive } from "../../utils/useResponsive";
-
-// ─── Skeleton ────────────────────────────────────────────────────────────────
-
-const SkeletonItem: React.FC<{ size: number }> = ({ size }) => {
-  const { colors } = useTheme();
-  return (
-    <View>
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: colors.backgroundSkeleton,
-        }}
-      />
-      <View
-        style={{
-          width: size - 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: colors.backgroundSkeleton,
-          marginTop: 7,
-        }}
-      />
-      <View
-        style={{
-          width: (size - 8) * 0.6,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: colors.backgroundSkeleton,
-          marginTop: 3,
-        }}
-      />
-    </View>
-  );
-};
+import { useRouter } from "expo-router";
 
 const formatCategoryName = (name: string) => {
   if (!name) return "";
-
-  return name
-    .replace(/control/gi, "") // remove "control"
-    .replace(/controll/gi, "") // remove wrong spelling
-    .trim();
+  return name.replace(/control/gi, "").trim();
 };
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
-const CategoryList: React.FC = () => {
-  const { categories, loading, error, refetch } = useCategory();
+export const CategoryList: React.FC = () => {
+  const { categories, loading, error } = useCategory(0);
   const { colors } = useTheme();
-  const { getResponsiveFontSize: fs, wp } = useResponsive();
+  const { font, spacing } = useResponsive();
+  const router = useRouter();
 
-  const renderItem = ({ item }: any) => (
-    <TouchableOpacity
-      activeOpacity={0.75}
-      style={{ alignItems: "center", gap: 8 }}
-    >
-      {/* Outer glow ring */}
-      <View
-        style={{
-          width: 66,
-          height: 66,
-          borderRadius: 33,
-          backgroundColor: "rgba(167,139,250,0.15)",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
+  // ✅ responsive sizes
+  const ITEM_SIZE = spacing(66);
+  const IMAGE_SIZE = spacing(58);
+
+  // ✅ memoized renderItem
+  const renderItem = useCallback(
+    ({ item }: any) => (
+      <TouchableOpacity
+        activeOpacity={0.75}
+        className="items-center"
+        onPress={() =>
+          router.push({
+            pathname: "/(stack)/category/[slug]",
+            params: {
+              slug: item.id,
+              name: item.category_name,
+              image: item.s3_image_path,
+            },
+          })
+        }
       >
-        {/* Frosted glass circle */}
+        {/* Outer Circle */}
         <View
           style={{
-            width: 58,
-            height: 58,
-            borderRadius: 29,
-            overflow: "hidden",
-            borderWidth: 1.5,
-            borderColor: "rgba(255,255,255,0.28)",
-            backgroundColor: "rgba(255,255,255,0.13)",
-            justifyContent: "center",
-            alignItems: "center",
+            borderRadius: ITEM_SIZE / 2,
+            backgroundColor: colors.background,
           }}
         >
-          <Image
-            source={{ uri: item.s3_image_path }}
-            style={{ width: "82%", height: "82%" }}
-            contentFit="contain"
-          />
-        </View>
-      </View>
-
-      {/* Category Name */}
-      <Text
-        numberOfLines={2}
-        style={{
-          fontFamily: "Poppins_500Medium",
-          fontSize: fs(10),
-          color: "rgba(255,255,255,0.88)",
-          textAlign: "center",
-          width: 66,
-          lineHeight: 14,
-        }}
-      >
-        {formatCategoryName(item.category_name)}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  if (error) {
-    return (
-      <View style={styles.errorRow}>
-        <Text
-          style={{
-            color: colors.textTertiary,
-            fontSize: fs(12),
-            fontFamily: "Poppins_400Regular",
-          }}
-        >
-          Unable to load categories.{" "}
-        </Text>
-        <TouchableOpacity activeOpacity={0.7}>
-          <Text
+          <View
             style={{
-              color: colors.primary,
-              fontSize: fs(12),
-              fontFamily: "Poppins_600SemiBold",
-              textDecorationLine: "underline",
+              width: IMAGE_SIZE,
+              height: IMAGE_SIZE,
+              borderRadius: IMAGE_SIZE / 2,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor: colors.border,
             }}
           >
-            Retry
-          </Text>
-        </TouchableOpacity>
+            <Image
+              source={{ uri: item.s3_image_path }}
+              style={{ width: "100%", height: "100%" }}
+              contentFit="cover"
+            />
+          </View>
+        </View>
+
+        {/* Title */}
+        <Text
+          numberOfLines={2}
+          style={{
+            fontSize: font(12),
+            color: colors.textInverse,
+            textAlign: "center",
+            width: ITEM_SIZE,
+            marginTop: spacing(6),
+          }}
+        >
+          {formatCategoryName(item.category_name)}
+        </Text>
+      </TouchableOpacity>
+    ),
+    [colors, spacing, font],
+  );
+
+  const SkeletonRow = ({ ITEM_SIZE }: any) => {
+    const { colors } = useTheme();
+    const { spacing } = useResponsive();
+
+    return (
+      <View className="flex-row" style={{ paddingHorizontal: spacing(16) }}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <View
+            key={index}
+            style={{
+              alignItems: "center",
+              marginRight: spacing(14),
+            }}
+          >
+            {/* Circle */}
+            <View
+              style={{
+                width: ITEM_SIZE,
+                height: ITEM_SIZE,
+                borderRadius: ITEM_SIZE / 2,
+                backgroundColor: colors.backgroundSkeleton,
+              }}
+            />
+
+            {/* Text Line 1 */}
+            <View
+              style={{
+                width: ITEM_SIZE,
+                height: spacing(10),
+                borderRadius: spacing(4),
+                backgroundColor: colors.backgroundSkeleton,
+                marginTop: spacing(6),
+              }}
+            />
+
+            {/* Text Line 2 */}
+            <View
+              style={{
+                width: ITEM_SIZE * 0.6,
+                height: spacing(10),
+                borderRadius: spacing(4),
+                backgroundColor: colors.backgroundSkeleton,
+                marginTop: spacing(4),
+              }}
+            />
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  // ❌ error state
+  if (error) {
+    return (
+      <View className="px-4 py-3">
+        <Text style={{ color: colors.textTertiary, fontSize: font(12) }}>
+          Unable to load categories.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={{ paddingVertical: 4 }}>
+    <View className="py-1">
       {loading ? (
-        <View style={styles.skeletonRow} />
+        <SkeletonRow ITEM_SIZE={ITEM_SIZE} />
       ) : (
         <FlatList
           data={categories}
-          keyExtractor={(item, index) => item.slug + index}
-          renderItem={renderItem}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
+          keyExtractor={(item) => item.id.toString()} // ✅ FIXED
+          renderItem={renderItem}
+          contentContainerStyle={{
+            paddingHorizontal: spacing(16),
+            gap: spacing(25),
+          }}
+          initialNumToRender={6}
+          windowSize={5}
+          removeClippedSubviews
+          getItemLayout={(_, index) => ({
+            length: ITEM_SIZE + spacing(14),
+            offset: (ITEM_SIZE + spacing(14)) * index,
+            index,
+          })}
         />
       )}
     </View>
   );
 };
-
-export default CategoryList;
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  skeletonRow: {
-    flexDirection: "row",
-    paddingHorizontal: 14,
-    gap: 6,
-  },
-
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  errorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-});

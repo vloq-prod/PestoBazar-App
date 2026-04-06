@@ -6,11 +6,14 @@ import {
   FlatList,
   ActivityIndicator,
   ListRenderItem,
+  StatusBar,
+  StyleSheet,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
+import { useResponsive } from "../../src/utils/useResponsive";
 import AppNavbar from "../../src/components/comman/AppNavbar";
-import { navbarConfig } from "../../src/config/navbarConfig";
 import {
   ArrowDownUp,
   SlidersHorizontal,
@@ -24,220 +27,263 @@ import FilterBottomSheet, {
 import SortBottomSheet, {
   SortBottomSheetRef,
 } from "../../src/modals/shop/SortBottomSheet";
-import ShopItemCard from "../../src/components/comman/ShopItemCard";
+import ProductCard from "../../src/components/comman/ProductCard";
 import { ListingItem } from "../../src/types/shop.types";
 import { useLocalSearchParams } from "expo-router";
 
 type GridMode = "grid" | "list";
 
+const DEFAULT_PRICE = { from: 200, to: 50000 };
+
 export default function ShopScreen() {
   const { search } = useLocalSearchParams();
   const { colors } = useTheme();
-  const [gridMode, setGridMode] = useState<GridMode>("grid");
+  const { spacing, font } = useResponsive();
+  const { width } = useWindowDimensions();
+
+  const [gridMode, setGridMode] = useState<GridMode>("list");
   const [sortBy, setSortBy] = useState<number>(1);
-
-  // ✅ Price filter state add karo
-  const [priceFilter, setPriceFilter] = useState<{
-    from: number;
-    to: number;
-  }>({
-    from: 200,
-    to: 50000,
-  });
-
-
+  const [priceFilter, setPriceFilter] = useState(DEFAULT_PRICE);
 
   const searchText = Array.isArray(search) ? search[0] : search;
 
   const filterRef = useRef<FilterBottomSheetRef>(null);
   const sortRef = useRef<SortBottomSheetRef>(null);
+  const momentumRef = useRef(false);
 
-  // ✅ priceFilter useListing mein pass karo
-  const { products, loading, loadingMore, hasMore, loadMore } = useListing({
-    sort_by: sortBy,
-    type: searchText || "",
-    filter_from_price: priceFilter.from,
-    filter_to_price: priceFilter.to,
-  });
+  const { products, loading, loadingMore, hasMore, allLoaded, loadMore } =
+    useListing({
+      sort_by: sortBy,
+      type: searchText || "",
+      filter_from_price: priceFilter.from,
+      filter_to_price: priceFilter.to,
+    });
 
-  const onEndReachedCalledDuringMomentum = useRef(false);
   const isGrid = gridMode === "grid";
 
+  const isFilterActive =
+    priceFilter.from !== DEFAULT_PRICE.from ||
+    priceFilter.to !== DEFAULT_PRICE.to;
+
+  const isSortActive = sortBy !== 1;
+
+  // ✅ GRID WIDTH FIX
+  const ITEM_WIDTH = useMemo(() => {
+    const H_PADDING = spacing(24); // 12 * 2
+    const GAP = spacing(10);
+    return (width - H_PADDING - GAP) / 2;
+  }, [width, spacing]);
+
+  // ── Handlers ─────────────────
   const toggleGridMode = useCallback(() => {
     setGridMode((p) => (p === "grid" ? "list" : "grid"));
   }, []);
 
   const handleSortSelect = useCallback((id: number) => setSortBy(id), []);
 
-  // ✅ onApply mein price set karo
-  const handleApplyFilter = useCallback(
-    (filters: {
-      categories: number[];
-      brands: number[];
-      priceRange: { min: number; max: number };
-    }) => {
-     
-      setPriceFilter({
-        from: filters.priceRange.min,
-        to: filters.priceRange.max,
-      });
-    },
-    [],
-  );
-
-  const numColumns = isGrid ? 2 : 1;
-
-  const columnWrapperStyle = useMemo(
-    () => (isGrid ? { gap: 10 } : undefined),
-    [isGrid],
-  );
-
-  const contentContainerStyle = useMemo(() => ({ padding: 13, gap: 10 }), []);
-
-  const renderItem: ListRenderItem<ListingItem> = useCallback(
-    ({ item }) => <ShopItemCard item={item} mode={gridMode} />,
-    [gridMode],
-  );
-
-  const keyExtractor = useCallback(
-    (item: ListingItem) => item.id.toString(),
-    [],
-  );
+  const handleApplyFilter = useCallback((filters: any) => {
+    setPriceFilter({
+      from: filters.priceRange.min,
+      to: filters.priceRange.max,
+    });
+  }, []);
 
   const onMomentumScrollBegin = useCallback(() => {
-    onEndReachedCalledDuringMomentum.current = false;
+    momentumRef.current = false;
   }, []);
 
   const onEndReached = useCallback(() => {
-    if (!onEndReachedCalledDuringMomentum.current && hasMore && !loadingMore) {
+    if (!momentumRef.current && hasMore && !loadingMore) {
       loadMore();
-      onEndReachedCalledDuringMomentum.current = true;
+      momentumRef.current = true;
     }
   }, [hasMore, loadingMore, loadMore]);
 
-  const ListEmpty = useMemo(
-    () =>
-      loading ? (
-        <View className="items-center justify-center py-20">
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : null,
-    [loading, colors.primary],
+  // ✅ FIXED renderItem
+  const renderItem: ListRenderItem<ListingItem> = useCallback(
+    ({ item }) => {
+      if (isGrid) {
+        return (
+          <View style={{ width: ITEM_WIDTH }}>
+            <ProductCard item={item} mode="grid" />
+          </View>
+        );
+      }
+      return <ProductCard item={item} mode="list" />;
+    },
+    [isGrid, ITEM_WIDTH],
   );
 
+  const PAD = spacing(12);
+  const GAP = spacing(10);
+
+  const contentContainerStyle = useMemo(
+    () => ({
+      padding: PAD,
+      flexGrow: 1,
+    }),
+    [PAD],
+  );
+
+  const keyExtractor = useCallback(
+    (item: ListingItem, index: number) => `${item.id}_${index}`,
+    [],
+  );
+
+  // ── Empty ──
+  const ListEmpty = useMemo(() => {
+    if (loading) {
+      return (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.centered}>
+        <Text
+          style={{
+            fontSize: font(13),
+            color: colors.textTertiary,
+          }}
+        >
+          No products found
+        </Text>
+      </View>
+    );
+  }, [loading, colors, font]);
+
+  // ── Footer ──
   const ListFooter = useMemo(() => {
     if (loadingMore) {
       return (
-        <View className="items-center py-6">
+        <View style={styles.footer}>
           <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      );
+    }
+
+    if (allLoaded) {
+      return (
+        <View style={styles.footer}>
           <Text
-            className="mt-2 text-[11px]"
             style={{
-              fontFamily: "Poppins_400Regular",
+              fontFamily: "Poppins_500Medium",
+              fontSize: font(12),
               color: colors.textTertiary,
             }}
           >
-            Loading more...
+            All items loaded
           </Text>
         </View>
       );
     }
-    if (!hasMore && products.length > 0) {
-      return (
-        <Text
-          className="text-center py-5 text-[12px]"
-          style={{
-            fontFamily: "Poppins_400Regular",
-            color: colors.textTertiary,
-          }}
-        >
-          All products loaded ✓
-        </Text>
-      );
-    }
+
     return null;
-  }, [loadingMore, hasMore, products.length, colors.primary, colors.textTertiary]);
+  }, [allLoaded, loadingMore, colors.primary, colors.textTertiary, font]);
 
   return (
     <SafeAreaView
-      className="flex-1"
-      style={{ backgroundColor: colors.background }}
+      style={[styles.root, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <AppNavbar {...navbarConfig.shop} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <AppNavbar title="Shop" showBack />
 
-      {/* ── Filter Bar ── */}
+      {/* Toolbar */}
       <View
-        className="flex-row items-center justify-between px-4 py-2.5 border-b"
-        style={{
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
-        }}
+        style={[
+          styles.toolbar,
+          {
+            paddingHorizontal: spacing(16),
+            paddingVertical: spacing(10),
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.border,
+            gap: spacing(10),
+          },
+        ]}
       >
-        {/* Product count */}
+        {/* Count */}
         <Text
-          className="text-[13px]"
           style={{
             fontFamily: "Poppins_400Regular",
+            fontSize: font(13),
             color: colors.textSecondary,
+            flex: 1,
           }}
         >
           <Text
-            style={{ fontFamily: "Poppins_600SemiBold", color: colors.text }}
+            style={{
+              fontFamily: "Poppins_600SemiBold",
+              color: colors.text,
+            }}
           >
-            {loading ? "..." : products.length}{" "}
+            {loading ? "—" : products.length}{" "}
           </Text>
           Products
         </Text>
 
-        <View className="flex-row items-center gap-2">
+        {/* ── Actions ── */}
+        <View style={[styles.actions, { gap: spacing(8) }]}>
           {/* Grid / List toggle */}
           <TouchableOpacity
             onPress={toggleGridMode}
-            className="w-9 h-9 rounded-full border items-center justify-center"
-            style={{
-              borderColor: colors.primary,
-              backgroundColor: colors.primary + "15",
-            }}
+            style={[
+              styles.pill,
+              {
+                paddingHorizontal: spacing(10),
+                paddingVertical: spacing(7),
+                borderRadius: spacing(20),
+                borderColor: colors.primary,
+                backgroundColor: colors.primary + "12",
+                gap: spacing(4),
+              },
+            ]}
           >
             {isGrid ? (
-              <LayoutGrid size={17} color={colors.primary} />
+              <LayoutGrid size={spacing(15)} color={colors.primary} />
             ) : (
-              <List size={17} color={colors.primary} />
+              <List size={spacing(15)} color={colors.primary} />
             )}
-          </TouchableOpacity>
-
-          {/* Filter — ✅ active indicator jab price filter laga ho */}
-          <TouchableOpacity
-            onPress={() => filterRef.current?.open()}
-            className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border"
-            style={{
-              borderColor:
-                priceFilter.from > 0 || priceFilter.to > 0
-                  ? colors.primary
-                  : colors.border,
-              backgroundColor:
-                priceFilter.from > 0 || priceFilter.to > 0
-                  ? colors.primary + "12"
-                  : colors.background,
-            }}
-          >
-            <SlidersHorizontal
-              size={15}
-              color={
-                priceFilter.from > 0 || priceFilter.to > 0
-                  ? colors.primary
-                  : colors.textSecondary
-              }
-            />
             <Text
-              className="text-[12px]"
               style={{
                 fontFamily: "Poppins_500Medium",
-                color:
-                  priceFilter.from > 0 || priceFilter.to > 0
-                    ? colors.primary
-                    : colors.text,
+                fontSize: font(12),
+                color: colors.primary,
+                includeFontPadding: false,
+              }}
+            >
+              {isGrid ? "Grid" : "List"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Filter */}
+          <TouchableOpacity
+            onPress={() => filterRef.current?.open()}
+            style={[
+              styles.pill,
+              {
+                paddingHorizontal: spacing(10),
+                paddingVertical: spacing(7),
+                borderRadius: spacing(20),
+                gap: spacing(4),
+                borderColor: isFilterActive ? colors.primary : colors.border,
+                backgroundColor: isFilterActive
+                  ? colors.primary + "12"
+                  : "transparent",
+              },
+            ]}
+          >
+            <SlidersHorizontal
+              size={spacing(15)}
+              color={isFilterActive ? colors.primary : colors.textSecondary}
+            />
+            <Text
+              style={{
+                fontFamily: "Poppins_500Medium",
+                fontSize: font(12),
+                color: isFilterActive ? colors.primary : colors.text,
+                includeFontPadding: false,
               }}
             >
               Filter
@@ -247,22 +293,30 @@ export default function ShopScreen() {
           {/* Sort */}
           <TouchableOpacity
             onPress={() => sortRef.current?.open()}
-            className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border"
-            style={{
-              borderColor: sortBy !== 1 ? colors.primary : colors.border,
-              backgroundColor:
-                sortBy !== 1 ? colors.primary + "12" : colors.background,
-            }}
+            style={[
+              styles.pill,
+              {
+                paddingHorizontal: spacing(10),
+                paddingVertical: spacing(7),
+                borderRadius: spacing(20),
+                gap: spacing(4),
+                borderColor: isSortActive ? colors.primary : colors.border,
+                backgroundColor: isSortActive
+                  ? colors.primary + "12"
+                  : "transparent",
+              },
+            ]}
           >
             <ArrowDownUp
-              size={15}
-              color={sortBy !== 1 ? colors.primary : colors.textSecondary}
+              size={spacing(15)}
+              color={isSortActive ? colors.primary : colors.textSecondary}
             />
             <Text
-              className="text-[12px]"
               style={{
                 fontFamily: "Poppins_500Medium",
-                color: sortBy !== 1 ? colors.primary : colors.text,
+                fontSize: font(12),
+                color: isSortActive ? colors.primary : colors.text,
+                includeFontPadding: false,
               }}
             >
               Sort
@@ -271,31 +325,29 @@ export default function ShopScreen() {
         </View>
       </View>
 
+      {/* LIST */}
       <FlatList
-        key={gridMode}
+        key={gridMode} // 🔥 MUST
         data={products}
+        renderItem={renderItem}
         keyExtractor={keyExtractor}
-        numColumns={numColumns}
+        numColumns={isGrid ? 2 : 1}
         showsVerticalScrollIndicator={false}
-        onEndReachedThreshold={0.5}
-        removeClippedSubviews={false}
-        windowSize={10}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
         contentContainerStyle={contentContainerStyle}
-        columnWrapperStyle={columnWrapperStyle}
+        columnWrapperStyle={
+          isGrid
+            ? { justifyContent: "space-between", marginBottom: GAP }
+            : undefined
+        }
         ListEmptyComponent={ListEmpty}
         ListFooterComponent={ListFooter}
-        onMomentumScrollBegin={onMomentumScrollBegin}
         onEndReached={onEndReached}
-        renderItem={renderItem}
+        onEndReachedThreshold={0.6}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        removeClippedSubviews={isGrid}
       />
 
-      {/* ✅ handleApplyFilter pass karo */}
-      <FilterBottomSheet
-        ref={filterRef}
-        onApply={handleApplyFilter}
-      />
+      <FilterBottomSheet ref={filterRef} onApply={handleApplyFilter} />
       <SortBottomSheet
         ref={sortRef}
         selected={sortBy}
@@ -304,3 +356,32 @@ export default function ShopScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  toolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 80,
+  },
+  footer: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+});
