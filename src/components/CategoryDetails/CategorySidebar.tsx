@@ -18,7 +18,7 @@ import Animated, {
 import { useTheme } from "../../theme";
 import { CategoryItem } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
-
+import image1 from "../../../assets/category/category4.png";
 
 const ITEM_HEIGHT   = 100;
 const ANIM_DURATION = 220;
@@ -89,7 +89,13 @@ const CategorySidebarItem = ({
 }: SidebarItemProps) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
+  const imageSource =
+    item.category_name?.trim().toLowerCase() === "all"
+      ? image1
+      : { uri: item.s3_image_path };
 
+
+      
   const bgOpacity = useSharedValue(isActive ? 1 : 0);
   const scale = useSharedValue(isActive ? 1 : 0.94);
 
@@ -149,10 +155,11 @@ const CategorySidebarItem = ({
           />
         </Animated.View>
 
-        {!!item.s3_image_path && (
+        {(item.category_name?.trim().toLowerCase() === "all" ||
+          !!item.s3_image_path) && (
           <View style={styles.avatarWrap}>
             <Image
-              source={{ uri: item.s3_image_path }}
+              source={imageSource}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -271,9 +278,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   avatarWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 50,
+    height: 50,
+    borderRadius: 16,
     overflow: "hidden",
     marginBottom: 6,
   },

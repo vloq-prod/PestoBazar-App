@@ -68,7 +68,7 @@ function Dot({
 
 export default function WelcomeScreen() {
   const visitorId = useAppVisitorStore((state) => state.visitorId);
-  const { createVisitor, loading } = useVisitor();
+  const { createVisitor } = useVisitor();
   const setVisitor = useAppVisitorStore((state) => state.setVisitor);
 
   const insets = useSafeAreaInsets();

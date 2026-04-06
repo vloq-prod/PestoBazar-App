@@ -9,7 +9,7 @@ import { useResponsive } from "../../../utils/useResponsive";
 interface Props {
   item: ListingItem;
   onPress?: (item: ListingItem) => void;
-  onAddToCart?: (item: ListingItem) => void;
+  onAddToCart?: (item: ListingItem, qty: number) => void;
 }
 
 const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
@@ -222,7 +222,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
             onPress={() => {
               setQty(1);
               setInputVal("1");
-              onAddToCart?.(item);
+              onAddToCart?.(item, qty);
             }}
             style={{
               backgroundColor: colors.primary,

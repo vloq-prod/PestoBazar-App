@@ -27,9 +27,10 @@ import HomeUsp from "../../src/components/home/HomeUsp";
 import Branches from "../../src/components/home/Branches";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import { CategoryList } from "../../src/components/home/CategoryList";
+import CategoryCardSection from "../../src/components/home/CategoryCardSection";
 
 const SEARCH_HEIGHT = 56;
-const CATEGORY_HEIGHT = 120;
+const CATEGORY_HEIGHT = 105;
 const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
 
@@ -116,7 +117,7 @@ export default function HomeScreen() {
             backgroundColor: "rgba(139,92,246,0.22)",
           }}
         />
-        {/* ── Bright core glow — top-right inner ── */}
+
         <View
           style={{
             position: "absolute",
@@ -165,7 +166,7 @@ export default function HomeScreen() {
 
         <Animated.View style={categoryAnimStyle}>
           {/* <CategoryListStatic /> */}
-          <CategoryList  />
+          <CategoryList />
         </Animated.View>
       </LinearGradient>
 
@@ -182,6 +183,7 @@ export default function HomeScreen() {
           }}
         >
           <SlidingBanners data={slidingbanners} />
+          <CategoryCardSection />
           <HomeProduct />
           <FeatureBanner item={featureBanners?.[0]} />
           <DealsOfTheDay />

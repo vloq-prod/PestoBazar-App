@@ -12,10 +12,13 @@ import { useHomeProduct } from "../../hooks/homeHooks";
 import ItemCard from "../comman/ItemCard";
 import { useTheme } from "../../theme";
 import { ChevronRight } from "lucide-react-native";
+import { useAddToCart } from "../../hooks/cartHooks";
+import { useAppVisitorStore } from "../../store/auth";
+import { ProductItem } from "../../types/home.types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const H_PADDING = 16 * 2; 
+const H_PADDING = 16 * 2;
 const GAP = 10;
 
 const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.2;
@@ -36,9 +39,29 @@ const SkeletonCard = () => {
           backgroundColor: colors.backgroundSkeleton,
         }}
       />
-      <View style={{ height: 12, width: "80%", backgroundColor: colors.backgroundSkeleton, borderRadius: 6 }} />
-      <View style={{ height: 10, width: "55%", backgroundColor: colors.backgroundSkeleton, borderRadius: 6 }} />
-      <View style={{ height: 36, backgroundColor: colors.backgroundSkeleton, borderRadius: 8 }} />
+      <View
+        style={{
+          height: 12,
+          width: "80%",
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 6,
+        }}
+      />
+      <View
+        style={{
+          height: 10,
+          width: "55%",
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 6,
+        }}
+      />
+      <View
+        style={{
+          height: 36,
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 8,
+        }}
+      />
     </View>
   );
 };
@@ -56,8 +79,22 @@ const SkeletonSection = () => {
           paddingHorizontal: 16,
         }}
       >
-        <View style={{ height: 16, width: 130, backgroundColor: "#e8e8e8", borderRadius: 8 }} />
-        <View style={{ height: 13, width: 60, backgroundColor: "#e8e8e8", borderRadius: 8 }} />
+        <View
+          style={{
+            height: 16,
+            width: 130,
+            backgroundColor: "#e8e8e8",
+            borderRadius: 8,
+          }}
+        />
+        <View
+          style={{
+            height: 13,
+            width: 60,
+            backgroundColor: "#e8e8e8",
+            borderRadius: 8,
+          }}
+        />
       </View>
 
       <FlatList
@@ -121,8 +158,19 @@ const SectionHeader = ({ title, onViewAll }: any) => {
 // Main Component
 // ─────────────────────────────────────────────
 const HomeProduct = () => {
-  const { sections, loading, error, refetch } = useHomeProduct();
+  const { sections, loading, error } = useHomeProduct();
   const { colors } = useTheme();
+
+  const { addToCart } = useAddToCart();
+  const visitorId = useAppVisitorStore((state) => state.visitorId);
+
+  const handleAddToCart = (product: ProductItem, qty: number) => {
+    addToCart({
+      visitor_id: visitorId,
+      product_id: product.id,
+      qty: qty,
+    });
+  };
 
   // ── Loading
   if (loading) {
@@ -188,11 +236,12 @@ const HomeProduct = () => {
                 <ItemCard
                   item={item as any}
                   onPress={(p: any) => console.log("press", p.slug)}
-                  onAddToCart={(p: any) => console.log("cart", p.id)}
+                  onAddToCart={(item: ProductItem, qty: number) =>
+                    handleAddToCart(item, qty)
+                  }
                 />
               </View>
             )}
-     
             initialNumToRender={4}
             maxToRenderPerBatch={5}
             windowSize={5}

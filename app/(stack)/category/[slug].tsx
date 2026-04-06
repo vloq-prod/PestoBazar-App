@@ -13,13 +13,16 @@ import CategoryRightPanel, {
 import CategorySidebar from "../../../src/components/CategoryDetails/CategorySidebar";
 
 const CategoryDetails = () => {
-  const { slug, name, image } = useLocalSearchParams();
+  const { slug, name, image, selectedSubCategoryId } = useLocalSearchParams();
 
   const mainCategoryId = Number(slug);
+  const initialSelectedSubCategoryId = Number(selectedSubCategoryId);
   const { colors } = useTheme();
   const { categories, loading: catLoading } = useCategory(mainCategoryId);
 
-  const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(
+    null,
+  );
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const categoriesWithAll: CategoryItem[] = React.useMemo(() => {
@@ -29,19 +32,38 @@ const CategoryDetails = () => {
       id: 0,
       slug: "all",
       category_name: "All",
-      s3_image_path: String(image), 
+      s3_image_path: String(image),
     };
 
     return [allItem, ...categories];
   }, [categories, image]);
 
-
   useEffect(() => {
-    if (categoriesWithAll.length > 0 && selectedCategory === null) {
-      setSelectedCategory(categoriesWithAll[0]); // Always "All"
-    }
-  }, [categoriesWithAll, selectedCategory]);
+    if (categoriesWithAll.length === 0) return;
 
+    if (initialSelectedSubCategoryId && categories.length > 0) {
+      const matchedSubCategory = categories.find(
+        (item) => item.id === initialSelectedSubCategoryId,
+      );
+
+      if (
+        matchedSubCategory &&
+        selectedCategory?.id !== matchedSubCategory.id
+      ) {
+        setSelectedCategory(matchedSubCategory);
+        return;
+      }
+    }
+
+    if (selectedCategory === null) {
+      setSelectedCategory(categoriesWithAll[0]);
+    }
+  }, [
+    categories,
+    categoriesWithAll,
+    initialSelectedSubCategoryId,
+    selectedCategory,
+  ]);
 
   const hasSidebar = categories.length > 0;
 
@@ -52,7 +74,7 @@ const CategoryDetails = () => {
       return String(mainCategoryId);
     }
 
-    return String(selectedCategory.id); 
+    return String(selectedCategory.id);
   }, [selectedCategory, hasSidebar, mainCategoryId]);
 
   const handleSelect = useCallback((item: CategoryItem) => {
@@ -100,6 +122,6 @@ const CategoryDetails = () => {
 export default CategoryDetails;
 
 const styles = StyleSheet.create({
-  root: { flex: 1 ,},
-  body: { flex: 1, flexDirection: "row",},
+  root: { flex: 1 },
+  body: { flex: 1, flexDirection: "row" },
 });

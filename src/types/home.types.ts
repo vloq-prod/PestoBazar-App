@@ -36,6 +36,13 @@ export interface CategoryApiResponse {
   data: CategoryData;
 }
 
+export interface CategoryWithSubcategories {
+  mainCategory: CategoryItem;
+  mainCategoryId: number;
+  mainCategoryName: string;
+  subcategories: CategoryItem[];
+}
+
 // home product
 export interface ProductItem {
   id: number;

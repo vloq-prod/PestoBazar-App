@@ -5,7 +5,15 @@ import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../../theme";
 import { useResponsive } from "../../../utils/useResponsive";
 
-export default function ListCard({ item, onPress, onAddToCart }: any) {
+export default function ListCard({
+  item,
+  onPress,
+  onAddToCart,
+}: {
+  item: any;
+  onPress?: (item: any) => void;
+  onAddToCart?: (item: any, qty: number) => void;
+}) {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
@@ -42,7 +50,6 @@ export default function ListCard({ item, onPress, onAddToCart }: any) {
         gap: spacing(8),
         marginBottom: spacing(10),
       }}
-     
     >
       {/* ─── IMAGE ─── */}
       <View>
@@ -120,7 +127,6 @@ export default function ListCard({ item, onPress, onAddToCart }: any) {
           ) : null}
         </View>
 
-      
         {showRating && (
           <View
             style={{
@@ -191,7 +197,7 @@ export default function ListCard({ item, onPress, onAddToCart }: any) {
               e.stopPropagation();
               setQty(1);
               setInputVal("1");
-              onAddToCart?.(item);
+              onAddToCart?.(item, qty);
             }}
             style={{
               backgroundColor: colors.primary,
@@ -259,7 +265,7 @@ export default function ListCard({ item, onPress, onAddToCart }: any) {
                 e.stopPropagation();
                 setQty(qty + 1);
                 setInputVal(String(qty + 1));
-                onAddToCart?.(item);
+                onAddToCart?.(item, qty + 1);
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >

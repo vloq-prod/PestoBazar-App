@@ -6,24 +6,46 @@ import { useCategory } from "../../hooks/homeHooks";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 
+// eslint-disable-next-line import/no-duplicates
+import image1 from "../../../assets/category/category4.png";
+// eslint-disable-next-line import/no-duplicates
+import image2 from "../../../assets/category/category2.png";
+import image3 from "../../../assets/category/category5.png";
+// eslint-disable-next-line import/no-duplicates
+import image4 from "../../../assets/category/category1.png";
+import image5 from "../../../assets/category/category3.png";
+
 const formatCategoryName = (name: string) => {
   if (!name) return "";
   return name.replace(/control/gi, "").trim();
 };
+
+const formatCategoryDisplayName = (name: string) => {
+  const formatted = formatCategoryName(name);
+
+  if (/^agrochemicals$/i.test(formatted)) {
+    return "Agro\nChemicals";
+  }
+
+  return formatted;
+};
+
+const CATEGORY_IMAGES = [image1, image2, image3, image4, image5];
 
 export const CategoryList: React.FC = () => {
   const { categories, loading, error } = useCategory(0);
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const router = useRouter();
+  const CARD_RADIUS = spacing(16);
 
   // ✅ responsive sizes
-  const ITEM_SIZE = spacing(66);
-  const IMAGE_SIZE = spacing(58);
+  const ITEM_SIZE = spacing(62);
+  const IMAGE_SIZE = spacing(50);
 
   // ✅ memoized renderItem
   const renderItem = useCallback(
-    ({ item }: any) => (
+    ({ item, index }: any) => (
       <TouchableOpacity
         activeOpacity={0.75}
         className="items-center"
@@ -38,47 +60,44 @@ export const CategoryList: React.FC = () => {
           })
         }
       >
-        {/* Outer Circle */}
         <View
           style={{
-            borderRadius: ITEM_SIZE / 2,
+            width: IMAGE_SIZE,
+            height: IMAGE_SIZE,
+            borderRadius: CARD_RADIUS,
+            overflow: "hidden",
+            borderWidth: 1,
+            borderColor: colors.border,
             backgroundColor: colors.background,
           }}
         >
-          <View
+          <Image
+            source={CATEGORY_IMAGES[index % CATEGORY_IMAGES.length]}
             style={{
-              width: IMAGE_SIZE,
-              height: IMAGE_SIZE,
-              borderRadius: IMAGE_SIZE / 2,
-              overflow: "hidden",
-              borderWidth: 1,
-              borderColor: colors.border,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "transparent",
             }}
-          >
-            <Image
-              source={{ uri: item.s3_image_path }}
-              style={{ width: "100%", height: "100%" }}
-              contentFit="cover"
-            />
-          </View>
+            contentFit="contain"
+          />
         </View>
 
         {/* Title */}
         <Text
           numberOfLines={2}
           style={{
-            fontSize: font(12),
+            fontSize: font(11),
             color: colors.textInverse,
             textAlign: "center",
             width: ITEM_SIZE,
             marginTop: spacing(6),
           }}
         >
-          {formatCategoryName(item.category_name)}
+          {formatCategoryDisplayName(item.category_name)}
         </Text>
       </TouchableOpacity>
     ),
-    [colors, spacing, font],
+    [CARD_RADIUS, ITEM_SIZE, IMAGE_SIZE, colors, font, router, spacing],
   );
 
   const SkeletonRow = ({ ITEM_SIZE }: any) => {
@@ -156,16 +175,11 @@ export const CategoryList: React.FC = () => {
           renderItem={renderItem}
           contentContainerStyle={{
             paddingHorizontal: spacing(16),
-            gap: spacing(25),
+            gap: spacing(12),
           }}
           initialNumToRender={6}
           windowSize={5}
           removeClippedSubviews
-          getItemLayout={(_, index) => ({
-            length: ITEM_SIZE + spacing(14),
-            offset: (ITEM_SIZE + spacing(14)) * index,
-            index,
-          })}
         />
       )}
     </View>

@@ -12,7 +12,7 @@ interface UspCardProps {
   item: UspItem;
 }
 
-const UspCard: React.FC<UspCardProps> = React.memo(({ item }) => {
+const UspCard: React.FC<UspCardProps> = (({ item }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
@@ -36,7 +36,7 @@ const UspCard: React.FC<UspCardProps> = React.memo(({ item }) => {
       {/* Icon */}
       <Image
         source={{ uri: item.image }}
-        style={{ width: spacing(50), height: spacing(40) }}
+        style={{ width: spacing(55), height: spacing(40) }}
         resizeMode="cover"
       />
 
@@ -129,7 +129,7 @@ const HomeUsp: React.FC = () => {
   );
 };
 
-export default React.memo(HomeUsp);
+export default HomeUsp;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 

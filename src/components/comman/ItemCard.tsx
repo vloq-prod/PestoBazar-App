@@ -4,8 +4,17 @@ import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { ProductItem } from "../../types/home.types";
 
-export default function ItemCard({ item, onPress, onAddToCart }: any) {
+export default function ItemCard({
+  item,
+  onPress,
+  onAddToCart,
+}: {
+  item: ProductItem;
+  onPress?: (item: any) => void;
+  onAddToCart?: (item: ProductItem, qty: number) => void;
+}) {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
@@ -165,46 +174,45 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
       </View>
 
       {/* PRICE */}
-    <View
-         style={{
-           flexDirection: "row",
-           marginTop: spacing(4),
-         }}
-       >
-         <View
-           style={{
-             flexDirection: "row",
-             alignItems: "baseline",
-             gap: spacing(4),
-           }}
-         >
-           <Text
-             style={{
-               fontSize: font(15),
-               color: colors.primary,
-               includeFontPadding: false,
-               lineHeight: font(18),
-               fontFamily: "Poppins_600SemiBold",
-             }}
-           >
-             ₹{Number(item.selling_price)}
-           </Text>
- 
-           <Text
-             style={{
-               fontSize: font(11),
-               color: colors.textTertiary,
-               textDecorationLine: "line-through",
-               includeFontPadding: false,
-               lineHeight: font(14),
-               fontFamily: "Poppins_400Regular",
-             }}
-           >
-             ₹{item.mrp}
-           </Text>
-         </View>
-       </View>
- 
+      <View
+        style={{
+          flexDirection: "row",
+          marginTop: spacing(4),
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "baseline",
+            gap: spacing(4),
+          }}
+        >
+          <Text
+            style={{
+              fontSize: font(15),
+              color: colors.primary,
+              includeFontPadding: false,
+              lineHeight: font(18),
+              fontFamily: "Poppins_600SemiBold",
+            }}
+          >
+            ₹{Number(item.selling_price)}
+          </Text>
+
+          <Text
+            style={{
+              fontSize: font(11),
+              color: colors.textTertiary,
+              textDecorationLine: "line-through",
+              includeFontPadding: false,
+              lineHeight: font(14),
+              fontFamily: "Poppins_400Regular",
+            }}
+          >
+            ₹{item.mrp}
+          </Text>
+        </View>
+      </View>
 
       {/* BUTTON */}
       <View style={{ marginTop: spacing(8) }}>
@@ -214,7 +222,7 @@ export default function ItemCard({ item, onPress, onAddToCart }: any) {
             onPress={() => {
               setQty(1);
               setInputVal("1");
-              onAddToCart?.(item);
+              onAddToCart?.(item, 1);
             }}
             style={{
               backgroundColor: colors.primary,

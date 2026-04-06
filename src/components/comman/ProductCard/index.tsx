@@ -10,7 +10,7 @@ interface Props {
   item: ListingItem;
   mode?: "grid" | "list";
   onPress?: (item: ListingItem) => void;
-  onAddToCart?: (item: ListingItem) => void;
+onAddToCart?: (item: ListingItem, qty: number) => void;
 }
 
 const ProductCard: React.FC<Props> = ({

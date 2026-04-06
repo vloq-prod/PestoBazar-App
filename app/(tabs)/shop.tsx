@@ -30,6 +30,8 @@ import SortBottomSheet, {
 import ProductCard from "../../src/components/comman/ProductCard";
 import { ListingItem } from "../../src/types/shop.types";
 import { useLocalSearchParams } from "expo-router";
+import { useAddToCart } from "../../src/hooks/cartHooks";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 type GridMode = "grid" | "list";
 
@@ -40,6 +42,9 @@ export default function ShopScreen() {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const { width } = useWindowDimensions();
+
+  const { addToCart } = useAddToCart();
+  const visitorId = useAppVisitorStore((state) => state.visitorId);
 
   const [gridMode, setGridMode] = useState<GridMode>("list");
   const [sortBy, setSortBy] = useState<number>(1);
@@ -99,21 +104,33 @@ export default function ShopScreen() {
     }
   }, [hasMore, loadingMore, loadMore]);
 
-  // ✅ FIXED renderItem
   const renderItem: ListRenderItem<ListingItem> = useCallback(
     ({ item }) => {
       if (isGrid) {
         return (
           <View style={{ width: ITEM_WIDTH }}>
-            <ProductCard item={item} mode="grid" />
+            <ProductCard item={item} mode="grid" onAddToCart={handleAddToCart} />
           </View>
         );
       }
-      return <ProductCard item={item} mode="list" />;
+      return <ProductCard item={item} mode="list" onAddToCart={handleAddToCart} />;
     },
     [isGrid, ITEM_WIDTH],
   );
 
+
+  const handleAddToCart = useCallback(
+  (item: ListingItem, qty: number) => {
+    if (!visitorId) return;
+
+    addToCart({
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: qty,
+    });
+  },
+  [visitorId]
+);
   const PAD = spacing(12);
   const GAP = spacing(10);
 

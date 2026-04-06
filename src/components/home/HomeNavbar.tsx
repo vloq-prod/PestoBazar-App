@@ -19,7 +19,7 @@ type IconButtonProps = {
   onPress?: () => void;
 };
 
-const IconButton = (({ icon, onPress }: IconButtonProps) => {
+const IconButton = ({ icon, onPress }: IconButtonProps) => {
   const { spacing } = useResponsive();
 
   return (
@@ -35,7 +35,7 @@ const IconButton = (({ icon, onPress }: IconButtonProps) => {
       {icon}
     </TouchableOpacity>
   );
-});
+};
 
 const HomeNavbar: React.FC<HomeNavbarProps> = ({
   name = "Guest",
@@ -52,18 +52,15 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
     <View className="flex-row justify-between items-center px-4 py-2">
       {/* LEFT */}
       <View className="flex-row items-center gap-3">
-        <TouchableOpacity
-          onPress={onProfilePress}
-          style={{
-            width: spacing(44),
-            height: spacing(44),
-            borderRadius: spacing(22),
-            borderWidth: 2,
-            borderColor: colors.borderStrong,
-            overflow: "hidden",
-          }}
-        >
-          <Image source={profile} style={{ width: "100%", height: "100%" }} />
+        <TouchableOpacity onPress={onProfilePress}>
+          <Image
+            source={profile}
+            style={{
+              width: spacing(45),
+              height: spacing(45),
+              borderRadius: spacing(22),
+            }}
+          />
         </TouchableOpacity>
 
         <View>
@@ -93,21 +90,11 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
       <View className="flex-row items-center">
         <IconButton
           onPress={onCartPress}
-          icon={
-            <ShoppingCart
-              size={ICON_SIZE}
-              color={colors.textInverse} 
-            />
-          }
+          icon={<ShoppingCart size={ICON_SIZE} color={colors.textInverse} />}
         />
         <IconButton
           onPress={onNotificationPress}
-          icon={
-            <Bell
-              size={ICON_SIZE}
-              color={colors.textInverse} 
-            />
-          }
+          icon={<Bell size={ICON_SIZE} color={colors.textInverse} />}
         />
       </View>
     </View>

@@ -66,7 +66,7 @@ export default function AppSearchBar({ onPress }: any) {
     return () => clearTimeout(t);
   }, [phase, text]);
 
-  const HEIGHT = spacing(44);
+  const HEIGHT = spacing(38);
 
   return (
     <View className="flex-row items-center gap-3">
@@ -90,7 +90,7 @@ export default function AppSearchBar({ onPress }: any) {
         onPress={() => (onPress ? onPress() : router.push("/search"))}
         className="flex-1 flex-row items-center rounded-xl border"
         style={{
-          height: HEIGHT, // ✅ FIX
+          height: HEIGHT,
           backgroundColor: colors.surface,
           borderColor: colors.border,
           paddingHorizontal: spacing(12),
@@ -101,7 +101,7 @@ export default function AppSearchBar({ onPress }: any) {
         <View className="flex-row items-center flex-1 ml-2">
           <Text
             style={{
-              fontSize: font(14),
+              fontSize: font(12),
               color: colors.textTertiary,
             }}
           >
@@ -117,6 +117,7 @@ export default function AppSearchBar({ onPress }: any) {
                 index={index}
                 totalLength={characters.length}
                 phase={phase}
+              
               />
             ))}
           </View>
@@ -129,7 +130,7 @@ export default function AppSearchBar({ onPress }: any) {
 //
 // ✅ SAFE child component (hooks allowed here)
 //
-const FadeChar = React.memo(({ char, index, totalLength, phase }: any) => {
+const FadeChar = (({ char, index, totalLength, phase }: any) => {
   const { font } = useResponsive();
   const { colors } = useTheme();
 
@@ -149,7 +150,7 @@ const FadeChar = React.memo(({ char, index, totalLength, phase }: any) => {
         withTiming(0, { duration: 150 }),
       );
     }
-  }, [phase]);
+  }, [index, opacity, phase, totalLength]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -159,7 +160,7 @@ const FadeChar = React.memo(({ char, index, totalLength, phase }: any) => {
     <Animated.Text
       style={[
         {
-          fontSize: font(14),
+          fontSize: font(12),
           color: colors.primary,
           fontWeight: "700",
         },

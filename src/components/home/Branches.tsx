@@ -46,7 +46,7 @@ const LiveDot = () => {
       -1,
       false,
     );
-  }, []);
+  }, [ringOpacity, ringScale]);
 
   const ringStyle = useAnimatedStyle(() => ({
     transform: [{ scale: ringScale.value }],
@@ -130,7 +130,7 @@ const Branches = () => {
 
   return (
     <View className="gap-5">
-      <View className="flex-row items-center gap-3 px-4">
+      <View className="flex-row items-center gap-3 ">
         <View
           style={{
             flex: 1, // 🔥 dynamic width
@@ -142,14 +142,14 @@ const Branches = () => {
         <Text
           numberOfLines={1}
           style={{
-            color: colors.primary,
+            color: "#311A6A",
             fontFamily: "Poppins_700Bold",
             fontSize: 18,
             includeFontPadding: false,
             textAlignVertical: "center",
           }}
         >
-          We Deliver From <Text style={{ color: colors.error }}>Near You</Text>
+          We Deliver From <Text style={{ color: "#52145A" }}>Near You</Text>
         </Text>
 
         <View

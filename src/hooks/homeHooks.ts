@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   getBanners,
   getBranches,
@@ -9,6 +9,7 @@ import {
   getTestimonials,
   getUsp,
 } from "../api/home.api";
+import { CategoryWithSubcategories } from "../types/home.types";
 
 // useBanner hook
 export const useBanner = () => {
@@ -37,6 +38,48 @@ export const useCategory = (id:number) => {
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
+  };
+};
+
+export const useCategoryWithSubcategories = (rootId: number = 0) => {
+  const mainCategoryQuery = useQuery({
+    queryKey: ["home-categories", rootId],
+    queryFn: () => getHomeCategories(rootId),
+  });
+
+  const mainCategories = mainCategoryQuery.data?.data?.category_master ?? [];
+
+  const subcategoryQueries = useQueries({
+    queries: mainCategories.map((mainCategory) => ({
+      queryKey: ["home-categories", "subcategories", mainCategory.id],
+      queryFn: () => getHomeCategories(mainCategory.id),
+      enabled: !!mainCategory.id,
+    })),
+  });
+
+  const categoriesWithSubcategories: CategoryWithSubcategories[] =
+    mainCategories.map((mainCategory, index) => ({
+      mainCategory,
+      mainCategoryId: mainCategory.id,
+      mainCategoryName: mainCategory.category_name,
+      subcategories:
+        subcategoryQueries[index]?.data?.data?.category_master ?? [],
+    }));
+
+  return {
+    categories: mainCategories,
+    categoriesWithSubcategories,
+    loading:
+      mainCategoryQuery.isLoading ||
+      subcategoryQueries.some((query) => query.isLoading),
+    error:
+      mainCategoryQuery.error ??
+      subcategoryQueries.find((query) => query.error)?.error ??
+      null,
+    refetch: async () => {
+      await mainCategoryQuery.refetch();
+      await Promise.all(subcategoryQueries.map((query) => query.refetch()));
+    },
   };
 };
 
