@@ -129,7 +129,7 @@ export default function ShopScreen() {
       qty: qty,
     });
   },
-  [visitorId]
+  [addToCart, visitorId]
 );
   const PAD = spacing(12);
   const GAP = spacing(10);
@@ -205,7 +205,7 @@ export default function ShopScreen() {
       edges={["top"]}
     >
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
-      <AppNavbar title="Shop" showBack />
+      <AppNavbar title="Shop" showBack showCart={true} />
 
       {/* Toolbar */}
       <View

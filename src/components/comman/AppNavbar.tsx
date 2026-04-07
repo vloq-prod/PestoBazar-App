@@ -7,29 +7,42 @@ import {
   Bell,
   Sun,
   Moon,
-  TextAlignJustify,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 
+type AppNavbarProps = {
+  title?: string;
+  count?: string | number;
+  showBack?: boolean;
+  showSearch?: boolean;
+  showNotification?: boolean;
+  showThemeToggle?: boolean;
+  showCart?: boolean;
+  onSearchPress?: () => void;
+  onNotificationPress?: () => void;
+  onCartPress?: () => void;
+  rightComponent?: React.ReactNode;
+};
+
 const AppNavbar = ({
   title = "",
+  count,
   showBack = false,
-  showMenu = false,
   showSearch = false,
   showNotification = false,
   showThemeToggle = false,
   showCart = false,
-  onMenuPress,
   onSearchPress,
   onNotificationPress,
-  onCartPress,
+
   rightComponent,
-}: any) => {
+}: AppNavbarProps) => {
   const router = useRouter();
   const { colors, toggleTheme, isDark } = useTheme();
   const { spacing, font } = useResponsive();
+  
 
   const ICON_SIZE = spacing(20);
   const ICON_BOX = spacing(36);
@@ -47,9 +60,8 @@ const AppNavbar = ({
       }}
     >
       {/* LEFT */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6) }}>
-        
-        {showBack && !showMenu && (
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        {showBack && (
           <TouchableOpacity
             onPress={() => router.back()}
             style={{
@@ -57,41 +69,51 @@ const AppNavbar = ({
               height: ICON_BOX,
               alignItems: "center",
               justifyContent: "center",
+              marginRight: spacing(10),
             }}
           >
             <ChevronLeft size={ICON_SIZE} color={colors.text} />
           </TouchableOpacity>
         )}
 
-        {showMenu && !showBack && (
-          <TouchableOpacity
-            onPress={onMenuPress}
+        {(!!title || count !== undefined) && (
+          <View
             style={{
-              width: ICON_BOX,
-              height: ICON_BOX,
-              alignItems: "center",
               justifyContent: "center",
+              gap: spacing(2),
             }}
           >
-            <TextAlignJustify size={ICON_SIZE} color={colors.text} />
-          </TouchableOpacity>
-        )}
+            {!!title && (
+              <Text
+                style={{
+                  fontSize: font(16),
+                  fontWeight: "700",
+                  color: colors.text,
+                }}
+              >
+                {title}
+              </Text>
+            )}
 
-        {!!title && (
-          <Text
-            style={{
-              fontSize: font(16),
-              fontWeight: "700",
-              color: colors.text,
-            }}
-          >
-            {title}
-          </Text>
+            {count !== undefined && count !== null && (
+              <Text
+                style={{
+                  fontSize: font(12),
+                  fontWeight: "500",
+                  color: colors.textSecondary ?? colors.text,
+                }}
+              >
+                {count}
+              </Text>
+            )}
+          </View>
         )}
       </View>
 
       {/* RIGHT */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(4) }}>
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: spacing(4) }}
+      >
         {rightComponent ?? (
           <>
             {showSearch && (
@@ -112,7 +134,7 @@ const AppNavbar = ({
 
             {showCart && (
               <TouchableOpacity
-                onPress={onCartPress}
+                onPress={() => router.push("/cart")}
                 style={{
                   width: ICON_BOX,
                   height: ICON_BOX,

@@ -222,7 +222,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
             onPress={() => {
               setQty(1);
               setInputVal("1");
-              onAddToCart?.(item, qty);
+              onAddToCart?.(item, 1);
             }}
             style={{
               backgroundColor: colors.primary,
@@ -258,9 +258,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                 if (qty <= 1) {
                   setQty(0);
                   setInputVal("1");
+                  onAddToCart?.(item, 0);
                 } else {
-                  setQty(qty - 1);
-                  setInputVal(String(qty - 1));
+                  const nextQty = qty - 1;
+                  setQty(nextQty);
+                  setInputVal(String(nextQty));
+                  onAddToCart?.(item, nextQty);
                 }
               }}
               style={{ width: spacing(36), alignItems: "center" }}
@@ -286,8 +289,10 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
 
             <TouchableOpacity
               onPress={() => {
-                setQty(qty + 1);
-                setInputVal(String(qty + 1));
+                const nextQty = qty + 1;
+                setQty(nextQty);
+                setInputVal(String(nextQty));
+                onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >

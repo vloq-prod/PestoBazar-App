@@ -197,7 +197,7 @@ export default function ListCard({
               e.stopPropagation();
               setQty(1);
               setInputVal("1");
-              onAddToCart?.(item, qty);
+              onAddToCart?.(item, 1);
             }}
             style={{
               backgroundColor: colors.primary,
@@ -234,9 +234,12 @@ export default function ListCard({
                 if (qty <= 1) {
                   setQty(0);
                   setInputVal("1");
+                  onAddToCart?.(item, 0);
                 } else {
-                  setQty(qty - 1);
-                  setInputVal(String(qty - 1));
+                  const nextQty = qty - 1;
+                  setQty(nextQty);
+                  setInputVal(String(nextQty));
+                  onAddToCart?.(item, nextQty);
                 }
               }}
               style={{ width: spacing(36), alignItems: "center" }}
