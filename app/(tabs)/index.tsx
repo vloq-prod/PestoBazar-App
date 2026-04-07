@@ -106,42 +106,6 @@ export default function HomeScreen() {
         end={{ x: 1, y: 0.5 }}
         style={{ overflow: "hidden" }}
       >
-        <View
-          style={{
-            position: "absolute",
-            top: -60,
-            right: -40,
-            width: 240,
-            height: 240,
-            borderRadius: 120,
-            backgroundColor: "rgba(139,92,246,0.22)",
-          }}
-        />
-
-        <View
-          style={{
-            position: "absolute",
-            top: -20,
-            right: -10,
-            width: 160,
-            height: 160,
-            borderRadius: 100,
-            backgroundColor: "rgba(167,139,250,0.15)",
-          }}
-        />
-        {/* ── Deep indigo bloom — left ── */}
-        <View
-          style={{
-            position: "absolute",
-            top: 150,
-            left: -60,
-            width: 200,
-            height: 200,
-            borderRadius: 100,
-            backgroundColor: "rgba(109,40,217,0.28)",
-          }}
-        />
-
         <SafeAreaView edges={["top"]} className=" gap-2">
           <StatusBar
             barStyle="light-content"

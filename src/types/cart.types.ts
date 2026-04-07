@@ -38,3 +38,14 @@ export interface AddToCartResponse {
   message: string;
   data: AddToCartData;
 }
+
+
+// get cart response
+export interface CartResponse {
+  message: string;
+  status: number;
+  data: {
+    cart: CartSummary;
+    cart_details: CartItem[];
+  };
+}

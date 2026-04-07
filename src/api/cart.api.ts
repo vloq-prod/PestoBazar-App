@@ -1,5 +1,9 @@
 import { apiClient } from "../lib/apiClient";
-import { AddToCartRequest, AddToCartResponse } from "../types/cart.types";
+import {
+  AddToCartRequest,
+  AddToCartResponse,
+  CartResponse,
+} from "../types/cart.types";
 
 export const addToCart = async (
   payload: AddToCartRequest,
@@ -12,6 +16,21 @@ export const addToCart = async (
   );
 
   console.log("🛒 ADD TO CART RESPONSE:", response.data);
+
+  return response.data;
+};
+
+// src/api/cart.api.ts
+
+interface GetCartParams {
+  user_id?: number;
+  visitor_id: string;
+}
+
+export const getCart = async (params: GetCartParams): Promise<CartResponse> => {
+  const response = await apiClient.get("/app-api/v1/cart", {
+    params,
+  });
 
   return response.data;
 };

@@ -1,5 +1,5 @@
 // app/(stack)/category/[slug].tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
@@ -19,11 +19,12 @@ const CategoryDetails = () => {
   const initialSelectedSubCategoryId = Number(selectedSubCategoryId);
   const { colors } = useTheme();
   const { categories, loading: catLoading } = useCategory(mainCategoryId);
+  const hasAppliedInitialSelectionRef = useRef(false);
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(
     null,
   );
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const categoriesWithAll: CategoryItem[] = React.useMemo(() => {
     if (!categories || categories.length === 0) return [];
@@ -41,15 +42,18 @@ const CategoryDetails = () => {
   useEffect(() => {
     if (categoriesWithAll.length === 0) return;
 
-    if (initialSelectedSubCategoryId && categories.length > 0) {
+    if (
+      !hasAppliedInitialSelectionRef.current &&
+      initialSelectedSubCategoryId &&
+      categories.length > 0
+    ) {
       const matchedSubCategory = categories.find(
         (item) => item.id === initialSelectedSubCategoryId,
       );
 
-      if (
-        matchedSubCategory &&
-        selectedCategory?.id !== matchedSubCategory.id
-      ) {
+      hasAppliedInitialSelectionRef.current = true;
+
+      if (matchedSubCategory) {
         setSelectedCategory(matchedSubCategory);
         return;
       }
@@ -66,6 +70,8 @@ const CategoryDetails = () => {
   ]);
 
   const hasSidebar = categories.length > 0;
+  const hasSubcategories = hasSidebar;
+  const resolvedViewMode: ViewMode = hasSubcategories ? "list" : viewMode;
 
   const categoryId = React.useMemo(() => {
     if (!hasSidebar) return String(mainCategoryId);
@@ -109,9 +115,10 @@ const CategoryDetails = () => {
         <CategoryRightPanel
           selectedCategory={selectedCategory}
           categoryId={categoryId}
-          viewMode={hasSidebar ? viewMode : "grid"}
+          viewMode={resolvedViewMode}
           onToggleView={toggleViewMode}
           hasSidebar={hasSidebar}
+          hasSubcategories={hasSubcategories}
           mainCategoryId={mainCategoryId}
         />
       </View>

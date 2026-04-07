@@ -3,12 +3,15 @@ export default {
     name: "pestobazaar",
     slug: "pestobazaar",
     version: "1.0.0",
+
+    userInterfaceStyle: "automatic", 
+
     ios: {
       buildNumber: "1",
     },
     android: {
       versionCode: 1,
-      package: "com.pestobazaar.app" // 👈 ADD THIS
+      package: "com.pestobazaar.app"
     },
 
     extra: {

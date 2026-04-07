@@ -23,6 +23,7 @@ export type CategoryRightPanelProps = {
   viewMode: ViewMode;
   onToggleView: () => void;
   hasSidebar: boolean;
+  hasSubcategories?: boolean;
   mainCategoryId?: number;
 };
 
@@ -111,6 +112,7 @@ export default function CategoryRightPanel({
   viewMode,
   onToggleView,
   hasSidebar,
+  hasSubcategories = false,
   mainCategoryId,
 }: CategoryRightPanelProps) {
   const { colors } = useTheme();
@@ -175,7 +177,7 @@ export default function CategoryRightPanel({
             )}
           </View>
 
-          {hasSidebar && (
+          {!hasSubcategories && (
             <TouchableOpacity
               onPress={onToggleView}
               activeOpacity={0.8}

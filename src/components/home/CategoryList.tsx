@@ -6,12 +6,12 @@ import { useCategory } from "../../hooks/homeHooks";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 
-// eslint-disable-next-line import/no-duplicates
+ 
 import image1 from "../../../assets/category/category4.png";
-// eslint-disable-next-line import/no-duplicates
+ 
 import image2 from "../../../assets/category/category2.png";
 import image3 from "../../../assets/category/category5.png";
-// eslint-disable-next-line import/no-duplicates
+ 
 import image4 from "../../../assets/category/category1.png";
 import image5 from "../../../assets/category/category3.png";
 

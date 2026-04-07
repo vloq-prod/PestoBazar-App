@@ -5,11 +5,12 @@ import { Image } from "expo-image";
 import profile from "../../../assets/profile.jpeg";
 import { useResponsive } from "../../utils/useResponsive";
 import { useTheme } from "../../theme";
+import { useRouter } from "expo-router";
 
 type HomeNavbarProps = {
   name?: string;
   onMenuPress?: () => void;
-  onCartPress?: () => void;
+
   onNotificationPress?: () => void;
   onProfilePress?: () => void;
 };
@@ -39,14 +40,19 @@ const IconButton = ({ icon, onPress }: IconButtonProps) => {
 
 const HomeNavbar: React.FC<HomeNavbarProps> = ({
   name = "Guest",
-  onCartPress,
+
   onNotificationPress,
   onProfilePress,
 }) => {
   const { font, spacing } = useResponsive();
   const { colors } = useTheme();
+  const router = useRouter();
 
   const ICON_SIZE = spacing(20);
+
+  const handleMoveToCart = () => {
+    router.push("/cart");
+  };
 
   return (
     <View className="flex-row justify-between items-center px-4 py-2">
@@ -89,7 +95,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
       {/* RIGHT */}
       <View className="flex-row items-center">
         <IconButton
-          onPress={onCartPress}
+          onPress={handleMoveToCart}
           icon={<ShoppingCart size={ICON_SIZE} color={colors.textInverse} />}
         />
         <IconButton
