@@ -1,29 +1,44 @@
 import React from "react";
-import { TouchableOpacity, Text, View } from "react-native";
+import { TouchableOpacity, Text, View, useWindowDimensions } from "react-native";
 import { ChevronLeft, ShoppingBag } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
+  useAnimatedReaction,
   interpolate,
   Extrapolate,
   useSharedValue,
-  withSpring,
+  withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 
 type Props = {
   onPress?: () => void;
+  visible?: SharedValue<number>;
 };
 
-const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
+const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
   const { colors } = useTheme();
+  const { height } = useWindowDimensions();
+  const manualOpen = useSharedValue(1);
+  const bottomOffset = Math.max(120, Math.min(height * 0.22, 200));
 
-  const manualOpen = useSharedValue(0);
+  useAnimatedReaction(
+    () => visible?.value ?? 1,
+    (current, previous) => {
+      if (current === previous) return;
+      manualOpen.value = withTiming(current > 0.5 ? 1 : 0, { duration: 280 });
+    },
+    [visible],
+  );
 
   const expandStyle = useAnimatedStyle(() => {
+    const progress = manualOpen.value;
+
     return {
-      width: interpolate(manualOpen.value, [0, 1], [0, 75], Extrapolate.CLAMP),
+      width: interpolate(progress, [0, 1], [0, 75], Extrapolate.CLAMP),
       opacity: interpolate(
-        manualOpen.value,
+        progress,
         [0, 0.35, 1],
         [0, 0, 1],
         Extrapolate.CLAMP,
@@ -32,11 +47,13 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
   });
 
   const chevronStyle = useAnimatedStyle(() => {
+    const progress = manualOpen.value;
+
     return {
       transform: [
         {
           rotate: `${interpolate(
-            manualOpen.value,
+            progress,
             [0, 1],
             [0, 180],
             Extrapolate.CLAMP,
@@ -47,11 +64,8 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
   });
 
   const handlePress = () => {
-    if (manualOpen.value === 1) {
-      manualOpen.value = withSpring(0, { stiffness: 300 });
-    } else {
-      manualOpen.value = withSpring(1, { stiffness: 300 });
-    }
+    const nextValue = manualOpen.value > 0.5 ? 0 : 1;
+    manualOpen.value = withTiming(nextValue, { duration: 280 });
     onPress?.();
   };
 
@@ -62,7 +76,7 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
       style={{
         position: "absolute",
         right: 0,
-        bottom: 11,
+        bottom: bottomOffset,
         zIndex: 50,
         flexDirection: "row",
         alignItems: "center",
@@ -88,12 +102,10 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
             flexDirection: "row",
             alignItems: "center",
             gap: 6,
-            width: 20,
             height: 30,
           },
         ]}
       >
-        {/* Icon */}
         <View
           style={{
             width: 30,
@@ -107,7 +119,6 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
           <ShoppingBag size={15} color="#fff" strokeWidth={2} />
         </View>
 
-        {/* Text */}
         <View>
           <Text
             style={{
@@ -127,7 +138,6 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
               fontFamily: "Poppins_600SemiBold",
               color: "#fff",
               lineHeight: 14,
-
               includeFontPadding: false,
             }}
           >
@@ -136,7 +146,6 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress }) => {
         </View>
       </Animated.View>
 
-      {/* ── Chevron ── */}
       <Animated.View style={chevronStyle}>
         <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
       </Animated.View>

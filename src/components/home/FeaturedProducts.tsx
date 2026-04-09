@@ -10,7 +10,7 @@ import { useFeatured } from "../../hooks/homeHooks";
 import { FeaturedItem } from "../../types/home.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
-import ProductCard, { SkeletonCard } from "../comman/ProductCard/ProductCard";
+import ProductCard, { SkeletonCard } from "../ProductCard/ProductCard";
 
 const SKELETON_COUNT = 2;
 

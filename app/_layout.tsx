@@ -13,10 +13,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 function RootLayoutNav() {
-
-    const { fontsLoaded } = useFonts();
-
-
   // @ts-ignore
   if (Text.defaultProps == null) Text.defaultProps = {};
   // @ts-ignore
@@ -27,14 +23,9 @@ function RootLayoutNav() {
   // @ts-ignore
   TextInput.defaultProps.allowFontScaling = false;
 
-  const queryClient = new QueryClient();
-
-  if (!fontsLoaded) return null;
   const { colors } = useTheme();
-
   const [isReady, setIsReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
-
   const { visitorId, token } = useAppVisitorStore();
 
   useEffect(() => {
@@ -73,8 +64,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const { fontsLoaded } = useFonts();
-
-  const queryClient = new QueryClient();
+  const [queryClient] = useState(() => new QueryClient());
 
   if (!fontsLoaded) return null;
 

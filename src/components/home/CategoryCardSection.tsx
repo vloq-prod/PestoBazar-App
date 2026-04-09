@@ -237,6 +237,7 @@ const CategoryCardSection = () => {
           </Text>
 
           <FlatList
+            key={`category-${category.mainCategoryId}-${columns}`}
             data={category.subcategories}
             renderItem={createSubCategoryRenderer(
               category.mainCategoryId,

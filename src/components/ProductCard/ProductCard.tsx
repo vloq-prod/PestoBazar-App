@@ -6,9 +6,9 @@ import { View, Text, StyleSheet } from "react-native";
 import ProductMedia from "./ProductMedia";
 import ProductInfo from "./ProductInfo";
 import ProductTimer from "./ProductTimer";
-import { useTheme } from "../../../theme";
-import { useResponsive } from "../../../utils/useResponsive";
-import { resolveImages } from "../../../utils/productHelpers";
+import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
+import { resolveImages } from "../../utils/productHelpers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ export default React.memo(ProductCard);
 
 // ─── SkeletonCard ─────────────────────────────────────────────────────────────
 
-export const SkeletonCard: React.FC<{ cardWidth: number }> = React.memo(
+export const SkeletonCard: React.FC<{ cardWidth: number }> = (
   ({ cardWidth }) => {
     const { colors } = useTheme();
     const { spacing } = useResponsive();

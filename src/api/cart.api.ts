@@ -19,7 +19,7 @@ export const addToCart = async (
     payload,
   );
 
-  console.log("🛒 ADD TO CART RESPONSE:", response.data);
+  console.log("🛒 ADD TO CART RESPONSE:", response.data.message);
 
   return response.data;
 };

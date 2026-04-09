@@ -27,7 +27,7 @@ import FilterBottomSheet, {
 import SortBottomSheet, {
   SortBottomSheetRef,
 } from "../../src/modals/shop/SortBottomSheet";
-import ProductCard from "../../src/components/comman/ProductCard";
+import ProductCard from "../../src/components/ProductCard";
 import { ListingItem } from "../../src/types/shop.types";
 import { useLocalSearchParams } from "expo-router";
 import { useAddToCart } from "../../src/hooks/cartHooks";

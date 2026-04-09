@@ -89,7 +89,7 @@ export interface GetCartCountParams {
 export interface CartCountResponse {
   message: string;
   status: number;
-  data: number; // cart count
+  data: number; 
 }
 
 

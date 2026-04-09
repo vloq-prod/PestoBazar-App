@@ -8,10 +8,8 @@ import AppSearchBar from "../../src/components/home/AppSearchBar";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
 import HomeProduct from "../../src/components/home/HomeProduct";
 import { useHomeBanners } from "../../src/hooks/homeHooks";
-import FeatureBannerColumn from "../../src/components/home/FeatureBannerColumn";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
 import FeaturedProducts from "../../src/components/home/FeaturedProducts";
-import MiniCart from "../../src/components/home/MiniCart";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -25,9 +23,12 @@ import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
 import Testimonial from "../../src/components/home/Testimonial";
 import HomeUsp from "../../src/components/home/HomeUsp";
 import Branches from "../../src/components/home/Branches";
-import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import { CategoryList } from "../../src/components/home/CategoryList";
 import CategoryCardSection from "../../src/components/home/CategoryCardSection";
+import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
+import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
+import NoInternet from "../(stack)/nointernet";
+import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 
 const SEARCH_HEIGHT = 56;
 const CATEGORY_HEIGHT = 105;
@@ -35,6 +36,8 @@ const SCROLL_THRESHOLD = 10;
 const TIMING_CONFIG = { duration: 280 };
 
 export default function HomeScreen() {
+  const isConnected = useNetworkStatus();
+
   const { colors } = useTheme();
   const { slidingbanners, featureBanners, homeBottomBanners } =
     useHomeBanners();
@@ -96,6 +99,10 @@ export default function HomeScreen() {
     overflow: "hidden",
   }));
 
+  if (!isConnected) {
+    return <NoInternet />;
+  }
+
   return (
     <View style={{ flex: 1 }}>
       {/* ── HEADER ── */}
@@ -106,6 +113,42 @@ export default function HomeScreen() {
         end={{ x: 1, y: 0.5 }}
         style={{ overflow: "hidden" }}
       >
+        <View
+          style={{
+            position: "absolute",
+            top: -60,
+            right: -40,
+            width: 240,
+            height: 240,
+            borderRadius: 120,
+            backgroundColor: "rgba(139,92,246,0.22)",
+          }}
+        />
+        {/* ── Bright core glow — top-right inner ── */}
+        <View
+          style={{
+            position: "absolute",
+            top: -10,
+            right: 20,
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: "rgba(167,139,250,0.15)",
+          }}
+        />
+        {/* ── Deep indigo bloom — left ── */}
+        <View
+          style={{
+            position: "absolute",
+            top: 100,
+            left: -60,
+            width: 200,
+            height: 200,
+            borderRadius: 100,
+            backgroundColor: "rgba(109,40,217,0.28)",
+          }}
+        />
+
         <SafeAreaView edges={["top"]} className=" gap-2">
           <StatusBar
             barStyle="light-content"
@@ -115,7 +158,6 @@ export default function HomeScreen() {
 
           <HomeNavbar
             name="Guest"
-            onCartPress={() => {}}
             onNotificationPress={() => {}}
             onProfilePress={() => {}}
           />
@@ -166,8 +208,9 @@ export default function HomeScreen() {
           <Branches />
         </Animated.ScrollView>
 
-        {/* <MiniCart /> */}
-        {/* <BulkOrderFAB  /> */}
+        <AddToCartPreview visible={searchVisible} />
+
+        <BulkOrderFAB visible={searchVisible} />
       </View>
     </View>
   );

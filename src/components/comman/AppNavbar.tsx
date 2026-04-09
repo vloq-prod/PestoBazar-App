@@ -7,6 +7,7 @@ import {
   Bell,
   Sun,
   Moon,
+  ArrowLeft,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../theme";
@@ -42,7 +43,6 @@ const AppNavbar = ({
   const router = useRouter();
   const { colors, toggleTheme, isDark } = useTheme();
   const { spacing, font } = useResponsive();
-  
 
   const ICON_SIZE = spacing(20);
   const ICON_BOX = spacing(36);
@@ -72,7 +72,8 @@ const AppNavbar = ({
               marginRight: spacing(10),
             }}
           >
-            <ChevronLeft size={ICON_SIZE} color={colors.text} />
+         
+            <ArrowLeft size={ICON_SIZE} color={colors.text}  />
           </TouchableOpacity>
         )}
 
@@ -80,14 +81,15 @@ const AppNavbar = ({
           <View
             style={{
               justifyContent: "center",
-              gap: spacing(2),
+              gap: spacing(0.5),
             }}
           >
             {!!title && (
               <Text
                 style={{
                   fontSize: font(16),
-                  fontWeight: "700",
+                  lineHeight: font(20),
+                  fontFamily: "Poppins_600SemiBold",
                   color: colors.text,
                 }}
               >
@@ -98,8 +100,10 @@ const AppNavbar = ({
             {count !== undefined && count !== null && (
               <Text
                 style={{
-                  fontSize: font(12),
-                  fontWeight: "500",
+                  fontSize: font(10.5),
+                  lineHeight: font(12),
+                  fontFamily: "Poppins_500Medium",
+                  letterSpacing: 0.2,
                   color: colors.textSecondary ?? colors.text,
                 }}
               >

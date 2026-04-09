@@ -2,10 +2,9 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { useTheme } from "../../../theme";
-import { useResponsive } from "../../../utils/useResponsive";
-import { formatPrice, getDiscountPercent } from "../../../utils/productHelpers";
-
+import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
+import { formatPrice, getDiscountPercent } from "../../utils/productHelpers";
 
 interface ProductInfoProps {
   name: string;
@@ -27,7 +26,15 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const hasMrp = parseFloat(mrp) > parseFloat(sellingPrice);
 
   return (
-    <View style={{ gap: spacing(4) }}>
+    <View
+      style={[
+        styles.container,
+        {
+          gap: spacing(4),
+          backgroundColor: colors.surfaceElevated,
+        },
+      ]}
+    >
       {/* Name */}
       <Text
         numberOfLines={2}
@@ -70,7 +77,6 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             fontSize: font(20),
             color: colors.text,
             lineHeight: font(28),
-           
           }}
         >
           {formatPrice(sellingPrice)}
@@ -113,6 +119,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 export default React.memo(ProductInfo);
 
 const styles = StyleSheet.create({
+  container: {},
   name: {},
   overview: {},
   priceRow: {

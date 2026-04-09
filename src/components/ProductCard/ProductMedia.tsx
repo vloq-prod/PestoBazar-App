@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from "../../../theme";
-import { useResponsive } from "../../../utils/useResponsive";
+import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 
 
 interface ProductMediaProps {

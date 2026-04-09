@@ -10,7 +10,7 @@ import {
 import { LayoutGrid, List, PackageSearch } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
-import ProductCard from "../comman/ProductCard";
+import ProductCard from "../ProductCard";
 import { useListing } from "../../hooks/shopHooks";
 import { CategoryItem } from "../../types/home.types";
 import { ListingItem } from "../../types/shop.types";

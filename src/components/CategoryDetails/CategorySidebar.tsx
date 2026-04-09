@@ -1,5 +1,5 @@
 // src/components/category/CategorySidebar.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -207,6 +207,30 @@ const CategorySidebar = ({
 }: CategorySidebarProps) => {
   const { colors } = useTheme();
   const { spacing } = useResponsive();
+  const listRef = useRef<FlatList<CategoryItem>>(null);
+  const itemSpacing = spacing(4);
+  const itemTotalHeight = ITEM_HEIGHT + itemSpacing;
+  const listTopPadding = spacing(10);
+
+  const selectedIndex = useMemo(
+    () =>
+      categories.findIndex((item) => item.slug?.toString() === selectedSlug),
+    [categories, selectedSlug],
+  );
+
+  useEffect(() => {
+    if (loading || selectedIndex < 0) return;
+
+    const timer = setTimeout(() => {
+      listRef.current?.scrollToIndex({
+        index: selectedIndex,
+        animated: true,
+        viewPosition: 0.35,
+      });
+    }, 80);
+
+    return () => clearTimeout(timer);
+  }, [loading, selectedIndex]);
 
   return (
     <View
@@ -224,6 +248,7 @@ const CategorySidebar = ({
         <SidebarSkeleton />
       ) : (
         <FlatList
+          ref={listRef}
           data={categories}
           keyExtractor={(item) => item.slug.toString()}
           renderItem={({ item }) => (
@@ -237,10 +262,21 @@ const CategorySidebar = ({
           )}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={false}
+          getItemLayout={(_, index) => ({
+            length: itemTotalHeight,
+            offset: listTopPadding + itemTotalHeight * index,
+            index,
+          })}
+          onScrollToIndexFailed={({ index }) => {
+            listRef.current?.scrollToOffset({
+              offset: listTopPadding + itemTotalHeight * index,
+              animated: true,
+            });
+          }}
           contentContainerStyle={[
             styles.listContent,
             {
-              paddingVertical: spacing(10),
+              paddingVertical: listTopPadding,
               paddingHorizontal: spacing(5),
             },
           ]}

@@ -3,7 +3,7 @@
 import React, { memo } from "react";
 import ListCard from "./ListCard";
 import GridCard from "./GridCard";
-import { ListingItem } from "../../../types/shop.types";
+import { ListingItem } from "../../types/shop.types";
 
 
 interface Props {

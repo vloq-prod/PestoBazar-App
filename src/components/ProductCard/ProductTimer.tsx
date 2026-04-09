@@ -3,9 +3,9 @@
 import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Flame, Eye } from "lucide-react-native";
-import { useTheme } from "../../../theme";
-import { useResponsive } from "../../../utils/useResponsive";
-import { useCountdown } from "../../../hooks/useCountdown";
+import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
+import { useCountdown } from "../../hooks/useCountdown";
 
 interface ProductTimerProps {
   expiryDate: string;

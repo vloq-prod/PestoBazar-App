@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput } from "react-native";
 import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
-import { useTheme } from "../../../theme";
-import { useResponsive } from "../../../utils/useResponsive";
+import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 
 export default function ListCard({
   item,

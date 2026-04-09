@@ -1,7 +1,7 @@
 // components/CartItem/index.tsx
 
-import { Text, View, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import { Text, View, TouchableOpacity, Image, TextInput } from "react-native";
+import React, { useEffect, useState } from "react";
 import { useTheme } from "../../theme";
 import { Minus, Plus, Trash2 } from "lucide-react-native";
 import { useResponsive } from "../../utils/useResponsive";
@@ -13,6 +13,7 @@ interface Props {
   onIncrease: (item: CartItemType) => void;
   onDecrease: (item: CartItemType) => void;
   onRemove: (item: CartItemType) => void;
+  onChangeQty: (item: CartItemType, qty: number) => void;
 }
 
 const CartItem = ({
@@ -21,12 +22,18 @@ const CartItem = ({
   onIncrease,
   onDecrease,
   onRemove,
+  onChangeQty
 }: Props) => {
   const { colors } = useTheme();
   const { spacing, font, wp } = useResponsive();
+  const [inputQty, setInputQty] = useState(String(item.qty));
 
   const qty = item.qty;
   const imageSize = wp(22);
+
+  useEffect(() => {
+    setInputQty(String(item.qty));
+  }, [item.qty]);
 
   const formatPrice = (value: string | number) => {
     const num = Number(value);
@@ -42,6 +49,7 @@ const CartItem = ({
         borderColor: colors.border,
         marginBottom: spacing(12),
         paddingBottom: 10,
+        
       }}
     >
       <View style={{ flexDirection: "row", gap: spacing(12) }}>
@@ -146,32 +154,47 @@ const CartItem = ({
                   justifyContent: "center",
                   alignItems: "center",
                   backgroundColor:
-                    qty <= 1 ? colors.inputBackground : colors.primaryLight,
+                    qty <= 1 ? colors.inputBackground : colors.primary,
                 }}
               >
                 <Minus
-                  size={spacing(13)}
-                  color={qty <= 1 ? colors.textTertiary : colors.primary}
+                  size={spacing(16)}
+                  color={qty <= 1 ? colors.primary : colors.textInverse}
                 />
               </TouchableOpacity>
 
               {/* Count */}
               <View
                 style={{
-                  paddingHorizontal: spacing(12),
+                  paddingHorizontal: spacing(2),
                   minWidth: spacing(36),
                   alignItems: "center",
                 }}
               >
-                <Text
+                <TextInput
+                  value={inputQty}
+                  keyboardType="number-pad"
+                  onChangeText={(text) => {
+                    const cleaned = text.replace(/[^0-9]/g, "");
+                    setInputQty(cleaned);
+                  }}
+                  onBlur={() => {
+                    let newQty = Number(inputQty);
+
+                    if (!newQty || newQty < 1) newQty = 1;
+                    if (newQty > item.stock) newQty = item.stock;
+
+                    setInputQty(String(newQty));
+                    onChangeQty(item, newQty);
+                  }}
                   style={{
                     fontSize: font(13),
                     fontFamily: "Poppins_600SemiBold",
-                    color: colors.primary,
+             
+                    textAlign: "center",
+                    minWidth: spacing(36),
                   }}
-                >
-                  {qty}
-                </Text>
+                />
               </View>
 
               {/* Plus */}
@@ -187,13 +210,13 @@ const CartItem = ({
                   backgroundColor:
                     qty >= item.stock
                       ? colors.inputBackground
-                      : colors.primaryLight,
+                      : colors.primary,
                 }}
               >
                 <Plus
-                  size={spacing(13)}
+                  size={spacing(16)}
                   color={
-                    qty >= item.stock ? colors.textTertiary : colors.primary
+                    qty >= item.stock ? colors.primary : colors.textInverse
                   }
                 />
               </TouchableOpacity>

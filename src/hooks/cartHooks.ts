@@ -93,7 +93,6 @@ export const useQuickCart = (params: GetQuickCartParams) => {
 
 
 
-// src/hooks/useUpdateCart.ts
 
 export const useCartAction = () => {
   const queryClient = useQueryClient();
@@ -101,12 +100,86 @@ export const useCartAction = () => {
   const mutation = useMutation({
     mutationFn: (payload: AddToCartRequest) => addToCart(payload),
 
+    onMutate: async (variables) => {
+      const cartKey = [
+        "cart",
+        variables.user_id ?? 0,
+        variables.visitor_id ?? "",
+      ];
+      const cartCountKey = [
+        "cart-count",
+        variables.user_id ?? 0,
+        variables.visitor_id ?? "",
+      ];
+
+      await queryClient.cancelQueries({ queryKey: cartKey });
+      await queryClient.cancelQueries({ queryKey: cartCountKey });
+
+      const previousCart = queryClient.getQueryData<CartResponse>(cartKey);
+      const previousCartCount =
+        queryClient.getQueryData<CartCountResponse>(cartCountKey);
+
+      if (previousCart?.data?.cart_details) {
+        const nextCartDetails = previousCart.data.cart_details
+          .map((item) => {
+            const matchesProduct =
+              item.product_id === variables.product_id ||
+              item.variation_id === variables.product_id;
+
+            if (!matchesProduct) return item;
+
+            return {
+              ...item,
+              qty: variables.qty,
+              total_price: String(
+                Number(item.price_per_piece || 0) * variables.qty,
+              ),
+            };
+          })
+          .filter((item) => item.qty > 0);
+
+        queryClient.setQueryData<CartResponse>(cartKey, {
+          ...previousCart,
+          data: {
+            ...previousCart.data,
+            cart: {
+              ...previousCart.data.cart,
+              cart_count: nextCartDetails.reduce(
+                (sum, item) => sum + Number(item.qty || 0),
+                0,
+              ),
+            },
+            cart_details: nextCartDetails,
+          },
+        });
+
+        queryClient.setQueryData<CartCountResponse>(cartCountKey, {
+          ...(previousCartCount ?? {
+            message: "",
+            status: 200,
+          }),
+          data: nextCartDetails.reduce(
+            (sum, item) => sum + Number(item.qty || 0),
+            0,
+          ),
+        });
+      }
+
+      return { previousCart, previousCartCount, cartKey, cartCountKey };
+    },
+
     onError: (error: any) => {
       console.log("❌ CartAction Error:", error?.response?.data || error?.message);
     },
 
-    onSuccess: (data, variables) => {
-      console.log("✅ CartAction Success:", data?.message, data?.data);
+    onSettled: (_data, _error, variables, context) => {
+      if (_error && context?.previousCart) {
+        queryClient.setQueryData(context.cartKey, context.previousCart);
+      }
+
+      if (_error && context?.previousCartCount) {
+        queryClient.setQueryData(context.cartCountKey, context.previousCartCount);
+      }
 
       queryClient.invalidateQueries({
         queryKey: ["cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
@@ -119,6 +192,10 @@ export const useCartAction = () => {
       queryClient.invalidateQueries({
         queryKey: ["quick-cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
       });
+    },
+
+    onSuccess: (data, variables) => {
+      console.log("✅ CartAction Success:", data?.message, data?.data);
     },
   });
 

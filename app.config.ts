@@ -3,6 +3,7 @@ export default {
     name: "pestobazaar",
     slug: "pestobazaar",
     version: "1.0.0",
+    orientation: "portrait",
 
     userInterfaceStyle: "automatic", 
 
