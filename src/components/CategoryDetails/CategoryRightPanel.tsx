@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { LayoutGrid, List, PackageSearch } from "lucide-react-native";
+import { withTiming, type SharedValue } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import ProductCard from "../ProductCard";
@@ -25,7 +26,10 @@ export type CategoryRightPanelProps = {
   hasSidebar: boolean;
   hasSubcategories?: boolean;
   mainCategoryId?: number;
+  cartPreviewVisible?: SharedValue<number>;
 };
+
+const TIMING_CONFIG = { duration: 280 };
 
 function ProductSkeleton() {
   const { colors } = useTheme();
@@ -114,6 +118,7 @@ export default function CategoryRightPanel({
   hasSidebar,
   hasSubcategories = false,
   mainCategoryId,
+  cartPreviewVisible,
 }: CategoryRightPanelProps) {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -132,6 +137,16 @@ export default function CategoryRightPanel({
 
   const showHeader = hasSidebar ? !!selectedCategory : true;
   const isGrid = viewMode === "grid";
+
+  const handleScrollBegin = () => {
+    if (!cartPreviewVisible) return;
+    cartPreviewVisible.value = withTiming(0, TIMING_CONFIG);
+  };
+
+  const handleScrollEnd = () => {
+    if (!cartPreviewVisible) return;
+    cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
+  };
 
   if (loading) {
     return <ProductSkeleton />;
@@ -238,6 +253,9 @@ export default function CategoryRightPanel({
           onMomentumScrollBegin={() => {
             momentumRef.current = false;
           }}
+          onScrollBeginDrag={handleScrollBegin}
+          onScrollEndDrag={handleScrollEnd}
+          onMomentumScrollEnd={handleScrollEnd}
           onEndReached={() => {
             if (!momentumRef.current && hasMore && !loadingMore) {
               loadMore();

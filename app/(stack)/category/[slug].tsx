@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, StatusBar, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
+import { useSharedValue } from "react-native-reanimated";
 import { useTheme } from "../../../src/theme";
 import AppNavbar from "../../../src/components/comman/AppNavbar";
 import { useCategory } from "../../../src/hooks/homeHooks";
@@ -11,6 +12,7 @@ import CategoryRightPanel, {
   ViewMode,
 } from "../../../src/components/CategoryDetails/CategoryRightPanel";
 import CategorySidebar from "../../../src/components/CategoryDetails/CategorySidebar";
+import AddToCartPreview from "../../../src/components/cart/AddToCartPreview";
 
 const CategoryDetails = () => {
   const { slug, name, image, selectedSubCategoryId } = useLocalSearchParams();
@@ -20,6 +22,7 @@ const CategoryDetails = () => {
   const { colors } = useTheme();
   const { categories, loading: catLoading } = useCategory(mainCategoryId);
   const hasAppliedInitialSelectionRef = useRef(false);
+  const cartPreviewVisible = useSharedValue(1);
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(
     null,
@@ -120,8 +123,11 @@ const CategoryDetails = () => {
           hasSidebar={hasSidebar}
           hasSubcategories={hasSubcategories}
           mainCategoryId={mainCategoryId}
+          cartPreviewVisible={cartPreviewVisible}
         />
       </View>
+
+      <AddToCartPreview />
     </SafeAreaView>
   );
 };

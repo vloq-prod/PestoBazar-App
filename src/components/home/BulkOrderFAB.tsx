@@ -1,6 +1,11 @@
 import React from "react";
-import { TouchableOpacity, Text, View, useWindowDimensions } from "react-native";
-import { ChevronLeft, ShoppingBag } from "lucide-react-native";
+import {
+  TouchableOpacity,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { ChevronLeft, MoveRight, ShoppingBag } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
@@ -11,6 +16,9 @@ import Animated, {
   type SharedValue,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
+
+import image1 from "../../../assets/image.png";
+import { Image } from "expo-image";
 
 type Props = {
   onPress?: () => void;
@@ -80,75 +88,94 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
         zIndex: 50,
         flexDirection: "row",
         alignItems: "center",
-        borderRadius: 14,
+        borderRadius: 8,
         borderTopRightRadius: 0,
         borderBottomRightRadius: 0,
-        paddingVertical: 8,
-        paddingLeft: 10,
-        paddingRight: 10,
-        backgroundColor: colors.primary,
-        shadowColor: "#000",
-        shadowOffset: { width: -3, height: 4 },
-        shadowOpacity: 0.22,
-        shadowRadius: 8,
-        elevation: 8,
+
+        paddingVertical: 2,
+        paddingLeft: 2,
+
+        backgroundColor: colors.background,
       }}
     >
-      <Animated.View
-        style={[
-          expandStyle,
-          {
-            overflow: "hidden",
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
-            height: 30,
-          },
-        ]}
-      >
+      <View style={{ position: "relative" }}>
+        {/* Background Image */}
+        <Image
+          source={image1}
+          style={{
+            width: 75,
+            height: 32,
+            borderRadius: 8,
+          }}
+          contentFit="cover"
+        />
+
+        {/* 🔥 Dark Overlay */}
         <View
           style={{
-            width: 30,
-            height: 30,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.55)", // 👈 increase/decrease this
             borderRadius: 8,
-            backgroundColor: "rgba(255,255,255,0.18)",
+          }}
+        />
+
+        {/* Overlay Content */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 6,
           }}
         >
-          <ShoppingBag size={15} color="#fff" strokeWidth={2} />
-        </View>
-
-        <View>
-          <Text
-            style={{
-              fontSize: 12,
-              fontFamily: "Poppins_600SemiBold",
-              color: "#fff",
-              lineHeight: 12,
-              includeFontPadding: false,
-            }}
+          <View
+            style={{ flexDirection: "row", alignItems: "flex-end", gap: 1 }}
           >
-            Bulk
-          </Text>
+            <View>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: "#fff",
+                  fontWeight: "700",
+                  lineHeight: 14,
+                  fontFamily: "Poppins_500Medium",
+                }}
+              >
+                Bulk
+              </Text>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: "#fff",
+                  fontWeight: "700",
+                  lineHeight: 13,
+                  fontFamily: "Poppins_500Medium",
+                }}
+              >
+                Orders
+              </Text>
+            </View>
 
-          <Text
-            style={{
-              fontSize: 12,
-              fontFamily: "Poppins_600SemiBold",
-              color: "#fff",
-              lineHeight: 14,
-              includeFontPadding: false,
-            }}
-          >
-            Order
-          </Text>
+            <Animated.View style={{ transform: [{ rotate: "-40deg" }] }}>
+              <MoveRight size={22} color={colors.background} />
+            </Animated.View>
+          </View>
         </View>
-      </Animated.View>
+      </View>
 
-      <Animated.View style={chevronStyle}>
+      {/* <Animated.View style={chevronStyle}>
         <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
-      </Animated.View>
+      </Animated.View> */}
     </TouchableOpacity>
   );
 };

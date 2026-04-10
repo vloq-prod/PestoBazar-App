@@ -11,6 +11,11 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import AppNavbar from "../../src/components/comman/AppNavbar";
@@ -32,10 +37,17 @@ import { ListingItem } from "../../src/types/shop.types";
 import { useLocalSearchParams } from "expo-router";
 import { useAddToCart } from "../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
+import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
 
 type GridMode = "grid" | "list";
 
 const DEFAULT_PRICE = { from: 200, to: 50000 };
+const SCROLL_THRESHOLD = 10;
+const TIMING_CONFIG = { duration: 280 };
+
+const AnimatedFlatList = Animated.createAnimatedComponent(
+  FlatList<ListingItem>,
+);
 
 export default function ShopScreen() {
   const { search } = useLocalSearchParams();
@@ -55,6 +67,8 @@ export default function ShopScreen() {
   const filterRef = useRef<FilterBottomSheetRef>(null);
   const sortRef = useRef<SortBottomSheetRef>(null);
   const momentumRef = useRef(false);
+  const lastScrollY = useSharedValue(0);
+  const cartPreviewVisible = useSharedValue(1);
 
   const { products, loading, loadingMore, hasMore, allLoaded, loadMore } =
     useListing({
@@ -104,33 +118,65 @@ export default function ShopScreen() {
     }
   }, [hasMore, loadingMore, loadMore]);
 
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      const currentY = event.contentOffset.y;
+      const diff = currentY - lastScrollY.value;
+
+      if (currentY <= 0) {
+        if (cartPreviewVisible.value !== 1) {
+          cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
+        }
+      } else if (diff > SCROLL_THRESHOLD && cartPreviewVisible.value !== 0) {
+        cartPreviewVisible.value = withTiming(0, TIMING_CONFIG);
+      } else if (diff < -SCROLL_THRESHOLD && cartPreviewVisible.value !== 1) {
+        cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
+      }
+
+      lastScrollY.value = currentY;
+    },
+  });
+
   const renderItem: ListRenderItem<ListingItem> = useCallback(
     ({ item }) => {
       if (isGrid) {
         return (
           <View style={{ width: ITEM_WIDTH }}>
-            <ProductCard item={item} mode="grid" onAddToCart={handleAddToCart} />
+            <ProductCard
+              item={item}
+              mode="grid"
+              onAddToCart={handleAddToCart}
+            />
           </View>
         );
       }
-      return <ProductCard item={item} mode="list" onAddToCart={handleAddToCart} />;
+      return (
+        <ProductCard item={item} mode="list" onAddToCart={handleAddToCart} />
+      );
     },
     [isGrid, ITEM_WIDTH],
   );
 
-
   const handleAddToCart = useCallback(
-  (item: ListingItem, qty: number) => {
-    if (!visitorId) return;
+    (item: ListingItem, qty: number) => {
+      if (!visitorId) return;
 
-    addToCart({
-      visitor_id: visitorId,
-      product_id: item.id,
-      qty: qty,
-    });
-  },
-  [addToCart, visitorId]
-);
+      addToCart({
+        visitor_id: visitorId,
+        product_id: item.id,
+        qty: qty,
+      });
+    },
+    [addToCart, visitorId],
+  );
+
+  const onScrollBegin = () => {
+    cartPreviewVisible.value = withTiming(0, TIMING_CONFIG);
+  };
+
+  const onScrollEnd = () => {
+    cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
+  };
   const PAD = spacing(12);
   const GAP = spacing(10);
 
@@ -343,26 +389,35 @@ export default function ShopScreen() {
       </View>
 
       {/* LIST */}
-      <FlatList
-        key={gridMode} // 🔥 MUST
-        data={products}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        numColumns={isGrid ? 2 : 1}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={contentContainerStyle}
-        columnWrapperStyle={
-          isGrid
-            ? { justifyContent: "space-between", marginBottom: GAP }
-            : undefined
-        }
-        ListEmptyComponent={ListEmpty}
-        ListFooterComponent={ListFooter}
-        onEndReached={onEndReached}
-        onEndReachedThreshold={0.6}
-        onMomentumScrollBegin={onMomentumScrollBegin}
-        removeClippedSubviews={isGrid}
-      />
+      <View style={{ flex: 1 }}>
+        <AnimatedFlatList
+          onScrollBeginDrag={onScrollBegin}
+          onScrollEndDrag={onScrollEnd}
+          onMomentumScrollEnd={onScrollEnd}
+          key={gridMode}
+          data={products}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={isGrid ? 2 : 1}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={contentContainerStyle}
+          columnWrapperStyle={
+            isGrid
+              ? { justifyContent: "space-between", marginBottom: GAP }
+              : undefined
+          }
+          ListEmptyComponent={ListEmpty}
+          ListFooterComponent={ListFooter}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.6}
+          onMomentumScrollBegin={onMomentumScrollBegin}
+          removeClippedSubviews={isGrid}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+        />
+
+        <AddToCartPreview visible={cartPreviewVisible} />
+      </View>
 
       <FilterBottomSheet ref={filterRef} onApply={handleApplyFilter} />
       <SortBottomSheet
