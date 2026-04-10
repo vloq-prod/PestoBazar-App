@@ -5,7 +5,11 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { ChevronLeft, MoveRight, ShoppingBag } from "lucide-react-native";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MoveRight,
+} from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
@@ -44,30 +48,24 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
     const progress = manualOpen.value;
 
     return {
-      width: interpolate(progress, [0, 1], [0, 75], Extrapolate.CLAMP),
+      width: interpolate(progress, [0, 1], [0, 80], Extrapolate.CLAMP),
       opacity: interpolate(
         progress,
         [0, 0.35, 1],
         [0, 0, 1],
         Extrapolate.CLAMP,
       ),
+      overflow: "hidden",
     };
   });
 
-  const chevronStyle = useAnimatedStyle(() => {
+  const collapsedHandleStyle = useAnimatedStyle(() => {
     const progress = manualOpen.value;
 
     return {
-      transform: [
-        {
-          rotate: `${interpolate(
-            progress,
-            [0, 1],
-            [0, 180],
-            Extrapolate.CLAMP,
-          )}deg`,
-        },
-      ],
+      width: interpolate(progress, [0, 1], [20, 0], Extrapolate.CLAMP),
+      opacity: interpolate(progress, [0, 0.35, 1], [1, 0, 0], Extrapolate.CLAMP),
+      overflow: "hidden",
     };
   });
 
@@ -88,7 +86,8 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
         zIndex: 50,
         flexDirection: "row",
         alignItems: "center",
-        borderRadius: 8,
+        borderTopLeftRadius: 8,
+        borderBottomLeftRadius: 8,
         borderTopRightRadius: 0,
         borderBottomRightRadius: 0,
 
@@ -98,19 +97,20 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
         backgroundColor: colors.background,
       }}
     >
-      <View style={{ position: "relative" }}>
-        {/* Background Image */}
+      {/* when visible show only this show */}
+      <Animated.View style={[{ position: "relative" }, expandStyle]}>
         <Image
           source={image1}
           style={{
-            width: 75,
-            height: 32,
+            width: 80,
+            height: 40,
             borderRadius: 8,
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
           }}
           contentFit="cover"
         />
 
-        {/* 🔥 Dark Overlay */}
         <View
           style={{
             position: "absolute",
@@ -118,12 +118,13 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.55)", // 👈 increase/decrease this
+            backgroundColor: "rgba(0,0,0,0.55)",
             borderRadius: 8,
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
           }}
         />
 
-        {/* Overlay Content */}
         <View
           style={{
             position: "absolute",
@@ -139,15 +140,15 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
           }}
         >
           <View
-            style={{ flexDirection: "row", alignItems: "flex-end", gap: 1 }}
+            style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
           >
             <View>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: 14,
                   color: "#fff",
                   fontWeight: "700",
-                  lineHeight: 14,
+                  lineHeight: 20,
                   fontFamily: "Poppins_500Medium",
                 }}
               >
@@ -155,10 +156,10 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
               </Text>
               <Text
                 style={{
-                  fontSize: 11,
+                  fontSize: 14,
                   color: "#fff",
                   fontWeight: "700",
-                  lineHeight: 13,
+                  lineHeight: 15,
                   fontFamily: "Poppins_500Medium",
                 }}
               >
@@ -166,16 +167,43 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
               </Text>
             </View>
 
-            <Animated.View style={{ transform: [{ rotate: "-40deg" }] }}>
-              <MoveRight size={22} color={colors.background} />
-            </Animated.View>
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <ChevronRight size={22} color={colors.background} />
+            </View>
           </View>
         </View>
-      </View>
+      </Animated.View>
 
-      {/* <Animated.View style={chevronStyle}>
-        <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
-      </Animated.View> */}
+      {/* When visible hide this is show  only */}
+      <Animated.View
+        style={{
+          height: 40,
+          justifyContent: "center",
+          padding: 0.5,
+        }}
+      >
+        <Animated.View
+          style={collapsedHandleStyle}
+        >
+          <View
+          style={{
+            width: 20,
+            height: 40,
+            justifyContent: "center",
+            backgroundColor: "#000000",
+            borderTopLeftRadius: 5,
+            borderBottomLeftRadius: 5,
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+            overflow: "hidden",
+          }}
+        >
+          <Animated.View>
+            <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
+          </Animated.View>
+          </View>
+        </Animated.View>
+      </Animated.View>
     </TouchableOpacity>
   );
 };

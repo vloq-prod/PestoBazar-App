@@ -22,9 +22,13 @@ import Animated, {
 
 type Props = {
   visible?: SharedValue<number>;
+  pbandroid?: number,
+  pbios?: number,
+
+
 };
 
-const AddToCartPreview: React.FC<Props> = ({ visible }) => {
+const AddToCartPreview: React.FC<Props> = ({ visible, pbandroid = 12, pbios = 90 }) => {
   const router = useRouter();
   const { colors } = useTheme();
   const { spacing, font, isTablet } = useResponsive();
@@ -80,7 +84,7 @@ const AddToCartPreview: React.FC<Props> = ({ visible }) => {
         styles.container,
         animatedContainerStyle,
         {
-          bottom: Platform.OS === "ios" ? spacing(90) : spacing(12),
+          bottom: Platform.OS === "ios" ? spacing(pbios) : spacing(pbandroid),
           left: horizontalInset,
           right: horizontalInset,
         },

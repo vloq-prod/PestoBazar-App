@@ -127,7 +127,7 @@ const CategoryDetails = () => {
         />
       </View>
 
-      <AddToCartPreview />
+      <AddToCartPreview pbandroid={12} pbios={30} />
     </SafeAreaView>
   );
 };
