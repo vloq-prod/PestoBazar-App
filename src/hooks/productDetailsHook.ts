@@ -23,7 +23,7 @@ export const useProductDetails = (params: ProductDetailsParams) => {
         reviews: Object.values(data?.grouped_reviews || {}),
 
         // combo
-        combos: data?.product_combo_variation || [],
+        combos: data?.product_variation_master || [],
         selectedCombo: data?.selected_combo_variation || [],
 
         // descriptions (accordion UI use)

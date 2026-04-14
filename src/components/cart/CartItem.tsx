@@ -6,6 +6,7 @@ import { useTheme } from "../../theme";
 import { Minus, Plus, Trash2 } from "lucide-react-native";
 import { useResponsive } from "../../utils/useResponsive";
 import { CartItem as CartItemType } from "../../types/cart.types";
+import { useRouter } from "expo-router";
 
 interface Props {
   item: CartItemType;
@@ -25,6 +26,7 @@ const CartItem = ({
   onChangeQty
 }: Props) => {
   const { colors } = useTheme();
+  const router = useRouter();
   const { spacing, font, wp } = useResponsive();
   const [inputQty, setInputQty] = useState(String(item.qty));
 
@@ -42,15 +44,26 @@ const CartItem = ({
   };
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.85}
       style={{
         backgroundColor: colors.surface,
         borderBottomWidth: 1,
         borderColor: colors.border,
         marginBottom: spacing(12),
         paddingBottom: 10,
-        
       }}
+
+        onPress={() =>
+        // router.push({
+        //   pathname: "(stack)/product/[id]",
+        //   params: {
+        //     id: item.product_id,
+        //     product_name: item.name,
+        //   },
+        // })
+        console.log("product id and product name: ", item.product_id, " and ", item.name)
+      }
     >
       <View style={{ flexDirection: "row", gap: spacing(12) }}>
         {/* Image */}
@@ -224,7 +237,7 @@ const CartItem = ({
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

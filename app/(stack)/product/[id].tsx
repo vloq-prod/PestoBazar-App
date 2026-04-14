@@ -33,15 +33,20 @@ import ImageVideoCarousel from "../../../src/components/comman/ImageVideoCarouse
 import Branches from "../../../src/components/home/Branches";
 import HomeUsp from "../../../src/components/home/HomeUsp";
 import ProductDetailsSkeleton from "../../../src/skeleton/ProductDetails";
+import type { ProductVariation } from "../../../src/types/productdetails.types";
+import { useAddToCart, useCart } from "../../../src/hooks/cartHooks";
+import { useAppVisitorStore } from "../../../src/store/auth";
 
 const FOOTER_HEIGHT = 112;
 
 const ProductDetails = () => {
   const { id, product_name } = useLocalSearchParams();
+  const visitorId = useAppVisitorStore((state) => state.visitorId);
   const router = useRouter();
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const productId = Number(id);
+  // console.log("product id: ", productId)
   const [quantity, setQuantity] = useState(0);
 
   const insets = useSafeAreaInsets();
@@ -51,12 +56,24 @@ const ProductDetails = () => {
     product_id: productId,
   });
 
+  const { addToCart } = useAddToCart();
+
+  const {
+    data: cartData,
+    isLoading: countloding,
+    error: counterror,
+  } = useCart({
+    user_id: 0,
+    visitor_id: visitorId!,
+  });
+
   const headerContentOffset = insets.top;
 
   const productImages = data?.images ?? [];
   // console.log("product iiamges: ", productImages)
   const productInfo = data?.product;
   const descriptionUi = data?.descriptions ?? [];
+  const combos = data?.combos;
 
   // console.log("description ui : ", descriptionUi);
 
@@ -119,21 +136,59 @@ const ProductDetails = () => {
       ? BASE_URL + "/product-video/" + item.video_path
       : null,
   }));
+
   const rawRatingValue = Number(productInfo?.avg_rating);
   const hasRating = Number.isFinite(rawRatingValue) && rawRatingValue > 0;
   const ratingValue = hasRating ? rawRatingValue : 0;
   const totalReviews = Number(productInfo?.total_reviews ?? 0);
+  const selectedComboId = combos?.some((item) => item.id === productId)
+    ? productId
+    : combos?.[0]?.id;
+
+  const getComboLabel = (item: ProductVariation) => {
+    if (item?.size?.trim()) return item.size.trim();
+
+    const weightWithUnit = [item?.actual_weight, item?.unit_of_measure]
+      .filter((value) => typeof value === "string" && value.trim().length > 0)
+      .join(" ")
+      .trim();
+
+    return weightWithUnit || "Option";
+  };
 
   const handleAddToCart = () => {
     setQuantity(1);
+
+    addToCart({
+      user_id: 0,
+      visitor_id: visitorId!,
+      product_id: productId,
+      qty: 1,
+    });
   };
 
   const handleIncrease = () => {
-    setQuantity((prev) => prev + 1);
+    const newQty = quantity + 1;
+    setQuantity(newQty);
+
+    addToCart({
+      user_id: 0,
+      visitor_id: visitorId!,
+      product_id: productId,
+      qty: newQty,
+    });
   };
 
   const handleDecrease = () => {
-    setQuantity((prev) => Math.max(prev - 1, 0));
+    const newQty = Math.max(quantity - 1, 0);
+    setQuantity(newQty);
+
+    addToCart({
+      user_id: 0,
+      visitor_id: visitorId!,
+      product_id: productId,
+      qty: newQty,
+    });
   };
 
   return (
@@ -292,6 +347,56 @@ const ProductDetails = () => {
           </View>
         </View>
 
+        {!!combos?.length && (
+          <View style={styles.comboSection}>
+            <View style={styles.comboList}>
+              {combos.map((item) => {
+                const isSelected = item.id === selectedComboId;
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      if (item.id === productId) return;
+
+                      router.replace({
+                        pathname: "(stack)/product/[id]",
+                        params: {
+                          id: item.id,
+                          product_name: resolvedProductName,
+                        },
+                      });
+                    }}
+                    style={[
+                      styles.comboPill,
+                      {
+                        backgroundColor: isSelected
+                          ? colors.primary
+                          : colors.background,
+                        borderColor: isSelected
+                          ? colors.primary
+                          : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.comboPillText,
+                        {
+                          color: isSelected ? colors.textInverse : colors.text,
+                        },
+                      ]}
+                    >
+                      {getComboLabel(item)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         {descriptionUi.length > 0 && (
           <View style={styles.descriptionSection}>
             {descriptionUi.map((item) => (
@@ -348,7 +453,7 @@ const ProductDetails = () => {
                     { color: colors.textOnPrimary },
                   ]}
                 >
-                  2
+                  {cartData?.data.cart.cart_count}
                 </Text>
               </View>
             </View>
@@ -595,6 +700,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 18,
     gap: 14,
+  },
+  comboSection: {
+    paddingHorizontal: 16,
+    marginTop: -6,
+  },
+  comboList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  comboPill: {
+    minWidth: 72,
+    minHeight: 40,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  comboPillText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontFamily: "Poppins_600SemiBold",
+    includeFontPadding: false,
+    textAlign: "center",
   },
   descriptionCard: {
     gap: 8,
