@@ -5,16 +5,18 @@ import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { ListingItem } from "../../types/shop.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { useRouter } from "expo-router";
 
 interface Props {
   item: ListingItem;
-  onPress?: (item: ListingItem) => void;
+
   onAddToCart?: (item: ListingItem, qty: number) => void;
 }
 
-const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
+const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
+  const router = useRouter()
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -43,7 +45,15 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.85}
-      onPress={() => onPress?.(item)}
+            onPress={() =>
+        router.push({
+          pathname: "(stack)/product/[id]",
+          params: {
+            id: item.id,
+            product_name: item.product_name,
+          },
+        })
+      }
       style={{
         flex: 1,
         borderWidth: 1,

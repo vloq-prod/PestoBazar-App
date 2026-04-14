@@ -4,18 +4,19 @@ import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { useRouter } from "expo-router";
 
 export default function ListCard({
   item,
-  onPress,
+
   onAddToCart,
 }: {
   item: any;
-  onPress?: (item: any) => void;
   onAddToCart?: (item: any, qty: number) => void;
 }) {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
+  const router = useRouter();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -44,7 +45,15 @@ export default function ListCard({
   return (
     <TouchableOpacity
       activeOpacity={0.88}
-      onPress={() => onPress?.(item)}
+      onPress={() =>
+        router.push({
+          pathname: "(stack)/product/[id]",
+          params: {
+            id: item.id,
+            product_name: item.product_name,
+          },
+        })
+      }
       style={{
         flexDirection: "row",
         gap: spacing(8),

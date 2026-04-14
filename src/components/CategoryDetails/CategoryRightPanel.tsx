@@ -162,7 +162,7 @@ export default function CategoryRightPanel({
               borderBottomColor: colors.border,
               backgroundColor: colors.surface,
               paddingHorizontal: spacing(12),
-              paddingVertical: spacing(10),
+              paddingVertical: spacing(6),
             },
           ]}
         >

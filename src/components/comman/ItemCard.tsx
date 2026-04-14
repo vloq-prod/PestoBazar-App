@@ -5,6 +5,7 @@ import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { ProductItem } from "../../types/home.types";
+import { useRouter } from "expo-router";
 
 export default function ItemCard({
   item,
@@ -17,6 +18,7 @@ export default function ItemCard({
 }) {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
+  const router = useRouter();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -47,7 +49,15 @@ export default function ItemCard({
   return (
     <TouchableOpacity
       activeOpacity={0.85}
-      onPress={() => onPress?.(item)}
+      onPress={() =>
+        router.push({
+          pathname: "(stack)/product/[id]",
+          params: {
+            id: item.id,
+            product_name: item.product_name,
+          },
+        })
+      }
       style={{
         flex: 1,
         borderWidth: 1,

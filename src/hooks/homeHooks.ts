@@ -57,14 +57,14 @@ export const useCategoryWithSubcategories = (rootId: number = 0) => {
     })),
   });
 
-  const categoriesWithSubcategories: CategoryWithSubcategories[] =
-    mainCategories.map((mainCategory, index) => ({
-      mainCategory,
-      mainCategoryId: mainCategory.id,
-      mainCategoryName: mainCategory.category_name,
-      subcategories:
-        subcategoryQueries[index]?.data?.data?.category_master ?? [],
-    }));
+const categoriesWithSubcategories: CategoryWithSubcategories[] =
+  mainCategories.map((mainCategory, index) => ({
+    mainCategory,
+    mainCategoryId: mainCategory.id,
+    mainCategoryName: mainCategory.category_name,
+    subcategories:
+      (subcategoryQueries[index]?.data?.data?.category_master ?? []).slice(0, 8),
+  }));
 
   return {
     categories: mainCategories,
