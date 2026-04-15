@@ -27,13 +27,24 @@ type MediaItem = {
 };
 
 // ─── Video Item ───────────────────────────────────────────────
-const VideoItem = ({ uri, shouldPlay }: { uri: string; shouldPlay: boolean }) => {
-  const player = useVideoPlayer(uri, (p) => { p.loop = true; });
+const VideoItem = ({
+  uri,
+  shouldPlay,
+}: {
+  uri: string;
+  shouldPlay: boolean;
+}) => {
+  const player = useVideoPlayer(uri, (p) => {
+    p.loop = true;
+  });
 
   React.useEffect(() => {
     if (!player) return;
     if (shouldPlay) player.play();
-    else { player.pause(); player.currentTime = 0; }
+    else {
+      player.pause();
+      player.currentTime = 0;
+    }
   }, [shouldPlay, player]);
 
   return (
@@ -62,17 +73,14 @@ const CarouselDot = ({
       easing: Easing.out(Easing.cubic),
     }),
     opacity: withTiming(isActive ? 1 : 0.35, { duration: 250 }),
-     backgroundColor: withTiming(
-    isActive ? activeColor : "#fff",
-    { duration: 250 }
-  ),
+    backgroundColor: withTiming(isActive ? activeColor : "#fff", {
+      duration: 250,
+    }),
   }));
 
   return (
     <Animated.View style={[styles.dot, animStyle]}>
-      {isVideo && isActive && (
-        <Play size={7} color="#fff" fill="#fff" />
-      )}
+      {isVideo && isActive && <Play size={7} color="#fff" fill="#fff" />}
     </Animated.View>
   );
 };
@@ -90,8 +98,7 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[] }> = ({ data }) => {
     if (viewableItems.length > 0) setActiveIndex(viewableItems[0].index ?? 0);
   }, []);
 
-  console.log("iamges data: ", data)
-
+  // console.log("iamges data: ", data)
 
   if (!data || data.length === 0) return null;
 
@@ -110,7 +117,10 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[] }> = ({ data }) => {
           renderItem={({ item, index }) => (
             <TouchableOpacity
               activeOpacity={0.95}
-              onPress={() => { setLightboxIndex(index); setLightboxOpen(true); }}
+              onPress={() => {
+                setLightboxIndex(index);
+                setLightboxOpen(true);
+              }}
               style={styles.slide}
             >
               {item.type === "image" ? (
@@ -120,7 +130,10 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[] }> = ({ data }) => {
                   resizeMode="cover"
                 />
               ) : (
-                <VideoItem uri={item.video!} shouldPlay={activeIndex === index} />
+                <VideoItem
+                  uri={item.video!}
+                  shouldPlay={activeIndex === index}
+                />
               )}
             </TouchableOpacity>
           )}
@@ -176,7 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-   backgroundColor: "black", 
+    backgroundColor: "black",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 20,

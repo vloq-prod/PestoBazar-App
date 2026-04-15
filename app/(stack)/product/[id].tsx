@@ -8,7 +8,10 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useProductDetails } from "../../../src/hooks/productDetailsHook";
+import {
+  useEstimatedDelivery,
+  useProductDetails,
+} from "../../../src/hooks/productDetailsHook";
 import { useTheme } from "../../../src/theme";
 import {
   ChevronLeft,
@@ -36,6 +39,12 @@ import type { ProductVariation } from "../../../src/types/productdetails.types";
 import { useAddToCart, useCart } from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
 import DescriptionAccordion from "../../../src/components/productDetails/DescriptionAccordion";
+import ReviewSection from "../../../src/components/productDetails/ReviewSection";
+import ProductDescription from "../../../src/components/productDetails/ProductDescription";
+import DeliveryInfoCard from "../../../src/components/productDetails/DeliveryInfoCard";
+import CustomerAlsoBoughtProduct from "../../../src/components/productDetails/CustomerAlsoBoughtProduct";
+import SaveRecentlyViewedProduct from "../../../src/components/productDetails/saveRecentlyViewedProduct";
+import DocumentButtons from "../../../src/components/productDetails/DocumentButtons";
 
 const FOOTER_HEIGHT = 112;
 
@@ -72,7 +81,12 @@ const ProductDetails = () => {
   const combos = data?.combos;
   const selectedVariation = data?.variation;
 
-  const selectedCombo = data?.selectedCombo;
+  const pricing = data?.pricing;
+
+  const sellingPrice = Number(pricing?.selling_price ?? 0);
+  const mrpPrice = Number(pricing?.mrp ?? 0);
+
+  // const selectedCombo = data?.selectedCombo;
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -128,134 +142,13 @@ const ProductDetails = () => {
   const hasRating = Number.isFinite(rawRatingValue) && rawRatingValue > 0;
   const ratingValue = hasRating ? rawRatingValue : 0;
   const totalReviews = Number(productInfo?.total_reviews ?? 0);
-  const sellingPrice = Number(selectedVariation?.selling_price ?? 0);
-  const mrpPrice = Number(selectedVariation?.mrp ?? 0);
+
   const discountPercentage =
     mrpPrice > 0 && sellingPrice > 0 && mrpPrice > sellingPrice
       ? Math.round(((mrpPrice - sellingPrice) / mrpPrice) * 100)
       : 0;
   const rawDescriptionHtml = productInfo?.description ?? "";
-  const descriptionHeadingMatch = rawDescriptionHtml.match(
-    /<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/i,
-  );
-  const descriptionHeadingAttributes = descriptionHeadingMatch?.[2] ?? "";
-  const hasVisibleDescriptionHeading =
-    !!descriptionHeadingMatch &&
-    !/display\s*:\s*none/i.test(descriptionHeadingAttributes);
-  const descriptionSectionTitle =
-    hasVisibleDescriptionHeading && descriptionHeadingMatch
-      ? descriptionHeadingMatch[3]
-          .replace(/<[^>]+>/g, " ")
-          .replace(/&nbsp;/gi, " ")
-          .replace(/\s+/g, " ")
-          .trim()
-      : "Description";
-  const descriptionBodyHtml =
-    hasVisibleDescriptionHeading && descriptionHeadingMatch
-      ? rawDescriptionHtml.replace(descriptionHeadingMatch[0], "").trim()
-      : rawDescriptionHtml;
-  const productDescriptionBaseStyle = {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 22,
-    fontFamily: "Poppins_400Regular",
-  } as const;
-  const productDescriptionTagStyles: Record<string, any> = {
-    p: { marginTop: 0, marginBottom: 8 },
-    ul: { marginTop: 4, marginBottom: 8, paddingLeft: 18 },
-    ol: { marginTop: 4, marginBottom: 8, paddingLeft: 18 },
-    li: { marginBottom: 6, lineHeight: 22 },
-    strong: {
-      fontFamily: "Poppins_600SemiBold",
-      color: colors.text,
-    },
-    em: {
-      fontFamily: "Poppins_400Regular",
-      fontStyle: "italic",
-      color: colors.textSecondary,
-    },
-    h1: {
-      fontFamily: "Poppins_700Bold",
-      fontSize: 18,
-      lineHeight: 26,
-      color: colors.text,
-      marginTop: 0,
-      marginBottom: 10,
-    },
-    h2: {
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: 16,
-      lineHeight: 24,
-      color: colors.text,
-      marginTop: 0,
-      marginBottom: 8,
-    },
-    h3: {
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: 13,
-      lineHeight: 22,
-      color: colors.text,
-      marginTop: 0,
-      marginBottom: 8,
-    },
-    h4: {
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: 14,
-      lineHeight: 21,
-      color: colors.text,
-      marginTop: 0,
-      marginBottom: 8,
-    },
-    h5: {
-      fontFamily: "Poppins_700Bold",
-      fontSize: 17,
-      lineHeight: 24,
-      color: colors.text,
-      marginTop: 0,
-      marginBottom: 8,
-    },
-    h6: {
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: 14,
-      lineHeight: 20,
-      color: colors.text,
-      marginTop: 0,
-      marginBottom: 8,
-    },
-    table: {
-      width: "100%",
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      marginVertical: 8,
-      overflow: "hidden",
-    },
-    thead: {
-      backgroundColor: colors.primary + "14",
-    },
-    th: {
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: 12,
-      color: colors.primary,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-    },
-    td: {
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      fontSize: 12,
-      fontFamily: "Poppins_400Regular",
-      color: colors.textSecondary,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-    },
-  };
+
   const formatPrice = (value: number) => {
     if (!Number.isFinite(value)) return "0";
     if (Number.isInteger(value)) return String(value);
@@ -516,80 +409,50 @@ const ProductDetails = () => {
         )}
 
         {/* ── Variation Details Card ── */}
-        <View style={{ flexDirection: "row" }}>
-          <View
-            style={[
-              styles.variationCard,
-              {
-                borderColor: colors.border,
-                backgroundColor: colors.backgroundgray,
-              },
-            ]}
-          >
-            {/* SKU Row */}
-            {!!selectedVariation?.sku && (
-              <View style={styles.variationRow}>
-                <Text
-                  style={[styles.variationKey, { color: colors.textTertiary }]}
-                >
-                  SKU#:
+        <View>
+          <View style={{ marginHorizontal: 16 }}>
+            <View
+              style={[
+                styles.variationCard,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundgray,
+                },
+              ]}
+            >
+              {/* LEFT: SKU */}
+              <View style={styles.leftBlock}>
+                <Text style={[styles.variationKey, { color: colors.text }]}>
+                  SKU#
                 </Text>
-                <Text
-                  style={[styles.variationVal, { color: colors.textSecondary }]}
-                >
-                  {selectedVariation.sku}
+                <Text style={[styles.variationVal, { color: colors.text }]}>
+                  {selectedVariation?.sku || "-"}
                 </Text>
               </View>
-            )}
 
-            {/* Stock Row */}
-            <View style={styles.variationRow}>
-              <Text
-                style={[styles.variationKey, { color: colors.textTertiary }]}
-              >
-                Stock:
-              </Text>
-
-              <View style={[styles.stockBadge]}>
-                <View
-                  style={[
-                    styles.stockDot,
-                    { backgroundColor: "#22C55E" }, // green dot
-                  ]}
-                />
-                <Text style={[styles.stockText, { color: "#16A34A" }]}>
-                  In Stock
+              {/* RIGHT: STOCK */}
+              <View style={styles.rightBlock}>
+                <Text style={[styles.variationKey, { color: colors.text }]}>
+                  Stock
                 </Text>
+
+                <View style={[styles.stockBadge]}>
+                  <View
+                    style={[styles.stockDot, { backgroundColor: "#22C55E" }]}
+                  />
+                  <Text style={[styles.stockText, { color: "#16A34A" }]}>
+                    In Stock
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
+
+          <DocumentButtons />
         </View>
 
-        {!!descriptionBodyHtml && (
-          <View
-            style={[
-              styles.productDescriptionSection,
-              {
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
-            ]}
-          >
-            <View style={styles.productDescriptionHeader}>
-              <Text
-                style={[styles.productDescriptionTitle, { color: colors.text }]}
-              >
-                {descriptionSectionTitle}
-              </Text>
-            </View>
-            <RenderHTML
-              contentWidth={width - 60}
-              source={{ html: descriptionBodyHtml }}
-              baseStyle={productDescriptionBaseStyle}
-              tagsStyles={productDescriptionTagStyles}
-              enableCSSInlineProcessing
-            />
-          </View>
+        {!!rawDescriptionHtml && (
+          <ProductDescription html={rawDescriptionHtml} />
         )}
 
         {/* ── Descriptions ── */}
@@ -598,6 +461,12 @@ const ProductDetails = () => {
         )}
 
         <HomeUsp />
+
+        <DeliveryInfoCard variationId={selectedVariation?.id ?? 0} />
+
+        <CustomerAlsoBoughtProduct productId={productId} />
+        <SaveRecentlyViewedProduct productId={productId} />
+        <ReviewSection product_id={productId} />
       </Animated.ScrollView>
 
       {/* ── FOOTER ── */}
@@ -881,44 +750,41 @@ const styles = StyleSheet.create({
 
   // ── Variation Card ──
   variationCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    flex: 1,
-    marginHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    gap: 12,
-  },
-
-  variationRow: {
-    flexDirection: "row",
+    flexDirection: "row", // ✅ keep row
     alignItems: "center",
     justifyContent: "space-between",
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+
+  leftBlock: {
+    flex: 1,
+    gap: 2,
+  },
+
+  rightBlock: {
+    flex: 1,
+    alignItems: "flex-end",
     gap: 4,
   },
 
   variationKey: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Poppins_400Regular",
-    includeFontPadding: false,
-    opacity: 0.7,
+    opacity: 0.6,
   },
 
   variationVal: {
     fontSize: 13,
-    fontFamily: "Poppins_500Medium",
-    includeFontPadding: false,
+    fontFamily: "Poppins_600SemiBold",
   },
 
   stockBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-
-    paddingVertical: 4,
-    borderRadius: 20,
   },
 
   stockDot: {
@@ -931,6 +797,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Poppins_500Medium",
   },
+
   // ── Footer ──
   footercontainer: {
     position: "absolute",

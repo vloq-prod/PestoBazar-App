@@ -32,6 +32,46 @@ import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
 import ReviewSection from "../../src/components/productDetails/ReviewSection";
 
+
+const dummyReviews = [
+  {
+    id: 1,
+    rating: 5,
+    review:
+      "Product delivered on time and works really well. Highly recommended!",
+    full_name: "Rahul Sharma",
+    email: "rahul.sharma@gmail.com",
+    created_at: "10 Apr 2026",
+    media: {
+      first_image: "https://via.placeholder.com/300x300",
+      video: null,
+      other_images: [],
+    },
+    admin_reply: {
+      message:
+        "Thank you for your valuable feedback! We're glad it worked well for you.",
+      replied_at: "11 Apr 2026",
+    },
+  },
+  {
+    id: 2,
+    rating: 4,
+    review: "Easy to use and effective, but packaging could be improved.",
+    full_name: "Neha Verma",
+    email: "neha.verma@gmail.com",
+    created_at: "08 Apr 2026",
+    media: {
+      first_image: null,
+      video: null,
+      other_images: [],
+    },
+    admin_reply: {
+      message: "Thanks for your suggestion! We’ll improve packaging.",
+      replied_at: "09 Apr 2026",
+    },
+  },
+];
+
 const SEARCH_HEIGHT = 56;
 const CATEGORY_HEIGHT = 105;
 const SCROLL_THRESHOLD = 10;
@@ -192,7 +232,7 @@ export default function HomeScreen() {
         >
           <SlidingBanners data={slidingbanners} />
 
-          <ReviewSection />
+        
           <CategoryCardSection />
           <HomeProduct />
           <FeatureBanner item={featureBanners?.[0]} />

@@ -98,11 +98,6 @@ export interface ProductImage {
 }
 
 /* ---------- REVIEW MEDIA ---------- */
-export interface ReviewMedia {
-  first_image: string | null;
-  video: string | null;
-  other_images: string[];
-}
 
 /* ---------- REVIEWS ---------- */
 export interface Review {
@@ -163,4 +158,123 @@ export interface ProductDetailsResponse {
     product_combo_variation: ProductCombo[];
     selected_combo_variation: ProductCombo[];
   };
+}
+
+
+
+
+export interface ReviewMedia {
+  first_image: string | null;
+  video: string | null;
+  other_images: string[];
+}
+
+export type ReviewItem = {
+  id: number;
+  rating: number;
+  review: string;
+  full_name: string;
+  email: string;
+  admin_comments: string | null;
+  created_at: string;
+  media: ReviewMedia;
+};
+
+export type ReviewsResponse = {
+  message: string;
+  status: number;
+  data: {
+    grouped_reviews: ReviewItem[];
+    pagination: {
+      current_page: number;
+      per_page: number;
+      total: number;
+      total_pages: number;
+      has_more: boolean;
+    };
+  };
+};
+
+
+export type ReviewsParams = {
+  product_id: number;
+  page?: number;
+};
+
+
+
+
+export type DeliveryParams = {
+  selected_variation_id: number;
+  pincode: string;
+};
+
+export type DeliveryResponse = {
+  message: string;
+  status: number;
+  data: {
+    delivery_date_message: string;
+    cod_message: string;
+    free_shipping_message: string;
+    location_message: string;
+  };
+};
+
+
+
+
+
+
+export interface CustomerAlsoBoughtItem {
+  id: number;
+  product_id: number;
+  url: string;
+  selling_price: string;
+  mrp: string;
+  sku: string;
+  stock: number | null;
+  active: string;
+  created_at: string;
+  size: string | null;
+  unit: string | null;
+  product_name: string;
+  image_path: string;
+  s3_image_path: string;
+  total_reviews: number;
+  avg_rating: string;
+  category_id: number;
+  is_new: string;
+  is_best_selling: string;
+  overview: string | null;
+  moq: number;
+  sequence: number;
+  listing_type: string;
+  product_visibility: string;
+  product_variation_id: number;
+}
+
+export interface CustomerAlsoBoughtResponse {
+  message: string;
+  status: number;
+  data: {
+    customer_also_bought: CustomerAlsoBoughtItem[];
+  };
+}
+
+export interface CustomerAlsoBoughtParams {
+  product_id: number;
+}
+
+
+
+
+export interface SaveRecentlyViewedParams {
+  product_id: number;
+  user_id?: string;
+  visitor_id?: string;
+}
+
+export interface SaveRecentlyViewedResponse {
+  message: string;
+  status: number;
 }

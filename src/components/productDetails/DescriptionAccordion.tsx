@@ -77,76 +77,60 @@ const AccordionItem = ({
   };
 
   const HTML_TAGS_STYLES: Record<string, any> = {
-    p: { marginTop: 0, marginBottom: spacing(8) },
+    p: {
+      marginTop: 0,
+      marginBottom: spacing(10),
+      fontSize: font(13),
+      lineHeight: font(20),
+    },
+
     ul: {
-      marginTop: spacing(4),
-      marginBottom: spacing(8),
+      marginTop: spacing(6),
+      marginBottom: spacing(10),
       paddingLeft: spacing(18),
     },
+
     ol: {
-      marginTop: spacing(4),
-      marginBottom: spacing(8),
+      marginTop: spacing(6),
+      marginBottom: spacing(10),
       paddingLeft: spacing(18),
     },
-    li: { marginBottom: spacing(6), lineHeight: font(20) },
-    strong: {
-      fontFamily: "Poppins_600SemiBold",
-      color: colors.text,
-    },
-    em: {
-      fontFamily: "Poppins_400Regular",
-      fontStyle: "italic",
+
+    li: {
+      marginBottom: spacing(6),
+      fontSize: font(13),
+      lineHeight: font(20),
       color: colors.textSecondary,
     },
+
+    strong: {
+      fontFamily: "Poppins_700Bold",
+      fontSize: font(13),
+      color: colors.text,
+
+      fontWeight: "700", // ✅ MUST
+    },
+
+    span: {
+      fontSize: font(13),
+      color: colors.textSecondary,
+    },
+
     h2: {
       fontFamily: "Poppins_600SemiBold",
-      fontSize: font(13),
+      fontSize: font(14),
       color: colors.text,
       marginBottom: spacing(6),
       marginTop: spacing(10),
     },
+
     h3: {
       fontFamily: "Poppins_600SemiBold",
-      fontSize: font(12),
+      fontSize: font(13),
       color: colors.text,
       marginBottom: spacing(4),
       marginTop: spacing(8),
     },
-    // Table styles
-    table: {
-      width: "100%",
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: spacing(8),
-      marginVertical: spacing(8),
-      overflow: "hidden",
-    },
-    thead: {
-      backgroundColor: colors.primary + "14",
-    },
-    th: {
-      paddingHorizontal: spacing(10),
-      paddingVertical: spacing(8),
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: font(11),
-      color: colors.primary,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-    },
-    td: {
-      paddingHorizontal: spacing(10),
-      paddingVertical: spacing(8),
-      fontSize: font(11),
-      fontFamily: "Poppins_400Regular",
-      color: colors.textSecondary,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-    },
-    tr: {},
   };
 
   return (
@@ -221,7 +205,6 @@ const AccordionItem = ({
           style={[
             styles.headerDivider,
             {
-            
               backgroundColor: colors.border,
             },
           ]}
@@ -245,7 +228,7 @@ const AccordionItem = ({
             source={{ html: item.drop_description || "" }}
             baseStyle={HTML_BASE_STYLE}
             tagsStyles={HTML_TAGS_STYLES}
-            enableCSSInlineProcessing
+            enableCSSInlineProcessing={false}
           />
         </View>
       )}
@@ -314,6 +297,5 @@ const styles = StyleSheet.create({
   headerDivider: {
     height: 1,
   },
-  itemBody: {
-  },
+  itemBody: {},
 });

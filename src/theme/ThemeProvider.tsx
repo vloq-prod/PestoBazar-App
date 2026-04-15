@@ -3,7 +3,7 @@ import { useColorScheme as useRNColorScheme } from "react-native";
 import { useColorScheme } from "nativewind";
 import { lightTheme, darkTheme, ThemeColors } from "./colors";
 
-type ThemeMode = "light" | "dark" | "system";
+type ThemeMode = "light" | "dark";
 
 interface ThemeContextValue {
   colors: ThemeColors;
@@ -16,12 +16,11 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemScheme = useRNColorScheme();
+  
   const { setColorScheme } = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>("system");
+  const [mode, setModeState] = useState<ThemeMode>("light");
 
-  const isDark =
-    mode === "system" ? systemScheme === "dark" : mode === "dark";
+  const isDark = mode === "dark";
 
   // Sync NativeWind's colorScheme whenever isDark changes
   useEffect(() => {
@@ -32,12 +31,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setModeState(newMode);
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setModeState((prev) => {
-      if (prev === "system") return isDark ? "light" : "dark";
-      return prev !== "dark" ? "light" : "dark";
-    });
-  }, [isDark]);
+const toggleTheme = useCallback(() => {
+  setModeState((prev) => (prev === "dark" ? "light" : "dark"));
+}, []);
 
   const colors = isDark ? darkTheme : lightTheme;
 

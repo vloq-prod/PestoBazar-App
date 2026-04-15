@@ -211,7 +211,7 @@ const CategoryCardSection = () => {
           Shop by Category
         </Text>
         <Text style={{ color: colors.text, marginTop: spacing(12) }}>
-          Categories load nahi ho paayi.
+          Categories could not be loaded.
         </Text>
       </View>
     );
