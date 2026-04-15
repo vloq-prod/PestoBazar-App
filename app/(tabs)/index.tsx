@@ -29,6 +29,8 @@ import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
 import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
+import Footer from "../../src/components/home/Footer";
+import ReviewSection from "../../src/components/productDetails/ReviewSection";
 
 const SEARCH_HEIGHT = 56;
 const CATEGORY_HEIGHT = 105;
@@ -189,6 +191,8 @@ export default function HomeScreen() {
           }}
         >
           <SlidingBanners data={slidingbanners} />
+
+          <ReviewSection />
           <CategoryCardSection />
           <HomeProduct />
           <FeatureBanner item={featureBanners?.[0]} />
@@ -206,6 +210,7 @@ export default function HomeScreen() {
           <HomeUsp />
 
           <Branches />
+          <Footer />
         </Animated.ScrollView>
 
         <AddToCartPreview visible={searchVisible} />

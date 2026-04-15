@@ -57,6 +57,18 @@ export default function ProfileScreen() {
             paddingBottom: 24,
           }}
         >
+
+
+          {/* welcom title and profile */}
+          <View>
+            <Text>
+                Hey There!
+            </Text>
+
+            <View>
+              
+            </View>
+          </View>
           {/* 👤 Profile Header */}
           <View className="items-center mt-4">
             <View

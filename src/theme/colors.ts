@@ -62,6 +62,7 @@ export const lightTheme = {
   textInverse: palette.white,
   textOnPrimary: palette.white,
   textOnSecondary: palette.white,
+  textgray: palette.gray300,
 
   // Borders
   border: palette.gray200,
@@ -82,7 +83,6 @@ export const lightTheme = {
   tabBar: palette.white,
   tabBarActive: palette.purple,
   tabBarInactive: palette.gray400,
-  
 
   starColor: palette.yellow,
   statusBar: "dark" as const,
@@ -102,7 +102,7 @@ export const darkTheme = {
   primaryMuted: palette.purpleMuted,
   primaryForeground: palette.white,
   backgroundSkeleton: palette.gray200,
-   backgroundgray: palette.gray100,
+  backgroundgray: palette.gray100,
 
   secondary: palette.redLight,
   secondaryLight: palette.redMuted,
@@ -117,6 +117,7 @@ export const darkTheme = {
   textInverse: palette.gray900,
   textOnPrimary: palette.white,
   textOnSecondary: palette.white,
+  textgray: palette.gray300,
 
   // Borders
   border: palette.gray700,
@@ -138,8 +139,7 @@ export const darkTheme = {
   tabBarActive: palette.purpleLight,
   tabBarInactive: palette.gray600,
 
-
-    starColor: palette.yellow,
+  starColor: palette.yellow,
   statusBar: "light" as const,
 } as const;
 

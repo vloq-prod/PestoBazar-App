@@ -30,12 +30,12 @@ import Animated, {
 } from "react-native-reanimated";
 import RenderHTML from "react-native-render-html";
 import ImageVideoCarousel from "../../../src/components/comman/ImageVideoCarousel";
-import Branches from "../../../src/components/home/Branches";
 import HomeUsp from "../../../src/components/home/HomeUsp";
 import ProductDetailsSkeleton from "../../../src/skeleton/ProductDetails";
 import type { ProductVariation } from "../../../src/types/productdetails.types";
 import { useAddToCart, useCart } from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
+import DescriptionAccordion from "../../../src/components/productDetails/DescriptionAccordion";
 
 const FOOTER_HEIGHT = 112;
 
@@ -45,8 +45,8 @@ const ProductDetails = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
+
   const productId = Number(id);
-  // console.log("product id: ", productId)
   const [quantity, setQuantity] = useState(0);
 
   const insets = useSafeAreaInsets();
@@ -58,11 +58,7 @@ const ProductDetails = () => {
 
   const { addToCart } = useAddToCart();
 
-  const {
-    data: cartData,
-    isLoading: countloding,
-    error: counterror,
-  } = useCart({
+  const { data: cartData } = useCart({
     user_id: 0,
     visitor_id: visitorId!,
   });
@@ -70,12 +66,13 @@ const ProductDetails = () => {
   const headerContentOffset = insets.top;
 
   const productImages = data?.images ?? [];
-  // console.log("product iiamges: ", productImages)
   const productInfo = data?.product;
+  // console.log("product info : ", productInfo);
   const descriptionUi = data?.descriptions ?? [];
   const combos = data?.combos;
+  const selectedVariation = data?.variation;
 
-  // console.log("description ui : ", descriptionUi);
+  const selectedCombo = data?.selectedCombo;
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -83,41 +80,31 @@ const ProductDetails = () => {
     },
   });
 
-  const headerAnimatedStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
       scrollY.value,
       [0, 120],
       ["rgba(255,255,255,0)", "rgba(255,255,255,1)"],
-    );
+    ),
+  }));
 
-    return {
-      backgroundColor,
-    };
-  });
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      scrollY.value,
+      [0, 60, 100],
+      [0, 0, 1],
+      Extrapolate.CLAMP,
+    ),
+  }));
 
-  const titleAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        scrollY.value,
-        [0, 60, 100],
-        [0, 0, 1],
-        Extrapolate.CLAMP,
-      ),
-    };
-  });
-
-  const borderAnimatedStyle = useAnimatedStyle(() => {
-    const borderColor = interpolateColor(
+  const borderAnimatedStyle = useAnimatedStyle(() => ({
+    borderBottomWidth: 1,
+    borderBottomColor: interpolateColor(
       scrollY.value,
       [0, 80],
       ["rgba(0,0,0,0)", colors.border],
-    );
-
-    return {
-      borderBottomWidth: 1,
-      borderBottomColor: borderColor,
-    };
-  });
+    ),
+  }));
 
   if (isLoading) return <ProductDetailsSkeleton />;
   if (error) return <Text>Error loading product</Text>;
@@ -141,24 +128,156 @@ const ProductDetails = () => {
   const hasRating = Number.isFinite(rawRatingValue) && rawRatingValue > 0;
   const ratingValue = hasRating ? rawRatingValue : 0;
   const totalReviews = Number(productInfo?.total_reviews ?? 0);
+  const sellingPrice = Number(selectedVariation?.selling_price ?? 0);
+  const mrpPrice = Number(selectedVariation?.mrp ?? 0);
+  const discountPercentage =
+    mrpPrice > 0 && sellingPrice > 0 && mrpPrice > sellingPrice
+      ? Math.round(((mrpPrice - sellingPrice) / mrpPrice) * 100)
+      : 0;
+  const rawDescriptionHtml = productInfo?.description ?? "";
+  const descriptionHeadingMatch = rawDescriptionHtml.match(
+    /<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/i,
+  );
+  const descriptionHeadingAttributes = descriptionHeadingMatch?.[2] ?? "";
+  const hasVisibleDescriptionHeading =
+    !!descriptionHeadingMatch &&
+    !/display\s*:\s*none/i.test(descriptionHeadingAttributes);
+  const descriptionSectionTitle =
+    hasVisibleDescriptionHeading && descriptionHeadingMatch
+      ? descriptionHeadingMatch[3]
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+      : "Description";
+  const descriptionBodyHtml =
+    hasVisibleDescriptionHeading && descriptionHeadingMatch
+      ? rawDescriptionHtml.replace(descriptionHeadingMatch[0], "").trim()
+      : rawDescriptionHtml;
+  const productDescriptionBaseStyle = {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 22,
+    fontFamily: "Poppins_400Regular",
+  } as const;
+  const productDescriptionTagStyles: Record<string, any> = {
+    p: { marginTop: 0, marginBottom: 8 },
+    ul: { marginTop: 4, marginBottom: 8, paddingLeft: 18 },
+    ol: { marginTop: 4, marginBottom: 8, paddingLeft: 18 },
+    li: { marginBottom: 6, lineHeight: 22 },
+    strong: {
+      fontFamily: "Poppins_600SemiBold",
+      color: colors.text,
+    },
+    em: {
+      fontFamily: "Poppins_400Regular",
+      fontStyle: "italic",
+      color: colors.textSecondary,
+    },
+    h1: {
+      fontFamily: "Poppins_700Bold",
+      fontSize: 18,
+      lineHeight: 26,
+      color: colors.text,
+      marginTop: 0,
+      marginBottom: 10,
+    },
+    h2: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 16,
+      lineHeight: 24,
+      color: colors.text,
+      marginTop: 0,
+      marginBottom: 8,
+    },
+    h3: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 13,
+      lineHeight: 22,
+      color: colors.text,
+      marginTop: 0,
+      marginBottom: 8,
+    },
+    h4: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 14,
+      lineHeight: 21,
+      color: colors.text,
+      marginTop: 0,
+      marginBottom: 8,
+    },
+    h5: {
+      fontFamily: "Poppins_700Bold",
+      fontSize: 17,
+      lineHeight: 24,
+      color: colors.text,
+      marginTop: 0,
+      marginBottom: 8,
+    },
+    h6: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 14,
+      lineHeight: 20,
+      color: colors.text,
+      marginTop: 0,
+      marginBottom: 8,
+    },
+    table: {
+      width: "100%",
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      marginVertical: 8,
+      overflow: "hidden",
+    },
+    thead: {
+      backgroundColor: colors.primary + "14",
+    },
+    th: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: 12,
+      color: colors.primary,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      borderRightWidth: 1,
+      borderRightColor: colors.border,
+    },
+    td: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      fontSize: 12,
+      fontFamily: "Poppins_400Regular",
+      color: colors.textSecondary,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      borderRightWidth: 1,
+      borderRightColor: colors.border,
+    },
+  };
+  const formatPrice = (value: number) => {
+    if (!Number.isFinite(value)) return "0";
+    if (Number.isInteger(value)) return String(value);
+
+    return value.toFixed(2).replace(/\.?0+$/, "");
+  };
+
   const selectedComboId = combos?.some((item) => item.id === productId)
     ? productId
     : combos?.[0]?.id;
 
   const getComboLabel = (item: ProductVariation) => {
     if (item?.size?.trim()) return item.size.trim();
-
     const weightWithUnit = [item?.actual_weight, item?.unit_of_measure]
-      .filter((value) => typeof value === "string" && value.trim().length > 0)
+      .filter((v) => typeof v === "string" && v.trim().length > 0)
       .join(" ")
       .trim();
-
     return weightWithUnit || "Option";
   };
 
   const handleAddToCart = () => {
     setQuantity(1);
-
     addToCart({
       user_id: 0,
       visitor_id: visitorId!,
@@ -170,7 +289,6 @@ const ProductDetails = () => {
   const handleIncrease = () => {
     const newQty = quantity + 1;
     setQuantity(newQty);
-
     addToCart({
       user_id: 0,
       visitor_id: visitorId!,
@@ -182,7 +300,6 @@ const ProductDetails = () => {
   const handleDecrease = () => {
     const newQty = Math.max(quantity - 1, 0);
     setQuantity(newQty);
-
     addToCart({
       user_id: 0,
       visitor_id: visitorId!,
@@ -199,19 +316,16 @@ const ProductDetails = () => {
         barStyle="dark-content"
       />
 
-      {/* 🔥 HEADER */}
+      {/* ── HEADER ── */}
       <Animated.View
         style={[
           styles.headerContainer,
-          {
-            paddingTop: insets.top,
-          },
+          { paddingTop: insets.top },
           headerAnimatedStyle,
           borderAnimatedStyle,
         ]}
       >
         <View style={styles.header}>
-          {/* LEFT */}
           <View style={styles.headerLeft}>
             <TouchableOpacity
               activeOpacity={0.8}
@@ -220,7 +334,6 @@ const ProductDetails = () => {
             >
               <ChevronLeft size={23} color={colors.borderblack} />
             </TouchableOpacity>
-
             <View style={styles.titleContainer}>
               <Animated.Text
                 numberOfLines={2}
@@ -231,7 +344,6 @@ const ProductDetails = () => {
             </View>
           </View>
 
-          {/* RIGHT */}
           <View style={styles.headerRight}>
             <TouchableOpacity
               onPress={() => router.push("/search")}
@@ -239,102 +351,100 @@ const ProductDetails = () => {
             >
               <Search size={23} color={colors.borderblack} />
             </TouchableOpacity>
-
-            <View
+            <TouchableOpacity
               style={[styles.iconContainer, { borderColor: colors.border }]}
             >
               <LucideShare2 size={23} color={colors.borderblack} />
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
       </Animated.View>
-      {/* 🔥 SCROLL CONTENT */}
+
+      {/* ── SCROLL CONTENT ── */}
       <Animated.ScrollView
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: headerContentOffset,
           paddingBottom: FOOTER_HEIGHT + insets.bottom + 24,
           gap: 20,
         }}
       >
+        {/* Carousel */}
         <ImageVideoCarousel data={mediaList} />
 
-        <View style={{ paddingHorizontal: 16 }}>
-          <View style={{ flexDirection: "column", gap: 6 }}>
-            <Text style={styles.productTitle}>{productInfo?.product_name}</Text>
+        {/* ── Product Info ── */}
+        <View style={{ paddingHorizontal: 16, gap: 6 }}>
+          <Text style={[styles.productTitle, { color: colors.text }]}>
+            {productInfo?.product_name}
+          </Text>
 
-            <View style={styles.priceBlock}>
-              <View style={styles.priceHeaderRow}>
-                <View style={styles.priceInfoColumn}>
-                  <View style={styles.priceRow}>
-                    <Text
-                      style={[styles.sellingPriceText, { color: colors.text }]}
-                    >
-                      ₹1038
-                    </Text>
-                    <Text
-                      style={[styles.discountText, { color: colors.primary }]}
-                    >
-                      46% OFF
-                    </Text>
-                  </View>
-
+          {/* Price + Rating row */}
+          <View style={styles.priceBlock}>
+            <View style={styles.priceHeaderRow}>
+              <View style={styles.priceRow}>
+                <Text style={[styles.sellingPriceText, { color: colors.text }]}>
+                  ₹{formatPrice(sellingPrice)}
+                </Text>
+                {discountPercentage > 0 && (
                   <Text
-                    style={[styles.mrpText, { color: colors.textTertiary }]}
+                    style={[styles.discountText, { color: colors.primary }]}
                   >
-                    ₹2957{" "}
-                    <Text
-                      style={[
-                        styles.mrpMetaText,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      MRP (Inclusive of all taxes)
-                    </Text>
+                    {discountPercentage}% OFF
                   </Text>
-                </View>
-
-                {hasRating && (
-                  <View style={styles.ratingContainer}>
-                    <View
-                      style={[
-                        styles.ratingWrap,
-                        {
-                          backgroundColor: colors.backgroundgray,
-                        },
-                      ]}
-                    >
-                      <Star
-                        size={14}
-                        strokeWidth={1.8}
-                        color={colors.starColor}
-                        fill={colors.starColor}
-                      />
-
-                      <Text
-                        style={[styles.ratingValueText, { color: colors.text }]}
-                      >
-                        {ratingValue.toFixed(1)}
-                      </Text>
-
-                      {totalReviews > 0 && (
-                        <Text
-                          style={[
-                            styles.reviewCountText,
-                            { color: colors.textSecondary },
-                          ]}
-                        >
-                          | {totalReviews}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
                 )}
               </View>
+
+              {hasRating && (
+                <View style={styles.ratingContainer}>
+                  <View
+                    style={[
+                      styles.ratingWrap,
+                      { backgroundColor: colors.backgroundgray },
+                    ]}
+                  >
+                    <Star
+                      size={14}
+                      strokeWidth={1.8}
+                      color={colors.starColor}
+                      fill={colors.starColor}
+                    />
+                    <Text
+                      style={[styles.ratingValueText, { color: colors.text }]}
+                    >
+                      {ratingValue.toFixed(1)}
+                    </Text>
+                    {totalReviews > 0 && (
+                      <Text
+                        style={[
+                          styles.reviewCountText,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        | {totalReviews} Reviews
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              )}
             </View>
 
+            {mrpPrice > 0 && (
+              <Text style={[styles.mrpText, { color: colors.textTertiary }]}>
+                ₹{formatPrice(mrpPrice)}{" "}
+                <Text
+                  style={[styles.mrpMetaText, { color: colors.textSecondary }]}
+                >
+                  MRP (Inclusive of all taxes)
+                </Text>
+              </Text>
+            )}
+          </View>
+
+          {/* Overview */}
+          {!!productInfo?.overview && (
             <Text
               style={{
                 fontSize: 13,
@@ -342,24 +452,26 @@ const ProductDetails = () => {
                 color: colors.textTertiary,
               }}
             >
-              {productInfo?.overview}
+              {productInfo.overview}
             </Text>
-          </View>
+          )}
         </View>
 
+        {/* ── Combo Variants ── */}
         {!!combos?.length && (
           <View style={styles.comboSection}>
+            <Text style={[styles.comboLabel, { color: colors.textSecondary }]}>
+              Select Variant
+            </Text>
             <View style={styles.comboList}>
               {combos.map((item) => {
                 const isSelected = item.id === selectedComboId;
-
                 return (
                   <TouchableOpacity
                     key={item.id}
-                    activeOpacity={0.85}
+                    activeOpacity={0.8}
                     onPress={() => {
                       if (item.id === productId) return;
-
                       router.replace({
                         pathname: "(stack)/product/[id]",
                         params: {
@@ -372,11 +484,12 @@ const ProductDetails = () => {
                       styles.comboPill,
                       {
                         backgroundColor: isSelected
-                          ? colors.primary
+                          ? colors.primary + "12"
                           : colors.background,
                         borderColor: isSelected
                           ? colors.primary
                           : colors.border,
+                        borderWidth: isSelected ? 1.5 : 1,
                       },
                     ]}
                   >
@@ -384,7 +497,12 @@ const ProductDetails = () => {
                       style={[
                         styles.comboPillText,
                         {
-                          color: isSelected ? colors.textInverse : colors.text,
+                          color: isSelected
+                            ? colors.primary
+                            : colors.textSecondary,
+                          fontFamily: isSelected
+                            ? "Poppins_600SemiBold"
+                            : "Poppins_400Regular",
                         },
                       ]}
                     >
@@ -397,27 +515,92 @@ const ProductDetails = () => {
           </View>
         )}
 
-        {descriptionUi.length > 0 && (
-          <View style={styles.descriptionSection}>
-            {descriptionUi.map((item) => (
-              <View key={item.id} style={styles.descriptionCard}>
-                <Text style={[styles.descriptionTitle, { color: colors.text }]}>
-                  {item.drop_name}
+        {/* ── Variation Details Card ── */}
+        <View style={{ flexDirection: "row" }}>
+          <View
+            style={[
+              styles.variationCard,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.backgroundgray,
+              },
+            ]}
+          >
+            {/* SKU Row */}
+            {!!selectedVariation?.sku && (
+              <View style={styles.variationRow}>
+                <Text
+                  style={[styles.variationKey, { color: colors.textTertiary }]}
+                >
+                  SKU#:
                 </Text>
-
-                <RenderHTML
-                  contentWidth={width - 32}
-                  source={{ html: item.drop_description || "" }}
-                />
+                <Text
+                  style={[styles.variationVal, { color: colors.textSecondary }]}
+                >
+                  {selectedVariation.sku}
+                </Text>
               </View>
-            ))}
+            )}
+
+            {/* Stock Row */}
+            <View style={styles.variationRow}>
+              <Text
+                style={[styles.variationKey, { color: colors.textTertiary }]}
+              >
+                Stock:
+              </Text>
+
+              <View style={[styles.stockBadge]}>
+                <View
+                  style={[
+                    styles.stockDot,
+                    { backgroundColor: "#22C55E" }, // green dot
+                  ]}
+                />
+                <Text style={[styles.stockText, { color: "#16A34A" }]}>
+                  In Stock
+                </Text>
+              </View>
+            </View>
           </View>
+        </View>
+
+        {!!descriptionBodyHtml && (
+          <View
+            style={[
+              styles.productDescriptionSection,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.background,
+              },
+            ]}
+          >
+            <View style={styles.productDescriptionHeader}>
+              <Text
+                style={[styles.productDescriptionTitle, { color: colors.text }]}
+              >
+                {descriptionSectionTitle}
+              </Text>
+            </View>
+            <RenderHTML
+              contentWidth={width - 60}
+              source={{ html: descriptionBodyHtml }}
+              baseStyle={productDescriptionBaseStyle}
+              tagsStyles={productDescriptionTagStyles}
+              enableCSSInlineProcessing
+            />
+          </View>
+        )}
+
+        {/* ── Descriptions ── */}
+        {descriptionUi.length > 0 && (
+          <DescriptionAccordion data={descriptionUi} />
         )}
 
         <HomeUsp />
       </Animated.ScrollView>
 
-      {/* Footer container */}
+      {/* ── FOOTER ── */}
       <View
         style={[
           styles.footercontainer,
@@ -429,6 +612,7 @@ const ProductDetails = () => {
         ]}
       >
         <View style={styles.footerRow}>
+          {/* Cart icon / View Cart */}
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => router.push("/cart")}
@@ -437,9 +621,7 @@ const ProductDetails = () => {
               quantity > 0
                 ? styles.footerHalfButton
                 : styles.viewCartButtonCompact,
-              {
-                borderColor: colors.border,
-              },
+              { borderColor: colors.border },
             ]}
           >
             <View style={styles.cartIconWrap}>
@@ -464,6 +646,7 @@ const ProductDetails = () => {
             )}
           </TouchableOpacity>
 
+          {/* Add To Cart / Qty stepper */}
           {quantity === 0 ? (
             <TouchableOpacity
               activeOpacity={0.9}
@@ -474,7 +657,6 @@ const ProductDetails = () => {
                 { backgroundColor: colors.primary },
               ]}
             >
-              {/* <ShoppingCart size={18} color={colors.textOnPrimary} /> */}
               <Text
                 style={[
                   styles.footerButtonText,
@@ -489,9 +671,7 @@ const ProductDetails = () => {
               style={[
                 styles.quantityBox,
                 styles.footerHalfButton,
-                {
-                  backgroundColor: colors.primary,
-                },
+                { backgroundColor: colors.primary },
               ]}
             >
               <TouchableOpacity
@@ -501,7 +681,6 @@ const ProductDetails = () => {
               >
                 <Minus size={18} color={colors.textOnPrimary} />
               </TouchableOpacity>
-
               <View style={styles.qtyValueWrap}>
                 <Text
                   style={[styles.qtyValueText, { color: colors.textOnPrimary }]}
@@ -509,7 +688,6 @@ const ProductDetails = () => {
                   {quantity}
                 </Text>
               </View>
-
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleIncrease}
@@ -528,6 +706,7 @@ const ProductDetails = () => {
 export default ProductDetails;
 
 const styles = StyleSheet.create({
+  // ── Header ──
   headerContainer: {
     position: "absolute",
     top: 0,
@@ -537,49 +716,228 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 10,
   },
-
   header: {
     paddingTop: 5,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     flex: 1,
   },
-
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-
   iconContainer: {
     padding: 7,
     borderRadius: 30,
     backgroundColor: "rgba(255,255,255,0.80)",
     borderWidth: 0.5,
   },
-
-  titleContainer: {
-    flex: 1,
-  },
-
+  titleContainer: { flex: 1 },
   titleText: {
     fontSize: 15,
     fontWeight: "600",
   },
 
+  // ── Price ──
+  productTitle: {
+    fontSize: 18,
+    lineHeight: 26,
+    fontFamily: "Poppins_600SemiBold",
+    includeFontPadding: false,
+  },
+  priceBlock: {
+    marginTop: 4,
+    gap: 4,
+  },
+  priceHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+    flex: 1,
+  },
+  sellingPriceText: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontFamily: "Poppins_700Bold",
+    includeFontPadding: false,
+  },
+  discountText: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontFamily: "Poppins_600SemiBold",
+    includeFontPadding: false,
+  },
+  mrpText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
+    textDecorationLine: "line-through",
+    flexWrap: "wrap",
+  },
+  mrpMetaText: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
+    textDecorationLine: "none",
+  },
+
+  // ── Rating ──
+  ratingContainer: {
+    alignItems: "flex-end",
+    justifyContent: "flex-start",
+  },
+  ratingWrap: {
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  ratingValueText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: "Poppins_600SemiBold",
+    includeFontPadding: false,
+  },
+  reviewCountText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
+  },
+
+  // ── Combos ──
+  comboSection: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  comboLabel: {
+    fontSize: 12,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  comboList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  comboPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  comboPillText: {
+    fontSize: 13,
+    lineHeight: 18,
+    includeFontPadding: false,
+  },
+
+  productDescriptionSection: {
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  productDescriptionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  productDescriptionAccent: {
+    width: 4,
+    height: 20,
+    borderRadius: 999,
+  },
+  productDescriptionTitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: "Poppins_600SemiBold",
+    includeFontPadding: false,
+  },
+
+  // ── Variation Card ──
+  variationCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flex: 1,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    gap: 12,
+  },
+
+  variationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 4,
+  },
+
+  variationKey: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    includeFontPadding: false,
+    opacity: 0.7,
+  },
+
+  variationVal: {
+    fontSize: 13,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
+  },
+
+  stockBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+
+  stockDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  stockText: {
+    fontSize: 11,
+    fontFamily: "Poppins_500Medium",
+  },
+  // ── Footer ──
   footercontainer: {
     position: "absolute",
     left: 0,
     right: 0,
-    zIndex: 10,
     bottom: 0,
+    zIndex: 10,
     paddingHorizontal: 12,
     paddingTop: 10,
     borderTopWidth: 1,
@@ -597,11 +955,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    overflow: "hidden",
   },
-  viewCartButtonCompact: {
-    width: 52,
-  },
+  viewCartButtonCompact: { width: 52 },
   footerHalfButton: {
     flex: 1,
     paddingHorizontal: 14,
@@ -615,11 +970,8 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
   },
-  footerButtonExpanded: {
-    flex: 1,
-  },
+  footerButtonExpanded: { flex: 1 },
   cartIconWrap: {
-    position: "relative",
     width: 24,
     height: 24,
     alignItems: "center",
@@ -647,7 +999,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     lineHeight: 18,
     includeFontPadding: false,
-    textAlignVertical: "center",
   },
   viewCartText: {
     fontSize: 14,
@@ -679,127 +1030,6 @@ const styles = StyleSheet.create({
   qtyValueText: {
     fontSize: 16,
     lineHeight: 20,
-    fontFamily: "Poppins_600SemiBold",
-    includeFontPadding: false,
-  },
-  priceBlock: {
-    marginTop: 8,
-    gap: 6,
-  },
-  priceHeaderRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  priceInfoColumn: {
-    flex: 1,
-    gap: 2,
-  },
-  descriptionSection: {
-    paddingHorizontal: 16,
-    paddingTop: 18,
-    gap: 14,
-  },
-  comboSection: {
-    paddingHorizontal: 16,
-    marginTop: -6,
-  },
-  comboList: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  comboPill: {
-    minWidth: 72,
-    minHeight: 40,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  comboPillText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: "Poppins_600SemiBold",
-    includeFontPadding: false,
-    textAlign: "center",
-  },
-  descriptionCard: {
-    gap: 8,
-  },
-  descriptionTitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontFamily: "Poppins_600SemiBold",
-    includeFontPadding: false,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  ratingContainer: {
-    alignItems: "flex-end",
-    justifyContent: "flex-start",
-    paddingTop: 2,
-  },
-  ratingWrap: {
-    minHeight: 24,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingVertical: 4,
-  },
-  ratingValueText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontFamily: "Poppins_600SemiBold",
-    includeFontPadding: false,
-    textAlignVertical: "center",
-  },
-  reviewCountText: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontFamily: "Poppins_500Medium",
-    includeFontPadding: false,
-    textAlignVertical: "center",
-  },
-  sellingPriceText: {
-    fontSize: 20,
-    lineHeight: 24,
-    fontFamily: "Poppins_700Bold",
-    includeFontPadding: false,
-  },
-  discountText: {
-    fontSize: 12,
-    lineHeight: 14,
-    fontFamily: "Poppins_600SemiBold",
-    includeFontPadding: false,
-  },
-  mrpText: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontFamily: "Poppins_500Medium",
-    includeFontPadding: false,
-    textDecorationLine: "line-through",
-    flexWrap: "wrap",
-  },
-  mrpMetaText: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontFamily: "Poppins_500Medium",
-    includeFontPadding: false,
-    textDecorationLine: "none",
-  },
-  productTitle: {
-    fontSize: 18,
-    lineHeight: 26,
     fontFamily: "Poppins_600SemiBold",
     includeFontPadding: false,
   },
