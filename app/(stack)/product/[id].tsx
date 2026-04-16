@@ -6,11 +6,12 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   useEstimatedDelivery,
   useProductDetails,
+  useSaveRecentlyViewed,
 } from "../../../src/hooks/productDetailsHook";
 import { useTheme } from "../../../src/theme";
 import {
@@ -66,6 +67,7 @@ const ProductDetails = () => {
   });
 
   const { addToCart } = useAddToCart();
+  const { saveRecentlyViewed } = useSaveRecentlyViewed();
 
   const { data: cartData } = useCart({
     user_id: 0,
@@ -120,8 +122,24 @@ const ProductDetails = () => {
     ),
   }));
 
+
+  useEffect(() => {
+  if (!productId || !visitorId) return;
+
+  saveRecentlyViewed({
+    product_id: productId,
+    visitor_id: visitorId,
+  });
+
+  
+}, [productId, visitorId]);
+
+
   if (isLoading) return <ProductDetailsSkeleton />;
   if (error) return <Text>Error loading product</Text>;
+
+
+  
 
   const resolvedProductName =
     typeof product_name === "string" && product_name.trim().length > 0
@@ -201,6 +219,8 @@ const ProductDetails = () => {
     });
   };
 
+
+ 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar

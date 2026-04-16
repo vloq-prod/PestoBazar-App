@@ -30,47 +30,7 @@ import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
-import ReviewSection from "../../src/components/productDetails/ReviewSection";
-
-
-const dummyReviews = [
-  {
-    id: 1,
-    rating: 5,
-    review:
-      "Product delivered on time and works really well. Highly recommended!",
-    full_name: "Rahul Sharma",
-    email: "rahul.sharma@gmail.com",
-    created_at: "10 Apr 2026",
-    media: {
-      first_image: "https://via.placeholder.com/300x300",
-      video: null,
-      other_images: [],
-    },
-    admin_reply: {
-      message:
-        "Thank you for your valuable feedback! We're glad it worked well for you.",
-      replied_at: "11 Apr 2026",
-    },
-  },
-  {
-    id: 2,
-    rating: 4,
-    review: "Easy to use and effective, but packaging could be improved.",
-    full_name: "Neha Verma",
-    email: "neha.verma@gmail.com",
-    created_at: "08 Apr 2026",
-    media: {
-      first_image: null,
-      video: null,
-      other_images: [],
-    },
-    admin_reply: {
-      message: "Thanks for your suggestion! We’ll improve packaging.",
-      replied_at: "09 Apr 2026",
-    },
-  },
-];
+import RecentlyViewProducts from "../../src/components/home/RecentlyViewProducts";
 
 const SEARCH_HEIGHT = 56;
 const CATEGORY_HEIGHT = 105;
@@ -232,12 +192,12 @@ export default function HomeScreen() {
         >
           <SlidingBanners data={slidingbanners} />
 
-        
           <CategoryCardSection />
           <HomeProduct />
           <FeatureBanner item={featureBanners?.[0]} />
           <DealsOfTheDay />
           <FeatureBanner item={featureBanners?.[1]} />
+          <RecentlyViewProducts />
           <FeaturedProducts />
           <HomeBottomCarousel
             item={
@@ -260,3 +220,165 @@ export default function HomeScreen() {
     </View>
   );
 }
+
+// app/(tabs)/index.tsx
+// import { View, StatusBar } from "react-native";
+// import { LinearGradient } from "expo-linear-gradient";
+// import { useTheme } from "../../src/theme";
+// import HomeNavbar from "../../src/components/home/HomeNavbar";
+// import { SafeAreaView } from "react-native-safe-area-context";
+// import AppSearchBar from "../../src/components/home/AppSearchBar";
+// import SlidingBanners from "../../src/components/home/SlidingBanners";
+// import HomeProduct from "../../src/components/home/HomeProduct";
+// import { useHomeBanners } from "../../src/hooks/homeHooks";
+// import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
+// import FeaturedProducts from "../../src/components/home/FeaturedProducts";
+// import Animated, {
+//   useSharedValue,
+//   useAnimatedStyle,
+//   useAnimatedScrollHandler,
+//   useDerivedValue,  // ✅ NEW
+//   interpolate,
+//   Extrapolate,
+// } from "react-native-reanimated";
+// import HomeBottomCarousel from "../../src/components/home/HomeBottomCarousel";
+// import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
+// import Testimonial from "../../src/components/home/Testimonial";
+// import HomeUsp from "../../src/components/home/HomeUsp";
+// import Branches from "../../src/components/home/Branches";
+// import { CategoryList } from "../../src/components/home/CategoryList";
+// import CategoryCardSection from "../../src/components/home/CategoryCardSection";
+// import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
+// import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
+// import NoInternet from "../(stack)/nointernet";
+// import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
+// import Footer from "../../src/components/home/Footer";
+
+// // ── Constants ──────────────────────────────────────────────
+// const NAVBAR_HEIGHT = 60;        // HomeNavbar height (adjust if needed)
+// const SEARCH_HEIGHT = 56;
+// const CATEGORY_HEIGHT = 105;
+// const TOP_SECTION_HEIGHT = SEARCH_HEIGHT + CATEGORY_HEIGHT + 10;
+
+// export default function HomeScreen() {
+//   const isConnected = useNetworkStatus();
+//   const { colors } = useTheme();
+//   const { slidingbanners, featureBanners, homeBottomBanners } = useHomeBanners();
+
+//   // ── Single scroll driver (reference style) ────────────────
+//   const scrollY = useSharedValue(0);
+
+//   const scrollHandler = useAnimatedScrollHandler({
+//     onScroll: (event) => {
+//       scrollY.value = event.contentOffset.y;
+//     },
+//   });
+
+//   // ── Top section (search + category) animation ─────────────
+//   const topSectionStyle = useAnimatedStyle(() => ({
+//     transform: [{
+//       translateY: interpolate(
+//         scrollY.value,
+//         [0, TOP_SECTION_HEIGHT],
+//         [0, -TOP_SECTION_HEIGHT],
+//         Extrapolate.CLAMP
+//       ),
+//     }],
+//     opacity: interpolate(
+//       scrollY.value,
+//       [0, TOP_SECTION_HEIGHT],
+//       [1, 0],
+//       Extrapolate.CLAMP
+//     ),
+//   }));
+
+//   // ── Derived 0→1 value for FAB + AddToCartPreview ──────────
+//   // (their prop API expects a 0-1 SharedValue, same as before)
+//   const searchVisible = useDerivedValue(() =>
+//     interpolate(
+//       scrollY.value,
+//       [0, TOP_SECTION_HEIGHT],
+//       [1, 0],
+//       Extrapolate.CLAMP
+//     )
+//   );
+
+//   if (!isConnected) return <NoInternet />;
+
+//   return (
+//     <View style={{ flex: 1 }}>
+
+//       {/* ── STICKY NAVBAR (absolute, always on top) ─────────── */}
+//       <LinearGradient
+//         colors={["#0c0225", "#2a0a6b", "#5f16e9", "#9333ea"]}
+//         locations={[0, 0.3, 0.7, 1]}
+//         start={{ x: 0, y: 0.5 }}
+//         end={{ x: 1, y: 0.5 }}
+//         style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, overflow: "hidden" }}
+//       >
+//         {/* Glow orbs */}
+//         <View style={{ position: "absolute", top: -60, right: -40, width: 240, height: 240, borderRadius: 120, backgroundColor: "rgba(139,92,246,0.22)" }} />
+//         <View style={{ position: "absolute", top: -10, right: 20, width: 90, height: 90, borderRadius: 45, backgroundColor: "rgba(167,139,250,0.15)" }} />
+//         <View style={{ position: "absolute", top: 100, left: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: "rgba(109,40,217,0.28)" }} />
+
+//         <SafeAreaView edges={["top"]}>
+//           <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+//           <HomeNavbar
+//             name="Guest"
+//             onNotificationPress={() => {}}
+//             onProfilePress={() => {}}
+//           />
+//         </SafeAreaView>
+//       </LinearGradient>
+
+//       {/* ── SCROLL CONTENT ──────────────────────────────────── */}
+//       <View style={{ flex: 1, backgroundColor: colors.background }}>
+//         <Animated.ScrollView
+//           onScroll={scrollHandler}
+//           scrollEventThrottle={16}
+//           showsVerticalScrollIndicator={false}
+//           contentContainerStyle={{
+//             paddingTop: NAVBAR_HEIGHT,   // offset for sticky navbar
+//             paddingBottom: 80,
+//             gap: 30,
+//           }}
+//         >
+//           {/* 🔥 Animated search + category (reference style — inside scroll) */}
+//           <Animated.View style={topSectionStyle}>
+//             <LinearGradient
+//               colors={["#0c0225", "#2a0a6b", "#5f16e9", "#9333ea"]}
+//               locations={[0, 0.3, 0.7, 1]}
+//               start={{ x: 0, y: 0.5 }}
+//               end={{ x: 1, y: 0.5 }}
+//               style={{ paddingBottom: 10 }}
+//             >
+//               <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
+//                 <AppSearchBar />
+//               </View>
+//               <CategoryList />
+//             </LinearGradient>
+//           </Animated.View>
+
+//           {/* ── Rest of home content ── */}
+//           <SlidingBanners data={slidingbanners} />
+//           <CategoryCardSection />
+//           <HomeProduct />
+//           <FeatureBanner item={featureBanners?.[0]} />
+//           <DealsOfTheDay />
+//           <FeatureBanner item={featureBanners?.[1]} />
+//           <FeaturedProducts />
+//           <HomeBottomCarousel
+//             item={Array.isArray(homeBottomBanners) ? homeBottomBanners[0] : homeBottomBanners}
+//           />
+//           <Testimonial />
+//           <HomeUsp />
+//           <Branches />
+//           <Footer />
+//         </Animated.ScrollView>
+
+//         <AddToCartPreview visible={searchVisible} />
+//         <BulkOrderFAB visible={searchVisible} />
+//       </View>
+//     </View>
+//   );
+// }

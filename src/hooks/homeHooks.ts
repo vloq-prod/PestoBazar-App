@@ -6,10 +6,11 @@ import {
   getFeaturedProducts,
   getHomeCategories,
   getHomeProducts,
+  getRecentlyViewed,
   getTestimonials,
   getUsp,
 } from "../api/home.api";
-import { CategoryWithSubcategories } from "../types/home.types";
+import { CategoryWithSubcategories, GetRecentlyViewedParams } from "../types/home.types";
 
 // useBanner hook
 export const useBanner = () => {
@@ -27,7 +28,7 @@ export const useBanner = () => {
 };
 
 // useCategory hook
-export const useCategory = (id:number) => {
+export const useCategory = (id: number) => {
   const query = useQuery({
     queryKey: ["home-categories", id],
     queryFn: () => getHomeCategories(id),
@@ -57,14 +58,15 @@ export const useCategoryWithSubcategories = (rootId: number = 0) => {
     })),
   });
 
-const categoriesWithSubcategories: CategoryWithSubcategories[] =
-  mainCategories.map((mainCategory, index) => ({
-    mainCategory,
-    mainCategoryId: mainCategory.id,
-    mainCategoryName: mainCategory.category_name,
-    subcategories:
-      (subcategoryQueries[index]?.data?.data?.category_master ?? []).slice(0, 8),
-  }));
+  const categoriesWithSubcategories: CategoryWithSubcategories[] =
+    mainCategories.map((mainCategory, index) => ({
+      mainCategory,
+      mainCategoryId: mainCategory.id,
+      mainCategoryName: mainCategory.category_name,
+      subcategories: (
+        subcategoryQueries[index]?.data?.data?.category_master ?? []
+      ).slice(0, 8),
+    }));
 
   return {
     categories: mainCategories,
@@ -173,6 +175,29 @@ export const useBranch = () => {
 
   return {
     branches: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+  };
+};
+
+
+
+export const useRecentlyViewed = (visitorId: string) => {
+  const query = useQuery({
+    queryKey: ["recently-viewed", visitorId],
+
+    queryFn: () =>
+      getRecentlyViewed({
+        visitor_id: visitorId,
+        user_id: "",
+      }),
+
+    enabled: !!visitorId,
+
+  });
+
+  return {
+    recentlyViewed: query.data?.data?.recently_viewed || [],
     loading: query.isLoading,
     error: query.error,
   };

@@ -66,9 +66,7 @@ export const CategoryList: React.FC = () => {
             height: IMAGE_SIZE,
             borderRadius: CARD_RADIUS,
             overflow: "hidden",
-            borderWidth: 1,
-            borderColor: colors.border,
-            backgroundColor: colors.background,
+    
           }}
         >
           <Image
@@ -161,6 +159,10 @@ export const CategoryList: React.FC = () => {
       </View>
     );
   }
+
+
+
+  console.log("djalfjasdlf;k", categories)
 
   return (
     <View className="py-1">

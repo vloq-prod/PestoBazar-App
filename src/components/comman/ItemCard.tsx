@@ -33,7 +33,7 @@ export default function ItemCard({
 
   const rating = Number(item.avg_rating);
 
-  const showRating = rating > 0 && Number(item.total_reviews) > 0;
+  const showRating = rating > 0;
 
   const handleQtyInput = (val: string) => {
     setInputVal(val);
@@ -45,6 +45,9 @@ export default function ItemCard({
     if (index === Math.ceil(rating) && rating % 1 !== 0) return "half";
     return "empty";
   };
+
+
+  // console.log("")
 
   return (
     <TouchableOpacity

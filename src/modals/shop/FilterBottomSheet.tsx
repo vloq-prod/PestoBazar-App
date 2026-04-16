@@ -171,13 +171,12 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
       max: 50_000,
     });
 
-    // ✅ openKey — PriceSlider ko remount karta hai har baar sheet khulne pe
-    // taaki saved priceRange values reflect ho slider mein
+ 
     const [openKey, setOpenKey] = useState(0);
 
     useImperativeHandle(ref, () => ({
       open: () => {
-        setOpenKey(k => k + 1); // ✅ increment → PriceSlider remounts with current priceRange
+        setOpenKey(k => k + 1); 
         sheetRef.current?.present();
       },
       close: () => sheetRef.current?.dismiss(),

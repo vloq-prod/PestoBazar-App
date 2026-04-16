@@ -50,8 +50,7 @@ const SortBottomSheet = React.forwardRef<SortBottomSheetRef, Props>(
     );
 
     return (
-      // ✅ enableDynamicSizing — content height se auto size
-      // ✅ snapPoints hataaya — 80% 6 rows ke liye bohot tha
+  
       <BottomSheetModal
         ref={sheetRef}
         enableDynamicSizing
@@ -63,9 +62,9 @@ const SortBottomSheet = React.forwardRef<SortBottomSheetRef, Props>(
           borderTopRightRadius: 20,
         }}
       >
-        {/* ✅ BottomSheetView — dynamic sizing ke saath yahi use karo */}
+     
         <BottomSheetView>
-          {/* Header */}
+    
           <View
             className="flex-row items-center justify-between px-4 py-3 border-b rounded-t-2xl"
             style={{

@@ -38,7 +38,7 @@ const Footer = () => {
             color: colors.textgray,
           }}
         >
-          pestobazaar
+          Pestobazaar
         </Text>
       </View>
     </View>

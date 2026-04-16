@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useColorScheme as useRNColorScheme } from "react-native";
 import { useColorScheme } from "nativewind";
 import { lightTheme, darkTheme, ThemeColors } from "./colors";
@@ -16,7 +22,6 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  
   const { setColorScheme } = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>("light");
 
@@ -31,14 +36,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setModeState(newMode);
   }, []);
 
-const toggleTheme = useCallback(() => {
-  setModeState((prev) => (prev === "dark" ? "light" : "dark"));
-}, []);
+  const toggleTheme = useCallback(() => {
+    setModeState((prev) => (prev === "dark" ? "light" : "dark"));
+  }, []);
 
   const colors = isDark ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ colors, isDark, mode, setMode, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{ colors, isDark, mode, setMode, toggleTheme }}
+    >
       {children}
     </ThemeContext.Provider>
   );

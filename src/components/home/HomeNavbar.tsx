@@ -94,10 +94,10 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
 
       {/* RIGHT */}
       <View className="flex-row items-center">
-        <IconButton
+        {/* <IconButton
           onPress={handleMoveToCart}
           icon={<ShoppingCart size={ICON_SIZE} color={colors.textInverse} />}
-        />
+        /> */}
         <IconButton
           onPress={onNotificationPress}
           icon={<Bell size={ICON_SIZE} color={colors.textInverse} />}

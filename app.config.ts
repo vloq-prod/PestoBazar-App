@@ -20,7 +20,7 @@ export default {
       app_version: "1.0.0",
       app_code: 1,
       eas: {
-        projectId: "83a50a4d-fbc1-414f-a6aa-a920ac8feac8"
+        projectId: "0fbcaee7-f976-49ed-bddc-00f1c6b50d18"
       }
     },
   },

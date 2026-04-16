@@ -17,15 +17,15 @@ const SaveRecentlyViewedProduct = ({ productId }: Props) => {
 
     saveRecentlyViewed({
       product_id: productId,
-      user_id: "", // ya 0 (as per API)
+      user_id: "", 
       visitor_id: visitorId ?? "",
     });
   }, [productId, visitorId]);
 
 
-  // console.log("recetly view data: ",data )
 
-  return <View />; // 👈 kuch show nahi karna
+
+  return <View />; 
 };
 
 export default SaveRecentlyViewedProduct;

@@ -101,7 +101,7 @@ const CategoryDetails = () => {
     >
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-      <AppNavbar title={String(name)} showBack showSearch />
+      <AppNavbar title={String(name)} showBack  />
 
       <View style={styles.body}>
         {/* ✅ Sidebar */}

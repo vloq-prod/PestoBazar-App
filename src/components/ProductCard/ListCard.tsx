@@ -61,16 +61,16 @@ export default function ListCard({
       }}
     >
       {/* ─── IMAGE ─── */}
-      <View>
+      <View style={{height: spacing(150),   borderRadius: spacing(12),
+            borderWidth: 1,
+            borderColor: colors.border, justifyContent: 'center', alignItems: 'center'}}>
         <Image
           source={{ uri: item.image_path }}
           style={{
             width: imgSize,
             height: imgSize,
-            borderRadius: spacing(12),
-            borderWidth: 1,
-            borderColor: colors.border,
-            backgroundColor: colors.surfaceElevated,
+         
+         
           }}
           contentFit="cover"
         />

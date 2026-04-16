@@ -5,6 +5,8 @@ import {
   CategoryApiResponse,
   DealsApiResponse,
   FeaturedApiResponse,
+  GetRecentlyViewedParams,
+  GetRecentlyViewedResponse,
   HomeProductApiResponse,
   TestimonialApiResponse,
   UspApiResponse,
@@ -21,10 +23,10 @@ export const getBanners = async (): Promise<BannerApiResponse> => {
 
 // categories api
 export const getHomeCategories = async (
-  id: number
+  id: number,
 ): Promise<CategoryApiResponse> => {
   const response = await apiClient.get<CategoryApiResponse>(
-    `/app-api/v1/app-home-category?id=${id}`
+    `/app-api/v1/app-home-category?id=${id}`,
   );
 
   return response.data;
@@ -75,4 +77,17 @@ export const getBranches = async (): Promise<BranchApiResponse> => {
   );
 
   return response.data;
+};
+
+export const getRecentlyViewed = async (
+  params: GetRecentlyViewedParams,
+): Promise<GetRecentlyViewedResponse> => {
+  const res = await apiClient.get<GetRecentlyViewedResponse>(
+    "/app-api/v1/get-recently-viewed",
+    {
+      params,
+    },
+  );
+
+  return res.data;
 };

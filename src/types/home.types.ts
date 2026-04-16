@@ -154,3 +154,40 @@ export interface BranchApiResponse {
   status: number;
   data: BranchItem[];
 }
+
+
+
+
+
+// types/recentlyViewed.types.ts
+export interface RecentlyViewedItem {
+  id: number;
+  product_variation_id: number;
+  active: string;
+  is_new: string;
+  overview: string;
+  avg_rating: string;
+  url: string;
+  selling_price: string;
+  mrp: string;
+  size: string;
+  unit: string | null;
+  product_name: string;
+  image_path: string;
+  moq: number;
+  s3_image_path: string;
+  enc_product_variation_id: string;
+}
+
+export interface GetRecentlyViewedResponse {
+  message: string;
+  status: number;
+  data: {
+    recently_viewed: RecentlyViewedItem[];
+  };
+}
+
+export interface GetRecentlyViewedParams {
+  visitor_id: string;
+  user_id?: string;
+}
