@@ -12,7 +12,7 @@ interface UspCardProps {
   item: UspItem;
 }
 
-const UspCard: React.FC<UspCardProps> = (({ item }) => {
+const UspCard: React.FC<UspCardProps> = ({ item }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
@@ -57,7 +57,7 @@ const UspCard: React.FC<UspCardProps> = (({ item }) => {
       </View>
     </LinearGradient>
   );
-});
+};
 
 // ─── HomeUsp ──────────────────────────────────────────────────────────────────
 
@@ -87,36 +87,53 @@ const HomeUsp: React.FC = () => {
       style={[
         styles.section,
         {
-          paddingHorizontal: EDGE_PADDING,
-          gap: spacing(16),
+          
+          gap: spacing(25),
         },
       ]}
     >
       {/* ── Header ── */}
-      <View style={[styles.header, { gap: spacing(5) }]}>
-        <Text
+
+      <View className="flex-row items-center gap-3 ">
+        <View
           style={{
-            fontFamily: "Poppins_600SemiBold",
-            fontSize: font(20),
-            color: colors.text,
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
+
+        <Text
+          numberOfLines={1}
+          style={{
+            fontFamily: "Poppins_700Bold",
+            fontSize: font(18),
             includeFontPadding: false,
-            textAlign: "center",
+            textAlignVertical: "center",
           }}
         >
           Why customers love us
         </Text>
+
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
       </View>
 
-      {/* ── Grid ── */}
-      <View style={[styles.grid, { gap: CARD_GAP }]}>
-        {/* Row 1 — 2 cards */}
+
+      <View style={[styles.grid, { gap: CARD_GAP, paddingHorizontal: EDGE_PADDING, }]}>
+     
         <View style={[styles.row, { gap: CARD_GAP }]}>
           {row1.map((item, i) => (
             <UspCard key={i} item={item} />
           ))}
         </View>
 
-        {/* Row 2 — up to 3 cards */}
+
         {row2.length > 0 && (
           <View style={[styles.row, { gap: CARD_GAP }]}>
             {row2.map((item, i) => (

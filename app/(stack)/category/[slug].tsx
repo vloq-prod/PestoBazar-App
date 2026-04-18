@@ -22,6 +22,7 @@ const CategoryDetails = () => {
   const { colors } = useTheme();
   const { categories, loading: catLoading } = useCategory(mainCategoryId);
   const hasAppliedInitialSelectionRef = useRef(false);
+  const [productCount, setProductCount] = useState(0);
   const cartPreviewVisible = useSharedValue(1);
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(
@@ -101,7 +102,7 @@ const CategoryDetails = () => {
     >
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-      <AppNavbar title={String(name)} showBack  />
+      <AppNavbar title={String(name)} showBack  count={productCount} />
 
       <View style={styles.body}>
         {/* ✅ Sidebar */}
@@ -124,6 +125,7 @@ const CategoryDetails = () => {
           hasSubcategories={hasSubcategories}
           mainCategoryId={mainCategoryId}
           cartPreviewVisible={cartPreviewVisible}
+           onCountChange={setProductCount}
         />
       </View>
 

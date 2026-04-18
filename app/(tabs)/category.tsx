@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import {
@@ -31,6 +32,7 @@ import image2 from "../../assets/maincat/Froggersandmachines.jpg";
 import image3 from "../../assets/maincat/Pestequipment.jpg";
 import image4 from "../../assets/maincat/Agrochemicals.jpg";
 import image5 from "../../assets/maincat/Gardeningtoolsandsupplies.jpg";
+import { useRouter } from "expo-router";
 
 type CategoryCardData = {
   image: ImageSourcePropType;
@@ -102,6 +104,7 @@ function CategoryCard({
 }: CategoryCardProps) {
   const translateX = useSharedValue(60);
   const opacity = useSharedValue(0);
+  const router = useRouter();
 
   useEffect(() => {
     const delay = index * 100;
@@ -159,7 +162,17 @@ function CategoryCard({
             {data.description}
           </Text>
 
-          <View
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/(stack)/category/[slug]",
+                params: {
+                  slug: item.id,
+                  name: item.category_name,
+                  image: item.s3_image_path,
+                },
+              })
+            }
             style={[
               styles.iconContainer,
               {
@@ -170,7 +183,7 @@ function CategoryCard({
             ]}
           >
             <ChevronRight size={iconSize} color="#FFFFFF" strokeWidth={2.4} />
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </Animated.View>

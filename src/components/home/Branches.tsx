@@ -129,7 +129,7 @@ const Branches = () => {
   );
 
   return (
-    <View className="gap-5">
+    <View  style={{gap: 25}}>
       <View className="flex-row items-center gap-3 ">
         <View
           style={{
@@ -142,19 +142,19 @@ const Branches = () => {
         <Text
           numberOfLines={1}
           style={{
-            color: "#311A6A",
+            
             fontFamily: "Poppins_700Bold",
             fontSize: 18,
             includeFontPadding: false,
             textAlignVertical: "center",
           }}
         >
-          We Deliver From <Text style={{ color: "#52145A" }}>Near You</Text>
+          We Deliver From <Text>Near You</Text>
         </Text>
 
         <View
           style={{
-            flex: 1, // 🔥 dynamic width
+            flex: 1,
             height: 1,
             backgroundColor: colors.border,
           }}
@@ -186,7 +186,7 @@ const Branches = () => {
           <Text style={{ fontFamily: "Poppins_500Medium" }}>
             nearest fulfillment centers
           </Text>{" "}
-          to your delivery address · Free delivery above ₹ 699
+          to your delivery address · Free delivery above <Text style={{color: colors.primary, fontFamily: "Poppins_700Bold"}}>₹ 699</Text>
         </Text>
       </View>
     </View>

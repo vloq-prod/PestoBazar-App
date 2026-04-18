@@ -8,12 +8,7 @@ const DocumentButtons = ({ onPressMSDS, onPressDFU }: any) => {
   const { spacing, font } = useResponsive();
 
   return (
-    <View
-      style={[
-        styles.container,
-        { marginHorizontal: spacing(16), marginTop: spacing(12) },
-      ]}
-    >
+    <View style={[styles.container, { marginHorizontal: spacing(16) }]}>
       {/* MSDS */}
       <TouchableOpacity
         activeOpacity={0.75}
@@ -24,7 +19,6 @@ const DocumentButtons = ({ onPressMSDS, onPressDFU }: any) => {
             paddingHorizontal: spacing(10),
             borderRadius: spacing(10),
             borderColor: colors.border,
-            backgroundColor: colors.backgroundgray,
           },
         ]}
         onPress={onPressMSDS}
@@ -34,15 +28,15 @@ const DocumentButtons = ({ onPressMSDS, onPressDFU }: any) => {
             {/* 🔥 Improved Icon */}
             <View
               style={{
-                width: spacing(30),
-                height: spacing(30),
-                borderRadius: spacing(8),
-                backgroundColor: colors.primary + "15",
+                width: spacing(36),
+                height: spacing(36),
+                borderRadius: spacing(18),
+                backgroundColor: colors.backgroundgray,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <FileText size={spacing(16)} color={colors.primary} />
+              <FileText size={spacing(16)} color={colors.textSecondary} />
             </View>
 
             <View>
@@ -80,7 +74,6 @@ const DocumentButtons = ({ onPressMSDS, onPressDFU }: any) => {
             paddingHorizontal: spacing(10),
             borderRadius: spacing(10),
             borderColor: colors.border,
-            backgroundColor: colors.backgroundgray,
           },
         ]}
         onPress={onPressDFU}
@@ -90,15 +83,15 @@ const DocumentButtons = ({ onPressMSDS, onPressDFU }: any) => {
             {/* 🔥 Improved Icon */}
             <View
               style={{
-                width: spacing(30),
-                height: spacing(30),
-                borderRadius: spacing(8),
-                backgroundColor: colors.primary + "15",
+                width: spacing(36),
+                height: spacing(36),
+                borderRadius: spacing(18),
+                backgroundColor: colors.backgroundgray,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <FileText size={spacing(16)} color={colors.primary} />
+              <FileText size={spacing(16)} color={colors.textSecondary} />
             </View>
 
             <View>

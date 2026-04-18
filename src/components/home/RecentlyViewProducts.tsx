@@ -93,18 +93,28 @@ const RecentlyViewProducts = () => {
   return (
     <View style={{ gap: spacing(14) }}>
       {/* ── Section Header ── */}
-      <View style={{ paddingHorizontal: spacing(16), gap: spacing(3) }}>
-        <Text
-          style={{
-            fontSize: font(18),
-            color: colors.text,
-            fontFamily: "Poppins_600SemiBold",
-            lineHeight: font(22),
-          }}
-        >
-          Recently Viewed
-        </Text>
-      </View>
+         <View style={{ paddingHorizontal: spacing(16), gap: spacing(3) }}>
+             <Text
+               style={{
+                 fontSize: font(18),
+                 fontFamily: "Poppins_700Bold",
+                 color: colors.text,
+                 lineHeight: font(22),
+               }}
+             >
+              Recently Viewed
+             </Text>
+             <Text
+               style={{
+                 fontSize: font(12),
+                 fontFamily: "Poppins_400Regular",
+                 color: colors.textSecondary,
+                 lineHeight: font(18),
+               }}
+             >
+               Browse The Collection You Viewed
+             </Text>
+           </View>
 
       {/* ── Horizontal Scroll ── */}
       <ScrollView

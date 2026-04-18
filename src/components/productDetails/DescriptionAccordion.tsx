@@ -3,11 +3,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   useWindowDimensions,
-  LayoutAnimation,
   Platform,
   UIManager,
+  LayoutAnimation,
 } from "react-native";
 import RenderHTML from "react-native-render-html";
 import { ChevronDown } from "lucide-react-native";
@@ -15,6 +14,8 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -33,41 +34,35 @@ type Props = {
   data: DescriptionItem[];
 };
 
-// ─── Single Accordion Item ────────────────────────────────────
-const AccordionItem = ({
-  item,
-  index,
-  isLast,
-}: {
-  item: DescriptionItem;
-  index: number;
-  isLast: boolean;
-}) => {
+// ─── Single Item ──────────────────────────────────────────────
+const AccordionItem = ({ item, isLast, expanded, onToggle }: any) => {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const { font, spacing } = useResponsive();
-  const [expanded, setExpanded] = useState(index === 0); // first one open by default
 
+  // Chevron rotation
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [
       {
         rotate: withTiming(expanded ? "180deg" : "0deg", {
-          duration: 250,
+          duration: 280,
           easing: Easing.out(Easing.cubic),
         }),
       },
     ],
   }));
 
+  // Body opacity fade
+  const bodyStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(expanded ? 1 : 0, {
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+    }),
+  }));
+
   const handleToggle = useCallback(() => {
-    LayoutAnimation.configureNext({
-      duration: 260,
-      create: { type: "easeInEaseOut", property: "opacity" },
-      update: { type: "easeInEaseOut" },
-      delete: { type: "easeInEaseOut", property: "opacity" },
-    });
-    setExpanded((prev) => !prev);
-  }, []);
+    onToggle();
+  }, [onToggle]);
 
   const HTML_BASE_STYLE = {
     color: colors.textSecondary,
@@ -79,188 +74,158 @@ const AccordionItem = ({
   const HTML_TAGS_STYLES: Record<string, any> = {
     p: {
       marginTop: 0,
-      marginBottom: spacing(10),
-      fontSize: font(13),
+      marginBottom: spacing(8),
+      fontSize: font(12),
       lineHeight: font(20),
     },
-
     ul: {
-      marginTop: spacing(6),
-      marginBottom: spacing(10),
-      paddingLeft: spacing(18),
+      marginTop: spacing(4),
+      marginBottom: spacing(8),
+      paddingLeft: spacing(16),
     },
-
     ol: {
-      marginTop: spacing(6),
-      marginBottom: spacing(10),
-      paddingLeft: spacing(18),
+      marginTop: spacing(4),
+      marginBottom: spacing(8),
+      paddingLeft: spacing(16),
     },
-
     li: {
-      marginBottom: spacing(6),
-      fontSize: font(13),
+      marginBottom: spacing(5),
+      fontSize: font(12),
       lineHeight: font(20),
       color: colors.textSecondary,
     },
-
     strong: {
       fontFamily: "Poppins_700Bold",
-      fontSize: font(13),
+      fontSize: font(12),
       color: colors.text,
-
-      fontWeight: "700", // ✅ MUST
+      fontWeight: "700",
     },
-
-    span: {
-      fontSize: font(13),
-      color: colors.textSecondary,
-    },
-
+    span: { fontSize: font(12), color: colors.textSecondary },
     h2: {
-      fontFamily: "Poppins_600SemiBold",
-      fontSize: font(14),
-      color: colors.text,
-      marginBottom: spacing(6),
-      marginTop: spacing(10),
-    },
-
-    h3: {
       fontFamily: "Poppins_600SemiBold",
       fontSize: font(13),
       color: colors.text,
       marginBottom: spacing(4),
       marginTop: spacing(8),
     },
+    h3: {
+      fontFamily: "Poppins_600SemiBold",
+      fontSize: font(12),
+      color: colors.text,
+      marginBottom: spacing(4),
+      marginTop: spacing(6),
+    },
   };
 
   return (
     <View
-      style={[
-        styles.itemWrapper,
-        {
-          borderBottomWidth: isLast ? 0 : 1,
-          borderBottomColor: colors.border,
-        },
-      ]}
+      style={{
+        borderBottomWidth: isLast ? 0 : 0.5,
+        borderBottomColor: colors.border,
+      }}
     >
-      {/* Header row */}
+      {/* Header */}
       <TouchableOpacity
-        activeOpacity={0.75}
+        activeOpacity={0.6}
         onPress={handleToggle}
-        style={[
-          styles.itemHeader,
-          {
-            paddingVertical: spacing(10),
-            paddingRight: spacing(16),
-            paddingLeft: spacing(16),
-            gap: spacing(10),
-          },
-        ]}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingVertical: spacing(14),
+          gap: spacing(10),
+        }}
       >
-        {/* Left accent bar + title */}
-        <View style={[styles.titleRow, { gap: spacing(10) }]}>
-          <Text
-            style={[
-              styles.itemTitle,
-              {
-                color: expanded ? colors.text : colors.textSecondary,
-                fontFamily: expanded
-                  ? "Poppins_600SemiBold"
-                  : "Poppins_500Medium",
-                fontSize: font(13),
-                lineHeight: font(18),
-              },
-            ]}
-            numberOfLines={2}
-          >
-            {item.drop_name}
-          </Text>
-        </View>
-
-        {/* Chevron */}
-        <Animated.View
-          style={[
-            styles.chevronWrap,
-            chevronStyle,
-            {
-              width: spacing(26),
-              height: spacing(26),
-              borderRadius: spacing(13),
-              backgroundColor: expanded
-                ? colors.primary + "12"
-                : colors.backgroundgray,
-            },
-          ]}
+        <Text
+          style={{
+            flex: 1,
+            fontSize: font(13),
+            fontFamily: expanded ? "Poppins_600SemiBold" : "Poppins_500Medium",
+            color: expanded ? colors.text : colors.textSecondary,
+            includeFontPadding: false,
+            lineHeight: font(18),
+          }}
+          numberOfLines={2}
         >
+          {item.drop_name}
+        </Text>
+
+        {/* Animated chevron — no bg, just icon */}
+        <Animated.View style={chevronStyle}>
           <ChevronDown
-            size={font(16)}
-            color={expanded ? colors.primary : colors.textTertiary}
-            strokeWidth={2}
+            size={font(17)}
+            color={expanded ? colors.text : colors.textTertiary}
+            strokeWidth={expanded ? 2.2 : 1.8}
           />
         </Animated.View>
       </TouchableOpacity>
 
+      {/* Body — LayoutAnimation handles height, opacity fades in */}
       {expanded && (
-        <View
-          style={[
-            styles.headerDivider,
-            {
-              backgroundColor: colors.border,
-            },
-          ]}
-        />
-      )}
-
-      {/* Body */}
-      {expanded && (
-        <View
-          style={[
-            styles.itemBody,
-            {
-              paddingHorizontal: spacing(16),
-              paddingBottom: spacing(16),
-              paddingTop: spacing(12),
-            },
-          ]}
-        >
+        <Animated.View style={[bodyStyle, { paddingBottom: spacing(16) }]}>
           <RenderHTML
-            contentWidth={width - spacing(64)}
+            contentWidth={width - spacing(32)}
             source={{ html: item.drop_description || "" }}
             baseStyle={HTML_BASE_STYLE}
             tagsStyles={HTML_TAGS_STYLES}
             enableCSSInlineProcessing={false}
           />
-        </View>
+        </Animated.View>
       )}
     </View>
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────
 const DescriptionAccordion: React.FC<Props> = ({ data }) => {
   const { colors } = useTheme();
-  const { spacing } = useResponsive();
+  const { spacing, font } = useResponsive();
+  const [openId, setOpenId] = useState<number | null>(data?.[0]?.id ?? null);
 
   if (!data || data.length === 0) return null;
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const handleToggle = useCallback((id: number) => {
+    LayoutAnimation.configureNext({
+      duration: 300,
+      create: { type: "easeInEaseOut", property: "opacity" },
+      update: { type: "spring", springDamping: 0.8 },
+      delete: { type: "easeInEaseOut", property: "opacity" },
+    });
+    setOpenId((prev) => (prev === id ? null : id));
+  }, []);
+
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          marginHorizontal: spacing(16),
-          borderRadius: spacing(14),
-          borderColor: colors.border,
-          backgroundColor: colors.background,
-        },
-      ]}
-    >
+    <View style={{ marginHorizontal: spacing(16) }}>
+      {/* Section header */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing(8),
+          marginBottom: spacing(4),
+        }}
+      >
+  
+        <Text
+          style={{
+          fontSize: font(16),
+            fontFamily: "Poppins_600SemiBold",
+            color: colors.text,
+            includeFontPadding: false,
+          }}
+        >
+         Product Information
+        </Text>
+      </View>
+
+      {/* Items — no outer border, just dividers */}
       {data.map((item, index) => (
         <AccordionItem
           key={item.id}
           item={item}
-          index={index}
           isLast={index === data.length - 1}
+          expanded={openId === item.id}
+          onToggle={() => handleToggle(item.id)}
         />
       ))}
     </View>
@@ -268,34 +233,3 @@ const DescriptionAccordion: React.FC<Props> = ({ data }) => {
 };
 
 export default DescriptionAccordion;
-
-const styles = StyleSheet.create({
-  container: {
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  itemWrapper: {},
-  itemHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  itemTitle: {
-    includeFontPadding: false,
-    flex: 1,
-  },
-  chevronWrap: {
-    flexShrink: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerDivider: {
-    height: 1,
-  },
-  itemBody: {},
-});

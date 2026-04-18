@@ -1,5 +1,5 @@
 // src/components/category/CategorySidebar.tsx
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
 } from "react-native";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,10 +19,9 @@ import { CategoryItem } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
 import image1 from "../../../assets/category/category4.png";
 
-const ITEM_HEIGHT   = 100;
+const ITEM_HEIGHT = 100;
 const ANIM_DURATION = 220;
-const EASING        = Easing.out(Easing.quad);
-
+const EASING = Easing.out(Easing.quad);
 
 const SkeletonBox = ({
   width,
@@ -94,8 +92,6 @@ const CategorySidebarItem = ({
       ? image1
       : { uri: item.s3_image_path };
 
-
-      
   const bgOpacity = useSharedValue(isActive ? 1 : 0);
   const scale = useSharedValue(isActive ? 1 : 0.94);
 
@@ -114,10 +110,6 @@ const CategorySidebarItem = ({
     transform: [{ scale: scale.value }],
   }));
 
-  const bgStyle = useAnimatedStyle(() => ({
-    opacity: bgOpacity.value,
-  }));
-
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -125,6 +117,7 @@ const CategorySidebarItem = ({
       style={[
         styles.itemOuter,
         {
+          flexDirection: "row",
           marginBottom: spacing(4),
         },
       ]}
@@ -139,22 +132,6 @@ const CategorySidebarItem = ({
           },
         ]}
       >
-        <Animated.View
-          style={[StyleSheet.absoluteFill, styles.gradientWrap, bgStyle]}
-        >
-          <LinearGradient
-            colors={[
-              colors.primary + "25",
-              colors.primary + "18",
-              colors.primary + "10",
-              "transparent",
-            ]}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 0, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-
         {(item.category_name?.trim().toLowerCase() === "all" ||
           !!item.s3_image_path) && (
           <View style={styles.avatarWrap}>
@@ -184,6 +161,17 @@ const CategorySidebarItem = ({
           {item.category_name}
         </Text>
       </Animated.View>
+
+      {isActive && (
+        <View
+          style={{
+            padding: 2,
+            backgroundColor: colors.primary,
+            borderTopLeftRadius: 6,
+            borderBottomLeftRadius: 6,
+          }}
+        />
+      )}
     </TouchableOpacity>
   );
 };
@@ -212,35 +200,67 @@ const CategorySidebar = ({
   const itemTotalHeight = ITEM_HEIGHT + itemSpacing;
   const listTopPadding = spacing(10);
 
-  const selectedIndex = useMemo(
-    () =>
-      categories.findIndex((item) => item.slug?.toString() === selectedSlug),
-    [categories, selectedSlug],
-  );
+  // ── Auto-scroll to active item when selectedSlug changes ──────────────────
+  // Small delay so the list has rendered before we scroll
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (loading || selectedIndex < 0) return;
+    if (!selectedSlug || categories.length === 0) return;
 
-    const timer = setTimeout(() => {
+    const index = categories.findIndex(
+      (item) => item.slug?.toString() === selectedSlug,
+    );
+    if (index < 0) return;
+
+    // Clear any pending scroll from a previous effect
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+    scrollTimeoutRef.current = setTimeout(() => {
       listRef.current?.scrollToIndex({
-        index: selectedIndex,
+        index,
         animated: true,
-        viewPosition: 0.35,
+        // 0.5 = center the active item vertically in the visible area
+        viewPosition: 0.5,
       });
-    }, 80);
+    }, 80); // 80 ms is enough for RN to finish its layout pass
 
-    return () => clearTimeout(timer);
-  }, [loading, selectedIndex]);
+    return () => {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, [selectedSlug, categories]);
+
+  // ── Fallback: if scrollToIndex fires before item is measured ─────────────
+  const handleScrollToIndexFailed = ({
+    index,
+    averageItemLength,
+  }: {
+    index: number;
+    averageItemLength: number;
+  }) => {
+    // Scroll to approximate offset first, then retry after layout
+    const offset = listTopPadding + averageItemLength * index;
+    listRef.current?.scrollToOffset({ offset, animated: false });
+
+    setTimeout(() => {
+      listRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }, 120);
+  };
 
   return (
     <View
       style={[
         styles.root,
         {
-          borderColor: colors.border,
           backgroundColor: colors.surface,
-          borderRightWidth: 1,
-      
+          shadowColor: "#000",
+          shadowOffset: { width: 2, height: 0 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 4,
         },
       ]}
     >
@@ -260,6 +280,7 @@ const CategorySidebar = ({
               textSecondaryColor={colors.textSecondary}
             />
           )}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={false}
           getItemLayout={(_, index) => ({
@@ -267,19 +288,8 @@ const CategorySidebar = ({
             offset: listTopPadding + itemTotalHeight * index,
             index,
           })}
-          onScrollToIndexFailed={({ index }) => {
-            listRef.current?.scrollToOffset({
-              offset: listTopPadding + itemTotalHeight * index,
-              animated: true,
-            });
-          }}
-          contentContainerStyle={[
-            styles.listContent,
-            {
-              paddingVertical: listTopPadding,
-              paddingHorizontal: spacing(5),
-            },
-          ]}
+          onScrollToIndexFailed={handleScrollToIndexFailed}
+          contentContainerStyle={styles.listContent}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={5}
@@ -297,7 +307,7 @@ export default CategorySidebar;
 
 const styles = StyleSheet.create({
   root: {
-    width: "23%",
+    width: "22%",
   },
   listContent: {},
   itemOuter: {
@@ -308,10 +318,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-  },
-  gradientWrap: {
-    borderRadius: 10,
-    overflow: "hidden",
   },
   avatarWrap: {
     width: 50,

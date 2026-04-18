@@ -7,7 +7,7 @@ const Footer = () => {
   const { colors } = useTheme();
   const { font, scale } = useResponsive();
   return (
-    <View style={{ gap: 20 }}>
+    <View style={{ gap: 20, height: 300 }}>
       <View
         style={{
           height: 200,

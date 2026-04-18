@@ -107,7 +107,7 @@ const AppNavbar = ({
                   color: colors.textSecondary ?? colors.text,
                 }}
               >
-                {count}
+                {count === 1 ? ` ${count} Item` : `${count} Items`}
               </Text>
             )}
           </View>

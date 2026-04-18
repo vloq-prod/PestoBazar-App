@@ -162,7 +162,7 @@ export const CategoryList: React.FC = () => {
 
 
 
-  console.log("djalfjasdlf;k", categories)
+  // console.log("djalfjasdlf;k", categories)
 
   return (
     <View className="py-1">

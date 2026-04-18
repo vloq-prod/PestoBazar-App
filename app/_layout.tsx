@@ -11,6 +11,7 @@ import { useAppVisitorStore } from "../src/store/auth";
 import AppStatusBar from "../src/components/AppStatusBar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { useDeliveryStore } from "../src/store/deliveryStore";
 
 function RootLayoutNav() {
   // @ts-ignore
@@ -27,10 +28,12 @@ function RootLayoutNav() {
   const [isReady, setIsReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const { visitorId, token } = useAppVisitorStore();
+  const { hydratePincode } = useDeliveryStore();
 
   useEffect(() => {
     const initApp = async () => {
       await useAppVisitorStore.getState().hydrateVisitor();
+      hydratePincode();
       setIsReady(true);
     };
 

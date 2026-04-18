@@ -1,28 +1,43 @@
-import React from "react";
-import { View, Text, useWindowDimensions } from "react-native";
+import React, { useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+} from "react-native";
 import RenderHTML from "react-native-render-html";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
+import { ChevronDown } from "lucide-react-native";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
+import { LinearGradient } from "expo-linear-gradient";
+
+const COLLAPSED_HEIGHT = 240;
 
 type Props = {
   html: string;
+  onReadMore?: () => void;
 };
 
-const ProductDescription: React.FC<Props> = ({ html }) => {
+const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
   const { colors } = useTheme();
+  const { font, spacing } = useResponsive();
   const { width } = useWindowDimensions();
 
-  if (!html) return null;
+  const measured = React.useRef(false);
+  const fullHeightRef = React.useRef(0);
+  const [needsClamp, setNeedsClamp] = React.useState(false);
 
-  // 🔥 STEP 1: Extract heading from HTML
-  const headingMatch = html.match(
-    /<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/i
-  );
+  const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);
 
+  // ─── HTML Processing ──────────────────────────────────────────
+  const headingMatch = html.match(/<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/i);
   const headingAttributes = headingMatch?.[2] ?? "";
-
   const hasVisibleHeading =
-    !!headingMatch &&
-    !/display\s*:\s*none/i.test(headingAttributes);
+    !!headingMatch && !/display\s*:\s*none/i.test(headingAttributes);
 
   const title = hasVisibleHeading
     ? headingMatch?.[3]
@@ -32,12 +47,10 @@ const ProductDescription: React.FC<Props> = ({ html }) => {
         ?.trim()
     : "Description";
 
-  // 🔥 STEP 2: Remove heading from body
   const bodyHtml = hasVisibleHeading
     ? html.replace(headingMatch![0], "").trim()
     : html;
 
-  // 🔥 STEP 3: Clean HTML (remove inline garbage styles)
   const cleanHtml = bodyHtml
     ?.replace(/font-size:[^;"]+;?/gi, "")
     ?.replace(/line-height:[^;"]+;?/gi, "")
@@ -45,101 +58,193 @@ const ProductDescription: React.FC<Props> = ({ html }) => {
     ?.replace(/<span[^>]*>/gi, "")
     ?.replace(/<\/span>/gi, "");
 
+  // ─── Measure ─────────────────────────────────────────────────
+  const handleLayout = useCallback((e: any) => {
+    if (measured.current) return;
+    const h = e.nativeEvent.layout.height;
+    if (h === 0) return;
+
+    measured.current = true;
+    fullHeightRef.current = h;
+
+    if (h > COLLAPSED_HEIGHT) {
+      setNeedsClamp(true);
+    } else {
+      animatedHeight.value = h;
+    }
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+    overflow: "hidden",
+  }));
+
+  // ─── Styles ───────────────────────────────────────────────────
   const baseStyle = {
     color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 22,
+    fontSize: font(13),
+    lineHeight: font(22),
     fontFamily: "Poppins_400Regular",
   };
 
   const tagStyles: Record<string, any> = {
-    p: {
-      marginBottom: 8,
-      fontSize: 13,
-      lineHeight: 22,
-    },
-
-    ul: {
-      paddingLeft: 18,
-      marginBottom: 10,
-    },
-
+    p: { marginBottom: spacing(8), fontSize: font(12), lineHeight: font(22) },
+    ul: { paddingLeft: spacing(18), marginBottom: spacing(10) },
     li: {
-      fontSize: 13,
-      lineHeight: 22,
-      marginBottom: 6,
+      fontSize: font(12),
+      lineHeight: font(22),
+      marginBottom: spacing(6),
       color: colors.textSecondary,
     },
-
     strong: {
-      fontFamily: "Poppins_700Bold",
+      fontFamily: "Poppins_600SemiBold",
       fontWeight: "700",
-      fontSize: 13,
+      fontSize: font(12),
       color: colors.text,
     },
-
     b: {
       fontFamily: "Poppins_700Bold",
       fontWeight: "700",
-      fontSize: 13,
+      fontSize: font(12),
       color: colors.text,
     },
-
     h1: {
       fontFamily: "Poppins_700Bold",
-      fontSize: 16,
-      marginBottom: 10,
+      fontSize: font(18),
+      marginBottom: spacing(10),
       color: colors.text,
     },
-
     h2: {
       fontFamily: "Poppins_600SemiBold",
-      fontSize: 15,
-      marginBottom: 8,
+      fontSize: font(18),
+      marginBottom: spacing(8),
       color: colors.text,
     },
-
     h3: {
       fontFamily: "Poppins_600SemiBold",
-      fontSize: 14,
-      marginBottom: 8,
+      fontSize: font(14),
+      marginBottom: spacing(8),
       color: colors.text,
     },
   };
 
+  if (!html) return null;
+
+  const renderHTML = (
+    <RenderHTML
+      contentWidth={width - spacing(32)}
+      source={{ html: cleanHtml }}
+      baseStyle={baseStyle}
+      tagsStyles={tagStyles}
+      enableCSSInlineProcessing={false}
+      systemFonts={[
+        "Poppins_400Regular",
+        "Poppins_600SemiBold",
+        "Poppins_700Bold",
+      ]}
+    />
+  );
+
   return (
     <View
       style={{
-        marginHorizontal: 16,
-        paddingVertical: 14,
-        gap: 10,
+        marginHorizontal: spacing(16),
+        paddingVertical: spacing(14),
         backgroundColor: colors.background,
+        gap: spacing(12),
       }}
     >
-      {/* 🔥 Title auto handled */}
-      <Text
-        style={{
-          fontSize: 15,
-          lineHeight: 22,
-          fontFamily: "Poppins_600SemiBold",
-          color: colors.text,
-        }}
+      {/* Title with accent bar */}
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: spacing(8) }}
       >
-        {title}
-      </Text>
+        <Text
+          style={{
+            fontSize: font(16),
+            fontFamily: "Poppins_600SemiBold",
+            color: colors.text,
+            includeFontPadding: false,
+          }}
+        >
+          {title}
+        </Text>
+      </View>
 
-      <RenderHTML
-        contentWidth={width - 60}
-        source={{ html: cleanHtml }}
-        baseStyle={baseStyle}
-        tagsStyles={tagStyles}
-        enableCSSInlineProcessing={false}
-        systemFonts={[
-          "Poppins_400Regular",
-          "Poppins_600SemiBold",
-          "Poppins_700Bold",
-        ]}
-      />
+      {/* Content + fade overlay */}
+      <View>
+        <Animated.View style={animatedStyle}>
+          {!measured.current && (
+            <View
+              onLayout={handleLayout}
+              style={{
+                position: "absolute",
+                opacity: 0,
+                left: 0,
+                right: 0,
+                pointerEvents: "none",
+              }}
+            >
+              {renderHTML}
+            </View>
+          )}
+          {renderHTML}
+        </Animated.View>
+
+        {/* Fade + Read more — text ke saath connected */}
+        {needsClamp && (
+          <TouchableOpacity
+            onPress={onReadMore}
+            activeOpacity={0.75}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: spacing(70),
+            }}
+          >
+            <LinearGradient
+              colors={[colors.background + "00", colors.background]}
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+              }}
+            />
+            {/* Read more text — bottom center pe */}
+            <View
+              style={{
+                position: "absolute",
+                bottom: spacing(4),
+                left: 0,
+                right: 0,
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+                gap: spacing(3),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(13),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  includeFontPadding: false,
+                }}
+              >
+                Read more
+              </Text>
+              <ChevronDown
+                size={font(14)}
+                color={colors.text}
+                strokeWidth={2.5}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };

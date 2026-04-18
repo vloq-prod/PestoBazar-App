@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ export type CategoryRightPanelProps = {
   hasSubcategories?: boolean;
   mainCategoryId?: number;
   cartPreviewVisible?: SharedValue<number>;
+  onCountChange?: (count: number) => void;
 };
 
 const TIMING_CONFIG = { duration: 280 };
@@ -118,6 +119,8 @@ export default function CategoryRightPanel({
   hasSidebar,
   hasSubcategories = false,
   mainCategoryId,
+
+  onCountChange,
   cartPreviewVisible,
 }: CategoryRightPanelProps) {
   const { colors } = useTheme();
@@ -135,7 +138,6 @@ export default function CategoryRightPanel({
     ? (selectedCategory?.category_name ?? "")
     : "All Products";
 
-  const showHeader = hasSidebar ? !!selectedCategory : true;
   const isGrid = viewMode === "grid";
 
   const handleScrollBegin = () => {
@@ -148,75 +150,21 @@ export default function CategoryRightPanel({
     cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
   };
 
+  useEffect(() => {
+  if (onCountChange) {
+    onCountChange(products.length);
+  }
+}, [products]);
+
   if (loading) {
     return <ProductSkeleton />;
   }
 
+
+  
+
   return (
     <View style={styles.root}>
-      {showHeader && (
-        <View
-          style={[
-            styles.panelHeader,
-            {
-              borderBottomColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingHorizontal: spacing(12),
-              paddingVertical: spacing(6),
-            },
-          ]}
-        >
-          <View style={styles.panelHeaderLeft}>
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: font(13.5),
-                lineHeight: font(18),
-                color: colors.text,
-                fontFamily: "Poppins_600SemiBold",
-              }}
-            >
-              {headerTitle}
-            </Text>
-            {products.length > 0 && (
-              <Text
-                style={{
-                  marginTop: spacing(1),
-                  fontSize: font(11),
-                  color: colors.textSecondary,
-                  fontFamily: "Poppins_400Regular",
-                }}
-              >
-                {products.length} items
-              </Text>
-            )}
-          </View>
-
-          {!hasSubcategories && (
-            <TouchableOpacity
-              onPress={onToggleView}
-              activeOpacity={0.8}
-              style={[
-                styles.toggleBtn,
-                {
-                  width: spacing(36),
-                  height: spacing(36),
-                  borderRadius: spacing(10),
-                  borderColor: colors.primary,
-                  backgroundColor: colors.primary + "15",
-                },
-              ]}
-            >
-              {isGrid ? (
-                <LayoutGrid size={spacing(17)} color={colors.primary} />
-              ) : (
-                <List size={spacing(17)} color={colors.primary} />
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
       {products.length === 0 ? (
         <EmptyState categoryName={headerTitle} />
       ) : (

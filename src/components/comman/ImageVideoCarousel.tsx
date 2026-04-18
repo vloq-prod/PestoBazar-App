@@ -73,7 +73,7 @@ const CarouselDot = ({
       easing: Easing.out(Easing.cubic),
     }),
     opacity: withTiming(isActive ? 1 : 0.35, { duration: 250 }),
-    backgroundColor: withTiming(isActive ? activeColor : "#fff", {
+    backgroundColor: withTiming(isActive ? activeColor : "#9ca3af", {
       duration: 250,
     }),
   }));
@@ -104,7 +104,7 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[] }> = ({ data }) => {
 
   return (
     <>
-      <View style={styles.root}>
+      <View style={[styles.root, { borderColor: colors.border }]}>
         <FlatList
           data={data}
           horizontal
@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
   root: {
     width,
     height: CAROUSEL_HEIGHT,
+    borderBottomWidth: 1,
   },
   slide: {
     width,
@@ -189,7 +190,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "black",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 20,

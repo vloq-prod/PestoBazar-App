@@ -67,7 +67,7 @@ const TestimonialCard = ({
         backgroundColor: colors.cardBackground,
         borderColor: colors.border,
       }}
-      className="rounded-3xl border p-4 gap-2" 
+      className="rounded-3xl border p-4 gap-2"
     >
       {/* Stars + Quote */}
       <View className="flex-row items-center justify-between">
@@ -158,7 +158,38 @@ const Testimonial = () => {
   if (!testimonials || testimonials.length === 0) return null;
 
   return (
-    <View className="px-2">
+    <View style={{gap: 25}}>
+      <View className="flex-row items-center gap-3 ">
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
+
+        <Text
+          numberOfLines={1}
+          style={{
+            fontFamily: "Poppins_700Bold",
+            fontSize: 18,
+            includeFontPadding: false,
+            textAlignVertical: "center",
+          }}
+        >
+         Testimonials
+        </Text>
+
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
+      </View>
+
+
       <Carousel
         width={CARD_WIDTH + CARD_MARGIN * 2}
         height={CARD_HEIGHT}
@@ -168,11 +199,13 @@ const Testimonial = () => {
         scrollAnimationDuration={700}
         style={{ width }}
         renderItem={({ item }) => (
-          <View style={{ paddingHorizontal: CARD_MARGIN }}>
+          <View style={{ paddingHorizontal: 16 }}>
             <TestimonialCard item={item} colors={colors} />
           </View>
         )}
       />
+
+
     </View>
   );
 };

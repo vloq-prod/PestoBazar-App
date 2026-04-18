@@ -58,19 +58,25 @@ export default function ListCard({
         flexDirection: "row",
         gap: spacing(8),
         marginBottom: spacing(10),
+        alignItems: "stretch",
       }}
     >
-      {/* ─── IMAGE ─── */}
-      <View style={{height: spacing(150),   borderRadius: spacing(12),
-            borderWidth: 1,
-            borderColor: colors.border, justifyContent: 'center', alignItems: 'center'}}>
+      {/* left content  */}
+      <View
+        style={{
+          borderRadius: spacing(12),
+          borderWidth: 1,
+          borderColor: colors.border,
+          justifyContent: "center",
+          alignItems: "center",
+          overflow: "hidden",
+        }}
+      >
         <Image
           source={{ uri: item.image_path }}
           style={{
             width: imgSize,
             height: imgSize,
-         
-         
           }}
           contentFit="cover"
         />
@@ -106,96 +112,102 @@ export default function ListCard({
       </View>
 
       {/* ─── RIGHT CONTENT ─── */}
-      <View style={{ flex: 1, gap: spacing(6) }}>
-        {/* NAME + OVERVIEW */}
-        <View style={{ gap: spacing(3) }}>
-          <Text
-            numberOfLines={2}
-            style={{
-              fontFamily: "Poppins_600SemiBold",
-              fontSize: font(13),
-              lineHeight: font(19),
-              color: colors.text,
-            }}
-          >
-            {item.product_name}
-          </Text>
-
-          {item.overview ? (
+      <View
+        style={{ flex: 1, gap: spacing(6), justifyContent: "space-between" }}
+      >
+        <View style={{ gap: 5 }}>
+          {/* NAME + OVERVIEW */}
+          <View style={{ gap: spacing(3) }}>
             <Text
               numberOfLines={2}
               style={{
-                fontFamily: "Poppins_400Regular",
-                fontSize: font(11),
-                lineHeight: font(16),
-                color: colors.textTertiary,
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(13),
+                lineHeight: font(19),
+                color: colors.text,
               }}
             >
-              {item.overview}
+              {item.product_name}
             </Text>
-          ) : null}
-        </View>
 
-        {showRating && (
+            {item.overview ? (
+              <Text
+                numberOfLines={2}
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(11),
+                  lineHeight: font(16),
+                  color: colors.textTertiary,
+                }}
+              >
+                {item.overview}
+              </Text>
+            ) : null}
+          </View>
+
+          {showRating && (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing(4),
+              }}
+            >
+              <View style={{ flexDirection: "row" }}>
+                {[1, 2, 3, 4, 5].map((i) => {
+                  const type = getStarType(i, rating);
+
+                  return (
+                    <StarIcon
+                      key={i}
+                      size={spacing(12)}
+                      color={
+                        type === "empty" ? colors.border : colors.starColor
+                      }
+                      fill={
+                        type === "full"
+                          ? colors.starColor
+                          : type === "half"
+                            ? colors.starColor
+                            : "none"
+                      }
+                      style={type === "half" ? { opacity: 0.5 } : {}}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* PRICE */}
           <View
             style={{
               flexDirection: "row",
-              alignItems: "center",
-              gap: spacing(4),
+              alignItems: "baseline",
+              gap: spacing(5),
             }}
           >
-            <View style={{ flexDirection: "row" }}>
-              {[1, 2, 3, 4, 5].map((i) => {
-                const type = getStarType(i, rating);
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(15),
+                color: colors.primary,
+              }}
+            >
+              ₹{price.toLocaleString("en-IN")}
+            </Text>
 
-                return (
-                  <StarIcon
-                    key={i}
-                    size={spacing(12)}
-                    color={type === "empty" ? colors.border : colors.starColor}
-                    fill={
-                      type === "full"
-                        ? colors.starColor
-                        : type === "half"
-                          ? colors.starColor
-                          : "none"
-                    }
-                    style={type === "half" ? { opacity: 0.5 } : {}}
-                  />
-                );
-              })}
-            </View>
+            <Text
+              style={{
+                fontFamily: "Poppins_400Regular",
+                fontSize: font(11),
+                color: colors.textTertiary,
+                textDecorationLine: "line-through",
+              }}
+            >
+              ₹{mrp.toLocaleString("en-IN")}
+            </Text>
           </View>
-        )}
-
-        {/* PRICE */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "baseline",
-            gap: spacing(5),
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: "Poppins_600SemiBold",
-              fontSize: font(15),
-              color: colors.primary,
-            }}
-          >
-            ₹{price.toLocaleString("en-IN")}
-          </Text>
-
-          <Text
-            style={{
-              fontFamily: "Poppins_400Regular",
-              fontSize: font(11),
-              color: colors.textTertiary,
-              textDecorationLine: "line-through",
-            }}
-          >
-            ₹{mrp.toLocaleString("en-IN")}
-          </Text>
         </View>
 
         {/* BUTTON */}

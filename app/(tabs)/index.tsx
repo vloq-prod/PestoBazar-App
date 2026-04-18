@@ -3,7 +3,10 @@ import { View, StatusBar } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../src/theme";
 import HomeNavbar from "../../src/components/home/HomeNavbar";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import AppSearchBar from "../../src/components/home/AppSearchBar";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
 import HomeProduct from "../../src/components/home/HomeProduct";
@@ -31,6 +34,7 @@ import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
 import RecentlyViewProducts from "../../src/components/home/RecentlyViewProducts";
+import OurServices from "../../src/components/home/OurServices";
 
 const SEARCH_HEIGHT = 56;
 const CATEGORY_HEIGHT = 105;
@@ -39,6 +43,7 @@ const TIMING_CONFIG = { duration: 280 };
 
 export default function HomeScreen() {
   const isConnected = useNetworkStatus();
+  const insets = useSafeAreaInsets();
 
   const { colors } = useTheme();
   const { slidingbanners, featureBanners, homeBottomBanners } =
@@ -185,7 +190,7 @@ export default function HomeScreen() {
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: 80,
+            paddingBottom: insets.bottom + 120,
             paddingTop: 16,
             gap: 30,
           }}
@@ -206,11 +211,15 @@ export default function HomeScreen() {
                 : homeBottomBanners
             }
           />
-          <Testimonial />
-          <HomeUsp />
 
-          <Branches />
-          <Footer />
+          <View style={{ gap: 25 }}>
+            <Testimonial />
+            <HomeUsp />
+
+            <OurServices />
+            <Branches />
+            <Footer />
+          </View>
         </Animated.ScrollView>
 
         <AddToCartPreview visible={searchVisible} />

@@ -9,6 +9,7 @@ import React from "react";
 import ReviewCard from "./ReviewCard";
 import { useProductReviews } from "../../hooks/productDetailsHook";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 
 type Props = {
   product_id: number;
@@ -19,6 +20,7 @@ const ReviewSection = ({ product_id }: Props) => {
     useProductReviews({ product_id });
 
   const { colors } = useTheme();
+  const { font } = useResponsive();
 
   if (loading) {
     return (
@@ -48,7 +50,16 @@ const ReviewSection = ({ product_id }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Customer Reviews</Text>
+      <Text
+        style={{
+          fontSize: font(16),
+          fontFamily: "Poppins_600SemiBold",
+          color: colors.text,
+          includeFontPadding: false,
+        }}
+      >
+        Customer Reviews
+      </Text>
       <FlatList
         data={reviews}
         keyExtractor={(item) => String(item.id)}
