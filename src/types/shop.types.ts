@@ -36,3 +36,33 @@ export interface ListingApiResponse {
     data: ListingItem[];
   };
 }
+
+
+
+
+export interface Category {
+  id: number;
+  category_name: string;
+}
+
+export interface Brand {
+  id: number;
+  brand_name: string;
+}
+
+export interface PriceRange {
+  min: number;
+  max: number;
+}
+
+export interface FilterData {
+  category: Category[];
+  brand: Brand[];
+  price: PriceRange;
+}
+
+export interface FilterResponse {
+  message: string;
+  status: number;
+  data: FilterData;
+}

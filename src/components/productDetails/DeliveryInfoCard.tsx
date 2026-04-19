@@ -2,7 +2,7 @@ import { Text, View, TouchableOpacity } from "react-native";
 import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
-import { CheckCircle2, Truck, Banknote, Check } from "lucide-react-native";
+import { Truck, CheckCircle2, XCircle } from "lucide-react-native";
 import { useEstimatedDelivery } from "../../hooks/productDetailsHook";
 import { useDeliveryStore } from "../../store/deliveryStore";
 
@@ -32,6 +32,10 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
 
   const hasBottomData = freeShipping || codeMessage;
 
+  const isCodAvailable =
+    codeMessage?.toLowerCase().includes("cod available") &&
+    !codeMessage?.toLowerCase().includes("not");
+
   return (
     <View
       style={{
@@ -60,7 +64,7 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
             gap: spacing(10),
           }}
         >
-      {/* <View style={{padding: 4, backgroundColor: colors.success, borderRadius: 30, }}>
+          {/* <View style={{padding: 4, backgroundColor: colors.success, borderRadius: 30, }}>
         <Check size={12} color={colors.background} strokeWidth={3} />
       </View> */}
 
@@ -138,6 +142,45 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
               gap: spacing(12),
             }}
           >
+            {/* COD */}
+            {codeMessage && (
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing(10),
+                }}
+              >
+                <View
+                  style={{
+                    width: spacing(36),
+                    height: spacing(36),
+                    borderRadius: spacing(18),
+                    backgroundColor: colors.backgroundgray,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {isCodAvailable ? (
+                    <CheckCircle2 size={spacing(18)} color="green" />
+                  ) : (
+                    <XCircle size={spacing(18)} color="red" />
+                  )}
+                </View>
+
+                <Text
+                  style={{
+                    fontSize: font(11),
+                    fontFamily: "Poppins_500Medium",
+                    color: colors.text,
+                  }}
+                >
+                  {codeMessage}
+                </Text>
+              </View>
+            )}
+
             {/* Free Shipping */}
             {freeShipping && (
               <View
@@ -162,51 +205,14 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
                 </View>
 
                 <Text
-                
                   style={{
                     flex: 1,
                     fontSize: font(11),
                     fontFamily: "Poppins_500Medium",
                     color: colors.text,
-                    
                   }}
                 >
                   {freeShipping}
-                </Text>
-              </View>
-            )}
-
-            {/* COD */}
-            {codeMessage && (
-              <View
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: spacing(10),
-                }}
-              >
-                <View
-                  style={{
-                    width: spacing(36),
-                    height: spacing(36),
-                    borderRadius: spacing(18),
-                    backgroundColor: colors.backgroundgray,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Banknote size={spacing(18)} color={colors.textSecondary} />
-                </View>
-
-                <Text
-                  style={{
-                    fontSize: font(11),
-                    fontFamily: "Poppins_500Medium",
-                    color: colors.text,
-                  }}
-                >
-                  {codeMessage}
                 </Text>
               </View>
             )}

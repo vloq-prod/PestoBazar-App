@@ -40,6 +40,11 @@ import { useAppVisitorStore } from "../../src/store/auth";
 import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
 
 type GridMode = "grid" | "list";
+type AppliedFilters = {
+  categories: number[];
+  brands: number[];
+  priceRange: { min: number; max: number };
+};
 
 const DEFAULT_PRICE = { from: 200, to: 50000 };
 const SCROLL_THRESHOLD = 10;
@@ -61,6 +66,11 @@ export default function ShopScreen() {
   const [gridMode, setGridMode] = useState<GridMode>("list");
   const [sortBy, setSortBy] = useState<number>(1);
   const [priceFilter, setPriceFilter] = useState(DEFAULT_PRICE);
+  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>({
+    categories: [],
+    brands: [],
+    priceRange: { min: DEFAULT_PRICE.from, max: DEFAULT_PRICE.to },
+  });
 
   const searchText = Array.isArray(search) ? search[0] : search;
 
@@ -70,19 +80,29 @@ export default function ShopScreen() {
   const lastScrollY = useSharedValue(0);
   const cartPreviewVisible = useSharedValue(1);
 
+  const isFilterActive =
+    appliedFilters.categories.length > 0 ||
+    appliedFilters.brands.length > 0 ||
+    priceFilter.from !== DEFAULT_PRICE.from ||
+    priceFilter.to !== DEFAULT_PRICE.to;
+
   const { products, loading, loadingMore, hasMore, allLoaded, loadMore } =
     useListing({
       sort_by: sortBy,
-      type: searchText || "",
+      type: isFilterActive ? "filter" : searchText || "",
+      filter_category_id:
+        appliedFilters.categories.length > 0
+          ? appliedFilters.categories.join(",")
+          : undefined,
+      filter_brand_id:
+        appliedFilters.brands.length > 0
+          ? appliedFilters.brands.join(",")
+          : undefined,
       filter_from_price: priceFilter.from,
       filter_to_price: priceFilter.to,
     });
 
   const isGrid = gridMode === "grid";
-
-  const isFilterActive =
-    priceFilter.from !== DEFAULT_PRICE.from ||
-    priceFilter.to !== DEFAULT_PRICE.to;
 
   const isSortActive = sortBy !== 1;
 
@@ -100,7 +120,8 @@ export default function ShopScreen() {
 
   const handleSortSelect = useCallback((id: number) => setSortBy(id), []);
 
-  const handleApplyFilter = useCallback((filters: any) => {
+  const handleApplyFilter = useCallback((filters: AppliedFilters) => {
+    setAppliedFilters(filters);
     setPriceFilter({
       from: filters.priceRange.min,
       to: filters.priceRange.max,

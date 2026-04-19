@@ -1,323 +1,570 @@
 import React, {
-  useCallback,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
+  useCallback,
 } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { BottomSheetModal, BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { X, Plus } from "lucide-react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  Modal,
+  Pressable,
+} from "react-native";
+import { X, Search } from "lucide-react-native";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import PriceSlider from "../../components/comman/PriceSlider"; // ✅ sirf PriceSlider import
+import PriceSlider from "../../components/comman/PriceSlider";
+import { useFilterData } from "../../hooks/shopHooks";
 
-const INITIAL_SHOW = 10;
-
+// ─── Types ────────────────────────────────────────────────────
 export interface FilterBottomSheetRef {
   open: () => void;
   close: () => void;
 }
 
-interface Props {
-  onApply?: (filters: {
-    categories: number[];
-    brands: number[];
-    priceRange: { min: number; max: number }; // ✅ price bhi onApply mein
-  }) => void;
+interface FilterState {
+  categories: number[];
+  brands: number[];
+  priceRange: { min: number; max: number };
 }
 
-export const categories = [
-  { id: 1, name: "Rat Control" },
-  { id: 2, name: "Lizard Control" },
-  { id: 3, name: "Snake Control" },
-  { id: 4, name: "Cockroach Control" },
-  { id: 5, name: "Termite Control" },
-  { id: 6, name: "Mosquito Control" },
-  { id: 7, name: "Bed Bug Control" },
-  { id: 8, name: "Ant Control" },
-  { id: 9, name: "Fly Control" },
-  { id: 10, name: "Spider Control" },
-  { id: 11, name: "Bird Control" },
-  { id: 12, name: "Bee Control" },
-  { id: 13, name: "Flea Control" },
-  { id: 14, name: "Tick Control" },
-  { id: 15, name: "Silverfish Control" },
+interface Props {
+  onApply?: (filters: FilterState) => void;
+}
+
+type SectionKey = "category" | "brand" | "price";
+
+const SECTIONS: { key: SectionKey; label: string }[] = [
+  { key: "category", label: "Category" },
+  { key: "brand", label: "Brands" },
+  { key: "price", label: "Price" },
 ];
 
-export const brands = [
-  { id: 1, name: "Hit" },
-  { id: 2, name: "Goodknight" },
-  { id: 3, name: "All Out" },
-  { id: 4, name: "Mortein" },
-  { id: 5, name: "Baygon" },
-  { id: 6, name: "Raid" },
-  { id: 7, name: "Ortho" },
-  { id: 8, name: "Harris" },
-  { id: 9, name: "Combat" },
-  { id: 10, name: "EcoSMART" },
-  { id: 11, name: "Green Gobbler" },
-  { id: 12, name: "Safer Brand" },
-  { id: 13, name: "Hot Shot" },
-  { id: 14, name: "Spectracide" },
-  { id: 15, name: "Black Flag" },
-];
-
-// ── FilterSection ─────────────────────────────────────────
-const FilterSection = ({
-  title,
-  items,
-  selectedSet,
-  onToggle,
-  colors,
-}: {
-  title: string;
-  items: { id: number; name: string }[];
-  selectedSet: Set<number>;
-  onToggle: (id: number) => void;
-  colors: any;
-}) => {
-  const [showAll, setShowAll] = useState(false);
-  const visible = showAll ? items : items.slice(0, INITIAL_SHOW);
-
-  return (
-    <View className="gap-2.5">
-      <Text
-        className="text-[11px] tracking-widest uppercase"
+// ─── Checkbox Row ─────────────────────────────────────────────
+const CheckRow = React.memo(
+  ({
+    label,
+    checked,
+    onToggle,
+    colors,
+    font,
+    spacing,
+  }: {
+    label: string;
+    checked: boolean;
+    onToggle: () => void;
+    colors: any;
+    font: any;
+    spacing: any;
+  }) => (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onToggle}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: spacing(11),
+        paddingHorizontal: spacing(14),
+        gap: spacing(10),
+        backgroundColor: checked ? colors.backgroundgray : colors.background,
+      }}
+    >
+      {/* Checkbox */}
+      <View
         style={{
-          fontFamily: "Poppins_600SemiBold",
-          color: colors.textSecondary,
+          width: spacing(18),
+          height: spacing(18),
+          borderRadius: spacing(5),
+          borderWidth: checked ? 0 : 1.5,
+          borderColor: colors.border,
+          backgroundColor: checked ? colors.primary : "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
         }}
       >
-        {title}
-      </Text>
-
-      <View className="flex-row flex-wrap gap-2">
-        {visible.map((item) => {
-          const selected = selectedSet.has(item.id);
-          return (
-            <TouchableOpacity
-              key={item.id}
-              onPress={() => onToggle(item.id)}
-              activeOpacity={0.7}
-              className="flex-row items-center gap-1 py-1.5 pl-3 pr-2 rounded-lg border"
-              style={{
-                borderColor: selected ? colors.primary : colors.border,
-                backgroundColor: selected
-                  ? colors.primary + "15"
-                  : colors.background,
-              }}
-            >
-              <Text
-                className="text-[12px]"
-                style={{
-                  fontFamily: selected
-                    ? "Poppins_600SemiBold"
-                    : "Poppins_400Regular",
-                  color: selected ? colors.primary : colors.textSecondary,
-                }}
-              >
-                {item.name}
-              </Text>
-              {selected ? (
-                <X size={13} color={colors.primary} strokeWidth={2.5} />
-              ) : (
-                <Plus
-                  size={13}
-                  color={colors.textSecondary}
-                  strokeWidth={2.5}
-                />
-              )}
-            </TouchableOpacity>
-          );
-        })}
-
-        {!showAll && items.length > INITIAL_SHOW && (
-          <TouchableOpacity
-            onPress={() => setShowAll(true)}
-            activeOpacity={0.7}
-            className="py-1.5 px-3 rounded-lg border"
+        {checked && (
+          <View
             style={{
-              borderColor: colors.primary,
-              backgroundColor: colors.primary + "10",
+              width: spacing(10),
+              height: spacing(10),
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <Text
-              className="text-[12px]"
-              style={{ fontFamily: "Poppins_500Medium", color: colors.primary }}
-            >
-              +{items.length - INITIAL_SHOW} More
-            </Text>
-          </TouchableOpacity>
+            {/* Checkmark via borders */}
+            <View
+              style={{
+                width: spacing(9),
+                height: spacing(5),
+                borderLeftWidth: 1.5,
+                borderBottomWidth: 1.5,
+                borderColor: colors.background,
+                transform: [{ rotate: "-45deg" }, { translateY: -spacing(1) }],
+              }}
+            />
+          </View>
         )}
       </View>
-    </View>
-  );
-};
 
-// ── Main ──────────────────────────────────────────────────
+      <Text
+        numberOfLines={1}
+        style={{
+          flex: 1,
+          fontSize: font(12),
+          fontFamily: checked ? "Poppins_500Medium" : "Poppins_400Regular",
+          color: checked ? colors.primary : colors.textSecondary,
+          includeFontPadding: false,
+        }}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  ),
+);
+
+CheckRow.displayName = "CheckRow";
+
+// ─── Search Input ─────────────────────────────────────────────
+const SearchBar = ({
+  value,
+  onChange,
+  placeholder,
+  colors,
+  font,
+  spacing,
+}: any) => (
+  <View
+    style={{
+      flexDirection: "row",
+      alignItems: "center",
+      margin: spacing(10),
+      paddingHorizontal: spacing(10),
+      backgroundColor: colors.backgroundgray,
+      borderRadius: spacing(8),
+      borderWidth: 0.5,
+      borderColor: colors.border,
+      gap: spacing(8),
+    }}
+  >
+    <Search size={font(14)} color={colors.textTertiary} strokeWidth={2} />
+    <TextInput
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      placeholderTextColor={colors.textTertiary}
+      style={{
+        flex: 1,
+        fontSize: font(12),
+        fontFamily: "Poppins_400Regular",
+        color: colors.text,
+        paddingVertical: spacing(8),
+        includeFontPadding: false,
+        paddingTop: 0,
+        paddingBottom: 0,
+      }}
+    />
+    {!!value && (
+      <TouchableOpacity onPress={() => onChange("")} activeOpacity={0.7}>
+        <X size={14} color={colors.textTertiary} />
+      </TouchableOpacity>
+    )}
+  </View>
+);
+
+// ─── Main Component ───────────────────────────────────────────
 const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
-  ({onApply}, ref) => {
-    const {colors} = useTheme();
+  ({ onApply }, ref) => {
+    const { colors } = useTheme();
+    const { font, spacing } = useResponsive();
     const insets = useSafeAreaInsets();
-    const sheetRef = useRef<BottomSheetModal>(null);
-    const snapPoints = useMemo(() => ['80%'], []);
-    const stableColors = useMemo(() => colors, [colors]);
+    const [visible, setVisible] = useState(false);
 
-    const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set());
-    const [selectedBrands, setSelectedBrands] = useState<Set<number>>(new Set());
-    const [priceRange, setPriceRange] = useState<{min: number; max: number}>({
-      min: 200,
-      max: 50_000,
+    // ── API ──────────────────────────────────────────────────
+    const { data } = useFilterData();
+    const categories = useMemo(
+      () => data?.data?.category ?? [],
+      [data?.data?.category],
+    );
+    const brands = useMemo(() => data?.data?.brand ?? [], [data?.data?.brand]);
+    const priceMin = data?.data?.price?.min ?? 100;
+    const priceMax = data?.data?.price?.max ?? 50000;
+
+    // ── State ────────────────────────────────────────────────
+    const [activeSection, setActiveSection] = useState<SectionKey>("category");
+    const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+    const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
+    const [priceRange, setPriceRange] = useState({
+      min: priceMin,
+      max: priceMax,
     });
-
- 
+    const [categorySearch, setCategorySearch] = useState("");
+    const [brandSearch, setBrandSearch] = useState("");
     const [openKey, setOpenKey] = useState(0);
 
-    useImperativeHandle(ref, () => ({
-      open: () => {
-        setOpenKey(k => k + 1); 
-        sheetRef.current?.present();
-      },
-      close: () => sheetRef.current?.dismiss(),
-    }));
+    // ── Derived ──────────────────────────────────────────────
+    const filteredCategories = useMemo(
+      () =>
+        categories.filter((c: any) =>
+          c.category_name.toLowerCase().includes(categorySearch.toLowerCase()),
+        ),
+      [categories, categorySearch],
+    );
 
+    const filteredBrands = useMemo(
+      () =>
+        brands.filter((b: any) =>
+          b.brand_name.toLowerCase().includes(brandSearch.toLowerCase()),
+        ),
+      [brands, brandSearch],
+    );
+
+    // ── Handlers ─────────────────────────────────────────────
     const toggleCategory = useCallback((id: number) => {
-      setSelectedCategories(prev => {
-        const next = new Set(prev);
-        next.has(id) ? next.delete(id) : next.add(id);
-        return next;
-      });
+      setSelectedCategories((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      );
     }, []);
 
     const toggleBrand = useCallback((id: number) => {
-      setSelectedBrands(prev => {
-        const next = new Set(prev);
-        next.has(id) ? next.delete(id) : next.add(id);
-        return next;
-      });
+      setSelectedBrands((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      );
     }, []);
 
-    const handleClearAll = useCallback(() => {
-      setSelectedCategories(new Set());
-      setSelectedBrands(new Set());
-      setPriceRange({min: 200, max: 50_000});
-      setOpenKey(k => k + 1); // ✅ slider bhi reset ho
-    }, []);
+    const handleClear = useCallback(() => {
+      setSelectedCategories([]);
+      setSelectedBrands([]);
+      setPriceRange({ min: priceMin, max: priceMax });
+      setCategorySearch("");
+      setBrandSearch("");
+    }, [priceMin, priceMax]);
 
     const handleApply = useCallback(() => {
       onApply?.({
-        categories: Array.from(selectedCategories),
-        brands: Array.from(selectedBrands),
+        categories: selectedCategories,
+        brands: selectedBrands,
         priceRange,
       });
-      sheetRef.current?.dismiss();
-    }, [onApply, selectedCategories, selectedBrands, priceRange]);
+      setVisible(false);
+    }, [selectedCategories, selectedBrands, priceRange, onApply]);
 
-    const totalSelected = selectedCategories.size + selectedBrands.size;
+    useImperativeHandle(ref, () => ({
+      open: () => {
+        setOpenKey((k) => k + 1);
+        setVisible(true);
+      },
+      close: () => setVisible(false),
+    }));
 
-    return (
-      <BottomSheetModal
-        ref={sheetRef}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        handleComponent={null}
-        backgroundStyle={{
-          backgroundColor: stableColors.background,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-        }}>
-        {/* Header — same as before */}
-        <View
-          className="flex-row items-center justify-between px-4 py-3 border-b rounded-t-2xl"
-          style={{
-            borderBottomColor: stableColors.border,
-            backgroundColor: stableColors.primary,
-          }}>
-          <Text
-            className="text-[17px]"
-            style={{fontFamily: 'Poppins_600SemiBold', color: stableColors.textInverse}}>
-            Filter Products
-          </Text>
-          <TouchableOpacity
-            onPress={() => sheetRef.current?.dismiss()}
-            className="w-8 h-8 items-center justify-center rounded-full"
-            style={{backgroundColor: 'rgba(255,255,255,0.2)'}}>
-            <X size={18} color={stableColors.textInverse} strokeWidth={2.2} />
-          </TouchableOpacity>
-        </View>
-
-        <BottomSheetScrollView
-          contentContainerStyle={{padding: 16, gap: 22, paddingBottom: 20}}
-          showsVerticalScrollIndicator={false}>
-
-          <FilterSection
-            title="Category"
-            items={categories}
-            selectedSet={selectedCategories}
-            onToggle={toggleCategory}
-            colors={stableColors}
-          />
-
-          <FilterSection
-            title="Brand"
-            items={brands}
-            selectedSet={selectedBrands}
-            onToggle={toggleBrand}
-            colors={stableColors}
-          />
-
-          <View className="gap-2.5">
-            <Text
-              className="text-[11px] tracking-widest uppercase"
-              style={{fontFamily: 'Poppins_600SemiBold', color: stableColors.textSecondary}}>
-              Price
-            </Text>
-
-            {/* ✅ key={openKey} — har open pe remount with saved priceRange */}
-            {/* ✅ initialMin/initialMax — apply ke baad wahi values dikhengi */}
+    // ── Right panel content ──────────────────────────────────
+    const renderContent = () => {
+      if (activeSection === "price") {
+        return (
+          <View style={{ padding: spacing(16) }}>
             <PriceSlider
               key={openKey}
               initialMin={priceRange.min}
               initialMax={priceRange.max}
-              onValueChange={range => setPriceRange(range)}
+              onValueChange={setPriceRange}
             />
           </View>
-        </BottomSheetScrollView>
+        );
+      }
 
-        {/* Footer — same as before */}
+      const isCategory = activeSection === "category";
+      const items = isCategory ? filteredCategories : filteredBrands;
+      const selected = isCategory ? selectedCategories : selectedBrands;
+      const onToggle = isCategory ? toggleCategory : toggleBrand;
+      const getLabel = (item: any) =>
+        isCategory ? item.category_name : item.brand_name;
+      const getId = (item: any) => item.id;
+
+      return (
+        <>
+          <SearchBar
+            value={isCategory ? categorySearch : brandSearch}
+            onChange={isCategory ? setCategorySearch : setBrandSearch}
+            placeholder={`Search ${isCategory ? "category" : "brand"}...`}
+            colors={colors}
+            font={font}
+            spacing={spacing}
+          />
+          <ScrollView
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled"
+            indicatorStyle="default"
+          >
+            {items.map((item: any, index: number) => (
+              <React.Fragment key={getId(item)}>
+                <CheckRow
+                  label={getLabel(item)}
+                  checked={selected.includes(getId(item))}
+                  onToggle={() => onToggle(getId(item))}
+                  colors={colors}
+                  font={font}
+                  spacing={spacing}
+                />
+                {index < items.length - 1 && (
+                  <View
+                    style={{ height: 0.5, backgroundColor: colors.border }}
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </ScrollView>
+        </>
+      );
+    };
+
+    return (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setVisible(false)}
+      >
         <View
-          className="flex-row gap-2.5 px-4 pt-3 border-t"
           style={{
-            paddingBottom: insets.bottom || 20,
-            backgroundColor: stableColors.background,
-            borderTopColor: stableColors.border,
-          }}>
-          <TouchableOpacity
-            onPress={handleClearAll}
-            className="flex-1 items-center justify-center py-3.5 rounded-xl border"
-            style={{borderColor: stableColors.border, backgroundColor: stableColors.surface}}>
-            <Text
-              className="text-[14px]"
-              style={{fontFamily: 'Poppins_500Medium', color: stableColors.textSecondary}}>
-              Clear All
-            </Text>
-          </TouchableOpacity>
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: colors.overlay,
+          }}
+        >
+          <Pressable style={{ flex: 1 }} onPress={() => setVisible(false)} />
+          <View
+            style={{
+              height: "70%",
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              overflow: "hidden",
+            }}
+          >
+            {/* ── Header ── */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: spacing(16),
+                paddingVertical: spacing(14),
+                borderTopWidth: 0.5,
+                borderTopColor: colors.border,
+                borderBottomWidth: 0.5,
+                borderBottomColor: colors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(15),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  includeFontPadding: false,
+                }}
+              >
+                Filter Products
+              </Text>
+              <TouchableOpacity
+                onPress={() => setVisible(false)}
+                activeOpacity={0.75}
+                style={{
+                  width: spacing(28),
+                  height: spacing(28),
+                  borderRadius: spacing(14),
+                  borderWidth: 0.5,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X
+                  size={font(14)}
+                  color={colors.textSecondary}
+                  strokeWidth={2.2}
+                />
+              </TouchableOpacity>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleApply}
-            className="flex-1 items-center justify-center py-3.5 rounded-xl"
-            style={{backgroundColor: stableColors.primary}}>
-            <Text
-              className="text-[14px] text-white"
-              style={{fontFamily: 'Poppins_600SemiBold'}}>
-              {totalSelected > 0
-                ? `Apply ${totalSelected} Filter${totalSelected > 1 ? 's' : ''}`
-                : 'Apply Filter'}
-            </Text>
-          </TouchableOpacity>
+            {/* ── Body: Sidebar + Content ── */}
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              {/* Left Sidebar — 28% */}
+              <View
+                style={{
+                  width: "28%",
+                  borderRightWidth: 0.5,
+                  borderRightColor: colors.border,
+                  backgroundColor: colors.backgroundgray,
+                }}
+              >
+                {SECTIONS.map(({ key, label }) => {
+                  const isActive = activeSection === key;
+                  const count =
+                    key === "category"
+                      ? selectedCategories.length
+                      : key === "brand"
+                        ? selectedBrands.length
+                        : 0;
+
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      activeOpacity={0.7}
+                      onPress={() => setActiveSection(key)}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        minHeight: spacing(50),
+                        backgroundColor: isActive
+                          ? colors.background
+                          : "transparent",
+                        borderBottomWidth: 0.5,
+                        borderBottomColor: colors.border,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          paddingVertical: spacing(14),
+                          paddingHorizontal: spacing(12),
+                          gap: spacing(8),
+                        }}
+                      >
+                        <Text
+                          numberOfLines={2}
+                          style={{
+                            flex: 1,
+                            fontSize: font(12),
+                            fontFamily: isActive
+                              ? "Poppins_600SemiBold"
+                              : "Poppins_400Regular",
+                            color: isActive
+                              ? colors.primary
+                              : colors.textSecondary,
+                            includeFontPadding: false,
+                          }}
+                        >
+                          {label}
+                        </Text>
+                        {count > 0 && (
+                          <View
+                            style={{
+                              minWidth: spacing(16),
+                              height: spacing(16),
+                              borderRadius: spacing(8),
+                              backgroundColor: isActive
+                                ? colors.primary
+                                : colors.primaryMuted,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              paddingHorizontal: spacing(4),
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: font(9),
+                                fontFamily: "Poppins_700Bold",
+                                color: colors.textOnPrimary,
+                                includeFontPadding: false,
+                              }}
+                            >
+                              {count}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {isActive && (
+                        <View
+                          style={{
+                            width: spacing(4),
+                            alignSelf: "stretch",
+                            backgroundColor: colors.primary,
+                            borderTopLeftRadius: spacing(6),
+                            borderBottomLeftRadius: spacing(6),
+                          }}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Right Content — 72% */}
+              <View style={{ flex: 1, backgroundColor: colors.background }}>
+                {renderContent()}
+              </View>
+            </View>
+
+            {/* ── Sticky Footer ── */}
+            <View
+              style={{
+                flexDirection: "row",
+                gap: spacing(10),
+                padding: spacing(12),
+                paddingBottom: Math.max(insets.bottom, spacing(12)),
+                borderTopWidth: 0.5,
+                borderTopColor: colors.border,
+                backgroundColor: colors.background,
+              }}
+            >
+              <TouchableOpacity
+                onPress={handleClear}
+                activeOpacity={0.75}
+                style={{
+                  flex: 1,
+                  paddingVertical: spacing(13),
+                  borderRadius: spacing(10),
+                  borderWidth: 0.5,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(13),
+                    fontFamily: "Poppins_500Medium",
+                    color: colors.textSecondary,
+                    includeFontPadding: false,
+                  }}
+                >
+                  Clear all
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleApply}
+                activeOpacity={0.85}
+                style={{
+                  flex: 2,
+                  paddingVertical: spacing(13),
+                  borderRadius: spacing(10),
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(13),
+                    fontFamily: "Poppins_600SemiBold",
+                    color: colors.textOnPrimary,
+                    includeFontPadding: false,
+                  }}
+                >
+                  Apply Filters
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </BottomSheetModal>
+      </Modal>
     );
   },
 );

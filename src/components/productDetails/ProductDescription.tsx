@@ -217,7 +217,7 @@ const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
             <View
               style={{
                 position: "absolute",
-                bottom: spacing(4),
+                bottom: spacing(-15),
                 left: 0,
                 right: 0,
                 alignItems: "center",

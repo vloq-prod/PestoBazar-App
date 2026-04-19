@@ -1,6 +1,10 @@
 import { useCallback, useMemo } from "react";
-import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
-import { getListing } from "../api/shop.api";
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
+import { getFilterApi, getListing } from "../api/shop.api";
 import {
   ListingApiResponse,
   ListingItem,
@@ -55,4 +59,12 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
     allLoaded: !query.hasNextPage && products.length > 0,
     loadMore,
   };
+};
+
+export const useFilterData = () => {
+  return useQuery({
+    queryKey: ["filter-data"],
+    queryFn: getFilterApi,
+    staleTime: 1000 * 60 * 10,
+  });
 };

@@ -36,7 +36,11 @@ const PincodeModal: React.FC<Props> = ({ visible, onClose, variationId }) => {
   });
 
   useEffect(() => {
-    if (!visible) setTrigger(false);
+    if (visible) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 300); // small delay for modal animation
+    }
   }, [visible]);
 
   const isValid = localPincode.length === 6;
@@ -47,6 +51,17 @@ const PincodeModal: React.FC<Props> = ({ visible, onClose, variationId }) => {
       setTrigger(true);
     }
   };
+
+  useEffect(() => {
+    if (trigger && !loading) {
+      // ✅ success condition
+      if (!error) {
+        setPincode(localPincode);
+        onClose();
+        setTrigger(false);
+      }
+    }
+  }, [loading, error, trigger]);
 
   return (
     <Modal

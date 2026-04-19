@@ -50,16 +50,28 @@ const ReviewSection = ({ product_id }: Props) => {
 
   return (
     <View style={styles.container}>
-      <Text
-        style={{
-          fontSize: font(16),
-          fontFamily: "Poppins_600SemiBold",
-          color: colors.text,
-          includeFontPadding: false,
-        }}
-      >
-        Customer Reviews
-      </Text>
+       <View style={{  gap: 1 }}>
+             <Text
+               style={{
+                 fontSize: font(18),
+                 fontFamily: "Poppins_700Bold",
+                 color: colors.text,
+                 lineHeight: font(22),
+               }}
+             >
+               Reviews
+             </Text>
+             {/* <Text
+               style={{
+                 fontSize: font(12),
+                 fontFamily: "Poppins_400Regular",
+                 color: colors.textSecondary,
+                 lineHeight: font(18),
+               }}
+             >
+               Frequently Bought Together by Other Customers
+             </Text> */}
+           </View>
       <FlatList
         data={reviews}
         keyExtractor={(item) => String(item.id)}
@@ -89,6 +101,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingTop: 12,
+    gap: 10,
   },
   heading: {
     fontSize: 18,

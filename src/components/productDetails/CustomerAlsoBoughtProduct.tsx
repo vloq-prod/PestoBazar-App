@@ -101,7 +101,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
   return (
     <View style={{ gap: spacing(14) }}>
       {/* ── Section Header ── */}
-      <View style={{ paddingHorizontal: spacing(16), gap: spacing(3) }}>
+      <View style={{ paddingHorizontal: spacing(16) }}>
         <Text
           style={{
             fontSize: font(18),

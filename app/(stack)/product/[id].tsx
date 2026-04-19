@@ -219,8 +219,7 @@ const ProductDetails = () => {
     saveRecentlyViewed({ product_id: productId, visitor_id: visitorId });
   }, [productId, visitorId]);
 
-
-  const HEADER_HEIGHT = insets.top; 
+  const HEADER_HEIGHT = insets.top;
   // ─── Guards ─────────────────────────────────────────────────
   if (isLoading) return <ProductDetailsSkeleton />;
   if (error) return <Text>Error loading product</Text>;
@@ -263,12 +262,12 @@ const ProductDetails = () => {
           </View>
 
           <View style={styles.headerRight}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => router.push("/search")}
               style={[styles.iconBtn, { borderColor: colors.border }]}
             >
               <Search size={23} color={colors.borderblack} />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               style={[styles.iconBtn, { borderColor: colors.border }]}
             >
@@ -285,31 +284,62 @@ const ProductDetails = () => {
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-           paddingTop: HEADER_HEIGHT, 
+          paddingTop: HEADER_HEIGHT,
           paddingBottom: FOOTER_HEIGHT + insets.bottom + 24,
           gap: spacing(24), // ✅ consistent section gap
         }}
       >
         {/* Carousel — no horizontal padding, full bleed */}
-        <ImageVideoCarousel data={mediaList} />
+        <View style={{ gap: 10 }}>
+          <ImageVideoCarousel data={mediaList} />
 
-        {/* ── Badges + Name + Price ── */}
-        <View style={{ paddingHorizontal: spacing(16), gap: spacing(10) }}>
-          {/* Badges row */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
+          <View style={{ paddingHorizontal: spacing(16), gap: spacing(10) }}>
             <View
               style={{
                 flexDirection: "row",
+                justifyContent: "space-between",
                 alignItems: "center",
-                gap: spacing(6),
               }}
             >
+              {hasRating && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(4),
+                  }}
+                >
+                  <Star
+                    size={font(14)}
+                    strokeWidth={1.8}
+                    color={colors.starColor}
+                    fill={colors.starColor}
+                  />
+                  <Text
+                    style={{
+                      fontSize: font(13),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: colors.text,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    {ratingValue.toFixed(1)}
+                  </Text>
+                  {totalReviews > 0 && (
+                    <Text
+                      style={{
+                        fontSize: font(12),
+                        fontFamily: "Poppins_400Regular",
+                        color: colors.textSecondary,
+                        includeFontPadding: false,
+                      }}
+                    >
+                      | {totalReviews} Reviews
+                    </Text>
+                  )}
+                </View>
+              )}
+
               {discountPercentage > 0 && (
                 <View
                   style={{
@@ -333,17 +363,29 @@ const ProductDetails = () => {
                   </Text>
                 </View>
               )}
+            </View>
+
+            {/* Product name */}
+            <Text
+              style={{
+                fontSize: font(15),
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.text,
+                lineHeight: font(22),
+                includeFontPadding: false,
+              }}
+            >
+              {productInfo?.product_name}
+            </Text>
+
+            {/* Price */}
+            <View style={{}}>
               <View
                 style={{
-                  borderWidth: 0.5,
-                  borderRadius: spacing(20),
-                  borderColor: colors.success + "80",
-                  backgroundColor: colors.success + "12",
-                  paddingVertical: spacing(3),
-                  paddingHorizontal: spacing(10),
                   flexDirection: "row",
                   alignItems: "center",
-                  gap: spacing(4),
+                  gap: spacing(7),
+                  alignSelf: "flex-start",
                 }}
               >
                 <View
@@ -365,120 +407,69 @@ const ProductDetails = () => {
                   In Stock
                 </Text>
               </View>
-            </View>
 
-            {hasRating && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: spacing(4),
-                }}
-              >
-                <Star
-                  size={font(14)}
-                  strokeWidth={1.8}
-                  color={colors.starColor}
-                  fill={colors.starColor}
-                />
-                <Text
+              <View>
+                <View
                   style={{
-                    fontSize: font(13),
-                    fontFamily: "Poppins_600SemiBold",
-                    color: colors.text,
-                    includeFontPadding: false,
+                    flexDirection: "row",
+                    alignItems: "baseline",
+                    gap: spacing(8),
                   }}
                 >
-                  {ratingValue.toFixed(1)}
-                </Text>
-                {totalReviews > 0 && (
                   <Text
                     style={{
-                      fontSize: font(12),
-                      fontFamily: "Poppins_400Regular",
-                      color: colors.textSecondary,
+                      fontSize: font(25),
+                      fontFamily: "Poppins_700Bold",
+                      color: colors.primary,
                       includeFontPadding: false,
                     }}
                   >
-                    | {totalReviews} Reviews
+                    ₹{formatPrice(sellingPrice)}
+                  </Text>
+                  {mrpPrice > 0 && mrpPrice !== sellingPrice && (
+                    <Text
+                      style={{
+                        fontSize: font(18),
+                        fontFamily: "Poppins_400Regular",
+                        color: colors.textTertiary,
+                        textDecorationLine: "line-through",
+                        includeFontPadding: false,
+                      }}
+                    >
+                      ₹{formatPrice(mrpPrice)}
+                    </Text>
+                  )}
+                </View>
+                {mrpPrice > 0 && (
+                  <Text
+                    style={{
+                      fontSize: font(11),
+                      fontFamily: "Poppins_400Regular",
+                      color: colors.textTertiary,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    Inclusive of all taxes
                   </Text>
                 )}
               </View>
-            )}
-          </View>
+            </View>
 
-          {/* Product name */}
-          <Text
-            style={{
-              fontSize: font(15),
-              fontFamily: "Poppins_600SemiBold",
-              color: colors.text,
-              lineHeight: font(22),
-              includeFontPadding: false,
-            }}
-          >
-            {productInfo?.product_name}
-          </Text>
-
-          {/* Price */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "baseline",
-              gap: spacing(8),
-            }}
-          >
-            <Text
-              style={{
-                fontSize: font(22),
-                fontFamily: "Poppins_700Bold",
-                color: colors.text,
-                includeFontPadding: false,
-              }}
-            >
-              ₹{formatPrice(sellingPrice)}
-            </Text>
-            {mrpPrice > 0 && mrpPrice !== sellingPrice && (
+            {/* Overview */}
+            {!!productInfo?.overview && (
               <Text
                 style={{
-                  fontSize: font(18),
+                  fontSize: font(13),
                   fontFamily: "Poppins_400Regular",
-                  color: colors.textTertiary,
-                  textDecorationLine: "line-through",
+                  lineHeight: font(20),
+                  color: colors.textSecondary,
                   includeFontPadding: false,
                 }}
               >
-                ₹{formatPrice(mrpPrice)}
-              </Text>
-            )}
-            {mrpPrice > 0 && (
-              <Text
-                style={{
-                  fontSize: font(11),
-                  fontFamily: "Poppins_400Regular",
-                  color: colors.textTertiary,
-                  includeFontPadding: false,
-                }}
-              >
-                Inclusive of all taxes
+                {productInfo.overview}
               </Text>
             )}
           </View>
-
-          {/* Overview */}
-          {!!productInfo?.overview && (
-            <Text
-              style={{
-                fontSize: font(13),
-                fontFamily: "Poppins_400Regular",
-                lineHeight: font(20),
-                color: colors.textSecondary,
-                includeFontPadding: false,
-              }}
-            >
-              {productInfo.overview}
-            </Text>
-          )}
         </View>
 
         {/* ── Variants ── */}
@@ -606,13 +597,12 @@ const ProductDetails = () => {
           <DescriptionAccordion data={descriptionUi} />
         )}
 
-        {/* ── USP ── */}
-        <HomeUsp />
-
         {/* ── Related + Recent ── */}
         <CustomerAlsoBoughtProduct productId={productId} />
         <RecentlyViewProducts />
 
+        {/* ── USP ── */}
+        <HomeUsp />
         {/* ── Reviews ── */}
         <ReviewSection product_id={productId} />
       </Animated.ScrollView>
