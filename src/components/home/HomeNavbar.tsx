@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { ShoppingCart, Bell } from "lucide-react-native";
+import {  Bell } from "lucide-react-native";
 import { Image } from "expo-image";
 import profile from "../../../assets/profile.jpeg";
 import { useResponsive } from "../../utils/useResponsive";

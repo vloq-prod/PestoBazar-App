@@ -74,7 +74,7 @@ export default function AppSearchBar({ onPress }: any) {
       style={{ paddingHorizontal: 16 }}
     >
       {/* Menu */}
-      {/* <View
+      <View
         style={{
           height: HEIGHT,
           width: HEIGHT,
@@ -85,15 +85,16 @@ export default function AppSearchBar({ onPress }: any) {
         }}
       >
         <Menu size={spacing(18)} color={colors.primary} />
-      </View> */}
+      </View>
 
       {/* Search Bar */}
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => (onPress ? onPress() : router.push("/search"))}
-        className="flex-1 flex-row items-center rounded-full border"
+        className="flex-1 flex-row items-center  border"
         style={{
           height: HEIGHT,
+          borderRadius: spacing(12),
           backgroundColor: colors.surface,
           borderColor: colors.border,
           paddingHorizontal: spacing(12),

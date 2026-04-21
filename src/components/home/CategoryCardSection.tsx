@@ -52,7 +52,7 @@ const CategoryCardSection = () => {
     (category) => category.subcategories.length > 0,
   );
 
-  const columns = isTablet ? 5 : 4;
+  const columns = isTablet ? 5 : 3;
   const itemWidth =
     (width - horizontalPadding * 2 - itemGap * (columns - 1)) / columns;
   const cardSize = itemWidth;

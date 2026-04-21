@@ -224,8 +224,8 @@ export default function UserProfile() {
   const { font, spacing } = useResponsive();
 
   const [form, setForm] = useState({
-    fullName: "Arfat Sheru",
-    email: "arfatsheru74@gmail.com",
+    fullName: "Guest User",
+    email: "guestuser@gmail.com",
     phone: "",
   });
 
@@ -269,15 +269,16 @@ export default function UserProfile() {
                 contentFit="cover"
               />
             </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={[styles.cameraBtn, { backgroundColor: colors.primary }]}
+            >
+              <Camera size={13} color="#fff" strokeWidth={2.2} />
+            </TouchableOpacity>
           </View>
 
           {/* Camera button */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.cameraBtn, { backgroundColor: colors.primary }]}
-          >
-            <Camera size={13} color="#fff" strokeWidth={2.2} />
-          </TouchableOpacity>
 
           {/* Name + email below avatar */}
           <Text
@@ -350,11 +351,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   avatarOuter: {
-    width: 108,
-    height: 108,
-
-    alignItems: "center",
-    justifyContent: "center",
+    position: "relative",
   },
   avatarInner: {
     width: 100,
@@ -371,19 +368,16 @@ const styles = StyleSheet.create({
   },
   cameraBtn: {
     position: "absolute",
-    bottom: 44, // sits on the avatar ring edge
-    right: "50%",
-    marginRight: -44, // offset: half of avatarOuter width - half of btn
+    bottom: 0,
+    right: 0,
     width: 30,
     height: 30,
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    // Crisp white border to pop on avatar
     borderWidth: 2.5,
     borderColor: "#fff",
-    // elevate above avatar
-    zIndex: 1,
+    zIndex: 2,
   },
   avatarName: {
     fontFamily: "Poppins_700Bold",

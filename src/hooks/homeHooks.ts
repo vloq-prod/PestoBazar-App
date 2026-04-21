@@ -10,7 +10,7 @@ import {
   getTestimonials,
   getUsp,
 } from "../api/home.api";
-import { CategoryWithSubcategories, GetRecentlyViewedParams } from "../types/home.types";
+import { CategoryWithSubcategories } from "../types/home.types";
 
 // useBanner hook
 export const useBanner = () => {
@@ -65,7 +65,7 @@ export const useCategoryWithSubcategories = (rootId: number = 0) => {
       mainCategoryName: mainCategory.category_name,
       subcategories: (
         subcategoryQueries[index]?.data?.data?.category_master ?? []
-      ).slice(0, 8),
+      )
     }));
 
   return {

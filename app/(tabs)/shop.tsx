@@ -10,7 +10,10 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -19,6 +22,8 @@ import Animated, {
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import AppNavbar from "../../src/components/comman/AppNavbar";
+
+import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
 import {
   ArrowDownUp,
   SlidersHorizontal,
@@ -81,6 +86,7 @@ export default function ShopScreen() {
   const momentumRef = useRef(false);
   const lastScrollY = useSharedValue(0);
   const cartPreviewVisible = useSharedValue(1);
+  const bulkFabVisible = useSharedValue(1);
 
   const isFilterActive =
     appliedFilters.categories.length > 0 ||
@@ -146,14 +152,22 @@ export default function ShopScreen() {
       const currentY = event.contentOffset.y;
       const diff = currentY - lastScrollY.value;
 
+      // ── CART PREVIEW (existing) ──
       if (currentY <= 0) {
-        if (cartPreviewVisible.value !== 1) {
-          cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
-        }
-      } else if (diff > SCROLL_THRESHOLD && cartPreviewVisible.value !== 0) {
-        cartPreviewVisible.value = withTiming(0, TIMING_CONFIG);
-      } else if (diff < -SCROLL_THRESHOLD && cartPreviewVisible.value !== 1) {
         cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
+        bulkFabVisible.value = withTiming(1, TIMING_CONFIG);
+      } else if (diff > SCROLL_THRESHOLD) {
+        // scroll DOWN
+        cartPreviewVisible.value = withTiming(0, TIMING_CONFIG);
+
+        // ✅ BULK FAB — slower & smoother feel
+        bulkFabVisible.value = withTiming(0, { duration: 350 });
+      } else if (diff < -SCROLL_THRESHOLD) {
+        // scroll UP
+        cartPreviewVisible.value = withTiming(1, TIMING_CONFIG);
+
+        // ✅ BULK FAB — slightly delayed feel
+        bulkFabVisible.value = withTiming(1, { duration: 320 });
       }
 
       lastScrollY.value = currentY;
@@ -207,7 +221,7 @@ export default function ShopScreen() {
     () => ({
       padding: PAD,
       flexGrow: 1,
-      paddingBottom: insets.bottom
+      paddingBottom: insets.bottom,
     }),
     [PAD, insets.bottom],
   );
@@ -442,6 +456,8 @@ export default function ShopScreen() {
         />
 
         <AddToCartPreview visible={cartPreviewVisible} />
+
+        <BulkOrderFAB visible={bulkFabVisible} />
       </View>
 
       <FilterBottomSheet ref={filterRef} onApply={handleApplyFilter} />

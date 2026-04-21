@@ -25,7 +25,7 @@ export default function SearchScreen() {
   const inputRef = useRef<TextInput>(null);
   const [query, setQuery] = useState("");
 
-  const { data, isLoading, isError } = useSearchSuggestions(query);
+  const { data, isLoading,  isFetching , isError } = useSearchSuggestions(query);
   const results = data?.data?.result ?? [];
   const productResults = results.filter(
     (item: any) => item?.search_type === "product",
@@ -154,7 +154,7 @@ export default function SearchScreen() {
           paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
-        {isLoading
+       {(isLoading || isFetching && results.length === 0)
           ? Array.from({ length: 6 }).map((_, index) => (
               <SearchItemSkeleton key={`search-skeleton-${index}`} />
             ))

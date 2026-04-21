@@ -7,11 +7,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 
@@ -35,6 +33,7 @@ import {
   LogOut,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 const MENU_SECTIONS = [
   {
@@ -136,18 +135,25 @@ const MENU_SECTIONS = [
 ];
 
 // ── Menu Row Component ─────────────────────────
-const MenuRow = ({ item, colors, isLast }: any) => {
+const MenuRow = ({ item, colors, isLast, onPressOverride }: any) => {
   const router = useRouter();
   const Icon = item.icon;
+
+  const handlePress = () => {
+    if (onPressOverride) {
+      onPressOverride();
+      return;
+    }
+
+    if (item.route) {
+      router.push(item.route);
+    }
+  };
 
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={() => {
-        if (item.route) {
-          router.push(item.route);
-        }
-      }}
+      onPress={handlePress}
       style={[
         styles.menuRow,
         !isLast && {
@@ -156,12 +162,23 @@ const MenuRow = ({ item, colors, isLast }: any) => {
         },
       ]}
     >
-      <Icon size={18} color={colors.primary} />
+      <Icon
+        size={18}
+        color={item.id === "logout" ? "#ef4444" : colors.primary} // 👈 RED ICON
+      />
 
       <View style={styles.menuText}>
-        <Text style={[styles.menuTitle, { color: colors.text }]}>
+        <Text
+          style={[
+            styles.menuTitle,
+            {
+              color: item.id === "logout" ? "#ef4444" : colors.text, // 👈 RED TEXT
+            },
+          ]}
+        >
           {item.label}
         </Text>
+
         <Text style={[styles.menuSub, { color: colors.textSecondary }]}>
           {item.sub}
         </Text>
@@ -176,7 +193,34 @@ const MenuRow = ({ item, colors, isLast }: any) => {
 export default function ProfileScreen() {
   const { colors } = useTheme();
 
+  const router = useRouter();
+
+  const clearVisitor = useAppVisitorStore((s) => s.clearVisitor);
+
   const insets = useSafeAreaInsets();
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Confirm Logout",
+      "Are you sure you want to logout from your account?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive", // 👈 makes it red on iOS
+          onPress: async () => {
+            await clearVisitor();
+
+            // 👉 redirect to login or root
+            router.replace("/login"); // change route if needed
+          },
+        },
+      ],
+    );
+  };
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View
@@ -210,7 +254,7 @@ export default function ProfileScreen() {
                 Hey there,
               </Text>
               <Text style={[styles.userName, { color: colors.text }]}>
-                Arfat Sheru
+                Guest User
               </Text>
             </View>
 
@@ -233,7 +277,7 @@ export default function ProfileScreen() {
           <View style={styles.inputRow}>
             <Mail size={16} color={colors.primary} />
             <Text style={[styles.inputText, { color: colors.text }]}>
-              arfatsheru74@gmail.com
+              guestuser@gmail.com
             </Text>
             <SquarePen size={16} color={colors.primary} />
           </View>
@@ -243,7 +287,7 @@ export default function ProfileScreen() {
           <View style={styles.inputRow}>
             <Phone size={16} color={colors.primary} />
             <Text style={[styles.inputText, { color: colors.textSecondary }]}>
-              Not added yet
+              +91 9913690041
             </Text>
             <SquarePen size={16} color={colors.primary} />
           </View>
@@ -265,6 +309,9 @@ export default function ProfileScreen() {
                   item={item}
                   colors={colors}
                   isLast={index === section.items.length - 1}
+                  onPressOverride={
+                    item.id === "logout" ? handleLogout : undefined
+                  }
                 />
               ))}
             </View>
@@ -332,7 +379,7 @@ const styles = StyleSheet.create({
 
   userName: {
     fontFamily: "Poppins_700Bold",
-    fontSize: 26,
+    fontSize: 23,
     lineHeight: 30,
   },
 
