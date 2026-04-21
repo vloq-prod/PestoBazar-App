@@ -1,13 +1,19 @@
 import React, {
-  useCallback,
   useImperativeHandle,
-  useMemo,
-  useRef,
+  useState,
+  useCallback,
+  forwardRef,
 } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+} from "react-native";
 import { X, Check } from "lucide-react-native";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export interface SortBottomSheetRef {
@@ -21,123 +27,208 @@ interface Props {
 }
 
 const SORT_OPTIONS = [
-  { id: 1, label: "Popularity"        },
-  { id: 2, label: "Name A to Z"       },
-  { id: 3, label: "Name Z to A"       },
+  { id: 1, label: "Popularity" },
+  { id: 2, label: "Name A to Z" },
+  { id: 3, label: "Name Z to A" },
   { id: 4, label: "Price Low to High" },
   { id: 5, label: "Price High to Low" },
-  { id: 6, label: "Top Rated"         },
-] as const;
+  { id: 6, label: "Top Rated" },
+];
 
-const SortBottomSheet = React.forwardRef<SortBottomSheetRef, Props>(
+const SortBottomSheet = forwardRef<SortBottomSheetRef, Props>(
   ({ selected = 1, onSelect }, ref) => {
     const { colors } = useTheme();
-    const insets     = useSafeAreaInsets();
-    const sheetRef   = useRef<BottomSheetModal>(null);
-    const stableColors = useMemo(() => colors, [colors]);
+    const { font, spacing } = useResponsive();
+    const insets = useSafeAreaInsets();
+    const [visible, setVisible] = useState(false);
 
     useImperativeHandle(ref, () => ({
-      open:  () => sheetRef.current?.present(),
-      close: () => sheetRef.current?.dismiss(),
+      open: () => setVisible(true),
+      close: () => setVisible(false),
     }));
 
     const handleSelect = useCallback(
       (id: number) => {
         onSelect(id);
-        sheetRef.current?.dismiss();
+        setVisible(false);
       },
       [onSelect],
     );
 
     return (
-  
-      <BottomSheetModal
-        ref={sheetRef}
-        enableDynamicSizing
-        enablePanDownToClose
-        handleComponent={null}
-        backgroundStyle={{
-          backgroundColor:      stableColors.background,
-          borderTopLeftRadius:  20,
-          borderTopRightRadius: 20,
-        }}
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setVisible(false)}
       >
-     
-        <BottomSheetView>
-    
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: colors.overlay,
+          }}
+        >
+          {/* Outside click close */}
+          <Pressable style={{ flex: 1 }} onPress={() => setVisible(false)} />
+
+          {/* Bottom Sheet */}
           <View
-            className="flex-row items-center justify-between px-4 py-3 border-b rounded-t-2xl"
             style={{
-              borderBottomColor: stableColors.border,
-              backgroundColor:   stableColors.primary,
+              height: "50%",
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              overflow: "visible",
             }}
           >
-            <Text className="text-[17px]" style={{ fontFamily: "Poppins_600SemiBold", color: stableColors.textInverse }}>
-              Sort By
-            </Text>
-            <TouchableOpacity
-              onPress={() => sheetRef.current?.dismiss()}
-              className="w-8 h-8 items-center justify-center rounded-full"
-              style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+            {/* 🔥 Floating Cross */}
+            <View
+              style={{
+                position: "absolute",
+                top: -spacing(50),
+                left: 0,
+                right: 0,
+                alignItems: "center",
+                zIndex: 10,
+              }}
             >
-              <X size={18} color={stableColors.textInverse} strokeWidth={2.2} />
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                onPress={() => setVisible(false)}
+                activeOpacity={0.8}
+                style={{
+                  width: spacing(36),
+                  height: spacing(36),
+                  borderRadius: spacing(18),
+                  backgroundColor: colors.background,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 0.5,
+                  borderColor: colors.border,
+                  elevation: 5,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  shadowOffset: { width: 0, height: 3 },
+                }}
+              >
+                <X size={font(16)} color={colors.text} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
 
-          {/* Options */}
-          <View
-            className="px-4 pt-1"
-            style={{ paddingBottom: (insets.bottom || 16) + 8 }}
-          >
-            {SORT_OPTIONS.map((opt, i) => {
-              const isActive = selected === opt.id;
-              return (
-                <TouchableOpacity
-                  key={opt.id}
-                  onPress={() => handleSelect(opt.id)}
-                  activeOpacity={0.65}
-                  className="flex-row items-center justify-between py-3.5 px-1"
-                  style={{
-                    borderBottomWidth: i < SORT_OPTIONS.length - 1 ? 1 : 0,
-                    borderBottomColor: stableColors.border,
-                  }}
-                >
-                  {/* Radio + Label */}
-                  <View className="flex-row items-center gap-3">
-                    {/* Radio */}
+            {/* Header */}
+            <View
+              style={{
+                paddingHorizontal: spacing(16),
+                paddingVertical: spacing(14),
+                borderBottomWidth: 0.5,
+                borderBottomColor: colors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(15),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                }}
+              >
+                Sort By
+              </Text>
+            </View>
+
+            {/* Options */}
+            <View
+              style={{
+                paddingHorizontal: spacing(16),
+                paddingBottom: Math.max(insets.bottom, spacing(16)),
+              }}
+            >
+              {SORT_OPTIONS.map((opt, i) => {
+                const isActive = selected === opt.id;
+
+                return (
+                  <TouchableOpacity
+                    key={opt.id}
+                    onPress={() => handleSelect(opt.id)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingVertical: spacing(14),
+                      borderBottomWidth:
+                        i < SORT_OPTIONS.length - 1 ? 0.5 : 0,
+                      borderBottomColor: colors.border,
+                    }}
+                  >
+                    {/* Left */}
                     <View
-                      className="w-5 h-5 rounded-full border-2 items-center justify-center"
                       style={{
-                        borderColor:     isActive ? stableColors.primary : stableColors.border,
-                        backgroundColor: isActive ? stableColors.primary : "transparent",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing(10),
                       }}
                     >
-                      {isActive && (
-                        <View className="w-2 h-2 rounded-full bg-white" />
-                      )}
+                      {/* Radio */}
+                      <View
+                        style={{
+                          width: spacing(18),
+                          height: spacing(18),
+                          borderRadius: spacing(9),
+                          borderWidth: 1.5,
+                          borderColor: isActive
+                            ? colors.primary
+                            : colors.border,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: isActive
+                            ? colors.primary
+                            : "transparent",
+                        }}
+                      >
+                        {isActive && (
+                          <View
+                            style={{
+                              width: spacing(6),
+                              height: spacing(6),
+                              borderRadius: spacing(3),
+                              backgroundColor: "#fff",
+                            }}
+                          />
+                        )}
+                      </View>
+
+                      <Text
+                        style={{
+                          fontSize: font(13),
+                          fontFamily: isActive
+                            ? "Poppins_600SemiBold"
+                            : "Poppins_400Regular",
+                          color: isActive
+                            ? colors.primary
+                            : colors.text,
+                        }}
+                      >
+                        {opt.label}
+                      </Text>
                     </View>
 
-                    <Text
-                      style={{
-                        fontSize:   14,
-                        fontFamily: isActive ? "Poppins_600SemiBold" : "Poppins_400Regular",
-                        color:      isActive ? stableColors.primary : stableColors.text,
-                      }}
-                    >
-                      {opt.label}
-                    </Text>
-                  </View>
-
-                  {/* Check */}
-                  {isActive && (
-                    <Check size={16} color={stableColors.primary} strokeWidth={2.5} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+                    {/* Check */}
+                    {isActive && (
+                      <Check
+                        size={spacing(16)}
+                        color={colors.primary}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-        </BottomSheetView>
-      </BottomSheetModal>
+        </View>
+      </Modal>
     );
   },
 );

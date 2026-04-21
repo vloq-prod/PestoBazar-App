@@ -66,6 +66,7 @@ const TimerUnit: React.FC<TimerUnitProps> = React.memo(({ value, label }) => {
     </View>
   );
 });
+TimerUnit.displayName = "TimerUnit";
 
 // ── ProductTimer ──────────────────────────────────────────────────────────────
 

@@ -34,7 +34,8 @@ export default function SearchScreen() {
     (item: any) => item?.search_type === "category",
   );
   const hasResults = productResults.length > 0 || categoryResults.length > 0;
-  const showEmptyState = !isLoading && !isError && query.trim().length > 0 && !hasResults;
+  const showEmptyState =
+    !isLoading && !isError && query.trim().length > 0 && !hasResults;
 
   return (
     <View

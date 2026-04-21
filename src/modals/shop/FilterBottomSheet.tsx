@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   useImperativeHandle,
   useMemo,
   useState,
@@ -143,6 +144,7 @@ const SearchBar = ({
       flexDirection: "row",
       alignItems: "center",
       margin: spacing(10),
+      paddingVertical: spacing(10),
       paddingHorizontal: spacing(10),
       backgroundColor: colors.backgroundgray,
       borderRadius: spacing(8),
@@ -191,8 +193,8 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
       [data?.data?.category],
     );
     const brands = useMemo(() => data?.data?.brand ?? [], [data?.data?.brand]);
-    const priceMin = data?.data?.price?.min ?? 100;
-    const priceMax = data?.data?.price?.max ?? 50000;
+    const priceMin = Number(data?.data?.price?.min ?? 100);
+    const priceMax = Number(data?.data?.price?.max ?? 50000);
 
     // ── State ────────────────────────────────────────────────
     const [activeSection, setActiveSection] = useState<SectionKey>("category");
@@ -205,6 +207,10 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
     const [categorySearch, setCategorySearch] = useState("");
     const [brandSearch, setBrandSearch] = useState("");
     const [openKey, setOpenKey] = useState(0);
+
+    useEffect(() => {
+      setPriceRange({ min: priceMin, max: priceMax });
+    }, [priceMin, priceMax]);
 
     // ── Derived ──────────────────────────────────────────────
     const filteredCategories = useMemo(
@@ -268,6 +274,8 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
           <View style={{ padding: spacing(16) }}>
             <PriceSlider
               key={openKey}
+              min={priceMin}
+              max={priceMax}
               initialMin={priceRange.min}
               initialMax={priceRange.max}
               onValueChange={setPriceRange}
@@ -343,9 +351,42 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
               backgroundColor: colors.background,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
-              overflow: "hidden",
+
+              overflow: "visible",
             }}
           >
+            <View
+              style={{
+                position: "absolute",
+                top: -spacing(50),
+                left: 0,
+                right: 0,
+                alignItems: "center",
+                zIndex: 10,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setVisible(false)}
+                activeOpacity={0.8}
+                style={{
+                  width: spacing(36),
+                  height: spacing(36),
+                  borderRadius: spacing(18),
+                  backgroundColor: colors.background,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 0.5,
+                  borderColor: colors.border,
+                  elevation: 5,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  shadowOffset: { width: 0, height: 3 },
+                }}
+              >
+                <X size={font(16)} color={colors.text} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
             {/* ── Header ── */}
             <View
               style={{
@@ -354,7 +395,6 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
                 justifyContent: "space-between",
                 paddingHorizontal: spacing(16),
                 paddingVertical: spacing(14),
-                borderTopWidth: 0.5,
                 borderTopColor: colors.border,
                 borderBottomWidth: 0.5,
                 borderBottomColor: colors.border,
@@ -370,25 +410,6 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
               >
                 Filter Products
               </Text>
-              <TouchableOpacity
-                onPress={() => setVisible(false)}
-                activeOpacity={0.75}
-                style={{
-                  width: spacing(28),
-                  height: spacing(28),
-                  borderRadius: spacing(14),
-                  borderWidth: 0.5,
-                  borderColor: colors.border,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <X
-                  size={font(14)}
-                  color={colors.textSecondary}
-                  strokeWidth={2.2}
-                />
-              </TouchableOpacity>
             </View>
 
             {/* ── Body: Sidebar + Content ── */}
@@ -396,7 +417,7 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
               {/* Left Sidebar — 28% */}
               <View
                 style={{
-                  width: "28%",
+                  width: "31%",
                   borderRightWidth: 0.5,
                   borderRightColor: colors.border,
                   backgroundColor: colors.backgroundgray,
@@ -432,6 +453,7 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
                           flex: 1,
                           flexDirection: "row",
                           alignItems: "center",
+                          justifyContent: "space-between",
                           paddingVertical: spacing(14),
                           paddingHorizontal: spacing(12),
                           gap: spacing(8),
@@ -453,15 +475,14 @@ const FilterBottomSheet = React.forwardRef<FilterBottomSheetRef, Props>(
                         >
                           {label}
                         </Text>
+
                         {count > 0 && (
                           <View
                             style={{
                               minWidth: spacing(16),
                               height: spacing(16),
                               borderRadius: spacing(8),
-                              backgroundColor: isActive
-                                ? colors.primary
-                                : colors.primaryMuted,
+                              backgroundColor: colors.primary,
                               alignItems: "center",
                               justifyContent: "center",
                               paddingHorizontal: spacing(4),

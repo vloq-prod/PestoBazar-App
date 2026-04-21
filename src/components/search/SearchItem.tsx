@@ -4,7 +4,6 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
 
 interface Props {
   item: any;
@@ -14,12 +13,15 @@ const SearchItem: React.FC<Props> = ({ item }) => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const router = useRouter();
+
   const sellingPrice = Number(item?.selling_price) || 0;
   const mrp = Number(item?.mrp) || 0;
+
   const discountPercentage =
     mrp > sellingPrice && mrp > 0
       ? Math.round(((mrp - sellingPrice) / mrp) * 100)
       : 0;
+
   const productTitle = item?.size
     ? `${item.product_name} - ${item.size}`
     : item.product_name;
@@ -27,9 +29,6 @@ const SearchItem: React.FC<Props> = ({ item }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-    //   onPress={() => {
-    //     router.push(`/product/${item.product_url}`);
-    //   }}
       style={{
         flexDirection: "row",
         alignItems: "flex-start",
@@ -54,6 +53,7 @@ const SearchItem: React.FC<Props> = ({ item }) => {
 
       {/* Info */}
       <View style={{ flex: 1, minWidth: 0 }}>
+        {/* Title */}
         <Text
           numberOfLines={2}
           style={{
@@ -66,71 +66,86 @@ const SearchItem: React.FC<Props> = ({ item }) => {
           {productTitle}
         </Text>
 
-        {/* Price */}
+        {/* 🔥 Price Row (FIXED ALIGNMENT) */}
         <View
           style={{
             flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
+            alignItems: "center", // ✅ IMPORTANT FIX
             marginTop: spacing(4),
-            flexWrap: "wrap",
           }}
         >
-          <Text
+          {/* Left Side (Price + MRP + Offer) */}
+          <View
             style={{
-              fontSize: font(12),
-              fontFamily: "Poppins_700Bold",
-              color: colors.primary,
-              lineHeight: font(17),
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing(6),
+              flexShrink: 1,
             }}
           >
-            ₹{item.selling_price}
-          </Text>
-
-          {mrp > 0 ? (
+            {/* Selling Price */}
             <Text
               style={{
-                fontSize: font(11),
-                fontFamily: "Poppins_400Regular",
-                color: colors.textSecondary,
-                textDecorationLine: "line-through",
-                lineHeight: font(16),
+                fontSize: font(13),
+                fontFamily: "Poppins_700Bold",
+                color: colors.primary,
               }}
             >
-              MRP ₹{item.mrp}
+              ₹{sellingPrice}
             </Text>
-          ) : null}
 
-          {discountPercentage > 0 ? (
-            <LinearGradient
-              colors={[
-                colors.error + "30",
-                colors.error + "18",
-                colors.error + "08",
-              ]}
-              style={{
-                borderRadius: 10,
-                paddingHorizontal: spacing(8),
-                paddingVertical: spacing(4),
-              }}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-            >
+            {/* MRP */}
+            {mrp > 0 && (
               <Text
                 style={{
-                  fontSize: font(10.5),
-                  fontFamily: "Poppins_500Medium",
-                  color: colors.error,
-                  lineHeight: font(14),
+                  fontSize: font(11),
+                  fontFamily: "Poppins_400Regular",
+                  color: colors.textSecondary,
+                  textDecorationLine: "line-through",
                 }}
               >
-                {discountPercentage}% off
+                MRP: ₹{mrp}
               </Text>
-            </LinearGradient>
-          ) : null}
+            )}
 
-          <View style={{ marginLeft: "auto", paddingLeft: spacing(4), paddingTop: 1 }}>
-            <ChevronRight size={spacing(16)} color={colors.textSecondary} />
+            {/* ✅ New Offer UI (No Gradient) */}
+            {discountPercentage > 0 && (
+              <View
+                style={{
+                  borderWidth: 0.5,
+                  borderRadius: spacing(20),
+                  borderColor: colors.error + "80",
+                  backgroundColor: colors.error + "12",
+                  paddingVertical: spacing(2),
+                  paddingHorizontal: spacing(8),
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(10.5),
+                    fontFamily: "Poppins_600SemiBold",
+                    color: colors.error,
+                    includeFontPadding: false,
+                  }}
+                >
+                  {discountPercentage}% off
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Right Arrow */}
+          <View
+            style={{
+              marginLeft: "auto",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <ChevronRight
+              size={spacing(16)}
+              color={colors.textSecondary}
+            />
           </View>
         </View>
       </View>

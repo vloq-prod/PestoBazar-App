@@ -69,7 +69,10 @@ export default function AppSearchBar({ onPress }: any) {
   const HEIGHT = spacing(38);
 
   return (
-    <View className="flex-row items-center gap-3">
+    <View
+      className="flex-row items-center gap-3"
+      style={{ paddingHorizontal: 16 }}
+    >
       {/* Menu */}
       {/* <View
         style={{
@@ -117,7 +120,6 @@ export default function AppSearchBar({ onPress }: any) {
                 index={index}
                 totalLength={characters.length}
                 phase={phase}
-              
               />
             ))}
           </View>
@@ -130,7 +132,7 @@ export default function AppSearchBar({ onPress }: any) {
 //
 // ✅ SAFE child component (hooks allowed here)
 //
-const FadeChar = (({ char, index, totalLength, phase }: any) => {
+const FadeChar = ({ char, index, totalLength, phase }: any) => {
   const { font } = useResponsive();
   const { colors } = useTheme();
 
@@ -170,4 +172,4 @@ const FadeChar = (({ char, index, totalLength, phase }: any) => {
       {char}
     </Animated.Text>
   );
-});
+};

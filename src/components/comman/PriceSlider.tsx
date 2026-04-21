@@ -1,320 +1,333 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedProps,
-  runOnJS,
-  withTiming,
-} from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  PanResponder,
+  PanResponderGestureState,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useTheme } from "../../theme";
 
-// ─── Constants ────────────────────────────────────────────
-const PRICE_MIN = 0;
-const PRICE_MAX = 50_000;
-const STEP = 10;
-const MIN_GAP = 500;
-const THUMB_SIZE = 22;
-const CONTAINER_H = 55; // ✅ reduced height
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+const DEFAULT_PRICE_MIN = 100;
+const DEFAULT_PRICE_MAX = 50_000;
+const STEP = 100;
+const MIN_GAP = 500;
+const THUMB_SIZE = 18;
+const TOUCH_SIZE = 44;
+const CONTAINER_H = 20;
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PriceSliderProps {
   onValueChange?: (range: { min: number; max: number }) => void;
   initialMin?: number;
   initialMax?: number;
+  min?: number;
+  max?: number;
 }
+
+// ─── Pure helpers (no hook deps) ──────────────────────────────────────────────
+
+const clamp = (v: number, lo: number, hi: number) =>
+  Math.min(Math.max(v, lo), hi);
+
+const snap = (v: number) => Math.round(v / STEP) * STEP;
+
+const valueToPos = (
+  value: number,
+  min: number,
+  max: number,
+  width: number,
+): number => ((value - min) / (max - min || 1)) * width;
+
+const deltaToVal = (
+  dx: number,
+  width: number,
+  min: number,
+  max: number,
+): number => snap((dx / Math.max(width, 1)) * (max - min || 1));
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const PriceSlider = ({
   onValueChange,
   initialMin = 200,
-  initialMax = 50_000,
+  initialMax = DEFAULT_PRICE_MAX,
+  min = DEFAULT_PRICE_MIN,
+  max = DEFAULT_PRICE_MAX,
 }: PriceSliderProps) => {
   const { colors } = useTheme();
+
+  const safeMin = min;
+  const safeMax = max;
+  const gap = Math.min(MIN_GAP, Math.max(0, safeMax - safeMin));
+
+  // ── Slider pixel width (set after first layout) ───────────────────────────
   const [sliderWidth, setSliderWidth] = useState(0);
-  const pxPerStep = useSharedValue(1);
-  const [minValue, setMinValue] = useState(initialMin);
-  const [maxValue, setMaxValue] = useState(initialMax);
 
-  // ── Initial positions from props ───────────────────────────
-  const initMinPos = 0;
-  const initMaxPos = 0;
-
-  const position = useSharedValue(initMinPos);
-  const position2 = useSharedValue(initMaxPos);
-  const opacity = useSharedValue(0);
-  const opacity2 = useSharedValue(0);
-  const zIndex = useSharedValue(0);
-  const zIndex2 = useSharedValue(0);
-  const context = useSharedValue(0);
-  const context2 = useSharedValue(0);
-
-  useEffect(() => {
-    if (sliderWidth <= 0) return;
-
-    // ✅ update step calculation
-    pxPerStep.value = sliderWidth / ((PRICE_MAX - PRICE_MIN) / STEP);
-
-    position.value = (initialMin / PRICE_MAX) * sliderWidth;
-    position2.value = (initialMax / PRICE_MAX) * sliderWidth;
-  }, [sliderWidth, initialMin, initialMax]);
-
-  // ── Worklet helpers ────────────────────────────────────────
-  const getPrice = (pos: number) => {
-    "worklet";
-    return PRICE_MIN + Math.round(pos / pxPerStep.value) * STEP;
-  };
-  // ── JS thread notify ───────────────────────────────────────
-  const notifyChange = useCallback(
-    (min: number, max: number) => {
-      setMinValue(min);
-      setMaxValue(max);
-      onValueChange?.({ min, max });
-    },
-    [onValueChange],
+  // ── Committed values — drive thumb positions ──────────────────────────────
+  const [minValue, setMinValue] = useState(() =>
+    clamp(snap(initialMin), safeMin, safeMax - gap),
+  );
+  const [maxValue, setMaxValue] = useState(() =>
+    clamp(snap(initialMax), safeMin + gap, safeMax),
   );
 
-  // ── Track tap — nearest thumb moves ───────────────────────
-  const trackTap = Gesture.Tap().onEnd((e) => {
-    if (sliderWidth <= 0) return;
+  // ── Draft strings — freely editable, no clamping until blur ──────────────
+  const [draftMin, setDraftMin] = useState(String(minValue));
+  const [draftMax, setDraftMax] = useState(String(maxValue));
 
-    const tapX = Math.max(0, Math.min(e.x, sliderWidth));
-    const distMin = Math.abs(tapX - position.value);
-    const distMax = Math.abs(tapX - position2.value);
-    if (distMin <= distMax) {
-      // clamp so min doesn't cross max
-      const clamped = Math.min(tapX, position2.value - pxPerStep.value);
-      position.value = withTiming(clamped, { duration: 150 });
-      runOnJS(notifyChange)(getPrice(clamped), getPrice(position2.value));
-    } else {
-      // clamp so max doesn't cross min
-      const clamped = Math.max(tapX, position.value + pxPerStep.value);
-      position2.value = withTiming(clamped, { duration: 150 });
-      runOnJS(notifyChange)(getPrice(position.value), getPrice(clamped));
-    }
+  // ── Mutable refs (always up-to-date, no stale closures) ──────────────────
+  // Pan responders read from these so they never go stale.
+  const stateRef = useRef({
+    min: minValue,
+    max: maxValue,
+    width: 0,
+    safeMin,
+    safeMax,
+    gap,
+    onValueChange,
   });
 
-  // ── Min thumb pan ──────────────────────────────────────────
-  const pan = Gesture.Pan()
-    .onBegin(() => {
-      context.value = position.value;
-    })
-    .onUpdate((e) => {
-      opacity.value = 1;
-      const next = context.value + e.translationX;
-      if (next < 0) {
-        position.value = 0;
-      } else if (next > position2.value - pxPerStep.value) {
-        position.value = position2.value - pxPerStep.value;
-      } else {
-        position.value = next;
+  // Keep stateRef current on every render — O(1), no cost.
+  stateRef.current.min = minValue;
+  stateRef.current.max = maxValue;
+  stateRef.current.width = sliderWidth;
+  stateRef.current.safeMin = safeMin;
+  stateRef.current.safeMax = safeMax;
+  stateRef.current.gap = gap;
+  stateRef.current.onValueChange = onValueChange;
+
+  const dragStartRef = useRef({ min: minValue, max: maxValue });
+
+  // ── Sync when server/props push new values ────────────────────────────────
+  useEffect(() => {
+    const nextMin = clamp(snap(initialMin), safeMin, safeMax - gap);
+    const nextMax = clamp(snap(initialMax), nextMin + gap, safeMax);
+
+    setMinValue(nextMin);
+    setMaxValue(nextMax);
+    setDraftMin(String(nextMin));
+    setDraftMax(String(nextMax));
+  }, [initialMin, initialMax, safeMin, safeMax, gap]);
+
+  // ── Commit helper (called from input blur + pan release) ──────────────────
+  const applyRange = useCallback(
+    (nextMin: number, nextMax: number, notify = false) => {
+      setMinValue(nextMin);
+      setMaxValue(nextMax);
+      setDraftMin(String(nextMin));
+      setDraftMax(String(nextMax));
+      if (notify) {
+        stateRef.current.onValueChange?.({ min: nextMin, max: nextMax });
       }
-    })
-    .onEnd(() => {
-      opacity.value = 0;
-      runOnJS(notifyChange)(
-        getPrice(position.value),
-        getPrice(position2.value),
-      );
-    });
-
-  // ── Max thumb pan ──────────────────────────────────────────
-  const pan2 = Gesture.Pan()
-    .onBegin(() => {
-      context2.value = position2.value;
-    })
-    .onUpdate((e) => {
-      opacity2.value = 1;
-      const next = context2.value + e.translationX;
-      if (next > sliderWidth) {
-        position2.value = sliderWidth;
-      } else if (next < position.value + pxPerStep.value) {
-        position2.value = position.value + pxPerStep.value;
-      } else {
-        position2.value = next;
-      }
-    })
-    .onEnd(() => {
-      opacity2.value = 0;
-      runOnJS(notifyChange)(
-        getPrice(position.value),
-        getPrice(position2.value),
-      );
-    });
-
-  // ── Animated styles ────────────────────────────────────────
-  const thumbStyle1 = useAnimatedStyle(() => ({
-    transform: [{ translateX: position.value }],
-    zIndex: zIndex.value,
-  }));
-
-  const thumbStyle2 = useAnimatedStyle(() => ({
-    transform: [{ translateX: position2.value }],
-    zIndex: zIndex2.value,
-  }));
-
-  const tooltipStyle1 = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const tooltipStyle2 = useAnimatedStyle(() => ({ opacity: opacity2.value }));
-
-  const sliderFillStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: position.value }],
-    width: position2.value - position.value,
-  }));
-
-  // ── Animated tooltip text ──────────────────────────────────
-  const minLabelProps = useAnimatedProps(() => ({
-    text: `₹${getPrice(position.value)}`,
-    defaultValue: `₹${initialMin}`,
-  }));
-
-  const maxLabelProps = useAnimatedProps(() => ({
-    text: `₹${getPrice(position2.value)}`,
-    defaultValue: `₹${initialMax}`,
-  }));
-
-  // ── Manual input handlers ──────────────────────────────────
-  const handleMinInput = useCallback(
-    (text: string) => {
-      // ✅ allow empty typing
-      if (text === "") {
-        setMinValue(0);
-        return;
-      }
-
-      const val = parseInt(text.replace(/[^0-9]/g, ""), 10);
-      if (isNaN(val)) return;
-
-      const clamped = Math.max(PRICE_MIN, Math.min(val, maxValue - MIN_GAP));
-
-      // ✅ important: raw value set karo (typing smooth hogi)
-      setMinValue(val);
-
-      position.value = withTiming((clamped / PRICE_MAX) * sliderWidth, {
-        duration: 200,
-      });
-
-      onValueChange?.({ min: clamped, max: maxValue });
     },
-    [maxValue, onValueChange, position, sliderWidth],
+    [],
   );
 
-  const handleMaxInput = useCallback(
-    (text: string) => {
-      if (text === "") {
-        setMaxValue(0);
-        return;
-      }
+  // ── Pan responders (created ONCE, read from stateRef every call) ──────────
+  const minPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
 
-      const val = parseInt(text.replace(/[^0-9]/g, ""), 10);
-      if (isNaN(val)) return;
+      onPanResponderGrant: () => {
+        // Snapshot current values when drag begins
+        dragStartRef.current = {
+          min: stateRef.current.min,
+          max: stateRef.current.max,
+        };
+      },
 
-      const clamped = Math.min(PRICE_MAX, Math.max(val, minValue + MIN_GAP));
+      onPanResponderMove: (_, gs: PanResponderGestureState) => {
+        const { safeMin, max, width, gap } = stateRef.current;
+        const delta = deltaToVal(gs.dx, width, safeMin, max);
+        const next = clamp(
+          snap(dragStartRef.current.min + delta),
+          safeMin,
+          stateRef.current.max - gap,
+        );
+        // Directly mutate stateRef for instant reads in subsequent move events,
+        // then batch the React state update.
+        stateRef.current.min = next;
+        setMinValue(next);
+        setDraftMin(String(next));
+      },
 
-      setMaxValue(val);
+      onPanResponderRelease: () => {
+        stateRef.current.onValueChange?.({
+          min: stateRef.current.min,
+          max: stateRef.current.max,
+        });
+      },
 
-      position2.value = withTiming((clamped / PRICE_MAX) * sliderWidth, {
-        duration: 200,
-      });
+      onPanResponderTerminate: () => {
+        stateRef.current.onValueChange?.({
+          min: stateRef.current.min,
+          max: stateRef.current.max,
+        });
+      },
 
-      onValueChange?.({ min: minValue, max: clamped });
-    },
-    [minValue, onValueChange, position2, sliderWidth],
-  );
+      onPanResponderTerminationRequest: () => false,
+    }),
+  ).current;
 
+  const maxPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+
+      onPanResponderGrant: () => {
+        dragStartRef.current = {
+          min: stateRef.current.min,
+          max: stateRef.current.max,
+        };
+      },
+
+      onPanResponderMove: (_, gs: PanResponderGestureState) => {
+        const { safeMin, safeMax, width, gap } = stateRef.current;
+        const delta = deltaToVal(gs.dx, width, safeMin, safeMax);
+        const next = clamp(
+          snap(dragStartRef.current.max + delta),
+          stateRef.current.min + gap,
+          safeMax,
+        );
+        stateRef.current.max = next;
+        setMaxValue(next);
+        setDraftMax(String(next));
+      },
+
+      onPanResponderRelease: () => {
+        stateRef.current.onValueChange?.({
+          min: stateRef.current.min,
+          max: stateRef.current.max,
+        });
+      },
+
+      onPanResponderTerminate: () => {
+        stateRef.current.onValueChange?.({
+          min: stateRef.current.min,
+          max: stateRef.current.max,
+        });
+      },
+
+      onPanResponderTerminationRequest: () => false,
+    }),
+  ).current;
+
+  // ── Input handlers ────────────────────────────────────────────────────────
+
+  const handleMinChange = useCallback((text: string) => {
+    setDraftMin(text.replace(/[^0-9]/g, ""));
+  }, []);
+
+  const handleMaxChange = useCallback((text: string) => {
+    setDraftMax(text.replace(/[^0-9]/g, ""));
+  }, []);
+
+  const handleMinBlur = useCallback(() => {
+    const parsed = Number(draftMin);
+    const next = clamp(
+      snap(parsed > 0 ? parsed : safeMin),
+      safeMin,
+      stateRef.current.max - gap,
+    );
+    applyRange(next, stateRef.current.max, true);
+  }, [draftMin, safeMin, gap, applyRange]);
+
+  const handleMaxBlur = useCallback(() => {
+    const parsed = Number(draftMax);
+    const next = clamp(
+      snap(parsed > 0 ? parsed : safeMax),
+      stateRef.current.min + gap,
+      safeMax,
+    );
+    applyRange(stateRef.current.min, next, true);
+  }, [draftMax, safeMax, gap, applyRange]);
+
+  // ── Thumb pixel positions (derived, updated every render) ─────────────────
+  const minX = valueToPos(minValue, safeMin, safeMax, sliderWidth);
+  const maxX = valueToPos(maxValue, safeMin, safeMax, sliderWidth);
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View
       style={styles.wrapper}
-      onLayout={(event) => {
-        const nextWidth = Math.max(
-          Math.round(event.nativeEvent.layout.width) - THUMB_SIZE,
+      onLayout={(e) => {
+        const w = Math.max(
+          Math.round(e.nativeEvent.layout.width - THUMB_SIZE),
           0,
         );
-
-        if (nextWidth > 0 && nextWidth !== sliderWidth) {
-          setSliderWidth(nextWidth);
+        if (w > 0 && w !== sliderWidth) {
+          setSliderWidth(w);
+          stateRef.current.width = w;
         }
       }}
     >
-      {/* ── Slider ─────────────────────────────────────────── */}
-      {/* ✅ Outer GestureDetector for track tap */}
-      <GestureDetector gesture={trackTap}>
-        <View style={[styles.sliderContainer, { width: sliderWidth }]}>
-          {/* Background track */}
+      {/* ── Slider track ── */}
+      <View style={[styles.sliderContainer, { width: sliderWidth }]}>
+        {/* Background track */}
+        <View
+          style={[
+            styles.trackBack,
+            { backgroundColor: colors.primaryLight, width: sliderWidth },
+          ]}
+        />
+
+        {/* Active range track */}
+        <View
+          style={[
+            styles.trackFront,
+            {
+              backgroundColor: colors.primary,
+              left: minX,
+              width: Math.max(maxX - minX, 0),
+            },
+          ]}
+        />
+
+        {/* Min thumb */}
+        <View
+          {...minPanResponder.panHandlers}
+          style={[styles.touchArea, { left: minX - TOUCH_SIZE / 2 }]}
+        >
           <View
             style={[
-              styles.trackBack,
-              { backgroundColor: colors.primaryLight, width: sliderWidth },
+              styles.thumb,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.primary,
+              },
             ]}
           />
-
-          {/* Active fill */}
-          <Animated.View
-            style={[
-              styles.trackFront,
-              { backgroundColor: colors.primary },
-              sliderFillStyle,
-            ]}
-          />
-
-          {/* ✅ Min Thumb — inner GestureDetector for pan */}
-          <GestureDetector gesture={pan}>
-            <Animated.View
-              style={[
-                styles.thumb,
-                thumbStyle1,
-                {
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                },
-              ]}
-            >
-              {/* ✅ Tooltip with arrow */}
-              <Animated.View style={[styles.tooltipWrapper, tooltipStyle1]}>
-                <View style={styles.tooltipBox}>
-                  <AnimatedTextInput
-                    style={styles.tooltipText}
-                    animatedProps={minLabelProps}
-                    editable={false}
-                  />
-                </View>
-                {/* ✅ Triangle arrow pointing down */}
-                <View style={styles.tooltipArrow} />
-              </Animated.View>
-            </Animated.View>
-          </GestureDetector>
-
-          {/* ✅ Max Thumb */}
-          <GestureDetector gesture={pan2}>
-            <Animated.View
-              style={[
-                styles.thumb,
-                thumbStyle2,
-                {
-                  backgroundColor: colors.background,
-                  borderColor: colors.primary,
-                },
-              ]}
-            >
-              {/* ✅ Tooltip with arrow */}
-              <Animated.View style={[styles.tooltipWrapper, tooltipStyle2]}>
-                <View style={styles.tooltipBox}>
-                  <AnimatedTextInput
-                    style={styles.tooltipText}
-                    animatedProps={maxLabelProps}
-                    editable={false}
-                  />
-                </View>
-                <View style={styles.tooltipArrow} />
-              </Animated.View>
-            </Animated.View>
-          </GestureDetector>
         </View>
-      </GestureDetector>
 
-      {/* ── Min / Max Inputs ─────────────────────────────── */}
+        {/* Max thumb */}
+        <View
+          {...maxPanResponder.panHandlers}
+          style={[styles.touchArea, { left: maxX - TOUCH_SIZE / 2 }]}
+        >
+          <View
+            style={[
+              styles.thumb,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.primary,
+              },
+            ]}
+          />
+        </View>
+      </View>
+
+      {/* ── Input fields ── */}
       <View style={styles.inputsRow}>
-        {/* ✅ Min Price — same structure as Max */}
         <View style={styles.inputGroup}>
           <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             Min Price
@@ -332,8 +345,9 @@ const PriceSlider = ({
               ₹
             </Text>
             <TextInput
-              value={String(minValue)}
-              onChangeText={handleMinInput}
+              value={draftMin}
+              onChangeText={handleMinChange}
+              onBlur={handleMinBlur}
               keyboardType="numeric"
               selectTextOnFocus
               style={[styles.input, { color: colors.text }]}
@@ -341,10 +355,8 @@ const PriceSlider = ({
           </View>
         </View>
 
-        {/* Dash */}
         <View style={[styles.dash, { backgroundColor: colors.primaryLight }]} />
 
-        {/* ✅ Max Price — same structure as Min, no alignItems override */}
         <View style={styles.inputGroup}>
           <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
             Max Price
@@ -362,8 +374,9 @@ const PriceSlider = ({
               ₹
             </Text>
             <TextInput
-              value={String(maxValue)}
-              onChangeText={handleMaxInput}
+              value={draftMax}
+              onChangeText={handleMaxChange}
+              onBlur={handleMaxBlur}
               keyboardType="numeric"
               selectTextOnFocus
               style={[styles.input, { color: colors.text }]}
@@ -377,20 +390,19 @@ const PriceSlider = ({
 
 export default PriceSlider;
 
-// ─── Styles ───────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   wrapper: {
     width: "100%",
     paddingHorizontal: THUMB_SIZE / 2,
     gap: 16,
   },
-
-  // ── Slider ────────────────────────────────────────────────
   sliderContainer: {
-    height: CONTAINER_H, // ✅ 55 — reduced
+    height: CONTAINER_H,
     justifyContent: "center",
     alignSelf: "center",
-    overflow: "visible", // ✅ tooltip goes above container freely
+    overflow: "visible",
   },
   trackBack: {
     height: 6,
@@ -402,87 +414,60 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     position: "absolute",
   },
-  thumb: {
+  touchArea: {
     position: "absolute",
-    left: -(THUMB_SIZE / 2),
+    top: (CONTAINER_H - TOUCH_SIZE) / 2,
+    width: TOUCH_SIZE,
+    height: TOUCH_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
+  thumb: {
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
     borderWidth: 3,
-    top: (CONTAINER_H - THUMB_SIZE) / 2,
   },
-
-  tooltipWrapper: {
-    position: "absolute",
-    bottom: THUMB_SIZE + 2,
-    alignSelf: "center",
-    alignItems: "center",
-  },
-  tooltipBox: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    minWidth: 64,
-    alignItems: "center",
-  },
-  tooltipArrow: {
-    // ✅ CSS triangle trick — pointing down
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 6,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: "#1A1A1A",
-  },
-  tooltipText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-
-  // ✅ Inputs — both equal, same structure
   inputsRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-end",
+    gap: 10,
   },
   inputGroup: {
-    flex: 1, // ✅ equal flex — both same width
+    flex: 1,
     gap: 6,
   },
   inputLabel: {
     fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.4,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
   },
   inputBox: {
+    height: 42,
+    borderWidth: 1,
+    borderRadius: 8,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    gap: 6,
   },
   rupee: {
     fontSize: 13,
-    fontWeight: "600",
-    marginRight: 4,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
   },
   input: {
-    flex: 1, // ✅ fills remaining space — no minWidth needed
-    fontSize: 14,
-    fontWeight: "700",
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Poppins_500Medium",
+    includeFontPadding: false,
     padding: 0,
   },
   dash: {
-    width: 14,
+    width: 12,
     height: 2,
     borderRadius: 1,
-    marginHorizontal: 8,
-    marginTop: 16,
+    marginBottom: 20,
   },
 });

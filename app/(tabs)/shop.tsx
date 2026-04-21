@@ -10,7 +10,7 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -59,6 +59,8 @@ export default function ShopScreen() {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const { width } = useWindowDimensions();
+
+  const insets = useSafeAreaInsets();
 
   const { addToCart } = useAddToCart();
   const visitorId = useAppVisitorStore((state) => state.visitorId);
@@ -205,8 +207,9 @@ export default function ShopScreen() {
     () => ({
       padding: PAD,
       flexGrow: 1,
+      paddingBottom: insets.bottom
     }),
-    [PAD],
+    [PAD, insets.bottom],
   );
 
   const keyExtractor = useCallback(
@@ -435,6 +438,7 @@ export default function ShopScreen() {
           removeClippedSubviews={isGrid}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
+          contentInsetAdjustmentBehavior="automatic"
         />
 
         <AddToCartPreview visible={cartPreviewVisible} />

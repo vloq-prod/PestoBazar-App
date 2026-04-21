@@ -56,7 +56,7 @@ export function SplashScreen({ onFinish }: Props) {
       <View style={styles.center}>
         <Animated.View style={[styles.content, contentStyle]}>
           <Text style={styles.brand}>Pesto Bazar</Text>
-          <Text style={styles.tagline}>India's Leading Online Pesticide Hub</Text>
+          <Text style={styles.tagline}>India&apos;s Leading Online Pesticide Hub</Text>
         </Animated.View>
       </View>
 
