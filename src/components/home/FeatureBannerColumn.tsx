@@ -2,11 +2,17 @@ import React from "react";
 import { View, TouchableOpacity, Image } from "react-native";
 import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
+import { useRouter } from "expo-router";
 
 interface Props {
   item?: BannerItem;
   loading?: boolean;
   onPress?: (item: BannerItem) => void;
+}
+
+interface BannerRedirect {
+  app_redirect_key: string;
+  app_redirect_value: string;
 }
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
@@ -30,12 +36,9 @@ const SkeletonBanner = () => {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function FeatureBanner({
-  item,
-  loading,
-  onPress,
-}: Props) {
+export default function FeatureBanner({ item, loading, onPress }: Props) {
   const { colors } = useTheme();
+  const router = useRouter();
 
   // ✅ Skeleton State
   if (loading) {
@@ -45,11 +48,41 @@ export default function FeatureBanner({
   // ✅ No Data
   if (!item) return null;
 
+  const handleBannerNavigation = ({
+    app_redirect_key,
+    app_redirect_value,
+  }: BannerRedirect) => {
+    if (!app_redirect_key || !app_redirect_value) return;
+
+    if (app_redirect_key === "products") {
+      router.push({
+        pathname: "(stack)/product/[id]",
+        params: {
+          id: "slug", // required
+          product_slug: app_redirect_value,
+        },
+      });
+      return;
+    }
+
+ 
+    if (app_redirect_key === "categories") {
+      router.push({
+        pathname: "(tabs)/shop",
+        params: {
+          category_slug: app_redirect_value,
+        },
+      });
+      return;
+    }
+  };
+  console.log("console data : ");
+
   return (
     <View className="px-4">
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() => onPress?.(item)}
+        onPress={() => handleBannerNavigation(item)}
         className="rounded-2xl overflow-hidden"
         style={{
           width: "100%",

@@ -1,5 +1,6 @@
 export interface ProductDetailsParams {
-  product_id: number;
+  product_id?: number;
+  product_slug?: string;
 }
 
 /* ---------- PRODUCT MASTER ---------- */

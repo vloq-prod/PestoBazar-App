@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -28,6 +28,8 @@ export default function CartScreen() {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
 
+
+  const insets = useSafeAreaInsets();
   const { updateCart } = useCartAction();
 
   const {
@@ -108,14 +110,13 @@ export default function CartScreen() {
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background }]}
-      edges={["top"]}
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <StatusBar barStyle="dark-content" />
 
       <AppNavbar
         title="Cart Item"
         showBack
-        showSearch={true}
+      
         count={`${cartCount} items`}
       />
 

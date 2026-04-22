@@ -186,7 +186,7 @@ const Branches = () => {
           <Text style={{ fontFamily: "Poppins_500Medium" }}>
             nearest fulfillment centers
           </Text>{" "}
-          to your delivery address · Free delivery above <Text style={{color: colors.primary, fontFamily: "Poppins_700Bold"}}>₹ 699</Text>
+          to your delivery address.
         </Text>
       </View>
     </View>

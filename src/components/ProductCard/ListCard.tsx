@@ -5,13 +5,14 @@ import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
+import { ListingItem } from "../../types/shop.types";
 
 export default function ListCard({
   item,
 
   onAddToCart,
 }: {
-  item: any;
+  item: ListingItem;
   onAddToCart?: (item: any, qty: number) => void;
 }) {
   const { colors } = useTheme();

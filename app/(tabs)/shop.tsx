@@ -60,7 +60,7 @@ const AnimatedFlatList = Animated.createAnimatedComponent(
 );
 
 export default function ShopScreen() {
-  const { search } = useLocalSearchParams();
+  const { search, category_slug } = useLocalSearchParams();
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const { width } = useWindowDimensions();
@@ -81,6 +81,10 @@ export default function ShopScreen() {
 
   const searchText = Array.isArray(search) ? search[0] : search;
 
+  const categorySlug = Array.isArray(category_slug)
+    ? category_slug[0]
+    : category_slug;
+
   const filterRef = useRef<FilterBottomSheetRef>(null);
   const sortRef = useRef<SortBottomSheetRef>(null);
   const momentumRef = useRef(false);
@@ -94,7 +98,7 @@ export default function ShopScreen() {
     priceFilter.from !== DEFAULT_PRICE.from ||
     priceFilter.to !== DEFAULT_PRICE.to;
 
-  const { products, loading, loadingMore, hasMore, allLoaded, loadMore } =
+  const { products, totalCount, loading, loadingMore, hasMore, allLoaded, loadMore } =
     useListing({
       sort_by: sortBy,
       type: isFilterActive ? "filter" : searchText || "",
@@ -108,6 +112,7 @@ export default function ShopScreen() {
           : undefined,
       filter_from_price: priceFilter.from,
       filter_to_price: priceFilter.to,
+      category_slug: categorySlug,
     });
 
   const isGrid = gridMode === "grid";
@@ -288,7 +293,11 @@ export default function ShopScreen() {
       style={[styles.root, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+       <StatusBar
+            barStyle="dark-content"
+            backgroundColor="transparent"
+            translucent
+          />
       <AppNavbar title="Shop" showBack showCart={true} />
 
       {/* Toolbar */}
@@ -319,7 +328,7 @@ export default function ShopScreen() {
               color: colors.text,
             }}
           >
-            {loading ? "—" : products.length}{" "}
+            {loading ? "—" : totalCount}{" "}
           </Text>
           Products
         </Text>

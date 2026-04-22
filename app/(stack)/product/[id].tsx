@@ -48,37 +48,47 @@ import ProductDescriptionSheet from "../../../src/modals/shop/CommonBottomSheet"
 import PincodeModal from "../../../src/modals/PincodeSheet";
 import RecentlyViewProducts from "../../../src/components/home/RecentlyViewProducts";
 import BottomSheet from "@gorhom/bottom-sheet";
+import Branches from "../../../src/components/home/Branches";
 
 // ─── Constants ────────────────────────────────────────────────
 const FOOTER_HEIGHT = 112;
 const BASE_URL = "https://static-cdn.pestobazaar.com";
 
 const ProductDetails = () => {
-  // ─── Hooks ──────────────────────────────────────────────────
-  const { id, product_name } = useLocalSearchParams();
+  const { id, product_name, product_slug } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
   const visitorId = useAppVisitorStore((state) => state.visitorId);
 
-  // ─── Refs ───────────────────────────────────────────────────
   const descriptionSheetRef = useRef<BottomSheet>(null);
 
-  // ─── Local State ────────────────────────────────────────────
   const [quantity, setQuantity] = useState(0);
   const [showPincodeModal, setShowPincodeModal] = useState(false);
 
-  // ─── Derived IDs ────────────────────────────────────────────
-  const productId = Number(id);
+  const productId =
+    typeof id === "string" && !isNaN(Number(id)) ? Number(id) : undefined;
+
+  const productSlug =
+    typeof product_slug === "string" && product_slug.trim().length > 0
+      ? product_slug
+      : undefined;
+
+  console.log("product slug: ", productSlug);
+  console.log("product product id: ", productId);
 
   // ─── Animation Values ───────────────────────────────────────
   const scrollY = useSharedValue(0);
 
   // ─── API Calls ──────────────────────────────────────────────
-  const { data, isLoading, error } = useProductDetails({
-    product_id: productId,
-  });
+  const { data, isLoading, error } = useProductDetails(
+    productSlug
+      ? { product_slug: productSlug }
+      : productId
+        ? { product_id: productId }
+        : {},
+  );
   const { addToCart } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
   const { data: cartData } = useCart({ user_id: 0, visitor_id: visitorId! });
@@ -87,8 +97,10 @@ const ProductDetails = () => {
   const productInfo = data?.product;
   const productImages = data?.images ?? [];
   const descriptionUi = data?.descriptions ?? [];
-  const combos = data?.combos;
+  const variationmaster = data?.variationmaster;
   const selectedVariation = data?.variation;
+  const realProductId = selectedVariation?.id;
+  console.log("realproductt id: ", realProductId);
   const pricing = data?.pricing;
 
   // ─── Derived Values ─────────────────────────────────────────
@@ -111,9 +123,9 @@ const ProductDetails = () => {
       ? product_name
       : (productInfo?.product_name ?? "");
 
-  const selectedComboId = combos?.some((c) => c.id === productId)
+  const selectedComboId = variationmaster?.some((c) => c.id === productId)
     ? productId
-    : combos?.[0]?.id;
+    : variationmaster?.[0]?.id;
 
   const mediaList = productImages.map((item) => ({
     type: item.asset_type,
@@ -174,36 +186,39 @@ const ProductDetails = () => {
 
   // ─── Cart Handlers ──────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
+    if (!realProductId) return;
     setQuantity(1);
     addToCart({
       user_id: 0,
       visitor_id: visitorId!,
-      product_id: productId,
+      product_id: realProductId,
       qty: 1,
     });
-  }, [productId, visitorId]);
+  }, [realProductId, visitorId, addToCart]);
 
   const handleIncrease = useCallback(() => {
+    if (!realProductId) return;
     const newQty = quantity + 1;
     setQuantity(newQty);
     addToCart({
       user_id: 0,
       visitor_id: visitorId!,
-      product_id: productId,
+      product_id: realProductId,
       qty: newQty,
     });
-  }, [quantity, productId, visitorId]);
+  }, [quantity, realProductId, visitorId, addToCart]);
 
   const handleDecrease = useCallback(() => {
+    if (!realProductId) return;
     const newQty = Math.max(quantity - 1, 0);
     setQuantity(newQty);
     addToCart({
       user_id: 0,
       visitor_id: visitorId!,
-      product_id: productId,
+      product_id: realProductId,
       qty: newQty,
     });
-  }, [quantity, productId, visitorId]);
+  }, [quantity, realProductId, visitorId, addToCart]);
 
   // ─── Modal / Sheet Handlers ─────────────────────────────────
   const openDescriptionSheet = useCallback(() => {
@@ -215,9 +230,9 @@ const ProductDetails = () => {
 
   // ─── Effects ────────────────────────────────────────────────
   useEffect(() => {
-    if (!productId || !visitorId) return;
-    saveRecentlyViewed({ product_id: productId, visitor_id: visitorId });
-  }, [productId, visitorId]);
+    if (!realProductId || !visitorId) return;
+    saveRecentlyViewed({ product_id: realProductId, visitor_id: visitorId });
+  }, [realProductId, visitorId]);
 
   const HEADER_HEIGHT = insets.top;
   // ─── Guards ─────────────────────────────────────────────────
@@ -473,7 +488,7 @@ const ProductDetails = () => {
         </View>
 
         {/* ── Variants ── */}
-        {!!combos?.length && (
+        {!!variationmaster?.length && (
           <View style={{ paddingHorizontal: spacing(16), gap: spacing(12) }}>
             <View
               style={{
@@ -492,34 +507,6 @@ const ProductDetails = () => {
               >
                 Select Variant
               </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: spacing(5),
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: font(10),
-                    fontFamily: "Poppins_400Regular",
-                    color: colors.textTertiary,
-                    includeFontPadding: false,
-                  }}
-                >
-                  SKU#
-                </Text>
-                <Text
-                  style={{
-                    fontSize: font(11),
-                    fontFamily: "Poppins_500Medium",
-                    color: colors.textSecondary,
-                    includeFontPadding: false,
-                  }}
-                >
-                  {selectedVariation?.sku || "—"}
-                </Text>
-              </View>
             </View>
 
             <View
@@ -529,7 +516,7 @@ const ProductDetails = () => {
                 gap: spacing(8),
               }}
             >
-              {combos.map((item) => {
+              {variationmaster.map((item) => {
                 const isSelected = item.id === selectedComboId;
                 return (
                   <TouchableOpacity
@@ -578,7 +565,7 @@ const ProductDetails = () => {
         {/* ── Delivery + Docs ── */}
         <View style={{ gap: spacing(10) }}>
           <DeliveryInfoCard
-            variationId={selectedVariation?.id ?? 0}
+            variationId={realProductId ?? 0}
             onOpenPincode={openPincodeModal}
           />
           <DocumentButtons />
@@ -598,13 +585,18 @@ const ProductDetails = () => {
         )}
 
         {/* ── Related + Recent ── */}
-        <CustomerAlsoBoughtProduct productId={productId} />
+        {realProductId !== undefined && (
+          <CustomerAlsoBoughtProduct productId={realProductId} />
+        )}
         <RecentlyViewProducts />
 
         {/* ── USP ── */}
         <HomeUsp />
+        <Branches />
         {/* ── Reviews ── */}
-        <ReviewSection product_id={productId} />
+        {realProductId !== undefined && (
+          <ReviewSection product_id={realProductId} />
+        )}
       </Animated.ScrollView>
 
       {/* ── Footer ── */}

@@ -4,6 +4,7 @@ import Carousel from "react-native-reanimated-carousel";
 import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const ITEM_WIDTH = SCREEN_WIDTH * 0.84;
@@ -49,7 +50,10 @@ const SkeletonCarousel = () => {
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-
+interface banner {
+  app_redirect_key: string;
+  app_redirect_value: string;
+}
 export default function SlidingBanners({
   onBannerPress,
   data,
@@ -57,6 +61,32 @@ export default function SlidingBanners({
 }: Props) {
   const { colors } = useTheme();
 
+  const router = useRouter();
+
+  const handleBannerPress = (banner: banner) => {
+    const { app_redirect_key, app_redirect_value } = banner;
+
+    console.log("app redite key : ", app_redirect_key);
+    console.log("app redite value : ", app_redirect_value);
+    if (app_redirect_key === "products") {
+      router.push({
+        pathname: "(stack)/product/[id]",
+        params: {
+          id: "slug",
+          product_slug: app_redirect_value,
+        },
+      });
+    }
+
+    if (app_redirect_key === "categories") {
+      router.push({
+        pathname: "(tabs)/shop",
+        params: {
+          category_slug: app_redirect_value,
+        },
+      });
+    }
+  };
   // ✅ Skeleton Handling
   if (loading) {
     return <SkeletonCarousel />;
@@ -64,6 +94,7 @@ export default function SlidingBanners({
 
   if (!data?.length) return null;
 
+  // console.log("sliding data: ", data);
   return (
     <View>
       <Carousel
@@ -83,7 +114,7 @@ export default function SlidingBanners({
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.92}
-            onPress={() => onBannerPress?.(item)}
+            onPress={() => handleBannerPress(item)}
             className="self-center rounded-2xl overflow-hidden"
             style={{
               width: ITEM_WIDTH,

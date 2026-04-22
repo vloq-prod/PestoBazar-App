@@ -5,11 +5,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MoveRight,
-} from "lucide-react-native";
+import { ChevronLeft, ChevronRight, MoveRight } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
@@ -23,6 +19,7 @@ import { useTheme } from "../../theme";
 
 import image1 from "../../../assets/image.png";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 
 type Props = {
   onPress?: () => void;
@@ -34,6 +31,8 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
   const { height } = useWindowDimensions();
   const manualOpen = useSharedValue(1);
   const bottomOffset = Math.max(120, Math.min(height * 0.22, 200));
+
+  const router = useRouter();
 
   useAnimatedReaction(
     () => visible?.value ?? 1,
@@ -64,7 +63,12 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
 
     return {
       width: interpolate(progress, [0, 1], [20, 0], Extrapolate.CLAMP),
-      opacity: interpolate(progress, [0, 0.35, 1], [1, 0, 0], Extrapolate.CLAMP),
+      opacity: interpolate(
+        progress,
+        [0, 0.35, 1],
+        [1, 0, 0],
+        Extrapolate.CLAMP,
+      ),
       overflow: "hidden",
     };
   });
@@ -73,6 +77,8 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
     const nextValue = manualOpen.value > 0.5 ? 0 : 1;
     manualOpen.value = withTiming(nextValue, { duration: 280 });
     onPress?.();
+
+    router.push("(stack)/bulkorder");
   };
 
   return (
@@ -139,9 +145,7 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
             paddingHorizontal: 6,
           }}
         >
-          <View
-            style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-          >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <View>
               <Text
                 style={{
@@ -182,25 +186,23 @@ const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
           padding: 0.5,
         }}
       >
-        <Animated.View
-          style={collapsedHandleStyle}
-        >
+        <Animated.View style={collapsedHandleStyle}>
           <View
-          style={{
-            width: 20,
-            height: 40,
-            justifyContent: "center",
-            backgroundColor: "#000000",
-            borderTopLeftRadius: 5,
-            borderBottomLeftRadius: 5,
-            borderTopRightRadius: 0,
-            borderBottomRightRadius: 0,
-            overflow: "hidden",
-          }}
-        >
-          <Animated.View>
-            <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
-          </Animated.View>
+            style={{
+              width: 20,
+              height: 40,
+              justifyContent: "center",
+              backgroundColor: "#000000",
+              borderTopLeftRadius: 5,
+              borderBottomLeftRadius: 5,
+              borderTopRightRadius: 0,
+              borderBottomRightRadius: 0,
+              overflow: "hidden",
+            }}
+          >
+            <Animated.View>
+              <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
+            </Animated.View>
           </View>
         </Animated.View>
       </Animated.View>

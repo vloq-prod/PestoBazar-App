@@ -14,7 +14,6 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import Animated, {
   useAnimatedStyle,
   withTiming,
-  withSpring,
   Easing,
 } from "react-native-reanimated";
 import { X, Play, ChevronLeft, ChevronRight } from "lucide-react-native";
@@ -170,8 +169,7 @@ const MediaLightbox: React.FC<Props> = ({
   accentColor,
 }) => {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const { font, wp, scale, moderateScale } = useResponsive();
+  const { font, scale, moderateScale } = useResponsive();
 
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const mainListRef = useRef<FlatList>(null);

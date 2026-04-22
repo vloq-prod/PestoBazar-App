@@ -66,10 +66,6 @@ const SidebarSkeleton = () => (
   </View>
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SIDEBAR ITEM
-// ─────────────────────────────────────────────────────────────────────────────
-
 type SidebarItemProps = {
   item: CategoryItem;
   isActive: boolean;
@@ -175,10 +171,6 @@ const CategorySidebarItem = ({
     </TouchableOpacity>
   );
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EXPORTED: CategorySidebar
-// ─────────────────────────────────────────────────────────────────────────────
 
 export type CategorySidebarProps = {
   categories: CategoryItem[];

@@ -129,7 +129,7 @@ export default function CategoryRightPanel({
 
   const resolvedCategoryId = categoryId === "0" ? mainCategoryId : categoryId;
 
-  const { products, loading, loadingMore, hasMore, allLoaded, loadMore } =
+  const { products, totalCount, loading, loadingMore, hasMore, allLoaded, loadMore } =
     useListing({
       category_id: String(resolvedCategoryId),
     });
@@ -152,7 +152,7 @@ export default function CategoryRightPanel({
 
   useEffect(() => {
   if (onCountChange) {
-    onCountChange(products.length);
+    onCountChange(totalCount);
   }
 }, [products]);
 

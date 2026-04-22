@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import {
-  ChevronLeft,
   Search,
   ShoppingCart,
   Bell,
@@ -63,7 +62,13 @@ const AppNavbar = ({
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         {showBack && (
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("(tabs)/index");
+              }
+            }}
             style={{
               width: ICON_BOX,
               height: ICON_BOX,
@@ -72,8 +77,7 @@ const AppNavbar = ({
               marginRight: spacing(10),
             }}
           >
-         
-            <ArrowLeft size={ICON_SIZE} color={colors.text}  />
+            <ArrowLeft size={ICON_SIZE} color={colors.text} />
           </TouchableOpacity>
         )}
 

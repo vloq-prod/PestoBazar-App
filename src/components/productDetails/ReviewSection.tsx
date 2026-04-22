@@ -2,25 +2,31 @@ import {
   StyleSheet,
   Text,
   View,
-  FlatList,
   ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import React from "react";
 import ReviewCard from "./ReviewCard";
 import { useProductReviews } from "../../hooks/productDetailsHook";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { useRouter } from "expo-router";
+
 
 type Props = {
   product_id: number;
 };
 
-const ReviewSection = ({ product_id }: Props) => {
-  const { reviews, loading, fetchingMore, error, hasMore, loadMore } =
-    useProductReviews({ product_id });
 
+const ReviewSection = ({ product_id }: Props) => {
+  const { reviews, loading, error } = useProductReviews({ product_id });
+
+  const router = useRouter();
   const { colors } = useTheme();
-  const { font } = useResponsive();
+  const { font, spacing } = useResponsive();
+
+  const limitedReviews = reviews?.slice(0, 6) || [];
 
   if (loading) {
     return (
@@ -49,48 +55,80 @@ const ReviewSection = ({ product_id }: Props) => {
   }
 
   return (
-    <View style={styles.container}>
-       <View style={{  gap: 1 }}>
-             <Text
-               style={{
-                 fontSize: font(18),
-                 fontFamily: "Poppins_700Bold",
-                 color: colors.text,
-                 lineHeight: font(22),
-               }}
-             >
-               Reviews
-             </Text>
-             {/* <Text
-               style={{
-                 fontSize: font(12),
-                 fontFamily: "Poppins_400Regular",
-                 color: colors.textSecondary,
-                 lineHeight: font(18),
-               }}
-             >
-               Frequently Bought Together by Other Customers
-             </Text> */}
-           </View>
-      <FlatList
-        data={reviews}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <ReviewCard item={item} />}
-        scrollEnabled={false}
-        onEndReached={() => {
-          if (hasMore && !fetchingMore) loadMore();
+    <View style={[styles.container, { gap: spacing(25) }]}>
+      <View className="flex-row items-center gap-3 ">
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
+
+        <Text
+          numberOfLines={1}
+          style={{
+            fontFamily: "Poppins_700Bold",
+            fontSize: font(18),
+            includeFontPadding: false,
+            textAlignVertical: "center",
+          }}
+        >
+          Reviews
+        </Text>
+
+        <View
+          style={{
+            flex: 1,
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
+      </View>
+      {/* 🔥 HORIZONTAL SCROLL */}
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          gap: 12,
         }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          fetchingMore ? (
-            <ActivityIndicator
-              size="small"
-              color="#4F46E5"
-              style={{ marginVertical: 12 }}
-            />
-          ) : null
+      >
+        {limitedReviews.map((item) => (
+          <View key={item.id}>
+            <ReviewCard item={item} />
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* 🔹 BUTTON */}
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: "(stack)/reviews/[reviewsid]",
+            params: {
+              reviewsid: product_id,
+            },
+          })
         }
-      />
+        style={{
+          height: 44,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: colors.primary,
+          alignItems: "center",
+          justifyContent: "center",
+          marginHorizontal: 16,
+        }}
+      >
+        <Text
+          style={{
+            color: colors.primary,
+            fontFamily: "Poppins_600SemiBold",
+            fontSize: font(13),
+          }}
+        >
+          Show All Reviews
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -99,15 +137,7 @@ export default ReviewSection;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
     paddingTop: 12,
-    gap: 10,
-  },
-  heading: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111",
-    marginBottom: 12,
   },
   centered: {
     padding: 24,

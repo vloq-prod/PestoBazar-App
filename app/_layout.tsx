@@ -1,17 +1,20 @@
 import "../global.css";
+
+
 import { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { Text, TextInput } from "react-native";
 
-import { ThemeProvider, useTheme } from "../src/theme";
+import { ThemeProvider } from "../src/theme";
 import { useFonts } from "../src/hooks/useFonts";
 import { SplashScreen } from "../src/components/SplashScreen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAppVisitorStore } from "../src/store/auth";
-import AppStatusBar from "../src/components/AppStatusBar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useDeliveryStore } from "../src/store/deliveryStore";
+import { ToastProvider } from "../src/context/ToastContext";
+import { ToastContainer } from "../src/components/Toast/ToastContainer";
 
 function RootLayoutNav() {
   // @ts-ignore
@@ -24,7 +27,6 @@ function RootLayoutNav() {
   // @ts-ignore
   TextInput.defaultProps.allowFontScaling = false;
 
-  const { colors } = useTheme();
   const [isReady, setIsReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const { visitorId, token } = useAppVisitorStore();
@@ -74,11 +76,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <BottomSheetModalProvider>
-            <RootLayoutNav />
-          </BottomSheetModalProvider>
-        </ThemeProvider>
+        <ToastProvider>
+          <ThemeProvider>
+            <BottomSheetModalProvider>
+              <RootLayoutNav />
+            </BottomSheetModalProvider>
+          </ThemeProvider>
+          <ToastContainer />
+        </ToastProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

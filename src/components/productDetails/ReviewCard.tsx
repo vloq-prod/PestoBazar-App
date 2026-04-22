@@ -1,10 +1,11 @@
 import { StyleSheet, Text, View, ScrollView, Pressable } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { useTheme } from "../../theme";
 import { MessageCircleReply, Star, Play } from "lucide-react-native";
 import { Image } from "expo-image";
 import { useResponsive } from "../../utils/useResponsive";
 import { ReviewItem } from "../../types/productdetails.types";
+import MediaLightbox from "../comman/MediaLightbox";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 const getInitials = (name: string) => {
@@ -38,24 +39,34 @@ const StarRow = ({
 );
 
 // ─── Media Row ───────────────────────────────────────────────────
-type MediaItem = { uri: string; type: "image" | "video" };
+type LightboxMedia = {
+  type: "image" | "video";
+  image?: string | null;
+  video?: string | null;
+};
 
 const MediaRow = ({
   media,
   colors,
   spacing,
+  onItemPress,
 }: {
   media: ReviewItem["media"];
   colors: any;
   spacing: (n: number) => number;
+  onItemPress: (index: number) => void;
 }) => {
-  
-  const allItems: MediaItem[] = [];
-  if (media.video) allItems.push({ uri: media.video, type: "video" });
+  const allItems: LightboxMedia[] = [];
+  if (media.video)
+    allItems.push({
+      type: "video",
+      video: media.video,
+      image: media.first_image,
+    });
   if (media.first_image)
-    allItems.push({ uri: media.first_image, type: "image" });
+    allItems.push({ type: "image", image: media.first_image });
   media.other_images.forEach((img) =>
-    allItems.push({ uri: img, type: "image" }),
+    allItems.push({ type: "image", image: img }),
   );
 
   if (allItems.length === 0) return null;
@@ -72,12 +83,11 @@ const MediaRow = ({
       contentContainerStyle={{ gap: spacing(8), paddingTop: spacing(10) }}
     >
       {visible.map((item, idx) => {
-
-     
         const isLast = idx === MAX_VISIBLE - 1 && hiddenCount > 0;
         return (
           <Pressable
             key={idx}
+            onPress={() => onItemPress(idx)} // ← lightbox open
             style={[
               styles.thumb,
               {
@@ -89,7 +99,7 @@ const MediaRow = ({
             ]}
           >
             <Image
-              source={{ uri: item.uri }}
+              source={{ uri: item.image ?? item.video ?? "" }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
             />
@@ -131,174 +141,193 @@ const MediaRow = ({
 };
 
 // ─── Review Card ─────────────────────────────────────────────────
-type Props = {
-  item: ReviewItem;
-};
-
-const ReviewCard = ({ item }: Props) => {
+const ReviewCard = ({ item }: { item: ReviewItem }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
-  const hasMedia =
-    item.media.video ||
-    item.media.first_image ||
-    item.media.other_images.length > 0;
+  // ── Lightbox state ──
+  const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Build lightbox data from media
+  const lightboxData: LightboxMedia[] = [];
+  if (item.media.video)
+    lightboxData.push({
+      type: "video",
+      video: item.media.video,
+      image: item.media.first_image,
+    });
+  if (item.media.first_image)
+    lightboxData.push({ type: "image", image: item.media.first_image });
+  item.media.other_images.forEach((img) =>
+    lightboxData.push({ type: "image", image: img }),
+  );
+
+  const hasMedia = lightboxData.length > 0;
+
+  const handleMediaPress = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxVisible(true);
+  };
 
   return (
-    <View
-      style={[
-        styles.reviewCard,
-        {
-          borderColor: colors.border,
-          borderRadius: 10,
-        },
-      ]}
-    >
-      {/* ── Header ── */}
-      <View style={styles.reviewHeader}>
-        <View
-          style={[
-            styles.avatar,
-            {
-              width: spacing(34),
-              height: spacing(34),
-              borderRadius: spacing(34),
-              backgroundColor: colors.primary,
-            },
-          ]}
-        >
-          <Text
-            style={{
-              fontSize: font(12),
-              fontFamily: "Poppins_700Bold",
-              color: colors.textInverse,
-              lineHeight: font(12),
-            }}
-          >
-            {getInitials(item.full_name)}
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flex: 1,
-            gap: spacing(3),
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <View style={styles.nameRow}>
-            <Text
-              style={{
-                fontSize: font(13),
-                fontFamily: "Poppins_600SemiBold",
-                color: colors.text,
-                lineHeight: font(18),
-              }}
-            >
-              {item.full_name}
-            </Text>
-
-            <View style={styles.starsRow}>
-              <StarRow rating={item.rating} starColor={colors.starColor} />
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* ── Review text ── */}
-      <Text
-        style={{
-          fontSize: font(11),
-          fontFamily: "Poppins_400Regular",
-          color: colors.textSecondary,
-          lineHeight: font(20),
-          marginTop: spacing(8),
-        }}
+    <>
+      <View
+        style={[
+          styles.reviewCard,
+          { borderColor: colors.border, borderRadius: 10 },
+        ]}
       >
-        {item.review}
-      </Text>
-
-      {/* ── Media row ── */}
-      {hasMedia && (
-        <MediaRow media={item.media} colors={colors} spacing={spacing} />
-      )}
-
-      {/* ── Admin Reply ── */}
-      {item.admin_comments && (
-        <View
-          style={[
-            styles.replyBlock,
-            {
-              marginTop: spacing(10),
-              backgroundColor: colors.primary + "0D",
-              borderRadius: spacing(10),
-              borderWidth: 0.5,
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.replyHeader}>
-            <View
-              style={[
-                styles.replyIconBox,
-                {
-                  backgroundColor: colors.primary,
-                  borderRadius: spacing(6),
-                  padding: spacing(4),
-                },
-              ]}
-            >
-              <MessageCircleReply
-                size={spacing(12)}
-                color={colors.textInverse}
-                strokeWidth={2}
-              />
-            </View>
+        {/* ── Header ── */}
+        <View style={styles.reviewHeader}>
+          <View
+            style={[
+              styles.avatar,
+              {
+                width: spacing(34),
+                height: spacing(34),
+                borderRadius: spacing(34),
+                backgroundColor: colors.primary,
+              },
+            ]}
+          >
             <Text
               style={{
                 fontSize: font(12),
-                fontFamily: "Poppins_600SemiBold",
-                color: colors.primary,
-                flex: 1,
+                fontFamily: "Poppins_700Bold",
+                color: colors.textInverse,
+                lineHeight: font(12),
               }}
             >
-              Admin Comment
+              {getInitials(item.full_name)}
             </Text>
           </View>
 
-          <Text
+          <View
             style={{
-              fontSize: font(11),
-              fontFamily: "Poppins_400Regular",
-              color: colors.textSecondary,
-              lineHeight: font(18),
-              marginTop: spacing(3),
-              paddingLeft: spacing(4),
+              flex: 1,
+              gap: spacing(3),
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
             }}
           >
-            {item.admin_comments}
-          </Text>
+            <View style={styles.nameRow}>
+              <Text
+                style={{
+                  fontSize: font(13),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  lineHeight: font(18),
+                }}
+              >
+                {item.full_name}
+              </Text>
+              <View style={styles.starsRow}>
+                <StarRow rating={item.rating} starColor={colors.starColor} />
+              </View>
+            </View>
+          </View>
         </View>
-      )}
-    </View>
+
+        {/* ── Review text ── */}
+        <Text
+          style={{
+            fontSize: font(11),
+            fontFamily: "Poppins_400Regular",
+            color: colors.textSecondary,
+            lineHeight: font(20),
+            marginTop: spacing(8),
+          }}
+        >
+          {item.review}
+        </Text>
+
+        {/* ── Media row ── */}
+        {hasMedia && (
+          <MediaRow
+            media={item.media}
+            colors={colors}
+            spacing={spacing}
+            onItemPress={handleMediaPress}
+          />
+        )}
+
+        {/* ── Admin Reply ── */}
+        {item.admin_comments && (
+          <View
+            style={[
+              styles.replyBlock,
+              {
+                marginTop: spacing(10),
+                backgroundColor: colors.primary + "0D",
+                borderRadius: spacing(10),
+                borderWidth: 0.5,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.replyHeader}>
+              <View
+                style={[
+                  styles.replyIconBox,
+                  {
+                    backgroundColor: colors.primary,
+                    borderRadius: spacing(6),
+                    padding: spacing(4),
+                  },
+                ]}
+              >
+                <MessageCircleReply
+                  size={spacing(12)}
+                  color={colors.textInverse}
+                  strokeWidth={2}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: font(12),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.primary,
+                  flex: 1,
+                }}
+              >
+                Admin Comment
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: font(11),
+                fontFamily: "Poppins_400Regular",
+                color: colors.textSecondary,
+                lineHeight: font(18),
+                marginTop: spacing(3),
+                paddingLeft: spacing(4),
+              }}
+            >
+              {item.admin_comments}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* ── Lightbox ── */}
+      <MediaLightbox
+        data={lightboxData}
+        initialIndex={lightboxIndex}
+        visible={lightboxVisible}
+        onClose={() => setLightboxVisible(false)}
+        accentColor={colors.primary}
+      />
+    </>
   );
 };
 
 export default ReviewCard;
 
 const styles = StyleSheet.create({
-  reviewCard: {
-    padding: 10,
-    borderWidth: 1,
-    marginBottom: 10,
-  },
-  reviewHeader: {
-    flexDirection: "row",
-    gap: 5,
-    alignItems: "flex-start",
-  },
+  reviewCard: { padding: 10, borderWidth: 1, marginBottom: 10 },
+  reviewHeader: { flexDirection: "row", gap: 5, alignItems: "flex-start" },
   avatar: {
     alignItems: "center",
     justifyContent: "center",
@@ -308,16 +337,10 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    gap: 3,
   },
-  starsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  thumb: {
-    overflow: "hidden",
-    borderWidth: 0.5,
-  },
+  starsRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  thumb: { overflow: "hidden", borderWidth: 0.5 },
   playOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
@@ -337,18 +360,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  countText: {
-    color: "#fff",
-  },
-  replyBlock: {
-    padding: 10,
-  },
-  replyHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  replyIconBox: {
-    alignSelf: "flex-start",
-  },
+  countText: { color: "#fff" },
+  replyBlock: { padding: 10 },
+  replyHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  replyIconBox: { alignSelf: "flex-start" },
 });

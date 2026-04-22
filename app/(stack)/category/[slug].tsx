@@ -100,7 +100,11 @@ const CategoryDetails = () => {
       style={[styles.root, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+        <StatusBar
+            barStyle="dark-content"
+            backgroundColor="transparent"
+            translucent
+          />
 
       <AppNavbar title={String(name)} showBack  count={productCount} />
 

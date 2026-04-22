@@ -44,6 +44,8 @@ const TIMING_CONFIG = { duration: 280 };
 export default function HomeScreen() {
   const isConnected = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  
+  
 
   const { colors } = useTheme();
   const { slidingbanners, featureBanners, homeBottomBanners } =

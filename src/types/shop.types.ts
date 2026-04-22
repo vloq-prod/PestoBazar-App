@@ -8,6 +8,7 @@ export interface ListingParams {
   filter_brand_id?: string;
   filter_from_price?: number;
   filter_to_price?: number;
+  category_slug?: string;
 }
 
 // 🔹 Product Item
@@ -34,6 +35,7 @@ export interface ListingApiResponse {
   status: number;
   data: {
     data: ListingItem[];
+    total_count: number;
   };
 }
 

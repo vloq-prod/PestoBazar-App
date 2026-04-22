@@ -23,7 +23,6 @@ const ProductCard: React.FC<Props> = ({
     return (
       <ListCard
         item={item}
-        onPress={onPress}
         onAddToCart={onAddToCart}
       />
     );
@@ -32,7 +31,7 @@ const ProductCard: React.FC<Props> = ({
   return (
     <GridCard
       item={item}
-      onPress={onPress}
+
       onAddToCart={onAddToCart}
     />
   );

@@ -21,9 +21,8 @@ import {
 
 export const useProductDetails = (params: ProductDetailsParams) => {
   return useQuery({
-    queryKey: ["product-details", params.product_id],
+    queryKey: ["product-details", params.product_id, params.product_slug],
     queryFn: () => getProductDetails(params),
-    enabled: !!params.product_id,
 
     select: (res) => {
       const data = res?.data;
@@ -31,9 +30,10 @@ export const useProductDetails = (params: ProductDetailsParams) => {
       const selectedVariation = data?.selected_variation;
       const selectedCombo = data?.selected_combo_variation || [];
 
-      // 🔥 Decide final pricing source
       const pricingSource =
-        selectedCombo.length > 0 ? selectedCombo[0] : selectedVariation;
+        selectedCombo?.length > 0
+          ? selectedCombo[0]
+          : selectedVariation || null;
 
       return {
         product: data?.product_master,
@@ -47,7 +47,7 @@ export const useProductDetails = (params: ProductDetailsParams) => {
         // reviews
         reviews: Object.values(data?.grouped_reviews || {}),
 
-        combos: data?.product_variation_master || [],
+        variationmaster: data?.product_variation_master || [],
         selectedCombo,
 
         descriptions: data?.product_drop_description || [],

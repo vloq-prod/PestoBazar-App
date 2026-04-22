@@ -28,6 +28,15 @@ const SearchItem: React.FC<Props> = ({ item }) => {
 
   return (
     <TouchableOpacity
+      onPress={() =>
+        router.push({
+          pathname: "(stack)/product/[id]",
+          params: {
+            id: "slug",
+            product_slug: item.product_url,
+          },
+        })
+      }
       activeOpacity={0.8}
       style={{
         flexDirection: "row",
@@ -142,10 +151,7 @@ const SearchItem: React.FC<Props> = ({ item }) => {
               alignItems: "center",
             }}
           >
-            <ChevronRight
-              size={spacing(16)}
-              color={colors.textSecondary}
-            />
+            <ChevronRight size={spacing(16)} color={colors.textSecondary} />
           </View>
         </View>
       </View>

@@ -44,6 +44,10 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
     );
   }, [query.data]);
 
+  const totalCount = useMemo(() => {
+  return query.data?.pages?.[0]?.data?.total_count ?? 0;
+}, [query.data]);
+
   // ✅ LOAD MORE
   const loadMore = useCallback(() => {
     if (query.hasNextPage && !query.isFetchingNextPage) {
@@ -54,6 +58,7 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
   return {
     products,
     loading: query.isLoading,
+     totalCount, 
     loadingMore: query.isFetchingNextPage,
     hasMore: query.hasNextPage,
     allLoaded: !query.hasNextPage && products.length > 0,

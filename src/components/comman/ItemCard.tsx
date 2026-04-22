@@ -6,6 +6,7 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
+import { useToast } from "../../context/ToastContext";
 
 export default function ItemCard({
   item,
@@ -19,6 +20,7 @@ export default function ItemCard({
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -36,16 +38,17 @@ export default function ItemCard({
   const showRating = rating > 0;
 
   const handleQtyInput = (val: string) => {
+    console.log("taoast not show bro!");
     setInputVal(val);
     const parsed = parseInt(val);
     if (!isNaN(parsed) && parsed > 0) setQty(parsed);
   };
+
   const getStarType = (index: number, rating: number) => {
     if (index <= Math.floor(rating)) return "full";
     if (index === Math.ceil(rating) && rating % 1 !== 0) return "half";
     return "empty";
   };
-
 
   // console.log("")
 
@@ -236,6 +239,7 @@ export default function ItemCard({
               setQty(1);
               setInputVal("1");
               onAddToCart?.(item, 1);
+              showToast(`${item.product_name} added to cart!`, "success");
             }}
             style={{
               backgroundColor: colors.primary,
@@ -303,6 +307,7 @@ export default function ItemCard({
               onPress={() => {
                 setQty(qty + 1);
                 setInputVal(String(qty + 1));
+                showToast(`Quantity updated to ${qty + 1}`, "info"); // ← add karo
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >
