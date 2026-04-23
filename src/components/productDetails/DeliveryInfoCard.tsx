@@ -16,12 +16,11 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
   const { spacing, font } = useResponsive();
   const { pincode } = useDeliveryStore();
 
-  const { delivery } = useEstimatedDelivery({
+  const { delivery, loading } = useEstimatedDelivery({
     selected_variation_id: variationId ?? 0,
     pincode: pincode ?? "",
   });
 
-  console.log("delivery : ", delivery);
   const deliveryDateMessage = delivery?.delivery_date_message;
   const locationMessage = delivery?.location_message;
   const freeShipping = delivery?.free_shipping_message;
@@ -36,6 +35,79 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
     codeMessage?.toLowerCase().includes("cod available") &&
     !codeMessage?.toLowerCase().includes("not");
 
+
+
+    if (loading) {
+  return (
+    <View
+      style={{
+        marginHorizontal: spacing(16),
+        borderWidth: 1,
+        borderRadius: spacing(12),
+        borderColor: colors.border,
+        padding: spacing(12),
+        gap: spacing(12),
+      }}
+    >
+      {/* Top skeleton */}
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <View style={{ flex: 1, gap: 6 }}>
+          <View
+            style={{
+              height: 12,
+              width: "70%",
+              backgroundColor: colors.backgroundgray,
+              borderRadius: 6,
+            }}
+          />
+          <View
+            style={{
+              height: 10,
+              width: "50%",
+              backgroundColor: colors.backgroundgray,
+              borderRadius: 6,
+            }}
+          />
+        </View>
+
+        <View
+          style={{
+            width: 80,
+            height: 30,
+            backgroundColor: colors.backgroundgray,
+            borderRadius: 8,
+          }}
+        />
+      </View>
+
+      {/* Bottom skeleton */}
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {[1, 2].map((i) => (
+          <View key={i} style={{ flex: 1, flexDirection: "row", gap: 10 }}>
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: colors.backgroundgray,
+              }}
+            />
+            <View style={{ flex: 1, gap: 6 }}>
+              <View
+                style={{
+                  height: 10,
+                  width: "80%",
+                  backgroundColor: colors.backgroundgray,
+                  borderRadius: 6,
+                }}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
   return (
     <View
       style={{

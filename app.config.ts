@@ -5,14 +5,30 @@ export default {
     version: "1.0.0",
     orientation: "portrait",
 
-    userInterfaceStyle: "automatic", 
+    userInterfaceStyle: "automatic",
+
+    // ✅ ADD THIS
+    icon: "./assets/icon.png",
+
+    splash: {
+      image: "./assets/icon.png",
+      resizeMode: "contain",
+      backgroundColor: "#ffffff",
+    },
 
     ios: {
       buildNumber: "1",
     },
+
     android: {
       versionCode: 1,
-      package: "com.pestobazaar.app"
+      package: "com.pestobazaar.app",
+
+      // ✅ ADD THIS
+      adaptiveIcon: {
+        foregroundImage: "./assets/icon.png",
+        backgroundColor: "#ffffff",
+      },
     },
 
     extra: {
@@ -20,8 +36,8 @@ export default {
       app_version: "1.0.0",
       app_code: 1,
       eas: {
-        projectId: "0fbcaee7-f976-49ed-bddc-00f1c6b50d18"
-      }
+        projectId: "5cfbb881-6243-45cd-b8f0-5d2966cd05d6",
+      },
     },
   },
 };

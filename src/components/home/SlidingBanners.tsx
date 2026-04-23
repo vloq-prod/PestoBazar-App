@@ -12,20 +12,28 @@ const ITEM_HEIGHT = ITEM_WIDTH * 0.48;
 
 interface Props {
   data: BannerItem[];
-  loading?: boolean;
   onBannerPress?: (banner: BannerItem) => void;
 }
 
-// ─── Skeleton Banner ─────────────────────────────────────────────────────────
+interface BannerRedirect {
+  app_redirect_key: string;
+  app_redirect_value: string;
+}
 
-const SkeletonBanner = () => {
+// ─── Skeleton ────────────────────────────────────────────────
+const SkeletonCarousel = () => {
   const { colors } = useTheme();
 
   return (
-    <View className="items-center">
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <View
         style={{
-          width: ITEM_WIDTH,
+          width: ITEM_WIDTH + 40,
           height: ITEM_HEIGHT,
           borderRadius: 14,
           backgroundColor: colors.backgroundSkeleton,
@@ -35,66 +43,34 @@ const SkeletonBanner = () => {
   );
 };
 
-// ─── Skeleton Carousel ───────────────────────────────────────────────────────
-
-const SkeletonCarousel = () => {
-  return (
-    <View className="flex-row px-4">
-      {Array.from({ length: 2 }).map((_, index) => (
-        <View key={index} className="mr-4">
-          <SkeletonBanner />
-        </View>
-      ))}
-    </View>
-  );
-};
-
-// ─── Main Component ──────────────────────────────────────────────────────────
-interface banner {
-  app_redirect_key: string;
-  app_redirect_value: string;
-}
-export default function SlidingBanners({
-  onBannerPress,
-  data,
-  loading,
-}: Props) {
+// ─── Main ────────────────────────────────────────────────────
+export default function SlidingBanners({ data, onBannerPress }: Props) {
   const { colors } = useTheme();
-
   const router = useRouter();
 
-  const handleBannerPress = (banner: banner) => {
+  // ✅ Show skeleton immediately when data not yet arrived
+  if (!data?.length) {
+    return <SkeletonCarousel />;
+  }
+
+  const handleBannerPress = (banner: BannerRedirect) => {
     const { app_redirect_key, app_redirect_value } = banner;
 
-    console.log("app redite key : ", app_redirect_key);
-    console.log("app redite value : ", app_redirect_value);
     if (app_redirect_key === "products") {
       router.push({
         pathname: "(stack)/product/[id]",
-        params: {
-          id: "slug",
-          product_slug: app_redirect_value,
-        },
+        params: { id: "slug", product_slug: app_redirect_value },
       });
     }
 
     if (app_redirect_key === "categories") {
       router.push({
         pathname: "(tabs)/shop",
-        params: {
-          category_slug: app_redirect_value,
-        },
+        params: { category_slug: app_redirect_value },
       });
     }
   };
-  // ✅ Skeleton Handling
-  if (loading) {
-    return <SkeletonCarousel />;
-  }
 
-  if (!data?.length) return null;
-
-  // console.log("sliding data: ", data);
   return (
     <View>
       <Carousel
@@ -115,8 +91,10 @@ export default function SlidingBanners({
           <TouchableOpacity
             activeOpacity={0.92}
             onPress={() => handleBannerPress(item)}
-            className="self-center rounded-2xl overflow-hidden"
             style={{
+              alignSelf: "center",
+              borderRadius: 16,
+              overflow: "hidden",
               width: ITEM_WIDTH,
               height: ITEM_HEIGHT,
               backgroundColor: colors.backgroundSkeleton,

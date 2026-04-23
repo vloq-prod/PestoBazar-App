@@ -3,7 +3,7 @@ import {
   TouchableOpacity,
   View,
   FlatList,
-  DimensionValue,
+  useWindowDimensions,
 } from "react-native";
 import React from "react";
 import { useCategoryWithSubcategories } from "../../hooks/homeHooks";
@@ -16,107 +16,132 @@ import {
 } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
 
-const SkeletonBlock = ({
-  width,
-  height,
-  borderRadius,
-  backgroundColor,
+const COLUMNS = 3;
+const H_PADDING = 16;
+const GAP = 10;
+
+// ─── Skeleton Item ────────────────────────────────────────────
+const SkeletonItem = ({
+  cardSize,
+  itemWidth,
+  spacing,
+  bgColor,
 }: {
-  width: DimensionValue;
-  height: number;
-  borderRadius: number;
-  backgroundColor: string;
+  cardSize: number;
+  itemWidth: number;
+  spacing: (n: number) => number;
+  bgColor: string;
 }) => (
-  <View
-    style={{
-      width,
-      height,
-      borderRadius,
-      backgroundColor,
-    }}
-  />
+  <View style={{ flex: 1, alignItems: "center", marginBottom: GAP }}>
+    <View
+      style={{
+        width: cardSize,
+        height: cardSize,
+        borderRadius: spacing(12),
+        backgroundColor: bgColor,
+      }}
+    />
+    <View style={{ marginTop: spacing(6), alignItems: "center", gap: 4 }}>
+      <View
+        style={{
+          width: itemWidth * 0.72,
+          height: spacing(10),
+          borderRadius: spacing(5),
+          backgroundColor: bgColor,
+        }}
+      />
+      <View
+        style={{
+          width: itemWidth * 0.48,
+          height: spacing(10),
+          borderRadius: spacing(5),
+          backgroundColor: bgColor,
+        }}
+      />
+    </View>
+  </View>
 );
 
+// ─── Skeleton Section ─────────────────────────────────────────
+const SkeletonSection = ({
+  itemWidth,
+  cardSize,
+  spacing,
+  bgColor,
+}: {
+  itemWidth: number;
+  cardSize: number;
+  spacing: (n: number) => number;
+  bgColor: string;
+}) => {
+  const skeletonData = Array.from({ length: COLUMNS * 2 }, (_, i) => ({
+    id: i,
+  }));
+
+  return (
+    <View style={{ marginBottom: 20 }}>
+      {/* Heading skeleton */}
+      <View
+        style={{
+          width: itemWidth * 1.5,
+          height: spacing(16),
+          borderRadius: spacing(6),
+          backgroundColor: bgColor,
+          marginBottom: spacing(12),
+        }}
+      />
+
+      {/* Grid — FlatList ensures always 3 columns on every device */}
+      <FlatList
+        data={skeletonData}
+        keyExtractor={(item) => `sk-${item.id}`}
+        numColumns={COLUMNS}
+        scrollEnabled={false}
+        columnWrapperStyle={{ gap: GAP }}
+        renderItem={() => (
+          <SkeletonItem
+            cardSize={cardSize}
+            itemWidth={itemWidth}
+            spacing={spacing}
+            bgColor={bgColor}
+          />
+        )}
+      />
+    </View>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────
 const CategoryCardSection = () => {
   const { colors } = useTheme();
-  const { spacing, font, width, isTablet } = useResponsive();
+  const { spacing, font } = useResponsive();
+  const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
+
   const { categoriesWithSubcategories, loading, error } =
     useCategoryWithSubcategories(0);
-  const horizontalPadding = 16;
-  const itemGap = 10;
 
-//   console.log("Categories with Subcategories:", categoriesWithSubcategories);
-
-  const visibleCategories = categoriesWithSubcategories.filter(
-    (category) => category.subcategories.length > 0,
-  );
-
-  const columns = isTablet ? 5 : 3;
+  // ✅ Precise item width — same formula everywhere
   const itemWidth =
-    (width - horizontalPadding * 2 - itemGap * (columns - 1)) / columns;
+    (screenWidth - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
   const cardSize = itemWidth;
 
-  type SubCategoryRenderArgs = {
-    item: CategoryItem;
-    index: number;
-  };
+  const visibleCategories = categoriesWithSubcategories.filter(
+    (cat) => cat.subcategories.length > 0,
+  );
 
-  const renderSkeletonItem = (_: unknown, index: number) => {
-    const isLastColumn = (index + 1) % columns === 0;
-
-    return (
-      <View
-        key={`skeleton-item-${index}`}
-        style={{
-          width: itemWidth,
-          alignItems: "center",
-          marginRight: isLastColumn ? 0 : itemGap,
-          marginBottom: itemGap,
-        }}
-      >
-        <SkeletonBlock
-          width={cardSize}
-          height={cardSize}
-          borderRadius={spacing(12)}
-          backgroundColor={colors.backgroundSkeleton}
-        />
-        <View style={{ marginTop: spacing(6), alignItems: "center", gap: 4 }}>
-          <SkeletonBlock
-            width={itemWidth * 0.72}
-            height={spacing(10)}
-            borderRadius={spacing(5)}
-            backgroundColor={colors.backgroundSkeleton}
-          />
-          <SkeletonBlock
-            width={itemWidth * 0.48}
-            height={spacing(10)}
-            borderRadius={spacing(5)}
-            backgroundColor={colors.backgroundSkeleton}
-          />
-        </View>
-      </View>
-    );
-  };
-
+  // ── Sub-category card ──────────────────────────────────────
   const createSubCategoryRenderer = (
     mainCategoryId: number,
     mainCategoryName: string,
     mainCategoryImage?: string,
-  ) => {
-    function renderSubCategoryItem({ item, index }: SubCategoryRenderArgs) {
-      const isLastColumn = (index + 1) % columns === 0;
-
+  ) =>
+    function renderItem({ item }: { item: CategoryItem }) {
       return (
         <TouchableOpacity
           activeOpacity={0.8}
-          style={{
-            width: itemWidth,
-            alignItems: "center",
-            marginRight: isLastColumn ? 0 : itemGap,
-            marginBottom: itemGap,
-          }}
-          onPress={() => {
+          style={{ flex: 1, alignItems: "center", marginBottom: GAP }}
+          onPress={() =>
             router.push({
               pathname: "/(stack)/category/[slug]",
               params: {
@@ -125,8 +150,8 @@ const CategoryCardSection = () => {
                 image: mainCategoryImage ?? "",
                 selectedSubCategoryId: String(item.id),
               },
-            });
-          }}
+            })
+          }
         >
           <View
             style={{
@@ -142,16 +167,13 @@ const CategoryCardSection = () => {
           >
             <Image
               source={{ uri: item.s3_image_path }}
-              style={{
-                width: cardSize * 0.72,
-                height: cardSize * 0.72,
-                borderRadius: spacing(8),
-              }}
+              style={{ width: cardSize * 0.72, height: cardSize * 0.72 }}
               contentFit="contain"
             />
           </View>
 
           <Text
+            numberOfLines={2}
             style={{
               marginTop: spacing(6),
               fontSize: font(11),
@@ -160,71 +182,57 @@ const CategoryCardSection = () => {
               width: "90%",
               fontFamily: "Poppins_600SemiBold",
             }}
-            numberOfLines={2}
           >
             {item.category_name}
           </Text>
         </TouchableOpacity>
       );
-    }
+    };
 
-    return renderSubCategoryItem;
-  };
-
+  // ── Loading ───────────────────────────────────────────────
   if (loading) {
     return (
-      <View style={{ paddingHorizontal: horizontalPadding }}>
-        {Array.from({ length: 2 }).map((_, sectionIndex) => (
-          <View key={`skeleton-section-${sectionIndex}`}>
-            <SkeletonBlock
-              width={itemWidth * 1.5}
-              height={spacing(16)}
-              borderRadius={spacing(6)}
-              backgroundColor={colors.backgroundSkeleton}
-            />
-
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                marginTop: spacing(12),
-              }}
-            >
-              {Array.from({ length: columns * 2 }).map(renderSkeletonItem)}
-            </View>
-          </View>
+      <View style={{ paddingHorizontal: H_PADDING }}>
+        {Array.from({ length: 2 }).map((_, i) => (
+          <SkeletonSection
+            key={`sk-section-${i}`}
+            itemWidth={itemWidth}
+            cardSize={cardSize}
+            spacing={spacing}
+            bgColor={colors.backgroundSkeleton}
+          />
         ))}
       </View>
     );
   }
 
+  // ── Error ─────────────────────────────────────────────────
   if (error) {
     return (
-      <View style={{ paddingHorizontal: horizontalPadding }}>
+      <View style={{ paddingHorizontal: H_PADDING }}>
         <Text
           style={{
-            fontSize: font(18),
-            color: colors.text,
-            fontFamily: "Poppins_600SemiBold",
+            fontSize: font(13),
+            color: colors.textSecondary,
+            fontFamily: "Poppins_400Regular",
           }}
         >
-          Shop by Category
-        </Text>
-        <Text style={{ color: colors.text, marginTop: spacing(12) }}>
           Categories could not be loaded.
         </Text>
       </View>
     );
   }
 
-  if (!visibleCategories.length) {
-    return null;
-  }
+  if (!visibleCategories.length) return null;
 
+  // ── Render ────────────────────────────────────────────────
   return (
-    <View style={{ paddingHorizontal: horizontalPadding }}>
+    <View style={{ paddingHorizontal: H_PADDING }}>
       {visibleCategories.map((category: CategoryWithSubcategories) => (
-        <View key={category.mainCategoryId}>
+        <View
+          key={category.mainCategoryId}
+          style={{ marginBottom: spacing(20) }}
+        >
           <Text
             style={{
               fontSize: font(16),
@@ -237,7 +245,7 @@ const CategoryCardSection = () => {
           </Text>
 
           <FlatList
-            key={`category-${category.mainCategoryId}-${columns}`}
+            key={`cat-${category.mainCategoryId}`}
             data={category.subcategories}
             renderItem={createSubCategoryRenderer(
               category.mainCategoryId,
@@ -245,14 +253,10 @@ const CategoryCardSection = () => {
               category.mainCategory.s3_image_path,
             )}
             keyExtractor={(item) => item.id.toString()}
-            numColumns={columns}
+            numColumns={COLUMNS}
             scrollEnabled={false}
-            columnWrapperStyle={{
-              justifyContent: "flex-start",
-            }}
-            contentContainerStyle={{
-              paddingBottom: spacing(4),
-            }}
+            columnWrapperStyle={{ gap: GAP }}
+            contentContainerStyle={{ paddingBottom: spacing(4) }}
           />
         </View>
       ))}

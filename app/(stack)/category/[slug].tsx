@@ -1,7 +1,10 @@
 // app/(stack)/category/[slug].tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, StatusBar, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useSharedValue } from "react-native-reanimated";
 import { useTheme } from "../../../src/theme";
@@ -15,6 +18,7 @@ import CategorySidebar from "../../../src/components/CategoryDetails/CategorySid
 import AddToCartPreview from "../../../src/components/cart/AddToCartPreview";
 
 const CategoryDetails = () => {
+  const insets = useSafeAreaInsets();
   const { slug, name, image, selectedSubCategoryId } = useLocalSearchParams();
 
   const mainCategoryId = Number(slug);
@@ -98,15 +102,15 @@ const CategoryDetails = () => {
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background }]}
-      edges={["top"]}
+      edges={["top", "bottom"]}
     >
-        <StatusBar
-            barStyle="dark-content"
-            backgroundColor="transparent"
-            translucent
-          />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
-      <AppNavbar title={String(name)} showBack  count={productCount} />
+      <AppNavbar title={String(name)} showBack count={productCount} />
 
       <View style={styles.body}>
         {/* ✅ Sidebar */}
@@ -129,11 +133,14 @@ const CategoryDetails = () => {
           hasSubcategories={hasSubcategories}
           mainCategoryId={mainCategoryId}
           cartPreviewVisible={cartPreviewVisible}
-           onCountChange={setProductCount}
+          onCountChange={setProductCount}
         />
       </View>
 
-      <AddToCartPreview pbandroid={12} pbios={30} />
+      <AddToCartPreview
+        pbandroid={Math.max(insets.bottom, 16)}
+        pbios={insets.bottom}
+      />
     </SafeAreaView>
   );
 };

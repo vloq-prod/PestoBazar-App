@@ -76,8 +76,6 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
       return;
     }
   };
-  console.log("console data : ");
-
   return (
     <View className="px-4">
       <TouchableOpacity

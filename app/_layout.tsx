@@ -62,6 +62,8 @@ function RootLayoutNav() {
         ) : (
           <Stack.Screen name="welcome" />
         )}
+
+        {/* <Stack.Screen name="(tabs)" /> */}
       </Stack>
     </>
   );

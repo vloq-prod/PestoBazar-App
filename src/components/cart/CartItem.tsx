@@ -54,16 +54,16 @@ const CartItem = ({
         paddingBottom: 10,
       }}
 
-        onPress={() =>
-        // router.push({
-        //   pathname: "(stack)/product/[id]",
-        //   params: {
-        //     id: item.product_id,
-        //     product_name: item.name,
-        //   },
-        // })
-        console.log("product id and product name: ", item.product_id, " and ", item.name)
-      }
+       onPress={() =>
+  router.push({
+    pathname: "(stack)/product/[id]",
+    params: {
+      id: item.variation_id, 
+      product_name: item.name,
+      product_slug: item.slug,
+    },
+  })
+}
     >
       <View style={{ flexDirection: "row", gap: spacing(12) }}>
         {/* Image */}

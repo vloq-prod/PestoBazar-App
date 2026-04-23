@@ -82,6 +82,8 @@ const HomeUsp: React.FC = () => {
   const row1 = uspList.slice(0, 2);
   const row2 = uspList.slice(2, 5);
 
+
+
   return (
     <View
       style={[

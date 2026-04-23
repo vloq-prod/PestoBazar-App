@@ -2,6 +2,10 @@ import { apiClient } from "../lib/apiClient";
 import {
   SendOtpRequest,
   SendOtpResponse,
+  VerifyOtpRequest,
+  VerifyOtpResponse,
+  VerifyUserRequest,
+  VerifyUserResponse,
   VisitorApiResponse,
   VisitorRequest,
 } from "../types/auth.types";
@@ -28,3 +32,30 @@ export const sendOtpApi = async (
 
   return response.data;
 };
+
+
+
+export const verifyOtpApi = async (
+  payload: VerifyOtpRequest
+): Promise<VerifyOtpResponse> => {
+  const response = await apiClient.post<VerifyOtpResponse>(
+    "/app-api/v1/verify-otp",
+    payload
+  );
+
+  return response.data;
+};
+
+
+
+export const verifyUser = async (
+  payload: VerifyUserRequest
+): Promise<VerifyUserResponse> => {
+  const response = await apiClient.post(
+    "/app-api/v1/verify-user",
+    payload
+  );
+
+  return response.data;
+};
+

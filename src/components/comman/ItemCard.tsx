@@ -177,14 +177,16 @@ export default function ItemCard({
             </View>
 
             {/* Reviews */}
-            <Text
-              style={{
-                fontSize: font(11),
-                color: colors.textTertiary,
-              }}
-            >
-              ({item.total_reviews})
-            </Text>
+            {item.total_reviews > 0 && (
+              <Text
+                style={{
+                  fontSize: font(11),
+                  color: colors.textTertiary,
+                }}
+              >
+                ({item.total_reviews})
+              </Text>
+            )}
           </View>
         ) : null}
       </View>

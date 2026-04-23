@@ -11,11 +11,13 @@ import { DealItem } from "../../types/home.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import ProductCard, { SkeletonCard } from "../ProductCard/ProductCard";
+import { useRouter } from "expo-router";
 
 const SKELETON_COUNT = 2;
 
 const DealsOfTheDay: React.FC = () => {
   const { deals, loading } = useDeals();
+  const router = useRouter();
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
 
@@ -38,22 +40,25 @@ const DealsOfTheDay: React.FC = () => {
           images: item.images,
         }}
         cardWidth={CARD_WIDTH}
-        onPress={() => {
-          // TODO: navigate to product detail
-        }}
+        onPress={() =>
+          router.push({
+            pathname: "(stack)/product/[id]",
+            params: {
+              id: item.id,
+              product_name: item.product_name,
+            },
+          })
+        }
       />
     ),
-    [CARD_WIDTH]
+    [CARD_WIDTH],
   );
 
-  const keyExtractor = useCallback(
-    (item: DealItem) => String(item.id),
-    []
-  );
+  const keyExtractor = useCallback((item: DealItem) => String(item.id), []);
 
   const ItemSeparator = useCallback(
     () => <View style={{ width: CARD_SPACING }} />,
-    [CARD_SPACING]
+    [CARD_SPACING],
   );
 
   const contentContainerStyle = {
@@ -63,12 +68,7 @@ const DealsOfTheDay: React.FC = () => {
   return (
     <View style={[styles.section, { gap: spacing(12) }]}>
       {/* ── Header ── */}
-      <View
-        style={[
-          styles.header,
-          { paddingHorizontal: EDGE_PADDING },
-        ]}
-      >
+      <View style={[styles.header, { paddingHorizontal: EDGE_PADDING }]}>
         <Text
           style={{
             fontFamily: "Poppins_600SemiBold",

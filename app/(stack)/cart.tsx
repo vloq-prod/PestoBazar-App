@@ -8,7 +8,10 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -25,9 +28,9 @@ import { ArrowRight, Info, MoveRight } from "lucide-react-native";
 
 export default function CartScreen() {
   const visitorId = useAppVisitorStore((state) => state.visitorId);
+
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
-
 
   const insets = useSafeAreaInsets();
   const { updateCart } = useCartAction();
@@ -51,7 +54,7 @@ export default function CartScreen() {
 
   const cartTotal = cartData?.data.cart;
   const isFreeShipping = cartData?.data.cart.free_shipping;
-  console.log("cartTotal", cartTotal);
+  // console.log("cartTotal", cartTotal);
   const cartCount = cartCountData?.data;
 
   const getCartPayloadProductId = (item: CartItemTypes) => {
@@ -110,15 +113,11 @@ export default function CartScreen() {
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background }]}
+      edges={["top", "bottom"]}
     >
       <StatusBar barStyle="dark-content" />
 
-      <AppNavbar
-        title="Cart Item"
-        showBack
-      
-        count={`${cartCount} items`}
-      />
+      <AppNavbar title="Cart Item" showBack count={`${cartCount} items`} />
 
       <ScrollView
         style={[
@@ -128,7 +127,7 @@ export default function CartScreen() {
           },
         ]}
         contentContainerStyle={{
-          paddingBottom: spacing(200),
+          paddingBottom: insets.bottom + 120,
           gap: spacing(16),
         }}
         showsVerticalScrollIndicator={false}
@@ -209,8 +208,7 @@ export default function CartScreen() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.background,
-          
-          paddingBottom: Platform.OS === "ios" ? 35 : 0,
+          paddingBottom: Math.max(insets.bottom, 16),
         }}
       >
         <View
@@ -235,8 +233,8 @@ export default function CartScreen() {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
-                 padding: 16,
-          paddingHorizontal: 20,
+            padding: 16,
+            paddingHorizontal: 20,
           }}
         >
           {/* LEFT: PRICE SECTION */}

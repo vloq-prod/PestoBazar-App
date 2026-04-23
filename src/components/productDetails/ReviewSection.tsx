@@ -13,11 +13,9 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 
-
 type Props = {
   product_id: number;
 };
-
 
 const ReviewSection = ({ product_id }: Props) => {
   const { reviews, loading, error } = useProductReviews({ product_id });
@@ -32,6 +30,7 @@ const ReviewSection = ({ product_id }: Props) => {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text>Reviews Loading</Text>
       </View>
     );
   }
@@ -45,13 +44,8 @@ const ReviewSection = ({ product_id }: Props) => {
       </View>
     );
   }
-
-  if (reviews.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.emptyText}>No reviews available yet.</Text>
-      </View>
-    );
+  if (!reviews || reviews.length === 0) {
+    return null;
   }
 
   return (
@@ -99,36 +93,37 @@ const ReviewSection = ({ product_id }: Props) => {
         ))}
       </ScrollView>
 
-      {/* 🔹 BUTTON */}
-      <TouchableOpacity
-        onPress={() =>
-          router.push({
-            pathname: "(stack)/reviews/[reviewsid]",
-            params: {
-              reviewsid: product_id,
-            },
-          })
-        }
-        style={{
-          height: 44,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderColor: colors.primary,
-          alignItems: "center",
-          justifyContent: "center",
-          marginHorizontal: 16,
-        }}
-      >
-        <Text
+      {reviews.length > 6 && (
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "(stack)/reviews/[reviewsid]",
+              params: {
+                reviewsid: product_id,
+              },
+            })
+          }
           style={{
-            color: colors.primary,
-            fontFamily: "Poppins_600SemiBold",
-            fontSize: font(13),
+            height: 44,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.primary,
+            alignItems: "center",
+            justifyContent: "center",
+            marginHorizontal: 16,
           }}
         >
-          Show All Reviews
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={{
+              color: colors.primary,
+              fontFamily: "Poppins_600SemiBold",
+              fontSize: font(13),
+            }}
+          >
+            View more
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

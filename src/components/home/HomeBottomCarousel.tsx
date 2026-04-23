@@ -19,8 +19,6 @@ export default function HomeBottomBanner({ item }: Props) {
   const handlePress = () => {
     const { app_redirect_key, app_redirect_value } = item;
 
-    console.log("key:", app_redirect_key);
-    console.log("value:", app_redirect_value);
 
     if (app_redirect_key === "products") {
       // router.push({

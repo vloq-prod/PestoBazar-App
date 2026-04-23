@@ -75,8 +75,8 @@ const ProductDetails = () => {
       ? product_slug
       : undefined;
 
-  console.log("product slug: ", productSlug);
-  console.log("product product id: ", productId);
+  // console.log("product slug: ", productSlug);
+  // console.log("product product id: ", productId);
 
   // ─── Animation Values ───────────────────────────────────────
   const scrollY = useSharedValue(0);
@@ -100,7 +100,7 @@ const ProductDetails = () => {
   const variationmaster = data?.variationmaster;
   const selectedVariation = data?.variation;
   const realProductId = selectedVariation?.id;
-  console.log("realproductt id: ", realProductId);
+  // console.log("realproductt id: ", realProductId);
   const pricing = data?.pricing;
 
   // ─── Derived Values ─────────────────────────────────────────
@@ -127,13 +127,20 @@ const ProductDetails = () => {
     ? productId
     : variationmaster?.[0]?.id;
 
-  const mediaList = productImages.map((item) => ({
+
+const mediaList = React.useMemo(() => {
+  return productImages.map((item) => ({
     type: item.asset_type,
     image: item.s3_image_path ? BASE_URL + item.s3_image_path : null,
     video: item.video_path
       ? BASE_URL + "/product-video/" + item.video_path
       : null,
   }));
+}, [productImages]);
+
+const handleBack = useCallback(() => {
+  router.back();
+}, [router]);
 
   // ─── Helpers ────────────────────────────────────────────────
   const formatPrice = (value: number) => {
@@ -586,9 +593,11 @@ const ProductDetails = () => {
 
         {/* ── Related + Recent ── */}
         {realProductId !== undefined && (
-          <CustomerAlsoBoughtProduct productId={realProductId} />
-        )}
-        <RecentlyViewProducts />
+  <>
+    <CustomerAlsoBoughtProduct productId={realProductId} />
+    <RecentlyViewProducts />
+  </>
+)}
 
         {/* ── USP ── */}
         <HomeUsp />
@@ -604,7 +613,7 @@ const ProductDetails = () => {
         style={[
           styles.footer,
           {
-            paddingBottom: Math.max(insets.bottom, 10),
+            paddingBottom: insets.bottom + 12,
             borderTopColor: colors.border,
             backgroundColor: colors.background,
           },

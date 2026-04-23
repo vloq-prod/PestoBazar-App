@@ -80,7 +80,7 @@ const PincodeModal: React.FC<Props> = ({ visible, onClose, variationId }) => {
         >
           {/* ✅ Inner TouchableWithoutFeedback hata diya — onStartShouldSetResponder se bubble rok rahe hain */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
           >
             <View
               onStartShouldSetResponder={() => true}
