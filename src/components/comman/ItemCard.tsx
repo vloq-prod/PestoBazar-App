@@ -241,7 +241,6 @@ export default function ItemCard({
               setQty(1);
               setInputVal("1");
               onAddToCart?.(item, 1);
-              showToast(`${item.product_name} added to cart!`, "success");
             }}
             style={{
               backgroundColor: colors.primary,
@@ -309,7 +308,6 @@ export default function ItemCard({
               onPress={() => {
                 setQty(qty + 1);
                 setInputVal(String(qty + 1));
-                showToast(`Quantity updated to ${qty + 1}`, "info"); // ← add karo
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >

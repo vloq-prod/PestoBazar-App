@@ -20,20 +20,15 @@ import {
   ValidatePincodeRequest,
 } from "../types/checkout.types";
 
+
+// complete
 export const useCheckout = () => {
   return useMutation({
     mutationFn: (payload: CheckoutRequest) => checkoutApi(payload),
-
-    onSuccess: (data) => {
-      console.log("Checkout Success:", data);
-    },
-
-    onError: (error) => {
-      console.log("Checkout Error:", error);
-    },
   });
 };
 
+//  done
 export const useAddress = (params: GetAddressParams) => {
   return useQuery({
     queryKey: ["address", params.user_id],
@@ -88,7 +83,7 @@ export const useSaveAddress = () => {
     },
   });
 };
-
+// done
 export const useRemoveAddress = () => {
   const queryClient = useQueryClient();
 

@@ -6,6 +6,7 @@ import profile from "../../../assets/profile.jpeg";
 import { useResponsive } from "../../utils/useResponsive";
 import { useTheme } from "../../theme";
 import { useRouter } from "expo-router";
+import { useAppVisitorStore } from "../../store/auth";
 
 type HomeNavbarProps = {
   name?: string;
@@ -22,6 +23,7 @@ type IconButtonProps = {
 
 const IconButton = ({ icon, onPress }: IconButtonProps) => {
   const { spacing } = useResponsive();
+
 
   return (
     <TouchableOpacity
@@ -46,13 +48,18 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
 }) => {
   const { font, spacing } = useResponsive();
   const { colors } = useTheme();
-  const router = useRouter();
+
+
+  const {userName} = useAppVisitorStore((state) => state)
+
 
   const ICON_SIZE = spacing(20);
 
-  const handleMoveToCart = () => {
-    router.push("/cart");
-  };
+  // const handleMoveToCart = () => {
+  //   router.push("/cart");
+  // };
+
+  
 
   return (
     <View className="flex-row justify-between items-center px-4 py-2">
@@ -87,7 +94,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
               lineHeight: font(22),
             }}
           >
-            {name}
+            {userName}
           </Text>
         </View>
       </View>

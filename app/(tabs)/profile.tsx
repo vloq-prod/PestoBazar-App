@@ -195,7 +195,7 @@ export default function ProfileScreen() {
 
   const router = useRouter();
 
-  const clearVisitor = useAppVisitorStore((s) => s.clearVisitor);
+  const logout = useAppVisitorStore((s) => s.logout);
 
   const insets = useSafeAreaInsets();
 
@@ -204,18 +204,14 @@ export default function ProfileScreen() {
       "Confirm Logout",
       "Are you sure you want to logout from your account?",
       [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Logout",
-          style: "destructive", // 👈 makes it red on iOS
+          style: "destructive",
           onPress: async () => {
-            await clearVisitor();
+            await logout(); 
 
-            // 👉 redirect to login or root
-            router.replace("/login"); // change route if needed
+            router.replace("/login"); 
           },
         },
       ],

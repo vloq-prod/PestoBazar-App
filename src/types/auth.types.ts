@@ -19,7 +19,7 @@ export interface VisitorApiResponse {
 
 export interface SendOtpRequest {
   mobile_no: string;
-  otp_channel: "sms" | "whatsapp";
+  otp_channel: "sms" | "whatsapp" | "both" ;
 }
 export interface ApiResponse<T> {
   message: string;
@@ -35,19 +35,17 @@ export interface VerifyOtpRequest {
   mobile: string;
   visitor_id: string;
   otp: string;
-  full_name?: string; // optional (only when user_exists = 0)
+  full_name?: string; // only when new user
 }
 
 // Verify OTP Response Data
 export interface VerifyOtpData {
-  user_exists: "0" | "1";
-  id: string;
-  first_name: string;
+  user_id: string;
+  user_name: string;
 }
 
 // Final Response Type
 export type VerifyOtpResponse = ApiResponse<VerifyOtpData>;
-
 
 
 export interface VerifyUserRequest {

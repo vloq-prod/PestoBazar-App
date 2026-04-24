@@ -18,9 +18,6 @@ export const addToCart = async (
     "/app-api/v1/add-to-cart",
     payload,
   );
-
-  // console.log("🛒 ADD TO CART RESPONSE:", response.data.message);
-
   return response.data;
 };
 

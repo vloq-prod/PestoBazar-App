@@ -41,12 +41,7 @@ export const useVerifyOtp = () => {
 
     onSuccess: (data) => {
       console.log("Verify Success:", data.message);
-
-      if (data.data.user_exists === "0") {
-        console.log("New User Registered");
-      } else {
-        console.log("Existing User Logged In");
-      }
+      console.log("User:", data.data);
     },
 
     onError: (error) => {
@@ -54,7 +49,6 @@ export const useVerifyOtp = () => {
     },
   });
 };
-
 
 
 

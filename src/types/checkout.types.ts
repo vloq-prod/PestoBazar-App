@@ -8,11 +8,12 @@ export interface CartSummary {
   cart_id: string;
   cart_amount: string;
   cart_count: number;
-  shipping_charge: string;
+  shipping_charge: string | number;
   amount_to_pay: number;
   free_shipping_message: string;
   free_shipping: string;
   gst_amount: number | string;
+  cod_charges?: string; // ✅ ADD THIS
 }
 
 // 🔹 Cart Item
@@ -174,7 +175,7 @@ export interface SaveAddressResponse {
 
 export interface RemoveAddressRequest {
   user_id: string;
-  address_id: string;
+  address_id: number;
 }
 
 // 🔹 Response

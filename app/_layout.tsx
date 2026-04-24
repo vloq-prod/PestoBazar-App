@@ -1,8 +1,7 @@
 import "../global.css";
 
-
 import { useEffect, useState } from "react";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { Text, TextInput } from "react-native";
 
 import { ThemeProvider } from "../src/theme";
@@ -17,11 +16,11 @@ import { ToastProvider } from "../src/context/ToastContext";
 import { ToastContainer } from "../src/components/Toast/ToastContainer";
 
 function RootLayoutNav() {
+  // font scaling fix
   // @ts-ignore
   if (Text.defaultProps == null) Text.defaultProps = {};
   // @ts-ignore
   if (TextInput.defaultProps == null) TextInput.defaultProps = {};
-
   // @ts-ignore
   Text.defaultProps.allowFontScaling = false;
   // @ts-ignore
@@ -29,43 +28,71 @@ function RootLayoutNav() {
 
   const [isReady, setIsReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
+
   const { visitorId, token } = useAppVisitorStore();
   const { hydratePincode } = useDeliveryStore();
 
+  const router = useRouter();
+  const segments = useSegments();
+
+  // 🔥 INIT (Hydration)
   useEffect(() => {
     const initApp = async () => {
-      await useAppVisitorStore.getState().hydrateVisitor();
+      const store = useAppVisitorStore.getState();
+
+      await store.hydrateVisitor(); // ✅ IMPORTANT
+      await store.hydrateUser();    // optional but safe
+
       hydratePincode();
+
       setIsReady(true);
     };
 
     initApp();
   }, []);
 
-  // 🚨 Step 1: wait for hydration
+  // 🔥 NAVIGATION CONTROL (ONLY THIS)
+  useEffect(() => {
+    if (!isReady) return;
+
+    const inTabs = segments[0] === "(tabs)";
+    const inWelcome = segments[0] === "welcome";
+
+    // ❌ No visitor → go welcome
+    if (!visitorId || !token) {
+      if (!inWelcome) {
+        console.log("🚨 Redirect → welcome");
+        router.replace("/welcome");
+      }
+      return;
+    }
+
+    // ✅ Visitor exists → go tabs
+    if (visitorId && token) {
+      if (!inTabs) {
+        console.log("🚀 Redirect → tabs");
+        router.replace("/(tabs)");
+      }
+    }
+  }, [visitorId, token, isReady]);
+
+  // ⏳ Splash handling
   if (!isReady) {
     return <SplashScreen onFinish={() => setSplashDone(true)} />;
   }
 
-  // 🚨 Step 2: show splash FIRST (block UI)
   if (!splashDone) {
     return <SplashScreen onFinish={() => setSplashDone(true)} />;
   }
 
+  console.log("visitorId, token:", visitorId, token);
+
+  // 🔥 ALWAYS RENDER BOTH (NO CONDITION)
   return (
-    <>
-      {/* <AppStatusBar /> */}
-
-      <Stack screenOptions={{ headerShown: false }}>
-        {visitorId && token ? (
-          <Stack.Screen name="(tabs)" />
-        ) : (
-          <Stack.Screen name="welcome" />
-        )}
-
-        {/* <Stack.Screen name="(tabs)" /> */}
-      </Stack>
-    </>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="welcome" />
+    </Stack>
   );
 }
 

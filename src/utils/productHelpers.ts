@@ -34,3 +34,22 @@ export const shouldShowRating = (
   const rating = parseFloat(avgRating);
   return rating > 0 && totalReviews > 0;
 };
+
+
+
+
+export const fmt = (value: string | number) => {
+  const num = Number(value);
+  if (Number.isNaN(num)) return String(value);
+  return `₹${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}`;
+};
+
+export const formatINR = (amount: number) => {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+

@@ -35,6 +35,7 @@ import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
 import RecentlyViewProducts from "../../src/components/home/RecentlyViewProducts";
 import OurServices from "../../src/components/home/OurServices";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 const SEARCH_HEIGHT = 56;
 const CATEGORY_HEIGHT = 105;
@@ -44,6 +45,9 @@ const TIMING_CONFIG = { duration: 280 };
 export default function HomeScreen() {
   const isConnected = useNetworkStatus();
   const insets = useSafeAreaInsets();
+
+  const visitorId =  useAppVisitorStore((state) => state.visitorId);
+  console.log("visitor id : ", visitorId)
   
   
 

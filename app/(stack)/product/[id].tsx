@@ -127,20 +127,19 @@ const ProductDetails = () => {
     ? productId
     : variationmaster?.[0]?.id;
 
+  const mediaList = React.useMemo(() => {
+    return productImages.map((item) => ({
+      type: item.asset_type,
+      image: item.s3_image_path ? BASE_URL + item.s3_image_path : null,
+      video: item.video_path
+        ? BASE_URL + "/product-video/" + item.video_path
+        : null,
+    }));
+  }, [productImages]);
 
-const mediaList = React.useMemo(() => {
-  return productImages.map((item) => ({
-    type: item.asset_type,
-    image: item.s3_image_path ? BASE_URL + item.s3_image_path : null,
-    video: item.video_path
-      ? BASE_URL + "/product-video/" + item.video_path
-      : null,
-  }));
-}, [productImages]);
-
-const handleBack = useCallback(() => {
-  router.back();
-}, [router]);
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
 
   // ─── Helpers ────────────────────────────────────────────────
   const formatPrice = (value: number) => {
@@ -593,11 +592,11 @@ const handleBack = useCallback(() => {
 
         {/* ── Related + Recent ── */}
         {realProductId !== undefined && (
-  <>
-    <CustomerAlsoBoughtProduct productId={realProductId} />
-    <RecentlyViewProducts />
-  </>
-)}
+          <>
+            <CustomerAlsoBoughtProduct productId={realProductId} />
+            <RecentlyViewProducts />
+          </>
+        )}
 
         {/* ── USP ── */}
         <HomeUsp />
@@ -613,7 +612,7 @@ const handleBack = useCallback(() => {
         style={[
           styles.footer,
           {
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: Math.max(insets.bottom, 16),
             borderTopColor: colors.border,
             backgroundColor: colors.background,
           },
@@ -751,11 +750,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 12,
-    paddingTop: 10,
     borderTopWidth: 1,
   },
-  footerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  footerRow: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 10,
+    padding: 16,
+    paddingHorizontal: 20,
+  },
 
   cartBtn: {
     minHeight: 52,

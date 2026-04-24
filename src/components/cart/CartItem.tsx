@@ -23,7 +23,7 @@ const CartItem = ({
   onIncrease,
   onDecrease,
   onRemove,
-  onChangeQty
+  onChangeQty,
 }: Props) => {
   const { colors } = useTheme();
   const router = useRouter();
@@ -53,17 +53,16 @@ const CartItem = ({
         marginBottom: spacing(12),
         paddingBottom: 10,
       }}
-
-       onPress={() =>
-  router.push({
-    pathname: "(stack)/product/[id]",
-    params: {
-      id: item.variation_id, 
-      product_name: item.name,
-      product_slug: item.slug,
-    },
-  })
-}
+      onPress={() =>
+        router.push({
+          pathname: "(stack)/product/[id]",
+          params: {
+            id: item.variation_id,
+            product_name: item.name,
+            product_slug: item.slug,
+          },
+        })
+      }
     >
       <View style={{ flexDirection: "row", gap: spacing(12) }}>
         {/* Image */}
@@ -203,7 +202,7 @@ const CartItem = ({
                   style={{
                     fontSize: font(13),
                     fontFamily: "Poppins_600SemiBold",
-             
+
                     textAlign: "center",
                     minWidth: spacing(36),
                   }}
@@ -221,9 +220,7 @@ const CartItem = ({
                   justifyContent: "center",
                   alignItems: "center",
                   backgroundColor:
-                    qty >= item.stock
-                      ? colors.inputBackground
-                      : colors.primary,
+                    qty >= item.stock ? colors.inputBackground : colors.primary,
                 }}
               >
                 <Plus

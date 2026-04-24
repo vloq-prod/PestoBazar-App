@@ -25,6 +25,7 @@ import { useAppVisitorStore } from "../src/store/auth";
 import { useVisitor } from "../src/hooks/useAuthHooks";
 import { StorageUtil } from "../src/utils/storage";
 
+
 const { width, height } = Dimensions.get("window");
 
 const SLIDES = [
@@ -105,12 +106,13 @@ export default function WelcomeScreen() {
       });
 
       const { visitor_id, token } = res;
+      
 
       setVisitor(visitor_id, token);
 
       await StorageUtil.setVisitor(visitor_id, token);
 
-      router.replace("/(tabs)");
+            router.replace("/(tabs)");
     } catch (error) {
    
     }

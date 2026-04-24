@@ -25,9 +25,14 @@ import CartItem from "../../src/components/cart/CartItem";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import CartItemSkeleton from "../../src/skeleton/CartItemSkeleton";
 import { ArrowRight, Info, MoveRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 export default function CartScreen() {
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const { visitorId, userId } = useAppVisitorStore((state) => state);
+
+  // console.log("usersID: ", userId)
+
+  const router = useRouter();
 
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -45,7 +50,7 @@ export default function CartScreen() {
   });
 
   const { data: cartCountData } = useCartCount({
-    user_id: 0,
+    user_id: userId ? Number(userId) : 0,
     visitor_id: visitorId!,
   });
 
@@ -110,6 +115,14 @@ export default function CartScreen() {
     }).format(amount);
   };
 
+  const handleContinue = () => {
+    if (userId) {
+      router.push("/checkout");
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background }]}
@@ -117,7 +130,7 @@ export default function CartScreen() {
     >
       <StatusBar barStyle="dark-content" />
 
-      <AppNavbar title="Cart Item" showBack count={`${cartCount} items`} />
+      <AppNavbar title="Cart Item" showBack count={`${cartCount}`} />
 
       <ScrollView
         style={[
@@ -161,41 +174,7 @@ export default function CartScreen() {
             </View>
           )}
         </View>
-        {/* 
-          <View className="px-4 gap-3">
-            <View className="flex-row items-center">
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginRight: 4,
-                  fontFamily: "Poppins_500Medium",
-                  includeFontPadding: false,
-                  textAlignVertical: "center",
-                }}
-              >
-                Cart Summary
-              </Text>
 
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontFamily: "Poppins_400Regular",
-                  color: colors.textTertiary,
-                  includeFontPadding: false,
-                  textAlignVertical: "center",
-                }}
-              >
-                ({cartCount} Items)
-              </Text>
-            </View>
-
-            <View>
-              <View>
-                <Text>Sub-Total</Text>
-                <Text></Text>
-              </View>
-            </View>
-          </View> */}
       </ScrollView>
 
       <View
@@ -261,12 +240,13 @@ export default function CartScreen() {
               >
                 Grand Total
               </Text>
-              {/* <Info size={12} color={colors.textTertiary} /> */}
+              <Info size={14} color={colors.textTertiary} />
             </View>
           </View>
 
           {/* RIGHT: BUTTON */}
           <TouchableOpacity
+            onPress={handleContinue}
             style={{
               backgroundColor: colors.primary,
               paddingVertical: 12,
