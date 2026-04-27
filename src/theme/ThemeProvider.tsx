@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useColorScheme as useRNColorScheme } from "react-native";
 import { useColorScheme } from "nativewind";
 import { lightTheme, darkTheme, ThemeColors } from "./colors";
 

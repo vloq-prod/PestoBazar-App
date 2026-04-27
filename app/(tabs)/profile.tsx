@@ -51,6 +51,7 @@ const MENU_SECTIONS = [
         label: "My Orders",
         sub: "Track & manage orders",
         icon: Package,
+        route: "/(auth)/userinfo",
       },
       {
         id: "wishlist",
@@ -209,9 +210,9 @@ export default function ProfileScreen() {
           text: "Logout",
           style: "destructive",
           onPress: async () => {
-            await logout(); 
+            await logout();
 
-            router.replace("/login"); 
+            router.replace("/login");
           },
         },
       ],
@@ -225,20 +226,14 @@ export default function ProfileScreen() {
 
       <StatusBar barStyle={"dark-content"} />
 
-      <AppNavbar
-        title="Profile"
-        showBack
-        showCart
-        showNotification
-        showThemeToggle
-      />
+      <AppNavbar title="Profile" showBack />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingBottom: insets.bottom + 60, // 👈 MAIN FIX
+            paddingBottom: insets.bottom + 60,
           },
         ]}
       >

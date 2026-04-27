@@ -8,12 +8,12 @@ export default function StackLayout() {
       <Stack.Screen name="search" />
       <Stack.Screen name="userprofile" />
 
-      {/* 👇 FIXED CONFIG */}
+      
       <Stack.Screen
         name="categories"
         options={{
           presentation: "transparentModal",
-          animation: "slide_from_right", // required fallback
+          animation: "slide_from_right", 
           gestureDirection: "horizontal",
         }}
       />

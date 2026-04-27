@@ -55,10 +55,10 @@ export default function CartScreen() {
   });
 
   // const cart = cartData?.data.cart;
-  const items = cartData?.data.cart_details;
+  const items = cartData?.data?.cart_details;
 
-  const cartTotal = cartData?.data.cart;
-  const isFreeShipping = cartData?.data.cart.free_shipping;
+  const cartTotal = cartData?.data?.cart;
+  const isFreeShipping = cartData?.data?.cart?.free_shipping;
   // console.log("cartTotal", cartTotal);
   const cartCount = cartCountData?.data;
 
@@ -174,7 +174,6 @@ export default function CartScreen() {
             </View>
           )}
         </View>
-
       </ScrollView>
 
       <View

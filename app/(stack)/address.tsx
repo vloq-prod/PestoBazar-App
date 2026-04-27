@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -8,19 +8,28 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router, useFocusEffect } from "expo-router";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useAppVisitorStore } from "../../src/store/auth";
-import CreateAddressModal from "../../src/modals/CreateAddessModal";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useAddress, useRemoveAddress } from "../../src/hooks/CheckoutHooks";
 import AddressCard from "../../src/components/checkout/AddressCard";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { MapPin, Plus, Trash2 } from "lucide-react-native";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ── Helpers ──
 const SectionTitle = ({ title, colors, font, spacing, onAddPress }: any) => (
-  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: spacing(12), marginTop: spacing(16) }}>
+  <View
+    style={{
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: spacing(12),
+      marginTop: spacing(16),
+    }}
+  >
     <Text
       style={[
         styles.sectionTitle,
@@ -32,9 +41,21 @@ const SectionTitle = ({ title, colors, font, spacing, onAddPress }: any) => (
     >
       {title}
     </Text>
-    <TouchableOpacity onPress={onAddPress} activeOpacity={0.7} style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+    <TouchableOpacity
+      onPress={onAddPress}
+      activeOpacity={0.7}
+      style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+    >
       <Plus size={14} color={colors.primary} />
-      <Text style={{ fontSize: font(12), color: colors.primary, fontFamily: "Poppins_500Medium" }}>Add New</Text>
+      <Text
+        style={{
+          fontSize: font(12),
+          color: colors.primary,
+          fontFamily: "Poppins_500Medium",
+        }}
+      >
+        Add New
+      </Text>
     </TouchableOpacity>
   </View>
 );
@@ -43,20 +64,40 @@ export default function Address() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
+  const queryClient = useQueryClient();
 
   const userId = useAppVisitorStore((s) => s.userId);
-  const [showModal, setShowModal] = useState(false);
 
   // Queries & Mutations
-  const { data: addressData, isLoading } = useAddress({ user_id: userId! });
+  const {
+    data: addressData,
+    isLoading,
+    refetch,
+  } = useAddress({ user_id: userId! });
+
+  // When the screen comes into focus, trigger a background refetch
+  // This solves the issue of stale data when returning from addaddress.tsx
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
   const { mutate: removeAddress, isPending: isRemoving } = useRemoveAddress();
+  console.log("addressData", addressData?.data?.delivery_address);
 
   // Delete Modal state
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null);
 
-  const billingList: any[] = addressData?.billing ?? [];
-  const deliveryList: any[] = addressData?.delivery ?? [];
+  const billingList = React.useMemo(
+    () => [...(addressData?.data?.billing_address ?? [])],
+    [addressData],
+  );
+
+  const deliveryList = React.useMemo(
+    () => [...(addressData?.data?.delivery_address ?? [])],
+    [addressData],
+  );
 
   const handleDeleteConfirm = () => {
     if (!addressToDelete || !userId) return;
@@ -67,7 +108,7 @@ export default function Address() {
           setDeleteModalVisible(false);
           setAddressToDelete(null);
         },
-      }
+      },
     );
   };
 
@@ -77,27 +118,45 @@ export default function Address() {
   };
 
   // Rendering Address List
-  const renderAddressList = (list: any[], title: string, emptyText: string) => (
+  const renderAddressList = (
+    list: any[],
+    title: string,
+    emptyText: string,
+    type: "billing" | "delivery",
+  ) => (
     <View>
       <SectionTitle
         title={title}
         colors={colors}
         font={font}
         spacing={spacing}
-        onAddPress={() => setShowModal(true)}
+        onAddPress={() =>
+          router.push({
+            pathname: "/(stack)/addaddress",
+            params: { type },
+          })
+        }
       />
       {list.length === 0 ? (
         <View
           style={[
             styles.emptyAddrBox,
-            { borderColor: colors.border, backgroundColor: colors.surface, paddingVertical: spacing(24) },
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.surface,
+              paddingVertical: spacing(24),
+            },
           ]}
         >
           <MapPin size={22} color={colors.textTertiary} />
           <Text
             style={[
               styles.emptyAddrText,
-              { color: colors.textSecondary, fontSize: font(12.5), marginTop: spacing(8) },
+              {
+                color: colors.textSecondary,
+                fontSize: font(12.5),
+                marginTop: spacing(8),
+              },
             ]}
           >
             {emptyText}
@@ -111,7 +170,12 @@ export default function Address() {
               item={addr}
               isSelected={false} // Address screen doesn't need selection state
               onSelect={() => {}} // No-op
-              onEdit={() => console.log("Edit address", addr.id)}
+              onEdit={() =>
+                router.push({
+                  pathname: "/(stack)/addaddress",
+                  params: { type, id: addr.id },
+                })
+              }
               onDelete={() => openDeleteModal(addr.id)}
             />
           ))}
@@ -128,49 +192,82 @@ export default function Address() {
       {isLoading ? (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.textSecondary, marginTop: spacing(10), fontFamily: "Poppins_400Regular" }}>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              marginTop: spacing(10),
+              fontFamily: "Poppins_400Regular",
+            }}
+          >
             Loading addresses...
           </Text>
         </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 20 }]}
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingBottom: insets.bottom + 20 },
+          ]}
         >
-          {billingList.length === 0 && deliveryList.length === 0 ? (
+          {billingList.length !== 0 && deliveryList.length !== 0 ? (
             <View style={styles.emptyContainer}>
-              <View style={[styles.iconWrap, { backgroundColor: colors.primary + "15" }]}>
-                 <MapPin size={32} color={colors.primary} />
+              <View
+                style={[
+                  styles.iconWrap,
+                  { backgroundColor: colors.primary + "15" },
+                ]}
+              >
+                <MapPin size={32} color={colors.primary} />
               </View>
-              <Text style={[styles.emptyTitle, { color: colors.text, fontSize: font(16) }]}>
+              <Text
+                style={[
+                  styles.emptyTitle,
+                  { color: colors.text, fontSize: font(16) },
+                ]}
+              >
                 No Addresses Found
               </Text>
-              <Text style={[styles.emptySub, { color: colors.textSecondary, fontSize: font(13) }]}>
+              <Text
+                style={[
+                  styles.emptySub,
+                  { color: colors.textSecondary, fontSize: font(13) },
+                ]}
+              >
                 Add a new address to continue shopping
               </Text>
+
               <TouchableOpacity
-                onPress={() => setShowModal(true)}
-                style={[styles.addButton, { backgroundColor: colors.primary, marginTop: spacing(20) }]}
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  backgroundColor: colors.primary,
+                  borderRadius: 25,
+                }}
+              onPress={() => router.push("(stack)/map")}
               >
-                <Plus size={16} color="#FFF" style={{ marginRight: 6 }} />
-                <Text style={styles.addButtonText}>Add New Address</Text>
+                <Text style={{ color: colors.textInverse }}>Open Map</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
-              {renderAddressList(billingList, "Billing Address", "No billing address added")}
+              {renderAddressList(
+                billingList,
+                "Billing Address",
+                "No billing address added",
+                "billing",
+              )}
               <View style={{ height: spacing(12) }} />
-              {renderAddressList(deliveryList, "Delivery Address", "No delivery address added")}
+              {renderAddressList(
+                deliveryList,
+                "Delivery Address",
+                "No delivery address added",
+                "delivery",
+              )}
             </>
           )}
         </ScrollView>
       )}
-
-      {/* Reused Modal for both Billing & Delivery */}
-      <CreateAddressModal
-        visible={showModal}
-        onClose={() => setShowModal(false)}
-      />
 
       <ConfirmationModal
         visible={deleteModalVisible}

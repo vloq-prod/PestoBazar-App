@@ -41,7 +41,7 @@ function RootLayoutNav() {
       const store = useAppVisitorStore.getState();
 
       await store.hydrateVisitor(); // ✅ IMPORTANT
-      await store.hydrateUser();    // optional but safe
+      await store.hydrateUser(); // optional but safe
 
       hydratePincode();
 

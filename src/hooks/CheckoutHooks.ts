@@ -20,7 +20,6 @@ import {
   ValidatePincodeRequest,
 } from "../types/checkout.types";
 
-
 // complete
 export const useCheckout = () => {
   return useMutation({
@@ -32,54 +31,50 @@ export const useCheckout = () => {
 export const useAddress = (params: GetAddressParams) => {
   return useQuery({
     queryKey: ["address", params.user_id],
-
     queryFn: () => getAddressApi(params),
-
     enabled: !!params.user_id,
 
-    select: (res) => {
-      const data = res?.data;
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
 
-      return {
-        billing: data?.billing_address || [],
-        delivery: data?.delivery_address || [],
-        states: data?.state_master || [],
-      };
-    },
+    // ❌ NO select
   });
 };
-
+// done
 export const useSingleAddress = (params: GetSingleAddressParams) => {
   return useQuery({
     queryKey: ["single-address", params.user_id, params.id],
-
     queryFn: () => getSingleAddressApi(params),
-
     enabled: !!params.user_id && !!params.id,
-
+    staleTime: 0,
     select: (res) => {
       return res?.data?.address;
     },
   });
 };
 
-export const useSaveAddress = () => {
+// done
+export const useSaveAddress = (onDone?: () => void) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: SaveAddressRequest) => saveAddressApi(payload),
+    mutationFn: (payload: SaveAddressRequest) =>
+      saveAddressApi(payload),
 
-    onSuccess: (data) => {
-      console.log("Address Saved:", data);
+    onSuccess: async (_res, variables) => {
+      const userId = variables.user_id;
 
-      // 🔥 IMPORTANT → refresh address list
-      queryClient.invalidateQueries({
-        queryKey: ["address"],
+      await queryClient.refetchQueries({
+        queryKey: ["address", userId],
+        exact: true,
       });
-    },
 
-    onError: (error) => {
-      console.log("Save Address Error:", error);
+      await queryClient.removeQueries({
+        queryKey: ["single-address"],
+      });
+
+      onDone?.();
     },
   });
 };
@@ -90,21 +85,16 @@ export const useRemoveAddress = () => {
   return useMutation({
     mutationFn: (payload: RemoveAddressRequest) => removeAddressApi(payload),
 
-    onSuccess: (data) => {
-      console.log("Address Removed:", data);
+    onSuccess: async (_res, variables) => {
+      const userId = variables.user_id;
 
-      // 🔥 Refresh address list
-      queryClient.invalidateQueries({
-        queryKey: ["address"],
+      await queryClient.invalidateQueries({
+        queryKey: ["address", userId],
       });
-    },
-
-    onError: (error) => {
-      console.log("Remove Address Error:", error);
     },
   });
 };
-
+//
 export const useShipping = () => {
   return useMutation({
     mutationFn: (payload: ShippingRequest) => shippingApi(payload),
@@ -147,3 +137,16 @@ export const useValidatePincode = () => {
     },
   });
 };
+
+
+
+
+
+
+
+
+
+
+
+// await queryClient.refetchQueries(...)
+// setTimeout(() => router.back(), 500)

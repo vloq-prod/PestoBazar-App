@@ -59,11 +59,6 @@ export interface CheckoutResponse {
   };
 }
 
-
-
-
-
-
 // 🔹 Request Params
 export interface GetAddressParams {
   user_id: string;
@@ -103,9 +98,6 @@ export interface GetAddressResponse {
   };
 }
 
-
-
-
 // 🔹 Request Params
 export interface GetSingleAddressParams {
   user_id: string;
@@ -142,8 +134,6 @@ export interface GetSingleAddressResponse {
   };
 }
 
-
-
 // 🔹 Request
 export interface SaveAddressRequest {
   user_id: string;
@@ -171,8 +161,6 @@ export interface SaveAddressResponse {
   };
 }
 
-
-
 export interface RemoveAddressRequest {
   user_id: string;
   address_id: number;
@@ -184,8 +172,6 @@ export interface RemoveAddressResponse {
   status: number;
   data: [];
 }
-
-
 
 // 🔹 Request
 export interface ShippingRequest {
@@ -202,6 +188,7 @@ export interface ShippingCart {
   amount_to_pay: string;
   free_shipping_message: string;
   free_shipping: string;
+  cod_charges?: string;
 }
 
 // 🔹 Response
@@ -212,10 +199,6 @@ export interface ShippingResponse {
     cart: ShippingCart;
   };
 }
-
-
-
-
 
 // 🔹 Request
 export interface ValidateCartRequest {
@@ -230,9 +213,6 @@ export interface ValidateCartResponse {
   status: number;
   data: any[]; // usually empty, but keep flexible
 }
-
-
-
 
 // 🔹 Request
 export interface ValidatePincodeRequest {

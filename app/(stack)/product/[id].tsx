@@ -640,7 +640,7 @@ const ProductDetails = () => {
                     { color: colors.textOnPrimary },
                   ]}
                 >
-                  {cartData?.data.cart.cart_count}
+                  {cartData?.data?.cart?.cart_count}
                 </Text>
               </View>
             </View>

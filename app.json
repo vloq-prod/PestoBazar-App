@@ -3,7 +3,6 @@
     "name": "Pestobazaar",
     "owner": "Daniyal Shaikh",
     "slug": "pestobazaar",
-
     "version": "1.0.0",
     "orientation": "portrait",
 
@@ -15,10 +14,31 @@
       "backgroundColor": "#ffffff"
     },
 
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Pestobazaar to access your location."
+        }
+      ]
+    ],
+
     "android": {
       "package": "com.pestobazaar.app",
       "versionCode": 1,
       "usesCleartextTraffic": true,
+
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCglD_NawJrXEFVr6kj1CWBsexuu_UQHp4"
+        }
+      },
+
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
