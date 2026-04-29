@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TextInput,
   Platform,
+  Alert,
   Image,
   Dimensions,
   KeyboardAvoidingView,
@@ -15,6 +16,7 @@ import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import Constants from "expo-constants";
 import { useState, useCallback } from "react";
 import { Phone } from "lucide-react-native";
 import Carousel from "react-native-reanimated-carousel";
@@ -29,10 +31,13 @@ import { useSendOtp, useVerifyUser } from "../../src/hooks/useAuthHooks";
 import { z, ZodError } from "zod";
 
 import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect } from "react";
 
 WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_REDIRECT_SCHEME = "com.devxkaif.pestobazar";
 
 type SafeParseReturn<T> =
   | { success: true; data: T }
@@ -151,11 +156,42 @@ export default function Login() {
   const { font, spacing, hp } = useResponsive();
   const insets = useSafeAreaInsets();
 
+  const googleRedirectUri = AuthSession.makeRedirectUri({
+    native: `${GOOGLE_REDIRECT_SCHEME}:/oauthredirect`,
+  });
+  const isExpoGo = Constants.executionEnvironment === "storeClient";
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+    redirectUri: googleRedirectUri,
+    scopes: ["openid", "profile", "email"],
+    selectAccount: true,
   });
+
+  const handleGoogleLogin = useCallback(() => {
+    if (isExpoGo) {
+      console.error("❌ Google Auth blocked in Expo Go", {
+        redirectUri: googleRedirectUri,
+        platform: Platform.OS,
+        executionEnvironment: Constants.executionEnvironment,
+      });
+      Alert.alert(
+        "Google login unavailable",
+        "Google Sign-In cannot run inside Expo Go. Use a development build or standalone app for Google login.",
+      );
+      return;
+    }
+
+    promptAsync().catch((authError) => {
+      console.error("❌ Failed to start Google Auth:", {
+        authError,
+        redirectUri: googleRedirectUri,
+        platform: Platform.OS,
+      });
+    });
+  }, [googleRedirectUri, isExpoGo, promptAsync]);
 
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
@@ -176,11 +212,6 @@ export default function Login() {
 
   const handleSkip = () => router.replace("/(tabs)");
 
-  console.log(
-    "android client id : ",
-    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  );
-  console.log("ios id: ", process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
   const handleGetOtp = useCallback(() => {
     const result = phoneSchema.safeParse({ mobile_no: phone });
     if (!result.success) {
@@ -241,12 +272,16 @@ export default function Login() {
           }
         }
       } else if (response?.type === "error") {
-        console.error("❌ Google Auth Error:", response.error);
+        console.error("❌ Google Auth Error:", {
+          error: response.error,
+          redirectUri: googleRedirectUri,
+          platform: Platform.OS,
+        });
       }
     };
 
     handleGoogleResponse();
-  }, [response]);
+  }, [googleRedirectUri, response]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -564,7 +599,7 @@ export default function Login() {
             {/* Google Login Button */}
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => promptAsync()}
+              onPress={handleGoogleLogin}
               style={[
                 styles.googleBtn,
                 {
@@ -572,6 +607,7 @@ export default function Login() {
                   borderColor: colors.border,
                   backgroundColor:
                     colors.background === "#fff" ? "#fff" : colors.surface,
+                  opacity: isExpoGo ? 0.65 : 1,
                 },
               ]}
             >
@@ -587,7 +623,9 @@ export default function Login() {
                   color: colors.text,
                 }}
               >
-                Continue with Google
+                {isExpoGo
+                  ? "Google Login Requires Dev Build"
+                  : "Continue with Google"}
               </Text>
             </TouchableOpacity>
 
