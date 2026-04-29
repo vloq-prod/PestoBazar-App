@@ -4,6 +4,7 @@ import {
   getCart,
   getCartCount,
   getQuickCart,
+  removeCartItemApi,
 } from "../api/cart.api";
 import {
   AddToCartRequest,
@@ -12,6 +13,8 @@ import {
   GetCartCountParams,
   GetQuickCartParams,
   QuickCartResponse,
+  RemoveCartItemRequest,
+  RemoveCartItemResponse,
 } from "../types/cart.types";
 import { useToast } from "../context/ToastContext";
 
@@ -64,7 +67,7 @@ export const useAddToCart = () => {
 };
 
 interface UseCartParams {
-  user_id: number;
+  user_id: number | string;
   visitor_id: string;
 }
 
@@ -146,8 +149,8 @@ export const useCartAction = () => {
           ...previousCart,
           data: {
             ...previousCart.data,
-            cart: {
-              ...previousCart.data.cart,
+            cart_app: {
+              ...previousCart.data.cart_app,
               cart_count: nextCartDetails.reduce(
                 (sum, item) => sum + Number(item.qty || 0),
                 0,
@@ -221,4 +224,46 @@ export const useCartAction = () => {
     updateCart: mutation.mutate,
     loading: mutation.isPending,
   };
+};
+
+
+
+
+
+
+export const useRemoveCartItem = () => {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation<
+    RemoveCartItemResponse,
+    Error,
+    RemoveCartItemRequest
+  >({
+    mutationFn: removeCartItemApi,
+
+    onSuccess: (data, variables) => {
+      console.log("✅ Item Removed:", data.message);
+      showToast(data.message || "Item removed from cart", "success");
+
+      const userId = variables.user_id ?? 0;
+      const visitorId = variables.visitor_id ?? "";
+
+      // refresh all related queries
+      queryClient.invalidateQueries({
+        queryKey: ["cart", userId, visitorId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cart-count", userId, visitorId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["quick-cart", userId, visitorId],
+      });
+    },
+
+    onError: (error) => {
+      console.log("❌ Remove Failed:", error.message);
+      showToast(error.message || "Failed to remove item", "error");
+    },
+  });
 };

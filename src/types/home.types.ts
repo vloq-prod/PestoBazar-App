@@ -191,3 +191,83 @@ export interface GetRecentlyViewedParams {
   visitor_id: string;
   user_id?: string;
 }
+
+
+
+
+
+
+// ======================================================
+// src/services/enquiry/enquiry.types.ts
+// UPDATED VERSION
+// ======================================================
+
+// Common API Response
+export interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
+
+// Request Payload
+export interface BulkEnquiryRequest {
+  email: string;
+  mobile: string;
+  name: string;
+  product: string;
+}
+
+// Response Data
+export interface BulkEnquiryData {
+  id: number;
+  name: string;
+  mobile: string;
+  email: string;
+  product: string;
+  ip_address: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Final Response
+export type BulkEnquiryResponse =
+  ApiResponse<BulkEnquiryData>;
+
+
+
+
+
+
+  // ======================================================
+// src/services/cart/cart.types.ts
+// ADD THIS IN SAME FILE
+// ======================================================
+
+// Common API Response
+export interface ApiResponse<T> {
+  message: string;
+  status: boolean;
+  data: T;
+}
+
+// ------------------------------------
+// Get Cart Quantity Request
+// ------------------------------------
+export interface GetCartQuantityRequest {
+  visitor_id: string;
+  user_id: string;
+}
+
+// ------------------------------------
+// Single Product Quantity Item
+// ------------------------------------
+export interface CartQuantityItem {
+  product_id: number;
+  qty: number;
+}
+
+// ------------------------------------
+// Final Response
+// ------------------------------------
+export type GetCartQuantityResponse =
+  ApiResponse<CartQuantityItem[]>;

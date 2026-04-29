@@ -33,15 +33,15 @@ const AddToCartPreview: React.FC<Props> = ({ visible, pbandroid = 12, pbios = 90
   const { colors } = useTheme();
   const { spacing, font, isTablet } = useResponsive();
 
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const {visitorId, userId} = useAppVisitorStore((state) => state);
 
   const { data: quickCartData } = useQuickCart({
-    user_id: 0,
+    user_id: userId ?? 0,
     visitor_id: visitorId!,
   });
 
   const { data: cartCountData } = useCartCount({
-    user_id: 0,
+    user_id: userId ?? 0,
     visitor_id: visitorId!,
   });
 

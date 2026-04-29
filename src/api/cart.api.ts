@@ -7,6 +7,8 @@ import {
   GetCartCountParams,
   GetQuickCartParams,
   QuickCartResponse,
+  RemoveCartItemRequest,
+  RemoveCartItemResponse,
 } from "../types/cart.types";
 
 export const addToCart = async (
@@ -26,7 +28,7 @@ export const addToCart = async (
 // src/api/cart.api.ts
 
 interface GetCartParams {
-  user_id?: number;
+  user_id?: number | string;
   visitor_id: string;
 }
 
@@ -54,6 +56,20 @@ export const getQuickCart = async (
   const response = await apiClient.get("/app-api/v1/quick-cart", {
     params,
   });
+
+  return response.data;
+};
+
+getCart;
+
+// Remove Cart Product API
+export const removeCartItemApi = async (
+  payload: RemoveCartItemRequest,
+): Promise<RemoveCartItemResponse> => {
+  const response = await apiClient.post<RemoveCartItemResponse>(
+    "/app-api/v1/remove",
+    payload,
+  );
 
   return response.data;
 };

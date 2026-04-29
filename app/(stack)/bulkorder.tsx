@@ -14,6 +14,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
+import { useBulkEnquiry } from "../../src/hooks/homeHooks";
+import { useToast } from "../../src/context/ToastContext";
+import { ActivityIndicator } from "react-native";
+import { bulkEnquirySchema } from "../../src/schema/bulkEnquiry.schema";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import Animated, {
   useSharedValue,
@@ -22,20 +26,39 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
-import { MessageCircle, Send, Bot, User, Phone, Mail } from "lucide-react-native";
+import {
+  MessageCircle,
+  Send,
+  Bot,
+  User,
+  Phone,
+  Mail,
+} from "lucide-react-native";
 
-const WHATSAPP_NUMBER = "919876543210";
+const WHATSAPP_NUMBER = "+91 99299 29980";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in bulk orders.";
 const INPUT_HEIGHT = 50;
 
 // ─── Animated Chat Bubble ─────────────────────────────────────
-const ChatBubble = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
+const ChatBubble = ({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(16);
 
   useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
+    opacity.value = withDelay(
+      delay,
+      withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) }),
+    );
+    translateY.value = withDelay(
+      delay,
+      withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }),
+    );
   }, []);
 
   const style = useAnimatedStyle(() => ({
@@ -44,7 +67,9 @@ const ChatBubble = ({ children, delay = 0 }: { children: React.ReactNode; delay?
   }));
 
   return (
-    <Animated.View style={[{ flexDirection: "row", alignItems: "flex-end", gap: 8 }, style]}>
+    <Animated.View
+      style={[{ flexDirection: "row", alignItems: "flex-end", gap: 8 }, style]}
+    >
       <View style={styles.botAvatar}>
         <Bot size={14} color="#fff" strokeWidth={2} />
       </View>
@@ -55,23 +80,39 @@ const ChatBubble = ({ children, delay = 0 }: { children: React.ReactNode; delay?
 
 // ─── Bot Bubble UI ────────────────────────────────────────────
 const BotBubble = ({
-  text, colors, font, spacing,
+  text,
+  colors,
+  font,
+  spacing,
 }: {
-  text: string; colors: any; font: (n: number) => number; spacing: (n: number) => number;
+  text: string;
+  colors: any;
+  font: (n: number) => number;
+  spacing: (n: number) => number;
 }) => (
   <View
-    style={[styles.bubble, {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderBottomLeftRadius: 4,
-      alignSelf: "flex-start",
-      maxWidth: "85%",
-      paddingHorizontal: spacing(14),
-      paddingVertical: spacing(11),
-    }]}
+    style={[
+      styles.bubble,
+      {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        borderWidth: 1,
+        borderBottomLeftRadius: 4,
+        alignSelf: "flex-start",
+        maxWidth: "85%",
+        paddingHorizontal: spacing(14),
+        paddingVertical: spacing(11),
+      },
+    ]}
   >
-    <Text style={{ fontSize: font(14), color: colors.text, fontFamily: "Poppins_400Regular", lineHeight: font(21) }}>
+    <Text
+      style={{
+        fontSize: font(14),
+        color: colors.text,
+        fontFamily: "Poppins_400Regular",
+        lineHeight: font(21),
+      }}
+    >
       {text}
     </Text>
   </View>
@@ -79,10 +120,19 @@ const BotBubble = ({
 
 // ─── Field with Icon (UserProfile style) ─────────────────────
 const FormField = ({
-  label, placeholder, icon: Icon, value, onChange,
-  keyboardType = "default", autoCapitalize = "sentences",
-  optional = false, multiline = false, numberOfLines = 1,
-  colors, font,
+  label,
+  placeholder,
+  icon: Icon,
+  value,
+  onChange,
+  keyboardType = "default",
+  autoCapitalize = "sentences",
+  optional = false,
+  multiline = false,
+  numberOfLines = 1,
+  colors,
+  font,
+  error,
 }: any) => {
   const [focused, setFocused] = useState(false);
 
@@ -90,39 +140,63 @@ const FormField = ({
     <View style={{ gap: 5 }}>
       {/* Label */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-        <Text style={{
-          fontFamily: "Poppins_500Medium",
-          fontSize: font(11),
-          color: focused ? colors.primary : colors.textSecondary,
-          marginLeft: 2,
-        }}>
+        <Text
+          style={{
+            fontFamily: "Poppins_500Medium",
+            fontSize: font(11),
+            color: error
+              ? "#EF4444"
+              : focused
+                ? colors.primary
+                : colors.textSecondary,
+            marginLeft: 2,
+          }}
+        >
           {label}
         </Text>
         {optional && (
-          <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10), color: colors.textTertiary }}>
+          <Text
+            style={{
+              fontFamily: "Poppins_400Regular",
+              fontSize: font(10),
+              color: colors.textTertiary,
+            }}
+          >
             (optional)
           </Text>
         )}
       </View>
 
       {/* Input box */}
-      <View style={[
-        styles.inputBox,
-        {
-          height: multiline ? undefined : INPUT_HEIGHT,
-          minHeight: multiline ? INPUT_HEIGHT * 1.6 : undefined,
-          backgroundColor: colors.background,
-          borderColor: focused ? colors.primary : colors.border,
-          borderWidth: focused ? 1.8 : 1.2,
-          alignItems: multiline ? "flex-start" : "center",
-          paddingVertical: multiline ? 12 : 0,
-        },
-      ]}>
+      <View
+        style={[
+          styles.inputBox,
+          {
+            height: multiline ? undefined : INPUT_HEIGHT,
+            minHeight: multiline ? INPUT_HEIGHT * 1.6 : undefined,
+            backgroundColor: colors.background,
+            borderColor: error
+              ? "#EF4444"
+              : focused
+                ? colors.primary
+                : colors.border,
+            borderWidth: error || focused ? 1.8 : 1.2,
+            alignItems: multiline ? "flex-start" : "center",
+            paddingVertical: multiline ? 12 : 0,
+          },
+        ]}
+      >
         {/* Icon — only if provided */}
         {Icon && (
           <Icon
             size={17}
-            color={focused ? colors.primary : colors.textSecondary}
+            color={
+              error
+                ? "#EF4444"
+                : focused
+                  ? colors.primary
+                  : colors.textSecondary
+            }
             strokeWidth={1.8}
             style={{ marginTop: multiline ? 2 : 0, flexShrink: 0 }}
           />
@@ -148,11 +222,28 @@ const FormField = ({
               fontFamily: "Poppins_400Regular",
               textAlignVertical: multiline ? "top" : "center",
               paddingVertical: multiline ? 0 : 0,
-              ...Platform.select({ android: { includeFontPadding: false }, ios: {} }),
+              ...Platform.select({
+                android: { includeFontPadding: false },
+                ios: {},
+              }),
             },
           ]}
         />
       </View>
+      {/* Error Message */}
+      {!!error && (
+        <Text
+          style={{
+            color: "#EF4444",
+            fontSize: font(10.5),
+            fontFamily: "Poppins_400Regular",
+            marginLeft: 4,
+            marginTop: -2,
+          }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
@@ -163,15 +254,32 @@ export default function BulkOrder() {
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
   const scrollRef = useRef<ScrollView>(null);
+  const { showToast } = useToast();
+
+  const { mutate: bulkEnquiry, isPending } = useBulkEnquiry();
 
   const [showForm, setShowForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const [form, setForm] = useState({ name: "", mobile: "", email: "", product: "" });
-  const setField = (key: keyof typeof form) => (v: string) => setForm((p) => ({ ...p, [key]: v }));
+  const [form, setForm] = useState({
+    name: "",
+    mobile: "",
+    email: "",
+    product: "",
+  });
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof typeof form, string>>
+  >({});
+
+  const setField = (key: keyof typeof form) => (v: string) => {
+    setForm((p) => ({ ...p, [key]: v }));
+    if (errors[key]) setErrors((p) => ({ ...p, [key]: undefined }));
+  };
 
   const handleWhatsApp = () => {
-    Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`);
+    Linking.openURL(
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`,
+    );
   };
 
   const handleGetQuote = () => {
@@ -180,9 +288,39 @@ export default function BulkOrder() {
   };
 
   const handleSubmit = () => {
-    if (!form.name || !form.mobile || !form.product) return;
-    setSubmitted(true);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
+    // Zod Validation
+    const result = bulkEnquirySchema.safeParse(form);
+
+    if (!result.success) {
+      const fieldErrors: any = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0] as keyof typeof form;
+        if (!fieldErrors[path]) {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
+
+    bulkEnquiry(form, {
+      onSuccess: (data) => {
+        showToast(data.message || "Enquiry submitted successfully!", "success");
+        setSubmitted(true);
+        setTimeout(
+          () => scrollRef.current?.scrollToEnd({ animated: true }),
+          200,
+        );
+      },
+      onError: (err) => {
+        showToast(
+          err.message || "Failed to submit enquiry. Try again.",
+          "error",
+        );
+      },
+    });
   };
 
   const msgOpacity = useSharedValue(0);
@@ -192,15 +330,33 @@ export default function BulkOrder() {
 
   useEffect(() => {
     if (showForm) {
-      msgOpacity.value = withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) });
-      msgY.value = withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) });
-      formOpacity.value = withDelay(450, withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) }));
-      formY.value = withDelay(450, withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) }));
+      msgOpacity.value = withTiming(1, {
+        duration: 380,
+        easing: Easing.out(Easing.cubic),
+      });
+      msgY.value = withTiming(0, {
+        duration: 380,
+        easing: Easing.out(Easing.cubic),
+      });
+      formOpacity.value = withDelay(
+        450,
+        withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) }),
+      );
+      formY.value = withDelay(
+        450,
+        withTiming(0, { duration: 380, easing: Easing.out(Easing.cubic) }),
+      );
     }
   }, [showForm]);
 
-  const msgStyle = useAnimatedStyle(() => ({ opacity: msgOpacity.value, transform: [{ translateY: msgY.value }] }));
-  const formStyle = useAnimatedStyle(() => ({ opacity: formOpacity.value, transform: [{ translateY: formY.value }] }));
+  const msgStyle = useAnimatedStyle(() => ({
+    opacity: msgOpacity.value,
+    transform: [{ translateY: msgY.value }],
+  }));
+  const formStyle = useAnimatedStyle(() => ({
+    opacity: formOpacity.value,
+    transform: [{ translateY: formY.value }],
+  }));
 
   return (
     <KeyboardAvoidingView
@@ -209,7 +365,9 @@ export default function BulkOrder() {
       keyboardVerticalOffset={0}
     >
       <StatusBar barStyle="dark-content" />
-      <View style={{ height: insets.top, backgroundColor: colors.background }} />
+      <View
+        style={{ height: insets.top, backgroundColor: colors.background }}
+      />
       <AppNavbar title="Bulk Orders" showBack />
 
       <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -225,34 +383,55 @@ export default function BulkOrder() {
         >
           {/* ── Msg 1 ── */}
           <ChatBubble delay={200}>
-            <BotBubble text="Hi 👋 Looking for bulk orders?" colors={colors} font={font} spacing={spacing} />
+            <BotBubble
+              text="Hi 👋 Looking for bulk orders?"
+              colors={colors}
+              font={font}
+              spacing={spacing}
+            />
           </ChatBubble>
 
           {/* ── Msg 2 ── */}
           <ChatBubble delay={700}>
-            <BotBubble text="I can help you get the best pricing." colors={colors} font={font} spacing={spacing} />
+            <BotBubble
+              text="I can help you get the best pricing."
+              colors={colors}
+              font={font}
+              spacing={spacing}
+            />
           </ChatBubble>
 
           {/* ── Action Buttons — same row ── */}
           <ChatBubble delay={1200}>
-            <View style={{ flexDirection: "row", gap: spacing(10), marginTop: spacing(4) }}>
+            <View
+              style={{
+                flexDirection: "row",
+                gap: spacing(10),
+                marginTop: spacing(4),
+              }}
+            >
               {/* Get Quote */}
               {!showForm && (
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={handleGetQuote}
-                  style={[styles.actionBtn, {
-                    flex: 1,
-                    backgroundColor: colors.primary,
-                    shadowColor: colors.primary,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 5,
-                  }]}
+                  style={[
+                    styles.actionBtn,
+                    {
+                      flex: 1,
+                      backgroundColor: colors.primary,
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      elevation: 5,
+                    },
+                  ]}
                 >
                   <Send size={spacing(15)} color="#fff" strokeWidth={2} />
-                  <Text style={[styles.actionBtnText, { fontSize: font(13) }]}>Get Quote</Text>
+                  <Text style={[styles.actionBtnText, { fontSize: font(13) }]}>
+                    Get Quote
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -260,18 +439,26 @@ export default function BulkOrder() {
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={handleWhatsApp}
-                style={[styles.actionBtn, {
-                  flex: showForm ? undefined : 1,
-                  paddingHorizontal: showForm ? spacing(20) : undefined,
-                  backgroundColor: colors.success,
-                  shadowColor: colors.success,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 8,
-                  elevation: 4,
-                }]}
+                style={[
+                  styles.actionBtn,
+                  {
+                    flex: showForm ? undefined : 1,
+                    paddingHorizontal: showForm ? spacing(20) : undefined,
+                    backgroundColor: colors.success,
+                    shadowColor: colors.success,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    elevation: 4,
+                  },
+                ]}
               >
-                <MessageCircle size={spacing(15)} color="#fff" strokeWidth={2} fill="#fff" />
+                <MessageCircle
+                  size={spacing(15)}
+                  color="#fff"
+                  strokeWidth={2}
+                  fill="#fff"
+                />
                 <Text style={[styles.actionBtnText, { fontSize: font(13) }]}>
                   {showForm ? "WhatsApp" : "WhatsApp"}
                 </Text>
@@ -281,21 +468,38 @@ export default function BulkOrder() {
 
           {/* ── Form header message ── */}
           {showForm && !submitted && (
-            <Animated.View style={[{ flexDirection: "row", alignItems: "flex-end", gap: 8 }, msgStyle]}>
+            <Animated.View
+              style={[
+                { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+                msgStyle,
+              ]}
+            >
               <View style={styles.botAvatar}>
                 <Bot size={14} color="#fff" strokeWidth={2} />
               </View>
-              <View style={[styles.bubble, {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                borderWidth: 1,
-                borderBottomLeftRadius: 4,
-                alignSelf: "flex-start",
-                maxWidth: "85%",
-                paddingHorizontal: spacing(14),
-                paddingVertical: spacing(11),
-              }]}>
-                <Text style={{ fontSize: font(14), color: colors.text, fontFamily: "Poppins_400Regular", lineHeight: font(21) }}>
+              <View
+                style={[
+                  styles.bubble,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderBottomLeftRadius: 4,
+                    alignSelf: "flex-start",
+                    maxWidth: "85%",
+                    paddingHorizontal: spacing(14),
+                    paddingVertical: spacing(11),
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: font(14),
+                    color: colors.text,
+                    fontFamily: "Poppins_400Regular",
+                    lineHeight: font(21),
+                  }}
+                >
                   Just a few details and we&apos;ll take it from here 👇
                 </Text>
               </View>
@@ -304,7 +508,13 @@ export default function BulkOrder() {
 
           {/* ── Form card ── */}
           {showForm && !submitted && (
-            <Animated.View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }, formStyle]}>
+            <Animated.View
+              style={[
+                styles.formCard,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formStyle,
+              ]}
+            >
               <View style={{ gap: spacing(14) }}>
                 <FormField
                   label="Your Name"
@@ -312,6 +522,7 @@ export default function BulkOrder() {
                   icon={User}
                   value={form.name}
                   onChange={setField("name")}
+                  error={errors.name}
                   autoCapitalize="words"
                   colors={colors}
                   font={font}
@@ -322,6 +533,7 @@ export default function BulkOrder() {
                   icon={Phone}
                   value={form.mobile}
                   onChange={setField("mobile")}
+                  error={errors.mobile}
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                   colors={colors}
@@ -333,6 +545,7 @@ export default function BulkOrder() {
                   icon={Mail}
                   value={form.email}
                   onChange={setField("email")}
+                  error={errors.email}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   optional
@@ -345,6 +558,7 @@ export default function BulkOrder() {
                   placeholder="Describe the product and quantity..."
                   value={form.product}
                   onChange={setField("product")}
+                  error={errors.product}
                   multiline
                   numberOfLines={3}
                   colors={colors}
@@ -354,17 +568,33 @@ export default function BulkOrder() {
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={handleSubmit}
-                  style={[styles.submitBtn, {
-                    backgroundColor: colors.primary,
-                    shadowColor: colors.primary,
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 6,
-                    elevation: 4,
-                  }]}
+                  disabled={isPending}
+                  style={[
+                    styles.submitBtn,
+                    {
+                      backgroundColor: isPending
+                        ? colors.primary + "80"
+                        : colors.primary,
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isPending ? 0 : 0.28,
+                      shadowRadius: 10,
+                      elevation: isPending ? 0 : 6,
+                    },
+                  ]}
                 >
-                  <Send size={spacing(15)} color="#fff" strokeWidth={2} />
-                  <Text style={[styles.submitBtnText, { fontSize: font(14) }]}>Submit Request</Text>
+                  {isPending ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Send size={spacing(15)} color="#fff" strokeWidth={2} />
+                      <Text
+                        style={[styles.submitBtnText, { fontSize: font(14) }]}
+                      >
+                        Submit Request
+                      </Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
             </Animated.View>

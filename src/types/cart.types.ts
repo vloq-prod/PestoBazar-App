@@ -73,7 +73,7 @@ export interface CartResponse {
   message: string;
   status: number;
   data: {
-    cart: CartSummary;
+    cart_app: CartSummary;
     cart_details: CartItem[];
   };
 }
@@ -83,9 +83,13 @@ export interface CartResponse {
 
 
 export interface GetCartCountParams {
-  user_id: number;
+  user_id: string | number;
   visitor_id: string;
 }
+
+
+
+
 export interface CartCountResponse {
   message: string;
   status: number;
@@ -97,7 +101,7 @@ export interface CartCountResponse {
 
 
 export interface GetQuickCartParams {
-  user_id: number;
+  user_id: number | string;
   visitor_id: string;
 }
 
@@ -110,3 +114,81 @@ export interface QuickCartResponse {
   status: number;
   data: QuickCartItem[];
 }
+
+
+
+
+
+
+// Common API Response
+export interface ApiResponse<T> {
+  message: string;
+  status: number;
+  data: T;
+}
+
+// Remove Cart Item Request
+export interface RemoveCartItemRequest {
+  visitor_id: string;
+  product_id: string;
+  qty: number;
+  user_id: string |number;
+  cart_id: string;
+  cart_detail_id: number;
+}
+
+// Remove Cart Item Response Data
+export interface RemoveCartItemData {
+  cart_count?: number;
+  cart_amount?: string;
+  amount_to_pay?: number;
+}
+
+// Final Response
+export type RemoveCartItemResponse =
+  ApiResponse<RemoveCartItemData>;
+
+
+
+
+
+
+  
+
+
+  // ======================================================
+// src/services/enquiry/enquiry.types.ts
+// ======================================================
+
+// Common API Response
+export interface ApiResponse<T> {
+  status: number;
+  message: string;
+  data: T;
+}
+
+// Bulk Enquiry Request
+export interface BulkEnquiryRequest {
+  email: string;
+  mobile: string;
+  name: string;
+  product: string;
+}
+
+// Bulk Enquiry Response Data
+export interface BulkEnquiryData {
+  id: number;
+  name: string;
+  mobile: string;
+  email: string;
+  product: string;
+  ip_address: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Final Response
+export type BulkEnquiryResponse =
+  ApiResponse<BulkEnquiryData>;
+
+  

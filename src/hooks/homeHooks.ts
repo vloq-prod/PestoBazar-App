@@ -1,5 +1,6 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import {
+  bulkEnquiryApi,
   getBanners,
   getBranches,
   getDealsOfTheDay,
@@ -10,7 +11,7 @@ import {
   getTestimonials,
   getUsp,
 } from "../api/home.api";
-import { CategoryWithSubcategories } from "../types/home.types";
+import { BulkEnquiryRequest, BulkEnquiryResponse, CategoryWithSubcategories } from "../types/home.types";
 
 // useBanner hook
 export const useBanner = () => {
@@ -201,4 +202,25 @@ export const useRecentlyViewed = (visitorId: string) => {
     loading: query.isLoading,
     error: query.error,
   };
+};
+
+
+
+export const useBulkEnquiry = () => {
+  return useMutation<
+    BulkEnquiryResponse,
+    Error,
+    BulkEnquiryRequest
+  >({
+    mutationFn: bulkEnquiryApi,
+
+    onSuccess: (response) => {
+      console.log("✅", response.message);
+      console.log("📦 Saved ID:", response.data.id);
+    },
+
+    onError: (error) => {
+      console.log("❌", error.message);
+    },
+  });
 };
