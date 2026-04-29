@@ -33,6 +33,7 @@ import { z, ZodError } from "zod";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
 import { useEffect } from "react";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -161,37 +162,11 @@ export default function Login() {
   });
   const isExpoGo = Constants.executionEnvironment === "storeClient";
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
-    redirectUri: googleRedirectUri,
-    scopes: ["openid", "profile", "email"],
-    selectAccount: true,
-  });
-
-  const handleGoogleLogin = useCallback(() => {
-    if (isExpoGo) {
-      console.error("❌ Google Auth blocked in Expo Go", {
-        redirectUri: googleRedirectUri,
-        platform: Platform.OS,
-        executionEnvironment: Constants.executionEnvironment,
-      });
-      Alert.alert(
-        "Google login unavailable",
-        "Google Sign-In cannot run inside Expo Go. Use a development build or standalone app for Google login.",
-      );
-      return;
-    }
-
-    promptAsync().catch((authError) => {
-      console.error("❌ Failed to start Google Auth:", {
-        authError,
-        redirectUri: googleRedirectUri,
-        platform: Platform.OS,
-      });
-    });
-  }, [googleRedirectUri, isExpoGo, promptAsync]);
+const [request, response, promptAsync] = Google.useAuthRequest({
+  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+});
 
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
