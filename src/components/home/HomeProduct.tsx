@@ -163,16 +163,6 @@
     const { colors } = useTheme();
 
     const router = useRouter();
-    const { addToCart } = useAddToCart();
-    const visitorId = useAppVisitorStore((state) => state.visitorId);
-
-    const handleAddToCart = (product: ProductItem, qty: number) => {
-      addToCart({
-        visitor_id: visitorId,
-        product_id: product.id,
-        qty: qty,
-      });
-    };
 
     // ── Loading
     if (loading) {
@@ -243,9 +233,6 @@
                   <ItemCard
                     item={item as any}
                     onPress={(p: any) => console.log("press", p.slug)}
-                    onAddToCart={(item: ProductItem, qty: number) =>
-                      handleAddToCart(item, qty)
-                    }
                   />
                 </View>
               )}

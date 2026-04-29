@@ -132,8 +132,8 @@ export default function Address() {
         spacing={spacing}
         onAddPress={() =>
           router.push({
-            pathname: "/(stack)/addaddress",
-            params: { type },
+            pathname: "/(stack)/map",
+            params: { from: "address", type },
           })
         }
       />
@@ -210,7 +210,7 @@ export default function Address() {
             { paddingBottom: insets.bottom + 20 },
           ]}
         >
-          {billingList.length !== 0 && deliveryList.length !== 0 ? (
+          {billingList.length === 0 && deliveryList.length === 0 ? (
             <View style={styles.emptyContainer}>
               <View
                 style={[
@@ -236,18 +236,6 @@ export default function Address() {
               >
                 Add a new address to continue shopping
               </Text>
-
-              <TouchableOpacity
-                style={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  backgroundColor: colors.primary,
-                  borderRadius: 25,
-                }}
-              onPress={() => router.push("(stack)/map")}
-              >
-                <Text style={{ color: colors.textInverse }}>Open Map</Text>
-              </TouchableOpacity>
             </View>
           ) : (
             <>

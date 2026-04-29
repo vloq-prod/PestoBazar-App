@@ -6,6 +6,8 @@ import { ListingItem } from "../../types/shop.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
+import { useAppVisitorStore } from "../../store/auth";
+import { useAddToCart } from "../../hooks/cartHooks";
 
 interface Props {
   item: ListingItem;
@@ -16,7 +18,9 @@ interface Props {
 const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
-  const router = useRouter()
+  const router = useRouter();
+  const { visitorId, userId } = useAppVisitorStore((s) => s);
+  const { addToCart } = useAddToCart();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -230,9 +234,16 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={() => {
-              setQty(1);
+              const newQty = 1;
+              setQty(newQty);
               setInputVal("1");
-              onAddToCart?.(item, 1);
+              addToCart({
+                user_id: userId ?? 0,
+                visitor_id: visitorId,
+                product_id: item.id,
+                qty: newQty,
+              });
+              onAddToCart?.(item, newQty);
             }}
             style={{
               backgroundColor: colors.primary,
@@ -266,13 +277,26 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
             <TouchableOpacity
               onPress={() => {
                 if (qty <= 1) {
-                  setQty(0);
+                  const nextQty = 0;
+                  setQty(nextQty);
                   setInputVal("1");
-                  onAddToCart?.(item, 0);
+                  addToCart({
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  });
+                  onAddToCart?.(item, nextQty);
                 } else {
                   const nextQty = qty - 1;
                   setQty(nextQty);
                   setInputVal(String(nextQty));
+                  addToCart({
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  });
                   onAddToCart?.(item, nextQty);
                 }
               }}
@@ -302,6 +326,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 const nextQty = qty + 1;
                 setQty(nextQty);
                 setInputVal(String(nextQty));
+                addToCart({
+                  user_id: userId ?? 0,
+                  visitor_id: visitorId,
+                  product_id: item.id,
+                  qty: nextQty,
+                });
                 onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}

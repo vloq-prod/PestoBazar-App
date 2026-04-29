@@ -66,8 +66,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
 
   // ── Logout (clears everything) ────────────────────
   logout: async () => {
-    await StorageUtil.clearVisitor();
     await StorageUtil.clearUser();
-    set({ visitorId: null, token: null, userId: null, userName: null });
+    set({ userId: null, userName: null });
   },
 }));

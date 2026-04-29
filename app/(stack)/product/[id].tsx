@@ -60,7 +60,7 @@ const ProductDetails = () => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const {visitorId, userId} = useAppVisitorStore((state) => state);
 
   const descriptionSheetRef = useRef<BottomSheet>(null);
 
@@ -76,7 +76,7 @@ const ProductDetails = () => {
       : undefined;
 
   // console.log("product slug: ", productSlug);
-  // console.log("product product id: ", productId);
+  console.log("product product id: ", productId);
 
   // ─── Animation Values ───────────────────────────────────────
   const scrollY = useSharedValue(0);
@@ -195,7 +195,7 @@ const ProductDetails = () => {
     if (!realProductId) return;
     setQuantity(1);
     addToCart({
-      user_id: 0,
+      user_id: userId ?? 0,
       visitor_id: visitorId!,
       product_id: realProductId,
       qty: 1,
@@ -207,7 +207,7 @@ const ProductDetails = () => {
     const newQty = quantity + 1;
     setQuantity(newQty);
     addToCart({
-      user_id: 0,
+      user_id: userId ?? 0,
       visitor_id: visitorId!,
       product_id: realProductId,
       qty: newQty,
@@ -219,7 +219,7 @@ const ProductDetails = () => {
     const newQty = Math.max(quantity - 1, 0);
     setQuantity(newQty);
     addToCart({
-      user_id: 0,
+      user_id: userId ?? 0,
       visitor_id: visitorId!,
       product_id: realProductId,
       qty: newQty,

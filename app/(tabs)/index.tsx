@@ -46,10 +46,8 @@ export default function HomeScreen() {
   const isConnected = useNetworkStatus();
   const insets = useSafeAreaInsets();
 
-  const visitorId =  useAppVisitorStore((state) => state.visitorId);
-  console.log("visitor id : ", visitorId)
-  
-  
+  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  console.log("visitor id : ", visitorId);
 
   const { colors } = useTheme();
   const { slidingbanners, featureBanners, homeBottomBanners } =

@@ -59,18 +59,16 @@ export const useSaveAddress = (onDone?: () => void) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: SaveAddressRequest) =>
-      saveAddressApi(payload),
+    mutationFn: (payload: SaveAddressRequest) => saveAddressApi(payload),
 
     onSuccess: async (_res, variables) => {
       const userId = variables.user_id;
 
-      await queryClient.refetchQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["address", userId],
-        exact: true,
       });
 
-      await queryClient.removeQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["single-address"],
       });
 
@@ -137,16 +135,6 @@ export const useValidatePincode = () => {
     },
   });
 };
-
-
-
-
-
-
-
-
-
-
 
 // await queryClient.refetchQueries(...)
 // setTimeout(() => router.back(), 500)

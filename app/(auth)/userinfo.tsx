@@ -33,7 +33,7 @@ const nameSchema = {
 
 export default function UserInfo() {
   const router = useRouter();
-  const { mobile } = useLocalSearchParams<{ mobile: string }>();
+  const { mobile, redirectTo } = useLocalSearchParams<{ mobile: string; redirectTo?: string }>();
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
@@ -73,7 +73,7 @@ export default function UserInfo() {
         onSuccess: () => {
           router.push({
             pathname: "/(auth)/verifyotp",
-            params: { mobile, isNewUser: "1", fullName },
+            params: { mobile, isNewUser: "1", fullName, ...(redirectTo ? { redirectTo } : {}) },
           });
         },
         onError: () => setErrors({ firstName: "Failed to send OTP. Try again." }),

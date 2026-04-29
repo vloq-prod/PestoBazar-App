@@ -6,7 +6,9 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  useWindowDimensions,
 } from "react-native";
+import RenderHtml from "react-native-render-html";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
@@ -73,6 +75,7 @@ const PriceRow = ({
   value,
   isTotal,
   isGreen,
+  isRed,
   colors,
   font,
   spacing,
@@ -84,7 +87,11 @@ const PriceRow = ({
         {
           fontSize: isTotal ? font(14) : font(13),
           fontFamily: isTotal ? "Poppins_600SemiBold" : "Poppins_400Regular",
-          color: isTotal ? colors.text : colors.textSecondary,
+          color: isRed
+            ? "#EF4444"
+            : isTotal
+              ? colors.text
+              : colors.textSecondary,
         },
       ]}
     >
@@ -96,7 +103,13 @@ const PriceRow = ({
         {
           fontSize: isTotal ? font(17) : font(13),
           fontFamily: isTotal ? "Poppins_700Bold" : "Poppins_500Medium",
-          color: isGreen ? "#22C55E" : isTotal ? colors.primary : colors.text,
+          color: isRed
+            ? "#EF4444"
+            : isGreen
+              ? "#22C55E"
+              : isTotal
+                ? colors.primary
+                : colors.text,
         },
       ]}
     >
@@ -112,8 +125,11 @@ export default function Checkout() {
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const scrollRef = React.useRef<ScrollView>(null);
+  const [summaryY, setSummaryY] = useState(0);
 
   const userId = useAppVisitorStore((s) => s.userId);
   const { mutate: checkoutMutate, isPending, data, error } = useCheckout();
@@ -195,7 +211,11 @@ export default function Checkout() {
             {
               onSuccess: (pincodeRes) => {
                 if (pincodeRes?.status !== 1) {
-                  showToast(pincodeRes?.message || "Delivery not available for this pincode", "error");
+                  showToast(
+                    pincodeRes?.message ||
+                      "Delivery not available for this pincode",
+                    "error",
+                  );
                   return;
                 }
 
@@ -206,7 +226,10 @@ export default function Checkout() {
                 });
               },
               onError: (err: any) => {
-                showToast("Pincode validation error. Please try again.", "error");
+                showToast(
+                  "Pincode validation error. Please try again.",
+                  "error",
+                );
               },
             },
           );
@@ -243,15 +266,11 @@ export default function Checkout() {
   const billingList: any[] = addressData?.data?.billing_address ?? [];
   const deliveryList: any[] = addressData?.data?.delivery_address ?? [];
 
-  // ── Compute the address_id to send to shipping API ──────────────────────────
-  // sameAsBilling ON  → billing address id
-  // sameAsBilling OFF → delivery address id
   const effectiveAddressId: string | null = sameAsBilling
     ? (billingList.find((a) => a.id === selectedBillingId)?.address_id ?? null)
     : (deliveryList.find((a) => a.id === selectedDeliveryId)?.address_id ??
       null);
 
-  // ── Shipping result overrides cart values when available ────────────────────
   const shippingCart = shippingData?.data?.cart;
   const isFreeShipping =
     (shippingCart?.free_shipping ?? cart?.free_shipping) === "Yes";
@@ -261,10 +280,8 @@ export default function Checkout() {
   const gstAmount = cart?.gst_amount ?? "";
   const isCod = paymentMethod === "cod";
 
-  // COD charges — directly from API, no manual calculation
-  const codCharge = Number(shippingCart?.cod_charges ?? cart?.cod_charges ?? 0);
+  const codCharge = Number(cart?.cod_charges ?? 0);
 
-  // amount_to_pay — fully from API (shipping API already includes COD if applicable)
   const amountToPay = shippingCart?.amount_to_pay
     ? Number(shippingCart.amount_to_pay)
     : Number(cart?.amount_to_pay ?? 0);
@@ -281,7 +298,6 @@ export default function Checkout() {
     );
   }, [checkoutMutate, userId]);
 
-  // ── Trigger shipping API whenever effective address changes ─────────────────
   const visitorId = useAppVisitorStore((s) => s.visitorId);
   useEffect(() => {
     if (!userId || !visitorId || !cartId || !effectiveAddressId) return;
@@ -290,46 +306,53 @@ export default function Checkout() {
       user_id: userId,
       cart_id: cartId,
       address_id: effectiveAddressId,
+      payment_mode: paymentMethod === "cod" ? "cod" : "online",
     });
-  }, [effectiveAddressId, cartId, userId, visitorId]);
+  }, [effectiveAddressId, cartId, userId, visitorId, paymentMethod]);
 
-  // ── Debug: console log all price values ────────────────────────────────
-  // useEffect(() => {
-  //   console.log("\n======= CHECKOUT PRICE DEBUG =======");
-  //   console.log("[CART API]");
-  //   console.log("  cart_amount     :", cart?.cart_amount);
-  //   console.log("  shipping_charge :", cart?.shipping_charge);
-  //   console.log("  gst_amount      :", cart?.gst_amount);
-  //   console.log("  cod_charges     :", cart?.cod_charges);
-  //   console.log("  amount_to_pay   :", cart?.amount_to_pay);
-  //   console.log("  free_shipping   :", cart?.free_shipping);
-  //   console.log("[SHIPPING API]");
-  //   console.log("  cart_amount     :", shippingCart?.cart_amount);
-  //   console.log("  shipping_charge :", shippingCart?.shipping_charge);
-  //   console.log("  cod_charges     :", shippingCart?.cod_charges);
-  //   console.log("  amount_to_pay   :", shippingCart?.amount_to_pay);
-  //   console.log("  free_shipping   :", shippingCart?.free_shipping);
-  //   console.log("[COMPUTED]");
-  //   console.log("  shippingCharge  :", shippingCharge);
-  //   console.log("  codCharge       :", codCharge);
-  //   console.log("  amountToPay     :", amountToPay);
-  //   console.log("  paymentMethod   :", paymentMethod);
-  //   console.log("  isCod           :", isCod);
-  //   console.log("  effectiveAddrId :", effectiveAddressId);
-  //   console.log("[IDs]");
-  //   console.log("  userId          :", userId);
-  //   console.log("  visitorId       :", visitorId);
-  //   console.log("  cartId          :", cartId);
-  //   console.log("===================================\n");
-  // }, [
-  //   shippingCart,
-  //   cart,
-  //   shippingCharge,
-  //   codCharge,
-  //   amountToPay,
-  //   paymentMethod,
-  //   effectiveAddressId,
-  // ]);
+  useEffect(() => {
+    if (shippingData?.message) {
+      showToast(shippingData.message, "error");
+    }
+  }, [shippingData]);
+
+  useEffect(() => {
+    console.log("\n======= CHECKOUT PRICE DEBUG =======");
+    console.log("[CART API]");
+    console.log("  cart_amount     :", cart?.cart_amount);
+    console.log("  shipping_charge :", cart?.shipping_charge);
+    console.log("  gst_amount      :", cart?.gst_amount);
+    console.log("  cod_charges     :", cart?.cod_charges);
+    console.log("  amount_to_pay   :", cart?.amount_to_pay);
+    console.log("  free_shipping   :", cart?.free_shipping);
+    console.log("[SHIPPING API]");
+    console.log("  cart_amount     :", shippingCart?.cart_amount);
+    console.log("  shipping_charge :", shippingCart?.shipping_charge);
+    console.log("  cod_charges     :", shippingCart?.cod_charges);
+    console.log("  amount_to_pay   :", shippingCart?.amount_to_pay);
+    console.log("  free_shipping   :", shippingCart?.free_shipping);
+    console.log(" message shipping: ", shippingData?.message);
+    console.log("[COMPUTED]");
+    console.log("  shippingCharge  :", shippingCharge);
+    console.log("  codCharge       :", codCharge);
+    console.log("  amountToPay     :", amountToPay);
+    console.log("  paymentMethod   :", paymentMethod);
+    console.log("  isCod           :", isCod);
+    console.log("  effectiveAddrId :", effectiveAddressId);
+    console.log("[IDs]");
+    console.log("  userId          :", userId);
+    console.log("  visitorId       :", visitorId);
+    console.log("  cartId          :", cartId);
+    console.log("===================================\n");
+  }, [
+    shippingCart,
+    cart,
+    shippingCharge,
+    codCharge,
+    amountToPay,
+    paymentMethod,
+    effectiveAddressId,
+  ]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isPending) {
@@ -397,6 +420,7 @@ export default function Checkout() {
       <AppNavbar title="Checkout" showBack />
 
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
@@ -421,8 +445,8 @@ export default function Checkout() {
               <TouchableOpacity
                 onPress={() =>
                   router.push({
-                    pathname: "(stack)/addaddress",
-                    params: { type: "billing" },
+                    pathname: "/(stack)/map",
+                    params: { from: "checkout", type: "billing" },
                   })
                 }
                 activeOpacity={0.7}
@@ -524,8 +548,8 @@ export default function Checkout() {
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
-                      pathname: "(stack)/addaddress",
-                      params: { type: "delivery" },
+                      pathname: "/(stack)/map",
+                      params: { from: "checkout", type: "delivery" },
                     })
                   }
                   activeOpacity={0.7}
@@ -589,7 +613,6 @@ export default function Checkout() {
           </View>
         )}
 
-      
         <View>
           <SectionTitle
             title="Payment Method"
@@ -605,41 +628,101 @@ export default function Checkout() {
               style={[
                 styles.paymentOption,
                 {
-                  backgroundColor: paymentMethod === "online" ? colors.primary + "08" : colors.surface,
-                  borderColor: paymentMethod === "online" ? colors.primary : colors.border,
+                  backgroundColor:
+                    paymentMethod === "online"
+                      ? colors.primary + "08"
+                      : colors.surface,
+                  borderColor:
+                    paymentMethod === "online" ? colors.primary : colors.border,
                   borderWidth: 1.5,
                   padding: spacing(16),
                   alignItems: "flex-start", // Top alignment for cleaner multi-line look
                 },
               ]}
             >
-              <View style={[styles.iconBox, { backgroundColor: colors.background, marginTop: 2 }]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  { backgroundColor: colors.background, marginTop: 2 },
+                ]}
+              >
                 <CreditCard
                   size={22}
-                  color={paymentMethod === "online" ? colors.primary : colors.textSecondary}
+                  color={
+                    paymentMethod === "online"
+                      ? colors.primary
+                      : colors.textSecondary
+                  }
                 />
               </View>
 
               <View style={{ flex: 1, marginLeft: spacing(12) }}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <Text style={[styles.paymentOptionTitle, { color: colors.text, fontSize: font(13.5) }]}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.paymentOptionTitle,
+                      { color: colors.text, fontSize: font(13.5) },
+                    ]}
+                  >
                     Pay Online
                   </Text>
-                  <View style={{ backgroundColor: "#22C55E15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                    <Text style={{ color: "#22C55E", fontSize: font(10), fontFamily: "Poppins_600SemiBold" }}>
+                  <View
+                    style={{
+                      backgroundColor: "#22C55E15",
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#22C55E",
+                        fontSize: font(10),
+                        fontFamily: "Poppins_600SemiBold",
+                      }}
+                    >
                       RECOMMENDED
                     </Text>
                   </View>
                 </View>
-                
-                <Text style={[styles.paymentOptionDesc, { color: colors.textSecondary, fontSize: font(11), lineHeight: font(16) }]}>
+
+                <Text
+                  style={[
+                    styles.paymentOptionDesc,
+                    {
+                      color: colors.textSecondary,
+                      fontSize: font(11),
+                      lineHeight: font(16),
+                    },
+                  ]}
+                >
                   UPI, Cards, Wallets, NetBanking
                 </Text>
 
-                <View style={{ marginTop: spacing(8), flexDirection: "row", alignItems: "center", gap: 4 }}>
-                   <Text style={{ color: "#22C55E", fontSize: font(10.5), fontFamily: "Poppins_500Medium" }}>
-                     No extra charges applied
-                   </Text>
+                <View
+                  style={{
+                    marginTop: spacing(8),
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#22C55E",
+                      fontSize: font(10.5),
+                      fontFamily: "Poppins_500Medium",
+                    }}
+                  >
+                    No extra charges applied
+                  </Text>
                 </View>
               </View>
 
@@ -659,42 +742,95 @@ export default function Checkout() {
               style={[
                 styles.paymentOption,
                 {
-                  backgroundColor: paymentMethod === "cod" ? colors.error + "05" : colors.surface,
-                  borderColor: paymentMethod === "cod" ? colors.primary : colors.border,
+                  backgroundColor:
+                    paymentMethod === "cod"
+                      ? colors.error + "05"
+                      : colors.surface,
+                  borderColor:
+                    paymentMethod === "cod" ? colors.primary : colors.border,
                   borderWidth: 1.5,
                   padding: spacing(16),
                   alignItems: "flex-start",
                 },
               ]}
             >
-              <View style={[styles.iconBox, { backgroundColor: colors.background, marginTop: 2 }]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  { backgroundColor: colors.background, marginTop: 2 },
+                ]}
+              >
                 <Banknote
                   size={22}
-                  color={paymentMethod === "cod" ? colors.primary : colors.textSecondary}
+                  color={
+                    paymentMethod === "cod"
+                      ? colors.primary
+                      : colors.textSecondary
+                  }
                 />
               </View>
 
               <View style={{ flex: 1, marginLeft: spacing(12) }}>
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <Text style={[styles.paymentOptionTitle, { color: colors.text, fontSize: font(13.5) }]}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.paymentOptionTitle,
+                      { color: colors.text, fontSize: font(13.5) },
+                    ]}
+                  >
                     Cash on Delivery
                   </Text>
                   {codCharge > 0 && (
-                    <Text style={{ color: "#EF4444", fontSize: font(11), fontFamily: "Poppins_600SemiBold" }}>
+                    <Text
+                      style={{
+                        color: "#EF4444",
+                        fontSize: font(11),
+                        fontFamily: "Poppins_600SemiBold",
+                      }}
+                    >
                       {fmt(codCharge)} extra
                     </Text>
                   )}
                 </View>
-                
-                <Text style={[styles.paymentOptionDesc, { color: colors.textSecondary, fontSize: font(11), lineHeight: font(16) }]}>
+
+                <Text
+                  style={[
+                    styles.paymentOptionDesc,
+                    {
+                      color: colors.textSecondary,
+                      fontSize: font(11),
+                      lineHeight: font(16),
+                    },
+                  ]}
+                >
                   Pay when you receive the order
                 </Text>
 
                 {codCharge > 0 && (
-                  <View style={{ marginTop: spacing(8), flexDirection: "row", alignItems: "center", gap: 4 }}>
-                     <Text style={{ color: "#EF4444", fontSize: font(10.5), fontFamily: "Poppins_500Medium" }}>
-                       {fmt(codCharge)} COD handling charges applied
-                     </Text>
+                  <View
+                    style={{
+                      marginTop: spacing(8),
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#EF4444",
+                        fontSize: font(10.5),
+                        fontFamily: "Poppins_500Medium",
+                      }}
+                    >
+                      {fmt(codCharge)} COD handling charges applied
+                    </Text>
                   </View>
                 )}
               </View>
@@ -710,8 +846,8 @@ export default function Checkout() {
           </View>
         </View>
 
-
         <View
+          onLayout={(e) => setSummaryY(e.nativeEvent.layout.y)}
           style={[
             styles.summaryCard,
             {
@@ -803,13 +939,42 @@ export default function Checkout() {
           )}
 
           {isCod && codCharge > 0 && (
-            <PriceRow
-              label="COD Charges"
-              value={fmt(codCharge)}
-              colors={colors}
-              font={font}
-              spacing={spacing}
-            />
+            <>
+              <PriceRow
+                label="COD Charges"
+                value={fmt(codCharge)}
+                isRed
+                colors={colors}
+                font={font}
+                spacing={spacing}
+              />
+              <View
+                style={{
+                  backgroundColor: "#FEF2F2",
+                  borderRadius: spacing(8),
+                  paddingHorizontal: spacing(10),
+                  paddingVertical: spacing(6),
+                  marginTop: spacing(2),
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: "#B91C1C",
+                    lineHeight: font(16),
+                  }}
+                >
+                  Avoid COD charges and pay online to save{" "}
+                  <Text
+                    style={{ fontFamily: "Poppins_700Bold", color: "#EF4444" }}
+                  >
+                    {fmt(codCharge)}
+                  </Text>{" "}
+                  on this order
+                </Text>
+              </View>
+            </>
           )}
 
           <View
@@ -844,28 +1009,99 @@ export default function Checkout() {
           },
         ]}
       >
-        {isFreeShipping && (
+        {/* ── Free Shipping Banner ── */}
+        {isFreeShipping ? (
           <View
             style={[
               styles.freeShippingBanner,
-              { backgroundColor: colors.primary + "20" },
+              {
+                backgroundColor: colors.primary + 20,
+                borderColor: colors.primary + "28",
+              },
             ]}
           >
-            <Text style={[styles.freeShippingText, { color: colors.primary }]}>
-              You have unlocked FREE shipping
+            <Text
+              style={{
+                fontFamily: "Poppins_500Medium",
+                fontSize: font(12),
+                color: colors.textSecondary,
+                lineHeight: font(18),
+              }}
+            >
+              You have unlocked{" "}
+              <Text
+                style={{
+                  fontFamily: "Poppins_700Bold",
+                  color: colors.primary,
+                }}
+              >
+                FREE shipping
+              </Text>
             </Text>
           </View>
-        )}
+        ) : !!cart.free_shipping_message ? (
+          <View
+            style={[
+              styles.freeShippingBanner,
+              {
+                backgroundColor: colors.primary + 20,
+                borderColor: colors.primary + "28",
+              },
+            ]}
+          >
+            <RenderHtml
+              contentWidth={windowWidth - 40}
+              source={{ html: cart.free_shipping_message }}
+              tagsStyles={{
+                body: {
+                  margin: 0,
+                  padding: 0,
+                },
+                p: {
+                  margin: 0,
+                  padding: 0,
+                },
+                span: {
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12),
+                  fontWeight: "500",
+
+                  color: colors.textSecondary,
+                  lineHeight: font(18),
+                },
+                strong: {
+                  fontFamily: "Poppins_700Bold",
+                  fontSize: font(12),
+                  color: colors.primary,
+                },
+                b: {
+                  fontFamily: "Poppins_700Bold",
+                  fontSize: font(12),
+                  color: colors.primary,
+                },
+              }}
+              defaultTextProps={{
+                allowFontScaling: false,
+              }}
+            />
+          </View>
+        ) : null}
 
         <View style={styles.bottomBarInner}>
           <View>
             <Text style={[styles.amountText, { color: colors.text }]}>
               {formatINR(amountToPay)}
             </Text>
-            <View style={styles.grandTotalRow}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() =>
+                scrollRef.current?.scrollTo({ y: summaryY, animated: true })
+              }
+              style={styles.grandTotalRow}
+            >
               <Text style={styles.grandTotalLabel}>Grand Total</Text>
               <Info size={13} color={colors.textTertiary} />
-            </View>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity

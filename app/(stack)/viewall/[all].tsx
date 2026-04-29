@@ -13,7 +13,6 @@ import { useTheme } from "../../../src/theme";
 import AppNavbar from "../../../src/components/comman/AppNavbar";
 import { useLocalSearchParams } from "expo-router";
 import { useHomeProduct } from "../../../src/hooks/homeHooks";
-import { useAddToCart } from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
 import { LayoutGrid, List } from "lucide-react-native";
 import { ProductItem } from "../../../src/types/home.types";
@@ -73,8 +72,8 @@ const AllProducts = () => {
   const selectedSection = sections.find((sec) => sec.title === title);
   const products = selectedSection?.products || [];
 
-  const { addToCart } = useAddToCart();
-  const visitorId = useAppVisitorStore((s) => s.visitorId);
+  // const { addToCart } = useAddToCart(); // 🗑️ Handled internally by cards
+  // const {visitorId, userId} = useAppVisitorStore((state) => state);
 
   // ✅ MAPPED DATA
   const mappedProducts = React.useMemo(() => {
@@ -82,11 +81,7 @@ const AllProducts = () => {
   }, [products]);
 
   const handleAddToCart = (item: ListingItem, qty: number) => {
-    addToCart({
-      visitor_id: visitorId,
-      product_id: item.id,
-      qty,
-    });
+    // 🚀 Internalized in ProductCard
   };
 
   return (

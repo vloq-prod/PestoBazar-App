@@ -2,6 +2,7 @@
   "expo": {
     "name": "Pestobazaar",
     "owner": "Daniyal Shaikh",
+    "scheme": "pestobazaar",
     "slug": "pestobazaar",
     "version": "1.0.0",
     "orientation": "portrait",

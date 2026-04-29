@@ -2,6 +2,7 @@ export default {
   expo: {
     name: "pestobazaar",
     slug: "pestobazaar",
+    scheme: "pestobazaar",
     version: "1.0.0",
     orientation: "portrait",
 
@@ -18,6 +19,7 @@ export default {
 
     ios: {
       buildNumber: "1",
+      bundleIdentifier: "com.pestobazaar.app",
     },
 
     android: {

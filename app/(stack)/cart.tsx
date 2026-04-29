@@ -119,7 +119,7 @@ export default function CartScreen() {
     if (userId) {
       router.push("/checkout");
     } else {
-      router.push("/login");
+      router.push({ pathname: "/login", params: { redirectTo: "/checkout" } });
     }
   };
 
@@ -140,8 +140,10 @@ export default function CartScreen() {
           },
         ]}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 120,
-          gap: spacing(16),
+          paddingTop: spacing(20),
+          paddingBottom: insets.bottom + 170,
+
+          flexGrow: 1,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -186,7 +188,7 @@ export default function CartScreen() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.background,
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: Math.max(insets.bottom),
         }}
       >
         <View

@@ -1,12 +1,13 @@
 // app/(stack)/category/[slug].tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, StatusBar, StyleSheet } from "react-native";
+import { View, StatusBar, StyleSheet, TouchableOpacity } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { useSharedValue } from "react-native-reanimated";
+import { LayoutGrid, List } from "lucide-react-native";
 import { useTheme } from "../../../src/theme";
 import AppNavbar from "../../../src/components/comman/AppNavbar";
 import { useCategory } from "../../../src/hooks/homeHooks";
@@ -110,7 +111,31 @@ const CategoryDetails = () => {
         translucent
       />
 
-      <AppNavbar title={String(name)} showBack count={productCount} />
+      <AppNavbar 
+        title={String(name)} 
+        showBack 
+        count={productCount} 
+        rightComponent={
+          !hasSubcategories ? (
+            <TouchableOpacity
+              onPress={toggleViewMode}
+              style={{
+                padding: 6,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.primary,
+                backgroundColor: colors.primary + "12",
+              }}
+            >
+              {resolvedViewMode === "grid" ? (
+                <LayoutGrid size={20} color={colors.primary} />
+              ) : (
+                <List size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       <View style={styles.body}>
         {/* ✅ Sidebar */}

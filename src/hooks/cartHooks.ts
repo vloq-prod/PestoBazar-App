@@ -13,19 +13,26 @@ import {
   GetQuickCartParams,
   QuickCartResponse,
 } from "../types/cart.types";
+import { useToast } from "../context/ToastContext";
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const mutation = useMutation({
     mutationFn: (payload: AddToCartRequest) => addToCart(payload),
 
     onError: (error: any) => {
-      console.log("❌ AddToCart Error:", error?.message);
+      showToast(error?.message || "Failed to add to cart", "error");
     },
 
     onSuccess: (data, variables) => {
-      console.log("✅ Added to Cart:", data.message);
+      // ✅ Handle API status (1 = Success, 0 = Failure)
+      if (data.status === 1) {
+        showToast(data.message || "Product added to cart", "success");
+      } else {
+        showToast(data.message || "Failed to update cart", "error");
+      }
 
       queryClient.invalidateQueries({
         queryKey: ["cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
@@ -90,9 +97,6 @@ export const useQuickCart = (params: GetQuickCartParams) => {
     staleTime: 1000 * 60 * 2, // 2 min cache
   });
 };
-
-
-
 
 export const useCartAction = () => {
   const queryClient = useQueryClient();
@@ -169,7 +173,10 @@ export const useCartAction = () => {
     },
 
     onError: (error: any) => {
-      console.log("❌ CartAction Error:", error?.response?.data || error?.message);
+      console.log(
+        "❌ CartAction Error:",
+        error?.response?.data || error?.message,
+      );
     },
 
     onSettled: (_data, _error, variables, context) => {
@@ -178,7 +185,10 @@ export const useCartAction = () => {
       }
 
       if (_error && context?.previousCartCount) {
-        queryClient.setQueryData(context.cartCountKey, context.previousCartCount);
+        queryClient.setQueryData(
+          context.cartCountKey,
+          context.previousCartCount,
+        );
       }
 
       queryClient.invalidateQueries({
@@ -186,16 +196,24 @@ export const useCartAction = () => {
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["cart-count", variables.user_id ?? 0, variables.visitor_id ?? ""],
+        queryKey: [
+          "cart-count",
+          variables.user_id ?? 0,
+          variables.visitor_id ?? "",
+        ],
       });
 
       queryClient.invalidateQueries({
-        queryKey: ["quick-cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
+        queryKey: [
+          "quick-cart",
+          variables.user_id ?? 0,
+          variables.visitor_id ?? "",
+        ],
       });
     },
 
     onSuccess: (data, variables) => {
-      console.log("✅ CartAction Success:", data?.message, data?.data);
+      // console.log("✅ CartAction Success:", data?.message, data?.data);
     },
   });
 

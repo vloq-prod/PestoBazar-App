@@ -13,7 +13,7 @@ export interface CartSummary {
   free_shipping_message: string;
   free_shipping: string;
   gst_amount: number | string;
-  cod_charges?: string; // ✅ ADD THIS
+  cod_charges?: string; 
 }
 
 // 🔹 Cart Item
@@ -137,18 +137,18 @@ export interface GetSingleAddressResponse {
 // 🔹 Request
 export interface SaveAddressRequest {
   user_id: string;
-  address_name: "Home" | "Office" | "Warehouse" | "Others";
+  address_name: string;
   full_name: string;
   number: string;
   email: string;
   building: string;
   area: string;
   address: string;
-  state: string; // state id
+  state: string;
   city: string;
   pincode: string;
   gst?: string;
-  address_id?: string; // 👉 empty = create, filled = update
+  address_id?: string;
   address_type: "billing" | "delivery";
 }
 
@@ -179,6 +179,7 @@ export interface ShippingRequest {
   user_id: string;
   cart_id: string;
   address_id: string;
+  payment_mode?: "cod" | "online";
 }
 
 // 🔹 Cart Summary (shipping result)

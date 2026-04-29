@@ -70,14 +70,14 @@ const SkeletonCard = ({
 const RecentlyViewProducts = () => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const {visitorId, userId} = useAppVisitorStore((state) => state);
 
   const { data, isLoading } = useQuery({
     queryKey: ["recently-viewed", visitorId],
     queryFn: () =>
       getRecentlyViewed({
         visitor_id: visitorId!,
-        user_id: "0",
+        user_id: userId ?? "0",
       }),
     enabled: !!visitorId,
     select: (res) => res?.data?.recently_viewed ?? [],
@@ -133,7 +133,10 @@ const RecentlyViewProducts = () => {
           : products.map((item, index) => {
               return (
                 <View key={index} style={{ width: cardWidth }}>
-                  <ItemCard key={index} item={item as any} />
+                  <ItemCard
+                    key={index}
+                    item={item as any}
+                  />
                 </View>
               );
             })}

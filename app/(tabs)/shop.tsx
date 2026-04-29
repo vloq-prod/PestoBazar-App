@@ -18,6 +18,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
+  useAnimatedStyle,
 } from "react-native-reanimated";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -29,6 +30,7 @@ import {
   SlidersHorizontal,
   LayoutGrid,
   List,
+  ArrowUp,
 } from "lucide-react-native";
 import { useListing } from "../../src/hooks/shopHooks";
 import FilterBottomSheet, {
@@ -39,8 +41,8 @@ import SortBottomSheet, {
 } from "../../src/modals/shop/SortBottomSheet";
 import ProductCard from "../../src/components/ProductCard";
 import { ListingItem } from "../../src/types/shop.types";
+
 import { useLocalSearchParams } from "expo-router";
-import { useAddToCart } from "../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
 
@@ -67,8 +69,8 @@ export default function ShopScreen() {
 
   const insets = useSafeAreaInsets();
 
-  const { addToCart } = useAddToCart();
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  // const { addToCart } = useAddToCart(); // 🗑️ Removed to prevent double toast
+  const {visitorId, userId} = useAppVisitorStore((state) => state);
 
   const [gridMode, setGridMode] = useState<GridMode>("list");
   const [sortBy, setSortBy] = useState<number>(1);
@@ -87,6 +89,7 @@ export default function ShopScreen() {
 
   const filterRef = useRef<FilterBottomSheetRef>(null);
   const sortRef = useRef<SortBottomSheetRef>(null);
+  const listRef = useRef<FlatList<ListingItem>>(null);
   const momentumRef = useRef(false);
   const lastScrollY = useSharedValue(0);
   const cartPreviewVisible = useSharedValue(1);
@@ -98,22 +101,29 @@ export default function ShopScreen() {
     priceFilter.from !== DEFAULT_PRICE.from ||
     priceFilter.to !== DEFAULT_PRICE.to;
 
-  const { products, totalCount, loading, loadingMore, hasMore, allLoaded, loadMore } =
-    useListing({
-      sort_by: sortBy,
-      type: isFilterActive ? "filter" : searchText || "",
-      filter_category_id:
-        appliedFilters.categories.length > 0
-          ? appliedFilters.categories.join(",")
-          : undefined,
-      filter_brand_id:
-        appliedFilters.brands.length > 0
-          ? appliedFilters.brands.join(",")
-          : undefined,
-      filter_from_price: priceFilter.from,
-      filter_to_price: priceFilter.to,
-      category_slug: categorySlug,
-    });
+  const {
+    products,
+    totalCount,
+    loading,
+    loadingMore,
+    hasMore,
+    allLoaded,
+    loadMore,
+  } = useListing({
+    sort_by: sortBy,
+    type: isFilterActive ? "filter" : searchText || "",
+    filter_category_id:
+      appliedFilters.categories.length > 0
+        ? appliedFilters.categories.join(",")
+        : undefined,
+    filter_brand_id:
+      appliedFilters.brands.length > 0
+        ? appliedFilters.brands.join(",")
+        : undefined,
+    filter_from_price: priceFilter.from,
+    filter_to_price: priceFilter.to,
+    category_slug: categorySlug,
+  });
 
   const isGrid = gridMode === "grid";
 
@@ -129,6 +139,10 @@ export default function ShopScreen() {
   // ── Handlers ─────────────────
   const toggleGridMode = useCallback(() => {
     setGridMode((p) => (p === "grid" ? "list" : "grid"));
+  }, []);
+
+  const handleBackToTop = useCallback(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
   const handleSortSelect = useCallback((id: number) => setSortBy(id), []);
@@ -179,6 +193,19 @@ export default function ShopScreen() {
     },
   });
 
+  const backToTopStyle = useAnimatedStyle(() => {
+    const isVisible = lastScrollY.value > 800;
+    return {
+      opacity: withTiming(isVisible ? 1 : 0, TIMING_CONFIG),
+      transform: [
+        {
+          translateY: withTiming(isVisible ? 0 : -20, TIMING_CONFIG),
+        },
+      ],
+      zIndex: isVisible ? 100 : -1,
+    };
+  });
+
   const renderItem: ListRenderItem<ListingItem> = useCallback(
     ({ item }) => {
       if (isGrid) {
@@ -201,15 +228,10 @@ export default function ShopScreen() {
 
   const handleAddToCart = useCallback(
     (item: ListingItem, qty: number) => {
-      if (!visitorId) return;
-
-      addToCart({
-        visitor_id: visitorId,
-        product_id: item.id,
-        qty: qty,
-      });
+      // 🚀 Parent no longer needs to call API. 
+      // ProductCard handles its own API call internally.
     },
-    [addToCart, visitorId],
+    [],
   );
 
   const onScrollBegin = () => {
@@ -293,11 +315,11 @@ export default function ShopScreen() {
       style={[styles.root, { backgroundColor: colors.background }]}
       edges={["top"]}
     >
-       <StatusBar
-            barStyle="dark-content"
-            backgroundColor="transparent"
-            translucent
-          />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <AppNavbar title="Shop" showBack showCart={true} />
 
       {/* Toolbar */}
@@ -438,6 +460,7 @@ export default function ShopScreen() {
       {/* LIST */}
       <View style={{ flex: 1 }}>
         <AnimatedFlatList
+          ref={listRef}
           onScrollBeginDrag={onScrollBegin}
           onScrollEndDrag={onScrollEnd}
           onMomentumScrollEnd={onScrollEnd}
@@ -467,6 +490,58 @@ export default function ShopScreen() {
         <AddToCartPreview visible={cartPreviewVisible} />
 
         <BulkOrderFAB visible={bulkFabVisible} />
+
+        {/* ── Back to Top Button ── */}
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              top: spacing(12), // Position at top, just under the filter toolbar
+              alignSelf: "center",
+            },
+            backToTopStyle,
+          ]}
+        >
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleBackToTop}
+            style={{
+              backgroundColor: "#000000", // Pure Black
+              paddingHorizontal: spacing(14),
+              paddingVertical: spacing(6),
+              borderRadius: 30,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing(8),
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 10,
+              elevation: 8,
+            }}
+          >
+          
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(11),
+                color: "#fff",
+              }}
+            >
+              Back To Top
+            </Text>
+       
+            <Text
+              style={{
+                fontFamily: "Poppins_500Medium",
+                fontSize: font(11),
+                color: "rgba(255,255,255,0.9)",
+              }}
+            >
+              {products.length} / {totalCount}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
       <FilterBottomSheet ref={filterRef} onApply={handleApplyFilter} />

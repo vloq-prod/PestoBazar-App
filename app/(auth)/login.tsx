@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -27,6 +27,12 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSendOtp, useVerifyUser } from "../../src/hooks/useAuthHooks";
 import { z, ZodError } from "zod";
+
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import { useEffect } from "react";
+
+WebBrowser.maybeCompleteAuthSession();
 
 type SafeParseReturn<T> =
   | { success: true; data: T }
@@ -139,10 +145,17 @@ const GradientDivider = ({
 
 export default function Login() {
   const router = useRouter();
+  const { redirectTo } = useLocalSearchParams<{ redirectTo?: string }>();
   const progress = useSharedValue(0);
   const { colors } = useTheme();
   const { font, spacing, hp } = useResponsive();
   const insets = useSafeAreaInsets();
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+  });
 
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
@@ -163,6 +176,11 @@ export default function Login() {
 
   const handleSkip = () => router.replace("/(tabs)");
 
+  console.log(
+    "android client id : ",
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  );
+  console.log("ios id: ", process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
   const handleGetOtp = useCallback(() => {
     const result = phoneSchema.safeParse({ mobile_no: phone });
     if (!result.success) {
@@ -178,7 +196,7 @@ export default function Login() {
           if (data.data.exists === 0) {
             router.push({
               pathname: "/(auth)/userinfo",
-              params: { mobile: phone },
+              params: { mobile: phone, ...(redirectTo ? { redirectTo } : {}) },
             });
           } else {
             sendOtpMutate(
@@ -187,7 +205,11 @@ export default function Login() {
                 onSuccess: () => {
                   router.push({
                     pathname: "/(auth)/verifyotp",
-                    params: { mobile: phone, isNewUser: "0" },
+                    params: {
+                      mobile: phone,
+                      isNewUser: "0",
+                      ...(redirectTo ? { redirectTo } : {}),
+                    },
                   });
                 },
                 onError: () => setError("Failed to send OTP. Try again."),
@@ -200,6 +222,32 @@ export default function Login() {
     );
   }, [phone]);
 
+  useEffect(() => {
+    const handleGoogleResponse = async () => {
+      if (response?.type === "success") {
+        const { accessToken } = response.authentication || {};
+        if (accessToken) {
+          try {
+            const userInfoResponse = await fetch(
+              "https://www.googleapis.com/userinfo/v2/me",
+              {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              },
+            );
+            const user = await userInfoResponse.json();
+            console.log("✅ Google User Info:", user);
+          } catch (error) {
+            console.error("❌ Failed to fetch user info:", error);
+          }
+        }
+      } else if (response?.type === "error") {
+        console.error("❌ Google Auth Error:", response.error);
+      }
+    };
+
+    handleGoogleResponse();
+  }, [response]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
@@ -207,7 +255,7 @@ export default function Login() {
       {/* ── Bottom Form Section ── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <ScrollView
@@ -215,13 +263,15 @@ export default function Login() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
+          alwaysBounceVertical={false}
+          overScrollMode="never"
         >
           {/* ── Top Carousel Section ── */}
           <View
             style={[
               styles.topSection,
               {
-                height: hp(50),
+                height: hp(44),
                 backgroundColor: colors.primary,
                 paddingTop: insets.top + spacing(8),
               },
@@ -306,6 +356,7 @@ export default function Login() {
                 justifyContent: "center",
                 alignItems: "center",
                 gap: 5,
+                marginTop: spacing(15),
                 paddingBottom: spacing(40),
               }}
             >
@@ -324,9 +375,13 @@ export default function Login() {
             style={[
               styles.bottomSection,
               {
-                marginTop: -spacing(22),
+                marginTop: -spacing(15),
                 padding: spacing(20),
-                paddingBottom: insets.bottom + spacing(20),
+                paddingTop: spacing(24),
+                paddingBottom:
+                  Platform.OS === "ios"
+                    ? insets.bottom + spacing(10)
+                    : spacing(20),
                 backgroundColor: colors.background,
                 borderTopLeftRadius: spacing(28),
                 borderTopRightRadius: spacing(28),
@@ -391,7 +446,11 @@ export default function Login() {
                 ]}
               >
                 {/* Phone Icon */}
-                <Phone size={16} color={colors.textSecondary} strokeWidth={1.8} />
+                <Phone
+                  size={16}
+                  color={colors.textSecondary}
+                  strokeWidth={1.8}
+                />
 
                 {/* Divider + Prefix */}
                 <View
@@ -502,6 +561,36 @@ export default function Login() {
               spacing={spacing}
             />
 
+            {/* Google Login Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => promptAsync()}
+              style={[
+                styles.googleBtn,
+                {
+                  marginTop: spacing(20),
+                  borderColor: colors.border,
+                  backgroundColor:
+                    colors.background === "#fff" ? "#fff" : colors.surface,
+                },
+              ]}
+            >
+              <Image
+                source={require("../../assets/google.png")}
+                style={{ width: 22, height: 22 }}
+                resizeMode="contain"
+              />
+              <Text
+                style={{
+                  fontSize: font(14),
+                  fontFamily: "Poppins_500Medium",
+                  color: colors.text,
+                }}
+              >
+                Continue with Google
+              </Text>
+            </TouchableOpacity>
+
             {/* Terms */}
             <Text
               style={{
@@ -581,9 +670,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 12,
     borderWidth: 1.2,
-    borderRadius: 14,
+    borderRadius: 999,
     paddingVertical: 14,
   },
   googleLogo: {

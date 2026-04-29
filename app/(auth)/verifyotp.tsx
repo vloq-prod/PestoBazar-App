@@ -23,10 +23,11 @@ const OTP_LENGTH = 4;
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
-  const { mobile, isNewUser, fullName } = useLocalSearchParams<{
+  const { mobile, isNewUser, fullName, redirectTo } = useLocalSearchParams<{
     mobile: string;
     isNewUser: "0" | "1";
     fullName?: string;
+    redirectTo?: string;
   }>();
 
   const { colors } = useTheme();
@@ -122,7 +123,15 @@ export default function VerifyOtpScreen() {
 
         await setUser(data.data.user_id, data.data.user_name);
 
-        router.replace("/(tabs)");
+        if (redirectTo) {
+          // Clear auth stack and go to the intended destination
+          router.replace("/(tabs)");
+          setTimeout(() => {
+            router.push(redirectTo as any);
+          }, 100);
+        } else {
+          router.replace("/(tabs)");
+        }
       },
 
       onError: () => setError("Invalid OTP. Please try again."),

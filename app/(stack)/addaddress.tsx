@@ -40,6 +40,9 @@ import {
   useSingleAddress,
 } from "../../src/hooks/CheckoutHooks";
 import { StateItem } from "../../src/types/checkout.types";
+import { useMapStore } from "../../src/store/mapStore";
+import { useDeliveryStore } from "../../src/store/deliveryStore";
+import { useToast } from "../../src/context/ToastContext";
 
 // ── Types ──────────────────────────────────────────────────────
 type AddressLabel = "Home" | "Office" | "Warehouse" | "Others";
@@ -70,6 +73,8 @@ interface FieldProps {
   font: (n: number) => number;
   spacing: (n: number) => number;
   optional?: boolean;
+
+  required?: boolean;
 }
 
 const Field = ({
@@ -88,6 +93,7 @@ const Field = ({
   font,
   spacing,
   optional,
+  required, // add
 }: FieldProps) => {
   const [focused, setFocused] = useState(false);
   const borderColor = error
@@ -98,6 +104,7 @@ const Field = ({
 
   return (
     <View style={{ gap: 5 }}>
+      {/* Label */}
       <Text
         style={{
           fontFamily: "Poppins_500Medium",
@@ -111,6 +118,20 @@ const Field = ({
         }}
       >
         {label}
+
+        {/* Red Star */}
+        {required && (
+          <Text
+            style={{
+              color: "#EF4444",
+              fontFamily: "Poppins_700Bold",
+            }}
+          >
+            {" "}
+            *
+          </Text>
+        )}
+
         {optional && (
           <Text
             style={{
@@ -234,6 +255,7 @@ const StatePicker = ({
         }}
       >
         State
+        <Text style={{ color: "#EF4444" }}> *</Text>
       </Text>
 
       {/* Trigger */}
@@ -473,10 +495,14 @@ const SectionLabel = ({ title, font, colors }: any) => (
 // ── Main Screen ────────────────────────────────────────────────
 export default function AddAddress() {
   const { colors } = useTheme();
+
+  const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { spacing, font } = useResponsive();
   const { type, id } = useLocalSearchParams<{ type: string; id?: string }>();
-  const userId = useAppVisitorStore((s) => s.userId);
+
+  const { userName, userId } = useAppVisitorStore((state) => state);
+  const { pincode } = useDeliveryStore();
 
   const { data: addressData } = useAddress({ user_id: userId! });
   const stateList: StateItem[] = addressData?.data?.state_master ?? [];
@@ -494,14 +520,14 @@ export default function AddAddress() {
 
   // ── Form State ─────────────────────────────────────────────
   const [form, setForm] = useState({
-    full_name: "",
+    full_name: userName || "",
     number: "",
     email: "",
     building: "",
     area: "",
     address: "",
     city: "",
-    pincode: "",
+    pincode: pincode || "",
     gst: "",
   });
 
@@ -547,6 +573,33 @@ export default function AddAddress() {
     if (errors[key]) setErrors((p) => ({ ...p, [key]: undefined }));
   };
 
+  const { selectedLocation, clearSelectedLocation } = useMapStore();
+
+  useEffect(() => {
+    if (selectedLocation) {
+      const fullAddress = String(selectedLocation.address);
+
+      const parts = fullAddress.split(",").map((item) => item.trim());
+
+      const city = parts.length >= 2 ? parts[parts.length - 3] : "";
+
+      const pincodeMatch = fullAddress.match(/\b\d{6}\b/);
+
+      const pincode = pincodeMatch ? pincodeMatch[0] : "";
+
+      const cleanAddress = parts.slice(0, parts.length - 3).join(", ");
+
+      setForm((prev) => ({
+        ...prev,
+        address: cleanAddress || fullAddress,
+        city: city,
+        pincode: pincode,
+      }));
+
+      clearSelectedLocation();
+    }
+  }, [selectedLocation]);
+
   // ── Refs ──────────────────────────────────────────────────
   const phoneRef = useRef<TextInput | null>(null);
   const emailRef = useRef<TextInput | null>(null);
@@ -558,62 +611,60 @@ export default function AddAddress() {
   const gstRef = useRef<TextInput | null>(null);
   const customLabelRef = useRef<TextInput | null>(null);
 
+  const finalAddressName =
+    selectedLabel === "Others" ? customLabel.trim() : selectedLabel;
   // ── Submit ─────────────────────────────────────────────────
   const handleSave = useCallback(() => {
-    // Validate state separately
+    const fieldErrors: any = {};
+
+    // Custom state validation
     if (!selectedState) {
-      setErrors((p) => ({ ...p, state: "Please select a state" }));
-      return;
+      fieldErrors.state = "Please select a state";
     }
 
-    const result = addressSchema.safeParse({
-      ...form,
-      state: String(selectedState.id),
-    });
+    // Custom label validation
+    if (selectedLabel === "Others" && !customLabel.trim()) {
+      fieldErrors.label = "Please enter address label";
+    }
+
+    // Zod validation
+    const result = addressSchema.safeParse(form);
 
     if (!result.success) {
-      const fieldErrors: any = {};
       result.error.issues.forEach((e) => {
         const key = e.path[0] as string;
-        if (!fieldErrors[key]) fieldErrors[key] = e.message;
+
+        if (!fieldErrors[key]) {
+          fieldErrors[key] = e.message;
+        }
       });
+    }
+
+    // If any errors
+    if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
       return;
     }
 
-    if (selectedLabel === "Others" && !customLabel.trim()) {
-      setErrors((p) => ({ ...p, label: "Please enter address label" }));
-      return;
-    }
-
+    // Save API
     saveAddress({
       user_id: userId!,
-      address_type: (type === "delivery" ? "delivery" : "billing") as
-        | "delivery"
-        | "billing",
-      address_name: selectedLabel,
+      address_type: type === "delivery" ? "delivery" : "billing",
+      address_name: selectedLabel === "Others" ? customLabel : selectedLabel,
+
       full_name: form.full_name,
       number: form.number,
       email: form.email,
       building: form.building,
       area: form.area,
       address: form.address,
-      state: String(selectedState.id),
+      state: String(selectedState!.id),
       city: form.city,
       pincode: form.pincode,
       gst: form.gst || undefined,
       address_id: id ? String(id) : undefined,
     });
-  }, [
-    form,
-    selectedState,
-    selectedLabel,
-    customLabel,
-    userId,
-    type,
-    id,
-    singleAddress,
-  ]);
+  }, [form, selectedState, selectedLabel, customLabel, userId, type, id]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -634,33 +685,6 @@ export default function AddAddress() {
             gap: spacing(10),
           }}
         >
-          {/* ── Map Placeholder ── */}
-          <View
-            style={{
-              height: 180,
-              borderRadius: spacing(16),
-              borderWidth: 1,
-              borderColor: colors.primary + "28",
-              borderStyle: "dashed",
-              backgroundColor: colors.primary + "08",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: spacing(6),
-            }}
-          >
-            <MapPin size={28} color={colors.primary + "60"} />
-            <Text
-              style={{
-                fontFamily: "Poppins_500Medium",
-                fontSize: font(13),
-                color: colors.primary + "80",
-                marginTop: spacing(8),
-              }}
-            >
-              Map Selection Coming Soon
-            </Text>
-          </View>
-
           {/* ── Address Label ── */}
           <SectionCard colors={colors} spacing={spacing}>
             <SectionLabel title="Address Label" font={font} colors={colors} />
@@ -734,6 +758,7 @@ export default function AddAddress() {
                 colors={colors}
                 font={font}
                 spacing={spacing}
+                required
               />
             )}
           </SectionCard>
@@ -760,6 +785,7 @@ export default function AddAddress() {
                     colors={colors}
                     font={font}
                     spacing={spacing}
+                    required
                   />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -779,6 +805,7 @@ export default function AddAddress() {
                     colors={colors}
                     font={font}
                     spacing={spacing}
+                    required
                   />
                 </View>
               </View>
@@ -797,6 +824,7 @@ export default function AddAddress() {
                 colors={colors}
                 font={font}
                 spacing={spacing}
+                required
               />
             </View>
           </SectionCard>
@@ -819,6 +847,7 @@ export default function AddAddress() {
                     colors={colors}
                     font={font}
                     spacing={spacing}
+                    required
                   />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -834,6 +863,7 @@ export default function AddAddress() {
                     colors={colors}
                     font={font}
                     spacing={spacing}
+                    required
                   />
                 </View>
               </View>
@@ -850,6 +880,7 @@ export default function AddAddress() {
                 colors={colors}
                 font={font}
                 spacing={spacing}
+                required
               />
 
               {/* State Picker + City — row */}
@@ -881,6 +912,7 @@ export default function AddAddress() {
                     colors={colors}
                     font={font}
                     spacing={spacing}
+                    required
                   />
                 </View>
               </View>
@@ -903,6 +935,7 @@ export default function AddAddress() {
                     colors={colors}
                     font={font}
                     spacing={spacing}
+                    required
                   />
                 </View>
                 <View style={{ flex: 1 }}>

@@ -7,6 +7,8 @@ import { useResponsive } from "../../utils/useResponsive";
 import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 import { useToast } from "../../context/ToastContext";
+import { useAppVisitorStore } from "../../store/auth";
+import { useAddToCart } from "../../hooks/cartHooks";
 
 export default function ItemCard({
   item,
@@ -18,9 +20,10 @@ export default function ItemCard({
   onAddToCart?: (item: ProductItem, qty: number) => void;
 }) {
   const { colors } = useTheme();
-  const { spacing, font } = useResponsive();
+  const { font, spacing } = useResponsive();
   const router = useRouter();
-  const { showToast } = useToast();
+  const { visitorId, userId } = useAppVisitorStore((s) => s);
+  const { addToCart } = useAddToCart();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -238,8 +241,15 @@ export default function ItemCard({
           <TouchableOpacity
             activeOpacity={8}
             onPress={() => {
-              setQty(1);
+              const newQty = 1;
+              setQty(newQty);
               setInputVal("1");
+              addToCart({
+                user_id: userId ?? 0,
+                visitor_id: visitorId,
+                product_id: item.id,
+                qty: newQty,
+              });
               onAddToCart?.(item, 1);
             }}
             style={{
@@ -276,11 +286,27 @@ export default function ItemCard({
             <TouchableOpacity
               onPress={() => {
                 if (qty <= 1) {
-                  setQty(0);
+                  const nextQty = 0;
+                  setQty(nextQty);
                   setInputVal("1");
+                  addToCart({
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  });
+                  onAddToCart?.(item, nextQty);
                 } else {
-                  setQty(qty - 1);
-                  setInputVal(String(qty - 1));
+                  const nextQty = qty - 1;
+                  setQty(nextQty);
+                  setInputVal(String(nextQty));
+                  addToCart({
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  });
+                  onAddToCart?.(item, nextQty);
                 }
               }}
               style={{ width: spacing(36), alignItems: "center" }}
@@ -306,8 +332,16 @@ export default function ItemCard({
 
             <TouchableOpacity
               onPress={() => {
-                setQty(qty + 1);
-                setInputVal(String(qty + 1));
+                const nextQty = qty + 1;
+                setQty(nextQty);
+                setInputVal(String(nextQty));
+                addToCart({
+                  user_id: userId ?? 0,
+                  visitor_id: visitorId,
+                  product_id: item.id,
+                  qty: nextQty,
+                });
+                onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >
