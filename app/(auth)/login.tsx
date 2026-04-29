@@ -37,7 +37,7 @@ import { useEffect } from "react";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_REDIRECT_SCHEME = "com.devxkaif.pestobazar";
+const GOOGLE_REDIRECT_SCHEME = "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh";
 
 type SafeParseReturn<T> =
   | { success: true; data: T }
@@ -157,7 +157,7 @@ export default function Login() {
   const insets = useSafeAreaInsets();
 
   const googleRedirectUri = AuthSession.makeRedirectUri({
-    native: `${GOOGLE_REDIRECT_SCHEME}:/oauthredirect`,
+    native: `${GOOGLE_REDIRECT_SCHEME}:/oauth2redirect`,
   });
   const isExpoGo = Constants.executionEnvironment === "storeClient";
 
@@ -256,32 +256,32 @@ export default function Login() {
   useEffect(() => {
     const handleGoogleResponse = async () => {
       if (response?.type === "success") {
-        const { accessToken } = response.authentication || {};
+        const { accessToken, idToken } = response.authentication || {};
+        console.log("✅ Google Auth Success");
+        console.log("idToken:", idToken);
+        console.log("accessToken:", accessToken);
         if (accessToken) {
           try {
             const userInfoResponse = await fetch(
               "https://www.googleapis.com/userinfo/v2/me",
-              {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              },
+              { headers: { Authorization: `Bearer ${accessToken}` } },
             );
             const user = await userInfoResponse.json();
-            console.log("✅ Google User Info:", user);
-          } catch (error) {
-            console.error("❌ Failed to fetch user info:", error);
+            console.log("✅ Google User Info:", JSON.stringify(user, null, 2));
+            console.log("email:", user.email);
+            console.log("name:", user.name);
+          } catch (err) {
+            console.error("❌ Failed to fetch user info:", err);
           }
         }
+        // TODO: call backend API with idToken/email here
       } else if (response?.type === "error") {
-        console.error("❌ Google Auth Error:", {
-          error: response.error,
-          redirectUri: googleRedirectUri,
-          platform: Platform.OS,
-        });
+        console.error("❌ Google Auth Error:", response.error);
       }
     };
 
     handleGoogleResponse();
-  }, [googleRedirectUri, response]);
+  }, [response]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
