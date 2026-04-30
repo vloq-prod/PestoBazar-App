@@ -35,9 +35,11 @@ import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect } from "react";
 
-WebBrowser.maybeCompleteAuthSession();
+// WebBrowser.maybeCompleteAuthSession();
+// const GOOGLE_REDIRECT_SCHEME = "pestobazaar";
 
-const GOOGLE_REDIRECT_SCHEME = "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh";
+const GOOGLE_REDIRECT_SCHEME =
+  "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh";
 
 type SafeParseReturn<T> =
   | { success: true; data: T }

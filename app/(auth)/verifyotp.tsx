@@ -147,6 +147,14 @@ export default function VerifyOtpScreen() {
     router,
   ]);
 
+  // ── Auto Verify when OTP is full ──
+  useEffect(() => {
+    const otpString = otp.join("");
+    if (otpString.length === OTP_LENGTH) {
+      handleVerify();
+    }
+  }, [otp, handleVerify]);
+
   // ── Resend ──
   const handleResend = useCallback(() => {
     if (!canResend) return;

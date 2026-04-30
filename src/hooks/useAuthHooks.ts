@@ -1,14 +1,27 @@
 // src/hooks/useVisitor.ts
 
 import { useMutation } from "@tanstack/react-query";
-import { createVisitor, sendOtpApi, verifyOtpApi, verifyUser } from "../api/auth.api";
 import {
+  createVisitor,
+  googleLoginApi,
+  sendOtpApi,
+  verifyOtpApi,
+  verifyUser,
+} from "../api/auth.api";
+import {
+  GoogleLoginRequest,
+  GoogleLoginResponse,
   SendOtpRequest,
   SendOtpResponse,
   VerifyOtpRequest,
   VerifyOtpResponse,
   VerifyUserRequest,
 } from "../types/auth.types";
+
+
+
+
+
 
 export const useVisitor = () => {
   const mutation = useMutation({
@@ -20,6 +33,8 @@ export const useVisitor = () => {
     loading: mutation.isPending,
   };
 };
+
+
 
 export const useSendOtp = () => {
   return useMutation<SendOtpResponse, Error, SendOtpRequest>({
@@ -34,6 +49,10 @@ export const useSendOtp = () => {
     },
   });
 };
+
+
+
+
 
 export const useVerifyOtp = () => {
   return useMutation<VerifyOtpResponse, Error, VerifyOtpRequest>({
@@ -52,10 +71,10 @@ export const useVerifyOtp = () => {
 
 
 
+
 export const useVerifyUser = () => {
   return useMutation({
-    mutationFn: (payload: VerifyUserRequest) =>
-      verifyUser(payload),
+    mutationFn: (payload: VerifyUserRequest) => verifyUser(payload),
 
     onSuccess: (data) => {
       console.log("Verify User Success:", data);
@@ -68,3 +87,20 @@ export const useVerifyUser = () => {
 };
 
 
+
+export const useGoogleLogin = () => {
+  return useMutation<GoogleLoginResponse, Error, GoogleLoginRequest>({
+    mutationFn: googleLoginApi,
+
+    onSuccess: (response) => {
+      console.log("✅ Google Login Success");
+      console.log("User:", response.data.user_name);
+      console.log("User ID:", response.data.user_id);
+    },
+
+    onError: (error) => {
+      console.log("❌ Google Login Failed");
+      console.log(error.message);
+    },
+  });
+};

@@ -8,6 +8,8 @@ import {
   CategoryApiResponse,
   DealsApiResponse,
   FeaturedApiResponse,
+  GetCartQuantityRequest,
+  GetCartQuantityResponse,
   GetRecentlyViewedParams,
   GetRecentlyViewedResponse,
   HomeProductApiResponse,
@@ -105,6 +107,24 @@ export const bulkEnquiryApi = async (
     await apiClient.post<BulkEnquiryResponse>(
       "/app-api/v1/bulk-enquiry",
       payload
+    );
+
+  return response.data;
+};
+
+
+
+
+
+export const getCartQuantityApi = async (
+  params: GetCartQuantityRequest
+): Promise<GetCartQuantityResponse> => {
+  const response =
+    await apiClient.get<GetCartQuantityResponse>(
+      "/app-api/v1/get-cart-quantity",
+      {
+        params,
+      }
     );
 
   return response.data;

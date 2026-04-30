@@ -130,9 +130,9 @@ export interface ApiResponse<T> {
 // Remove Cart Item Request
 export interface RemoveCartItemRequest {
   visitor_id: string;
-  product_id: string;
+  product_id: string | number;
   qty: number;
-  user_id: string |number;
+  user_id?: string | number;
   cart_id: string;
   cart_detail_id: number;
 }
@@ -155,17 +155,6 @@ export type RemoveCartItemResponse =
 
   
 
-
-  // ======================================================
-// src/services/enquiry/enquiry.types.ts
-// ======================================================
-
-// Common API Response
-export interface ApiResponse<T> {
-  status: number;
-  message: string;
-  data: T;
-}
 
 // Bulk Enquiry Request
 export interface BulkEnquiryRequest {

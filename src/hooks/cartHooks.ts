@@ -17,6 +17,11 @@ import {
   RemoveCartItemResponse,
 } from "../types/cart.types";
 import { useToast } from "../context/ToastContext";
+import {
+  GetCartQuantityRequest,
+  GetCartQuantityResponse,
+} from "../types/home.types";
+import { getCartQuantityApi } from "../api/home.api";
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
@@ -226,20 +231,11 @@ export const useCartAction = () => {
   };
 };
 
-
-
-
-
-
 export const useRemoveCartItem = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<
-    RemoveCartItemResponse,
-    Error,
-    RemoveCartItemRequest
-  >({
+  return useMutation<RemoveCartItemResponse, Error, RemoveCartItemRequest>({
     mutationFn: removeCartItemApi,
 
     onSuccess: (data, variables) => {
@@ -265,5 +261,15 @@ export const useRemoveCartItem = () => {
       console.log("❌ Remove Failed:", error.message);
       showToast(error.message || "Failed to remove item", "error");
     },
+  });
+};
+
+export const useGetCartQuantity = (params: GetCartQuantityRequest) => {
+  return useQuery<GetCartQuantityResponse, Error>({
+    queryKey: ["cart-quantity", params.visitor_id, params.user_id],
+
+    queryFn: () => getCartQuantityApi(params),
+
+    staleTime: 1000 * 60 * 2,
   });
 };

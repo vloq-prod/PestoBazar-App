@@ -61,3 +61,32 @@ export interface VerifyUserResponse {
 }
 
 
+
+
+
+
+
+// --------------------------------------
+// Google Login Request
+// --------------------------------------
+export interface GoogleLoginRequest {
+  email: string;
+  user_name: string;
+  token: string;
+  visitor_id: string;
+  avatar: string;
+}
+
+// --------------------------------------
+// Google Login Response Data
+// --------------------------------------
+export interface GoogleLoginData {
+  user_id: string;
+  user_name: string;
+}
+
+// --------------------------------------
+// Final Response
+// --------------------------------------
+export type GoogleLoginResponse =
+  ApiResponse<GoogleLoginData>;

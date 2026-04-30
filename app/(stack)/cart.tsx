@@ -109,7 +109,7 @@ export default function CartScreen() {
       removeCartItem.mutate({
         product_id: item.enc_product_id,
         qty: 0,
-        user_id: userId ?? 0,
+        ...(userId && { user_id: userId }),
         visitor_id: visitorId!,
         cart_id: cartId!,
         cart_detail_id: item.id,
@@ -129,7 +129,7 @@ export default function CartScreen() {
       removeCartItem.mutate({
         product_id: itemToRemove.enc_product_id,
         qty: 0,
-        user_id: userId ?? 0,
+        ...(userId && { user_id: userId }),
         visitor_id: visitorId!,
         cart_id: cartId!,
         cart_detail_id: itemToRemove.id,
