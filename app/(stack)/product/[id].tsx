@@ -91,7 +91,7 @@ const ProductDetails = () => {
   );
   const { addToCart } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
-  const { data: cartData } = useCart({ user_id: 0, visitor_id: visitorId! });
+  const { data: cartData } = useCart({ user_id: userId ?? 0, visitor_id: visitorId! });
 
   // ─── Data Extraction ────────────────────────────────────────
   const productInfo = data?.product;

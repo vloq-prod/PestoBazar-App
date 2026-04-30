@@ -547,7 +547,7 @@ export default function AddAddress() {
         email: singleAddress.email || "",
         building: singleAddress.building || "",
         area: singleAddress.area || "",
-        address: singleAddress.address || "",
+        address: "",
         city: singleAddress.city || "",
         pincode: singleAddress.pincode || "",
         gst: singleAddress.gst || "",
@@ -591,9 +591,10 @@ export default function AddAddress() {
 
       setForm((prev) => ({
         ...prev,
-        address: cleanAddress || fullAddress,
+        area: cleanAddress || fullAddress,
         city: city,
         pincode: pincode,
+        address: "",
       }));
 
       clearSelectedLocation();
@@ -657,7 +658,7 @@ export default function AddAddress() {
       email: form.email,
       building: form.building,
       area: form.area,
-      address: form.address,
+      address: "",
       state: String(selectedState!.id),
       city: form.city,
       pincode: form.pincode,
@@ -692,8 +693,8 @@ export default function AddAddress() {
             <View
               style={{
                 flexDirection: "row",
-                flexWrap: "wrap",
-                gap: spacing(10),
+                gap: 4,
+                width: "100%",
               }}
             >
               {ADDRESS_LABELS.map(({ key, icon: Icon }) => {
@@ -707,33 +708,41 @@ export default function AddAddress() {
                       setErrors((p) => ({ ...p, label: undefined }));
                     }}
                     style={{
+                      flex: 1,
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: spacing(6),
-                      paddingHorizontal: spacing(14),
+                      justifyContent: "center",
+                      gap: 4,
                       paddingVertical: spacing(8),
-                      borderRadius: 999,
-                      borderWidth: isSelected ? 1.8 : 1.2,
-                      borderColor: isSelected ? colors.primary : colors.border,
+                      paddingHorizontal: 4,
+                      borderRadius: 10,
+                      borderWidth: isSelected ? 1.5 : 1,
+                      borderColor: isSelected
+                        ? colors.primary
+                        : colors.border + "80",
                       backgroundColor: isSelected
-                        ? colors.primary + "10"
+                        ? colors.primary + "08"
                         : colors.background,
                     }}
                   >
                     <Icon
-                      size={14}
+                      size={12}
                       color={isSelected ? colors.primary : colors.textSecondary}
-                      strokeWidth={isSelected ? 2.2 : 1.8}
+                      strokeWidth={isSelected ? 2.5 : 1.8}
                     />
                     <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
                       style={{
                         fontFamily: isSelected
                           ? "Poppins_600SemiBold"
                           : "Poppins_400Regular",
-                        fontSize: font(12),
+                        fontSize: font(10),
                         color: isSelected
                           ? colors.primary
                           : colors.textSecondary,
+                        textAlign: "center",
                       }}
                     >
                       {key}
@@ -833,48 +842,28 @@ export default function AddAddress() {
           <SectionCard colors={colors} spacing={spacing}>
             <SectionLabel title="Address Details" font={font} colors={colors} />
             <View style={{ gap: spacing(10) }}>
-              <View style={{ flexDirection: "row", gap: spacing(10) }}>
-                <View style={{ flex: 1 }}>
-                  <Field
-                    label="Flat / House No"
-                    value={form.building}
-                    onChangeText={set("building")}
-                    placeholder="e.g. B-204"
-                    error={errors.building}
-                    inputRef={buildingRef}
-                    returnKeyType="next"
-                    onSubmitEditing={() => areaRef.current?.focus()}
-                    colors={colors}
-                    font={font}
-                    spacing={spacing}
-                    required
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Field
-                    label="Area / Sector"
-                    value={form.area}
-                    onChangeText={set("area")}
-                    placeholder="e.g. Andheri West"
-                    error={errors.area}
-                    inputRef={areaRef}
-                    returnKeyType="next"
-                    onSubmitEditing={() => addressRef.current?.focus()}
-                    colors={colors}
-                    font={font}
-                    spacing={spacing}
-                    required
-                  />
-                </View>
-              </View>
+              <Field
+                label="Flat / House No"
+                value={form.building}
+                onChangeText={set("building")}
+                placeholder="e.g. B-204"
+                error={errors.building}
+                inputRef={buildingRef}
+                returnKeyType="next"
+                onSubmitEditing={() => areaRef.current?.focus()}
+                colors={colors}
+                font={font}
+                spacing={spacing}
+                required
+              />
 
               <Field
-                label="Building / Street / Locality"
-                value={form.address}
-                onChangeText={set("address")}
-                placeholder="e.g. Sunrise Apt, MG Road"
-                error={errors.address}
-                inputRef={addressRef}
+                label="Building / Area / Street / Sector / Village"
+                value={form.area}
+                onChangeText={set("area")}
+                placeholder="e.g. Andheri West, MG Road"
+                error={errors.area}
+                inputRef={areaRef}
                 returnKeyType="next"
                 onSubmitEditing={() => cityRef.current?.focus()}
                 colors={colors}

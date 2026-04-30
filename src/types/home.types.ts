@@ -191,3 +191,52 @@ export interface GetRecentlyViewedParams {
   visitor_id: string;
   user_id?: string;
 }
+
+
+
+// ======================================================
+// src/services/enquiry/enquiry.types.ts
+// ======================================================
+
+// Common API Response
+export interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
+
+// ======================================================
+// REQUEST
+// ======================================================
+
+export interface BulkEnquiryRequest {
+  email: string;
+  mobile: string;
+  name: string;
+  product: string;
+}
+
+// ======================================================
+// RESPONSE DATA
+// ======================================================
+
+export interface BulkEnquiryData {
+  id: number;
+
+  name: string;
+  mobile: string;
+  email: string;
+  product: string;
+
+  ip_address: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// ======================================================
+// FINAL RESPONSE
+// ======================================================
+
+export type BulkEnquiryResponse =
+  ApiResponse<BulkEnquiryData>;

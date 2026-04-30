@@ -2,6 +2,8 @@ import { apiClient } from "../lib/apiClient";
 import {
   BannerApiResponse,
   BranchApiResponse,
+  BulkEnquiryRequest,
+  BulkEnquiryResponse,
   CategoryApiResponse,
   DealsApiResponse,
   FeaturedApiResponse,
@@ -90,4 +92,19 @@ export const getRecentlyViewed = async (
   );
 
   return res.data;
+};
+
+
+
+// Submit Bulk Enquiry API
+export const bulkEnquiryApi = async (
+  payload: BulkEnquiryRequest
+): Promise<BulkEnquiryResponse> => {
+  const response =
+    await apiClient.post<BulkEnquiryResponse>(
+      "/app-api/v1/bulk-enquiry",
+      payload
+    );
+
+  return response.data;
 };

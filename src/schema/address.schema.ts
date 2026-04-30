@@ -30,7 +30,7 @@ export const addressSchema = z.object({
   address: z
     .string()
     .trim()
-    .min(5, "Address too short"),
+    .optional(),
 
   city: z
     .string()

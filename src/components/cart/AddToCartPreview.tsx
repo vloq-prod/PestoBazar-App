@@ -22,26 +22,28 @@ import Animated, {
 
 type Props = {
   visible?: SharedValue<number>;
-  pbandroid?: number,
-  pbios?: number,
-
-
+  pbandroid?: number;
+  pbios?: number;
 };
 
-const AddToCartPreview: React.FC<Props> = ({ visible, pbandroid = 12, pbios = 90 }) => {
+const AddToCartPreview: React.FC<Props> = ({
+  visible,
+  pbandroid = 12,
+  pbios = 90,
+}) => {
   const router = useRouter();
   const { colors } = useTheme();
   const { spacing, font, isTablet } = useResponsive();
 
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const {visitorId, userId} = useAppVisitorStore((state) => state);
 
   const { data: quickCartData } = useQuickCart({
-    user_id: 0,
+    user_id: userId ?? 0,
     visitor_id: visitorId!,
   });
 
   const { data: cartCountData } = useCartCount({
-    user_id: 0,
+    user_id: userId ?? 0,
     visitor_id: visitorId!,
   });
 

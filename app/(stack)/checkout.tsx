@@ -45,6 +45,7 @@ import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal
 import { useRouter, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../src/context/ToastContext";
+import { useCodSuccess, useInitiateOrder } from "../../src/hooks/orderHooks";
 
 const SectionTitle = ({ title, colors, font, spacing, rightElement }: any) => (
   <View
@@ -132,6 +133,7 @@ export default function Checkout() {
   const [summaryY, setSummaryY] = useState(0);
 
   const userId = useAppVisitorStore((s) => s.userId);
+  console.log("userId: ", userId);
   const { mutate: checkoutMutate, isPending, data, error } = useCheckout();
   const { data: addressData } = useAddress({ user_id: userId! });
   const { mutate: shippingMutate, data: shippingData } = useShipping();
@@ -139,6 +141,10 @@ export default function Checkout() {
     useValidateCart();
   const { mutate: validatePincodeMutate, isPending: isValidatingPincode } =
     useValidatePincode();
+  const { mutate: codSuccessMutate, isPending: isCodSuccessPending } =
+    useCodSuccess();
+  const { mutate: initiateOrderMutate, isPending: isInitiatingOrder } =
+    useInitiateOrder();
 
   // ── Address state ──────────────────────────────────────────────────────────
   const [selectedBillingId, setSelectedBillingId] = useState<number | null>(
@@ -186,69 +192,161 @@ export default function Checkout() {
 
   // ── Place Order handler ─────────────────────────────────────────
   const handlePlaceOrder = () => {
+    console.log("🚀 Starting Order Placement Process...");
+    console.log("DEBUG: userId:", userId);
+    console.log("DEBUG: visitorId:", visitorId);
+    console.log("DEBUG: cartId:", cartId);
+    console.log("DEBUG: effectiveAddressId:", effectiveAddressId);
+
     if (!userId || !visitorId || !cartId || !effectiveAddressId) {
       showToast("Please select a delivery address", "warning");
+      console.log("❌ Missing required fields for order placement");
       return;
     }
 
     // Step 1: Validate Cart
-    validateCartMutate(
-      { visitor_id: visitorId, user_id: userId, cart_id: cartId },
-      {
-        onSuccess: (cartRes) => {
-          if (cartRes?.status !== 1) {
-            showToast(cartRes?.message || "Cart validation failed", "error");
-            return;
-          }
+    const cartPayload = {
+      visitor_id: visitorId,
+      user_id: userId,
+      cart_id: cartId,
+    };
+    console.log("📦 Step 1: Validating Cart...", cartPayload);
 
-          // Step 2: Validate Pincode
-          validatePincodeMutate(
-            {
-              cart_id: cartId,
-              delivery_address_id: effectiveAddressId,
-              payment_method: isCod ? "cash" : "online",
-            },
-            {
-              onSuccess: (pincodeRes) => {
-                if (pincodeRes?.status !== 1) {
+    validateCartMutate(cartPayload, {
+      onSuccess: (cartRes) => {
+        console.log("✅ Step 1 Success: Cart Validated", cartRes);
+        if (cartRes?.status !== 1) {
+          showToast(cartRes?.message || "Cart validation failed", "error");
+          console.log("❌ Step 1 Failed: API returned status", cartRes?.status);
+          return;
+        }
+
+        // Step 2: Validate Pincode
+        const pincodePayload = {
+          cart_id: cartId,
+          delivery_address_id: effectiveAddressId!,
+          payment_method: (isCod ? "cash" : "online") as "cash" | "online",
+        };
+        console.log("📍 Step 2: Validating Pincode...", pincodePayload);
+
+        validatePincodeMutate(pincodePayload, {
+          onSuccess: (pincodeRes) => {
+            console.log("✅ Step 2 Success: Pincode Validated", pincodeRes);
+            if (pincodeRes?.status !== 1) {
+              showToast(
+                pincodeRes?.message ||
+                  "Delivery not available for this pincode",
+                "error",
+              );
+              console.log(
+                "❌ Step 2 Failed: API returned status",
+                pincodeRes?.status,
+              );
+              return;
+            }
+
+            // Step 3: Initiate Order
+            const billingAddr = billingList.find(
+              (a) => a.id === selectedBillingId,
+            );
+            const deliveryAddr = sameAsBilling
+              ? billingAddr
+              : deliveryList.find((a) => a.id === selectedDeliveryId);
+
+            const initiatePayload = {
+              visitor_id: visitorId!,
+              user_id: userId!,
+              cart_id: String(cartId),
+              delivery_address_id: deliveryAddr?.address_id,
+              billing_address_id: billingAddr?.address_id || "",
+            };
+            console.log("📝 Step 3: Initiating Order...", initiatePayload);
+
+            initiateOrderMutate(initiatePayload, {
+              onSuccess: (initRes) => {
+                console.log("✅ Step 3 Success: Order Initiated", initRes);
+
+                if (initRes.status === 0) {
                   showToast(
-                    pincodeRes?.message ||
-                      "Delivery not available for this pincode",
+                    initRes.message || "Failed to initiate order",
                     "error",
                   );
+                  console.log("❌ Step 3 Failed: API returned status 0");
                   return;
                 }
 
-                // Step 3: Navigate to Order Success screen
-                router.replace({
-                  pathname: "/(stack)/ordersuccess",
-                  params: { amount: String(amountToPay) },
-                });
+                // Step 4: Process Order based on Payment Method
+                console.log(
+                  "💳 Step 4: Processing Payment Mode:",
+                  paymentMethod,
+                );
+                if (isCod) {
+                  const codPayload = { cart_id: String(cartId) };
+                  console.log("💵 Step 4 (COD): Confirming Order...", codPayload);
+
+                  codSuccessMutate(codPayload, {
+                    onSuccess: (res) => {
+                      console.log("✅ Step 4 Success: COD Confirmed", res);
+                      showToast(
+                        res.message || "Order placed successfully!",
+                        "success",
+                      );
+                      router.replace({
+                        pathname: "/(stack)/ordersuccess",
+                        params: {
+                          amount: String(amountToPay),
+                          order_id: res.order_id,
+                        },
+                      });
+                    },
+                    onError: (err: any) => {
+                      console.log("❌ Step 4 Failed: COD Confirm Error", err);
+                      showToast(
+                        err.message || "Failed to process COD order",
+                        "error",
+                      );
+                    },
+                  });
+                } else {
+                  // Logic for online payment (Razorpay, etc.) using initRes data
+                  console.log("🌐 Step 4 (Online): Payment Data", initRes.data);
+                  router.replace({
+                    pathname: "/(stack)/ordersuccess",
+                    params: { amount: String(amountToPay) },
+                  });
+                }
               },
               onError: (err: any) => {
-                showToast(
-                  "Pincode validation error. Please try again.",
-                  "error",
-                );
+                console.log("❌ Step 3 Failed: Initiate Error", err);
+                showToast(err.message || "Order initiation error", "error");
               },
-            },
-          );
-        },
-        onError: (err: any) => {
-          showToast("Cart validation error. Please try again.", "error");
-        },
+            });
+          },
+          onError: (err: any) => {
+            console.log("❌ Step 2 Failed: Pincode Error", err);
+            showToast("Pincode validation error. Please try again.", "error");
+          },
+        });
       },
-    );
+      onError: (err: any) => {
+        console.log("❌ Step 1 Failed: Cart Validation Error", err);
+        showToast("Cart validation error. Please try again.", "error");
+      },
+    });
   };
 
-  const isPlacingOrder = isValidatingCart || isValidatingPincode;
+  const isPlacingOrder =
+    isValidatingCart ||
+    isValidatingPincode ||
+    isInitiatingOrder ||
+    isCodSuccessPending;
 
-  // Auto-select first addresses when data arrives
+
   useEffect(() => {
     const billing = addressData?.data?.billing_address ?? [];
     const delivery = addressData?.data?.delivery_address ?? [];
 
-    // ✅ अगर selected ID अभी list में नहीं है → reset करो
+
     if (!billing.some((a) => a.id === selectedBillingId)) {
       setSelectedBillingId(billing[0]?.id ?? null);
     }
@@ -359,7 +457,7 @@ export default function Checkout() {
     return (
       <View style={[styles.screenRoot, { backgroundColor: colors.background }]}>
         <View style={{ height: insets.top }} />
-        <AppNavbar title="Checkout" showBack />
+        <AppNavbar title="Checkout" showBack  showNotification/>
         <View className="flex-1 items-center justify-center gap-2">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text

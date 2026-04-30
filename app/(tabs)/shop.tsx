@@ -69,8 +69,7 @@ export default function ShopScreen() {
 
   const insets = useSafeAreaInsets();
 
-  // const { addToCart } = useAddToCart(); // 🗑️ Removed to prevent double toast
-  const {visitorId, userId} = useAppVisitorStore((state) => state);
+
 
   const [gridMode, setGridMode] = useState<GridMode>("list");
   const [sortBy, setSortBy] = useState<number>(1);

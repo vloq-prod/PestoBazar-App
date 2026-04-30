@@ -64,7 +64,21 @@ export default function VerifyOtpScreen() {
 
   // ── OTP Input Handlers ──
   const handleOtpChange = useCallback((text: string, index: number) => {
-    const digit = text.replace(/[^0-9]/g, "").slice(-1);
+    const numericValue = text.replace(/[^0-9]/g, "");
+
+    // If user enters/pastes more than 1 digit (like a 4-digit code from keyboard suggestion)
+    if (numericValue.length > 1) {
+      const digits = numericValue.slice(0, OTP_LENGTH).split("");
+      const nextOtp = [...otp];
+      digits.forEach((d, i) => {
+        if (i < OTP_LENGTH) nextOtp[i] = d;
+      });
+      setOtp(nextOtp);
+      inputRefs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
+      return;
+    }
+
+    const digit = numericValue.slice(-1);
     setOtp((prev) => {
       const next = [...prev];
       next[index] = digit;
@@ -74,7 +88,7 @@ export default function VerifyOtpScreen() {
     if (digit && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
-  }, []);
+  }, [otp]);
 
   const handleKeyPress = useCallback((key: string, index: number) => {
     if (key === "Backspace") {
@@ -147,6 +161,14 @@ export default function VerifyOtpScreen() {
     router,
   ]);
 
+  // ── Auto Verify when OTP is full ──
+  useEffect(() => {
+    const otpString = otp.join("");
+    if (otpString.length === OTP_LENGTH) {
+      handleVerify();
+    }
+  }, [otp, handleVerify]);
+
   // ── Resend ──
   const handleResend = useCallback(() => {
     if (!canResend) return;
@@ -216,8 +238,10 @@ export default function VerifyOtpScreen() {
                 handleKeyPress(nativeEvent.key, index)
               }
               keyboardType="number-pad"
-              maxLength={1}
+              maxLength={index === 0 ? OTP_LENGTH : 1}
               autoFocus={index === 0}
+              textContentType="oneTimeCode"
+              autoComplete="one-time-code"
               style={[
                 styles.otpBox,
                 {

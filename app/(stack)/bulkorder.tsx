@@ -10,6 +10,7 @@ import {
   StatusBar,
   Linking,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
@@ -22,9 +23,12 @@ import Animated, {
   withDelay,
   Easing,
 } from "react-native-reanimated";
-import { MessageCircle, Send, Bot, User, Phone, Mail } from "lucide-react-native";
+import { Send, Bot, User, Phone, Mail } from "lucide-react-native";
+import { FontAwesome } from "@expo/vector-icons";
+import { useBulkEnquiry } from "../../src/hooks/homeHooks";
+import { useToast } from "../../src/context/ToastContext";
 
-const WHATSAPP_NUMBER = "919876543210";
+const WHATSAPP_NUMBER = "918879660630";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in bulk orders.";
 const INPUT_HEIGHT = 50;
 
@@ -162,7 +166,10 @@ export default function BulkOrder() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
+  const { showToast } = useToast();
   const scrollRef = useRef<ScrollView>(null);
+
+  const { mutate: bulkEnquiry, isPending: isSubmitting } = useBulkEnquiry();
 
   const [showForm, setShowForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -180,9 +187,25 @@ export default function BulkOrder() {
   };
 
   const handleSubmit = () => {
-    if (!form.name || !form.mobile || !form.product) return;
-    setSubmitted(true);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
+    if (!form.name || !form.mobile || !form.product) {
+      showToast("Please fill in all required fields", "error");
+      return;
+    }
+
+    bulkEnquiry(form, {
+      onSuccess: (data) => {
+        if (data.status) {
+          setSubmitted(true);
+          showToast(data.message || "Enquiry submitted successfully", "success");
+          setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
+        } else {
+          showToast(data.message || "Something went wrong", "error");
+        }
+      },
+      onError: (error: any) => {
+        showToast(error.message || "Failed to submit request", "error");
+      }
+    });
   };
 
   const msgOpacity = useSharedValue(0);
@@ -271,7 +294,7 @@ export default function BulkOrder() {
                   elevation: 4,
                 }]}
               >
-                <MessageCircle size={spacing(15)} color="#fff" strokeWidth={2} fill="#fff" />
+                <FontAwesome name="whatsapp" size={spacing(18)} color="#fff" />
                 <Text style={[styles.actionBtnText, { fontSize: font(13) }]}>
                   {showForm ? "WhatsApp" : "WhatsApp"}
                 </Text>
@@ -354,6 +377,7 @@ export default function BulkOrder() {
                 <TouchableOpacity
                   activeOpacity={0.85}
                   onPress={handleSubmit}
+                  disabled={isSubmitting}
                   style={[styles.submitBtn, {
                     backgroundColor: colors.primary,
                     shadowColor: colors.primary,
@@ -361,10 +385,17 @@ export default function BulkOrder() {
                     shadowOpacity: 0.25,
                     shadowRadius: 6,
                     elevation: 4,
+                    opacity: isSubmitting ? 0.7 : 1
                   }]}
                 >
-                  <Send size={spacing(15)} color="#fff" strokeWidth={2} />
-                  <Text style={[styles.submitBtnText, { fontSize: font(14) }]}>Submit Request</Text>
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Send size={spacing(15)} color="#fff" strokeWidth={2} />
+                      <Text style={[styles.submitBtnText, { fontSize: font(14) }]}>Submit Request</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
             </Animated.View>

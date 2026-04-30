@@ -4,6 +4,7 @@ import {
   getCart,
   getCartCount,
   getQuickCart,
+  removeCartItem,
 } from "../api/cart.api";
 import {
   AddToCartRequest,
@@ -12,6 +13,7 @@ import {
   GetCartCountParams,
   GetQuickCartParams,
   QuickCartResponse,
+  RemoveCartItemRequest,
 } from "../types/cart.types";
 import { useToast } from "../context/ToastContext";
 
@@ -64,15 +66,17 @@ export const useAddToCart = () => {
 };
 
 interface UseCartParams {
-  user_id: number;
+  user_id: number | string;
   visitor_id: string;
 }
 
 export const useCart = (params: UseCartParams) => {
   return useQuery<CartResponse>({
     queryKey: ["cart", params.user_id, params.visitor_id],
+
     queryFn: () => getCart(params),
-    enabled: !!params.visitor_id,
+
+    enabled: !!params.visitor_id || !!params.user_id,
   });
 };
 
@@ -221,4 +225,28 @@ export const useCartAction = () => {
     updateCart: mutation.mutate,
     loading: mutation.isPending,
   };
+};
+
+export const useRemoveCartItem = () => {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation({
+    mutationFn: (payload: RemoveCartItemRequest) => removeCartItem(payload),
+
+    onSuccess: (data) => {
+      showToast(data.message || "Item removed from cart", "success");
+      queryClient.invalidateQueries({
+        queryKey: ["cart"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["cart-count"],
+      });
+    },
+
+    onError: (error) => {
+      showToast(error.message || "Failed to remove item", "error");
+    },
+  });
 };

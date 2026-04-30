@@ -163,6 +163,7 @@ const AppNavbar = ({
                   alignItems: "center",
                   justifyContent: "center",
                 }}
+                
               >
                 <Bell size={ICON_SIZE} color={colors.text} />
               </TouchableOpacity>

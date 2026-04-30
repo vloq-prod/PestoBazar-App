@@ -89,6 +89,8 @@ export default function Address() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null);
 
+    console.log("user id: ", userId)
+
   const billingList = React.useMemo(
     () => [...(addressData?.data?.billing_address ?? [])],
     [addressData],
