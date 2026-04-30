@@ -1,8 +1,10 @@
 // src/hooks/useVisitor.ts
 
 import { useMutation } from "@tanstack/react-query";
-import { createVisitor, sendOtpApi, verifyOtpApi, verifyUser } from "../api/auth.api";
+import { createVisitor, googleAuthCallback, sendOtpApi, verifyOtpApi, verifyUser } from "../api/auth.api";
 import {
+  GoogleCallbackRequest,
+  GoogleCallbackResponse,
   SendOtpRequest,
   SendOtpResponse,
   VerifyOtpRequest,
@@ -64,6 +66,12 @@ export const useVerifyUser = () => {
     onError: (error) => {
       console.log("Verify User Error:", error);
     },
+  });
+};
+
+export const useGoogleAuthCallback = () => {
+  return useMutation<GoogleCallbackResponse, Error, GoogleCallbackRequest>({
+    mutationFn: googleAuthCallback,
   });
 };
 

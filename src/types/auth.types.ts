@@ -60,4 +60,14 @@ export interface VerifyUserResponse {
   };
 }
 
+export interface GoogleCallbackRequest {
+  email: string;
+  user_name: string;
+  token: string;
+  visitor_id: string;
+  avatar: string;
+}
+
+export type GoogleCallbackResponse = ApiResponse<{ user_id: string; user_name: string }>;
+
 
