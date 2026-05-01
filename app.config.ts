@@ -38,7 +38,7 @@ export default {
       app_version: "1.0.0",
       app_code: 1,
       eas: {
-        projectId: "5cfbb881-6243-45cd-b8f0-5d2966cd05d6",
+        projectId: "e3cc2f8b-4160-46c3-a5cd-d85cfee7252e",
       },
     },
   },

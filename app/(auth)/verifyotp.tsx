@@ -138,13 +138,9 @@ export default function VerifyOtpScreen() {
         await setUser(data.data.user_id, data.data.user_name);
 
         if (redirectTo) {
-          // Clear auth stack and go to the intended destination
-          router.replace("/(tabs)");
-          setTimeout(() => {
-            router.push(redirectTo as any);
-          }, 100);
+          router.replace(redirectTo as any);
         } else {
-          router.replace("/(tabs)");
+          router.replace("/");
         }
       },
 

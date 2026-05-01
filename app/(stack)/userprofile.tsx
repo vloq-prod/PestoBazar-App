@@ -26,6 +26,7 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 import { useResponsive } from "../../src/utils/useResponsive";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 // ─── Field config ─────────────────────────────────────────────────────────────
 const FIELDS = [
@@ -223,8 +224,9 @@ export default function UserProfile() {
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
 
+  const { userName } = useAppVisitorStore();
   const [form, setForm] = useState({
-    fullName: "Guest User",
+    fullName: userName || "Guest User",
     email: "guestuser@gmail.com",
     phone: "",
   });
@@ -264,7 +266,7 @@ export default function UserProfile() {
           >
             <View style={[styles.avatarInner, { borderColor: colors.primary }]}>
               <Image
-                source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+                source={{ uri: `https://ui-avatars.com/api/?name=${userName || "Guest"}` }}
                 style={styles.avatarImage}
                 contentFit="cover"
               />

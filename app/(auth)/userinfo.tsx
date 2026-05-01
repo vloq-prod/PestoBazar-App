@@ -72,7 +72,7 @@ export default function UserInfo() {
       {
         onSuccess: () => {
           router.push({
-            pathname: "/(auth)/verifyotp",
+            pathname: "/verifyotp",
             params: { mobile, isNewUser: "1", fullName, ...(redirectTo ? { redirectTo } : {}) },
           });
         },

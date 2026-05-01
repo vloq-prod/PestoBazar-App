@@ -292,10 +292,14 @@ export default function Checkout() {
                         "success",
                       );
                       router.replace({
-                        pathname: "/(stack)/ordersuccess",
+                        pathname: "/ordersuccess",
                         params: {
                           amount: String(amountToPay),
-                          order_id: res.order_id,
+                          subtotal: String(cart?.cart_amount || 0),
+                          shipping: String(shippingCharge),
+                          gst: String(gstAmount || 0),
+                          cod: String(codCharge),
+                          payment_method: "COD",
                         },
                       });
                     },
@@ -311,8 +315,15 @@ export default function Checkout() {
                   // Logic for online payment (Razorpay, etc.) using initRes data
                   console.log("🌐 Step 4 (Online): Payment Data", initRes.data);
                   router.replace({
-                    pathname: "/(stack)/ordersuccess",
-                    params: { amount: String(amountToPay) },
+                    pathname: "/ordersuccess",
+                    params: {
+                      amount: String(amountToPay),
+                      subtotal: String(cart?.cart_amount || 0),
+                      shipping: String(shippingCharge),
+                      gst: String(gstAmount || 0),
+                      cod: "0",
+                      payment_method: "Online",
+                    },
                   });
                 }
               },
@@ -543,7 +554,7 @@ export default function Checkout() {
               <TouchableOpacity
                 onPress={() =>
                   router.push({
-                    pathname: "/(stack)/map",
+                    pathname: "/map",
                     params: { from: "checkout", type: "billing" },
                   })
                 }
@@ -590,7 +601,7 @@ export default function Checkout() {
                   onSelect={() => setSelectedBillingId(addr.id)}
                   onEdit={() =>
                     router.push({
-                      pathname: "/(stack)/addaddress",
+                      pathname: "/addaddress",
                       params: { type: "billing", id: addr.id },
                     })
                   }
@@ -646,7 +657,7 @@ export default function Checkout() {
                 <TouchableOpacity
                   onPress={() =>
                     router.push({
-                      pathname: "/(stack)/map",
+                      pathname: "/map",
                       params: { from: "checkout", type: "delivery" },
                     })
                   }
@@ -696,7 +707,7 @@ export default function Checkout() {
                     onSelect={() => setSelectedDeliveryId(addr.id)}
                     onEdit={() =>
                       router.push({
-                        pathname: "/(stack)/addaddress",
+                        pathname: "/addaddress",
                         params: { type: "delivery", id: addr.id },
                       })
                     }

@@ -7,6 +7,7 @@ import {
   Animated,
   Easing,
   StatusBar,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -20,10 +21,9 @@ export default function OrderSuccess() {
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
   const router = useRouter();
-  const { amount, order_id } = useLocalSearchParams<{
-    amount: string;
-    order_id: string;
-  }>();
+  const params = useLocalSearchParams<any>();
+
+  const { amount, subtotal, shipping, gst, cod, payment_method } = params;
 
   // ── Animations ──────────────────────────────────────────────────────────────
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -31,172 +31,158 @@ export default function OrderSuccess() {
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    // Icon pop-in
     Animated.spring(scaleAnim, {
       toValue: 1,
-      tension: 50,
-      friction: 7,
+      tension: 40,
+      friction: 6,
       useNativeDriver: true,
     }).start();
 
-    // Content fade + slide up
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
-        delay: 200,
+        duration: 800,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 600,
-        delay: 200,
+        duration: 800,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
   }, []);
 
-  const amountNumber = Number(amount ?? 0);
+  // Robust number parsing
+  const parseSafe = (val: any) => {
+    if (!val) return 0;
+    const cleaned = String(val).replace(/[^0-9.-]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const totalNum = parseSafe(amount);
+  const subTotalNum = parseSafe(subtotal);
+  const shippingNum = parseSafe(shipping);
+  const gstNum = parseSafe(gst);
+  const codNum = parseSafe(cod);
+
+  const SummaryRow = ({ label, value, isTotal }: any) => (
+    <View style={[styles.infoRow, isTotal && { marginTop: spacing(8), paddingTop: spacing(8), borderTopWidth: 1, borderTopColor: colors.border + '40' }]}>
+      <Text style={[styles.infoLabel, { color: isTotal ? colors.text : colors.textSecondary, fontSize: font(isTotal ? 13 : 11), fontFamily: isTotal ? 'Poppins_600SemiBold' : 'Poppins_400Regular' }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: isTotal ? colors.primary : colors.text, fontSize: font(isTotal ? 15 : 11), fontFamily: isTotal ? 'Poppins_700Bold' : 'Poppins_600SemiBold' }]}>{formatINR(value)}</Text>
+    </View>
+  );
 
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          backgroundColor: colors.background,
-          paddingTop: insets.top + spacing(60),
-          paddingBottom: insets.bottom + spacing(20),
-        },
-      ]}
-    >
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="dark-content" />
-
-      {/* ── 1. Main Title ── */}
-      <Animated.Text
-        style={[
-          styles.mainHeading,
-          {
-            color: colors.text,
-            fontSize: font(28),
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
+      
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ 
+          paddingTop: insets.top + spacing(20),
+          paddingBottom: insets.bottom + spacing(40),
+          paddingHorizontal: 20,
+        }}
       >
-        Order Successful!
-      </Animated.Text>
+        {/* ── Header ── */}
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center' }}>
+          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '10' }]}>
+            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+              <BadgeCheck size={font(70)} color={colors.primary} strokeWidth={2} />
+            </Animated.View>
+          </View>
+          
+          <Text style={[styles.successTitle, { color: colors.text, fontSize: font(22) }]}>Order Confirmed!</Text>
+          <Text style={[styles.successSubtitle, { color: colors.textSecondary, fontSize: font(13) }]}>
+            Your payment was successful
+          </Text>
+        </Animated.View>
 
-      {/* ── 2. Success Icon ── */}
-      <View style={styles.badgeSection}>
-        <Animated.View
-          style={[styles.badgeWrapper, { transform: [{ scale: scaleAnim }] }]}
+        {/* ── Detailed Breakdown Card ── */}
+        <Animated.View 
+          style={[
+            styles.ticketCard, 
+            { 
+              backgroundColor: "#F3F4F6", 
+              borderColor: colors.border,
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
         >
-          <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: colors.primary + "10" },
-            ]}
-          >
-            <BadgeCheck
-              size={font(100)}
-              color={colors.primary}
-              strokeWidth={1.5}
-            />
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: colors.textTertiary, fontSize: font(10) }]}>BILLING SUMMARY</Text>
+            <View style={[styles.statusBadge, { backgroundColor: '#fff' }]}>
+              <Text style={{ color: colors.primary, fontSize: font(9), fontFamily: 'Poppins_600SemiBold' }}>{payment_method || 'PAID'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardContent}>
+            <SummaryRow label="Subtotal" value={subTotalNum} />
+            <SummaryRow label="Shipping Fee" value={shippingNum} />
+            <SummaryRow label="Tax (GST)" value={gstNum} />
+            {codNum > 0 && <SummaryRow label="COD Charges" value={codNum} />}
+          </View>
+
+          <View style={styles.ticketDivider}>
+             <View style={[styles.leftNotch, { backgroundColor: colors.background, borderColor: colors.border }]} />
+             <View style={[styles.dottedLine, { borderColor: colors.border + '40' }]} />
+             <View style={[styles.rightNotch, { backgroundColor: colors.background, borderColor: colors.border }]} />
+          </View>
+
+          <View style={[styles.cardContent, { marginTop: spacing(8), marginBottom: 16 }]}>
+            <SummaryRow label="Grand Total" value={totalNum} isTotal />
           </View>
         </Animated.View>
-      </View>
 
-      {/* ── 3. Content Section (No Box) ── */}
-      <Animated.View
-        style={[
-          styles.detailsSection,
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-        ]}
-      >
-        <Text
+        {/* ── Buttons ── */}
+        <Animated.View 
           style={[
-            styles.paymentDetail,
-            {
-              color: colors.textSecondary,
-              fontSize: font(15),
-              marginTop: spacing(10),
-            },
+            styles.buttonGroup, 
+            { 
+              opacity: fadeAnim, 
+              transform: [{ translateY: slideAnim }] 
+            }
           ]}
         >
-          We've received your order. Your payment of{" "}
-          <Text style={{ fontFamily: "Poppins_700Bold", color: colors.text }}>
-            {formatINR(amountNumber)}
-          </Text>{" "}
-          was successful.
-        </Text>
-
-        <Text
-          style={[
-            styles.confirmationText,
-            {
-              color: colors.textTertiary,
-              fontSize: font(13),
-              marginTop: spacing(12),
-            },
-          ]}
-        >
-          A confirmation email and SMS has been sent to your registered details.
-        </Text>
-
-        {/* ── 4. Thank You Text ── */}
-        <View style={{ marginTop: spacing(40) }}>
-          <Text
-            style={[
-              styles.thankYouText,
-              { color: colors.text, fontSize: font(18) },
-            ]}
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)")}
+            activeOpacity={0.8}
+            style={[styles.btnPrimary, { backgroundColor: colors.primary }]}
           >
-            Thank you for shopping with us!
-          </Text>
-        </View>
-      </Animated.View>
+            <Text style={[styles.btnPrimaryText, { fontSize: font(14) }]}>Continue Shopping</Text>
+            <ArrowRight size={18} color="#fff" />
+          </TouchableOpacity>
 
-      <View style={{ flex: 1 }} />
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)")}
+            activeOpacity={0.7}
+            style={[styles.btnSecondary, { borderColor: colors.border }]}
+          >
+            <ShoppingBag size={18} color={colors.text} />
+            <Text style={[styles.btnSecondaryText, { color: colors.text, fontSize: font(14) }]}>View My Orders</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
-      {/* ── 5. Buttons ── */}
-      <Animated.View
-        style={[
-          styles.footer,
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
-          activeOpacity={0.8}
-          style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
-        >
-          <Text style={[styles.primaryBtnText, { fontSize: font(15) }]}>
-            Continue Shopping
-          </Text>
-          <ArrowRight size={18} color="#fff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => router.replace("/(tabs)")}
-          activeOpacity={0.7}
+        {/* ── Bottom Message ── */}
+        <Animated.Text 
           style={[
-            styles.secondaryBtn,
-            { borderColor: colors.border, marginTop: spacing(12) },
+            styles.bottomMessage, 
+            { 
+              color: colors.textTertiary, 
+              fontSize: font(10),
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+              marginTop: spacing(32)
+            }
           ]}
         >
-          <ShoppingBag size={18} color={colors.text} />
-          <Text
-            style={[
-              styles.secondaryBtnText,
-              { color: colors.text, fontSize: font(15) },
-            ]}
-          >
-            View My Orders
-          </Text>
-        </TouchableOpacity>
-      </Animated.View>
+          Thank you for choosing Pestobazaar. Your order is being processed and will be delivered soon.
+        </Animated.Text>
+      </ScrollView>
     </View>
   );
 }
@@ -204,86 +190,129 @@ export default function OrderSuccess() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 24,
-    alignItems: "center",
   },
-  badgeSection: {
-    marginVertical: 40,
-    alignItems: "center",
+  iconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
-  badgeWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
+  successTitle: {
+    fontFamily: 'Poppins_700Bold',
+    textAlign: 'center',
+    marginBottom: 4,
   },
-  iconCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    alignItems: "center",
-    justifyContent: "center",
+  successSubtitle: {
+    fontFamily: 'Poppins_400Regular',
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  detailsSection: {
-    width: "100%",
-    alignItems: "center",
-  },
-  mainHeading: {
-    fontFamily: "Poppins_700Bold",
-    textAlign: "center",
-  },
-  thankYouText: {
-    fontFamily: "Poppins_600SemiBold",
-    textAlign: "center",
-  },
-  paymentDetail: {
-    fontFamily: "Poppins_400Regular",
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: 10,
-  },
-  confirmationText: {
-    fontFamily: "Poppins_400Regular",
-    textAlign: "center",
-    paddingHorizontal: 20,
-    lineHeight: 20,
-  },
-  orderRefBox: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+  ticketCard: {
+    borderRadius: 20,
     borderWidth: 1,
-    borderStyle: "dashed",
+    overflow: 'hidden',
+    marginBottom: 32,
   },
-  orderIdText: {
-    fontFamily: "Poppins_400Regular",
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    marginBottom: 12,
   },
-  footer: {
-    width: "100%",
-    marginBottom: 10,
+  cardTitle: {
+    fontFamily: 'Poppins_600SemiBold',
+    letterSpacing: 1,
   },
-  primaryBtn: {
-    width: "100%",
-    paddingVertical: 16,
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  cardContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 8,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoLabel: {
+    // defined inline
+  },
+  infoValue: {
+    // defined inline
+  },
+  ticketDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 24,
+  },
+  dottedLine: {
+    flex: 1,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 1,
+    height: 1,
+    marginHorizontal: 2,
+  },
+  leftNotch: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: 'absolute',
+    left: -11,
+    zIndex: 10,
+    borderWidth: 1,
+  },
+  rightNotch: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    position: 'absolute',
+    right: -11,
+    zIndex: 10,
+    borderWidth: 1,
+  },
+  buttonGroup: {
+    gap: 10,
+    width: '100%',
+  },
+  btnPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
     borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: 8,
   },
-  primaryBtnText: {
-    color: "#fff",
-    fontFamily: "Poppins_600SemiBold",
+  btnPrimaryText: {
+    color: '#fff',
+    fontFamily: 'Poppins_600SemiBold',
   },
-  secondaryBtn: {
-    width: "100%",
-    paddingVertical: 16,
+  btnSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
     borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: 8,
     borderWidth: 1.5,
   },
-  secondaryBtnText: {
-    fontFamily: "Poppins_600SemiBold",
+  btnSecondaryText: {
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  bottomMessage: {
+    fontFamily: 'Poppins_400Regular',
+    textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 30,
   },
 });
+

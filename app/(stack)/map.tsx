@@ -124,7 +124,7 @@ const MapScreen = () => {
     });
     if (from === "address" || from === "checkout") {
       router.replace({
-        pathname: "/(stack)/addaddress",
+        pathname: "/addaddress",
         params: { type: type ?? "delivery" },
       });
     } else {

@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse } from "../types/order.types";
+import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
 
 
 
@@ -24,6 +24,18 @@ export const initiateOrderApi = async (
     await apiClient.post<InitiateOrderResponse>(
       "/app-api/v1/initiate-order",
       payload
+    );
+
+  return response.data;
+};
+
+
+export const viewOrderApi = async (
+  params: ViewOrderRequest
+): Promise<ViewOrderResponse> => {
+  const response =
+    await apiClient.get<ViewOrderResponse>(
+      `/app-api/v1/view-order/${params.order_id}`
     );
 
   return response.data;

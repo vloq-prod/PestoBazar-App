@@ -153,9 +153,12 @@ export default function CartScreen() {
 
   const handleContinue = () => {
     if (userId) {
-      router.push("/(stack)/checkout");
+      router.push("/checkout");
     } else {
-      router.push({ pathname: "/(auth)/login", params: { redirectTo: "/(stack)/checkout" } });
+      router.push({
+        pathname: "/login",
+        params: { redirectTo: "/checkout" },
+      });
     }
   };
 

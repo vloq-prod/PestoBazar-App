@@ -165,7 +165,7 @@ function CategoryCard({
           <TouchableOpacity
             onPress={() =>
               router.push({
-                pathname: "/(stack)/category/[slug]",
+                pathname: "/category/[slug]",
                 params: {
                   slug: item.id,
                   name: item.category_name,

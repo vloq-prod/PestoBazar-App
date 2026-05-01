@@ -51,7 +51,7 @@ const MENU_SECTIONS = [
         label: "My Orders",
         sub: "Track & manage orders",
         icon: Package,
-        route: "/(auth)/userinfo",
+        route: "/ordersuccess",
       },
       {
         id: "wishlist",
@@ -196,93 +196,96 @@ export default function ProfileScreen() {
 
   const router = useRouter();
 
-  const logout = useAppVisitorStore((s) => s.logout);
-
-  const insets = useSafeAreaInsets();
-
-  const handleLogout = () => {
-    Alert.alert(
-      "Confirm Logout",
-      "Are you sure you want to logout from your account?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-
-            router.replace("/login");
-          },
-        },
-      ],
-    );
-  };
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View
-        style={{ height: insets.top, backgroundColor: colors.background }}
-      />
-
-      <StatusBar barStyle={"dark-content"} />
-
-      <AppNavbar title="Profile" showBack />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scroll,
+    const userName = useAppVisitorStore((s) => s.userName);
+    
+    const logout = useAppVisitorStore((s) => s.logout);
+  
+    const insets = useSafeAreaInsets();
+  
+    const handleLogout = () => {
+      Alert.alert(
+        "Confirm Logout",
+        "Are you sure you want to logout from your account?",
+        [
+          { text: "Cancel", style: "cancel" },
           {
-            paddingBottom: insets.bottom + 60,
+            text: "Logout",
+            style: "destructive",
+            onPress: async () => {
+              await logout();
+  
+              router.replace("/login");
+            },
           },
-        ]}
-      >
-        {/* ── Hero ───────────────────────────────── */}
-        <View style={styles.heroSection}>
-          <View style={styles.heroRow}>
-            <View>
-              <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                Hey there,
-              </Text>
-              <Text style={[styles.userName, { color: colors.text }]}>
-                Guest User
-              </Text>
+        ],
+      );
+    };
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View
+          style={{ height: insets.top, backgroundColor: colors.background }}
+        />
+  
+        <StatusBar barStyle={"dark-content"} />
+  
+        <AppNavbar title="Profile" showBack />
+  
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.scroll,
+            {
+              paddingBottom: insets.bottom + 60,
+            },
+          ]}
+        >
+          {/* ── Hero ───────────────────────────────── */}
+          <View style={styles.heroSection}>
+            <View style={styles.heroRow}>
+              <View>
+                <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+                  Hey there,
+                </Text>
+                <Text style={[styles.userName, { color: colors.text }]}>
+                  {userName || "Guest User"}
+                </Text>
+              </View>
+  
+              <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
+                <Image
+                  source={{ uri: `https://ui-avatars.com/api/?name=${userName || "Guest"}` }}
+                  style={styles.avatarImage}
+                />
+              </View>
             </View>
-
-            <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
-              <Image
-                source={{ uri: "https://i.pravatar.cc/150?img=12" }}
-                style={styles.avatarImage}
-              />
+  
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              Easily manage your account, track your orders, and keep your
+              personal details up to date with ease.
+            </Text>
+          </View>
+  
+          {/* ── Account Info ───────────────────────── */}
+          <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
+            <View style={styles.inputRow}>
+              <Mail size={16} color={colors.primary} />
+              <Text style={[styles.inputText, { color: colors.text }]}>
+                guestuser@gmail.com
+              </Text>
+              <SquarePen size={16} color={colors.primary} />
+            </View>
+  
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+  
+            <View style={styles.inputRow}>
+              <Phone size={16} color={colors.primary} />
+              <Text style={[styles.inputText, { color: colors.textSecondary }]}>
+                +91 99XXXXXX41
+              </Text>
+              <SquarePen size={16} color={colors.primary} />
             </View>
           </View>
-
-          <Text style={[styles.description, { color: colors.textSecondary }]}>
-            Easily manage your account, track your orders, and keep your
-            personal details up to date with ease.
-          </Text>
-        </View>
-
-        {/* ── Account Info ───────────────────────── */}
-        <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-          <View style={styles.inputRow}>
-            <Mail size={16} color={colors.primary} />
-            <Text style={[styles.inputText, { color: colors.text }]}>
-              guestuser@gmail.com
-            </Text>
-            <SquarePen size={16} color={colors.primary} />
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          <View style={styles.inputRow}>
-            <Phone size={16} color={colors.primary} />
-            <Text style={[styles.inputText, { color: colors.textSecondary }]}>
-              +91 9913690041
-            </Text>
-            <SquarePen size={16} color={colors.primary} />
-          </View>
-        </View>
 
         {/* ── Menu Sections ───────────────────────── */}
         {MENU_SECTIONS.map((section) => (

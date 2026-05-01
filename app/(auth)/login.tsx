@@ -210,7 +210,7 @@ export default function Login() {
       ? colors.primary
       : colors.border;
 
-  const handleSkip = () => router.replace("/(tabs)");
+  const handleSkip = () => router.replace("/");
 
   const handleGetOtp = useCallback(() => {
     const result = phoneSchema.safeParse({ mobile_no: phone });
@@ -226,7 +226,7 @@ export default function Login() {
         onSuccess: (data) => {
           if (data.data.exists === 0) {
             router.push({
-              pathname: "/(auth)/userinfo",
+              pathname: "/userinfo",
               params: { mobile: phone, ...(redirectTo ? { redirectTo } : {}) },
             });
           } else {
@@ -235,7 +235,7 @@ export default function Login() {
               {
                 onSuccess: () => {
                   router.push({
-                    pathname: "/(auth)/verifyotp",
+                    pathname: "/verifyotp",
                     params: {
                       mobile: phone,
                       isNewUser: "0",

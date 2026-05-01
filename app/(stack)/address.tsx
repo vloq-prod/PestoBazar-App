@@ -134,7 +134,7 @@ export default function Address() {
         spacing={spacing}
         onAddPress={() =>
           router.push({
-            pathname: "/(stack)/map",
+            pathname: "/map",
             params: { from: "address", type },
           })
         }
@@ -174,7 +174,7 @@ export default function Address() {
               onSelect={() => {}} // No-op
               onEdit={() =>
                 router.push({
-                  pathname: "/(stack)/addaddress",
+                  pathname: "/addaddress",
                   params: { type, id: addr.id },
                 })
               }
