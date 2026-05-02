@@ -90,6 +90,7 @@ export interface OrderInfo {
   pincode: string;
   city: string;
   state: string;
+  shipping_gst: string;
 
   landmark: string;
   area: string;
@@ -101,7 +102,6 @@ export interface OrderInfo {
   full_name: string;
   mobile: string;
   email: string | null;
-
   ip: string;
   created_at: string;
   updated_at: string | null;
@@ -240,3 +240,147 @@ export interface ViewOrderData {
 
 export type ViewOrderResponse =
   ApiResponse<ViewOrderData>;
+
+
+
+
+
+
+
+
+// ======================================================
+// REQUEST
+// ======================================================
+
+export interface UserOrderHistoryRequest {
+  user_id: string;
+}
+
+// ======================================================
+// ORDER ITEM
+// ======================================================
+
+export interface OrderHistoryItem {
+  id: number;
+  order_code: string;
+  user_id: number;
+  cart_id: number;
+
+  order_amount: string;
+  shipping_charge: string;
+  cod_charges: string;
+
+  address: string;
+  pincode: string;
+  city: string;
+  state: string;
+
+  landmark: string;
+  area: string;
+  alternate_no: string;
+
+  gst: string | null;
+  company: string;
+
+  full_name: string;
+  mobile: string;
+  email: string | null;
+
+  ip: string;
+  created_at: string;
+
+  current_status: string;
+  delivery_note: string;
+
+  processed: "Yes" | "No";
+
+  tracking_no: string | null;
+  courier_company: string | null;
+  expected_delivery_date: string | null;
+  tracking_id: string | null;
+
+  payment_id: string | null;
+  payment_type: string;
+
+  invoice_no: string;
+  invoice_sequence: number;
+  invoice_year: number;
+  invoice_path: string | null;
+
+  logistic_provider: string;
+
+  refund_status: string;
+  refund_id: string | null;
+
+  total_refunded_amount: string;
+  refundable_amount: string;
+  refund_amount: string;
+
+  is_eligible_for_refund: "Yes" | "No";
+
+  order_no: string;
+
+  cancelled_by: number | null;
+  cancelled_at: string | null;
+  cancel_reason_id: number | null;
+  cancel_reason: string | null;
+}
+
+// ======================================================
+// DATA
+// ======================================================
+
+export interface UserOrderHistoryData {
+  order_master: OrderHistoryItem[];
+}
+
+// ======================================================
+// FINAL RESPONSE
+// ======================================================
+
+export type UserOrderHistoryResponse =
+  ApiResponse<UserOrderHistoryData>;
+
+
+
+
+
+  // ======================================================
+// src/services/payment/payment.types.ts
+// ======================================================
+
+// Common API Response
+export interface ApiResponse<T> {
+  status: number;
+  message: string;
+  data?: T;
+}
+
+// ======================================================
+// REQUEST
+// ======================================================
+
+export interface PaymentSuccessRequest {
+  razorpay_signature: string;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+}
+
+// ======================================================
+// RESPONSE DATA
+// Flexible because backend may return order_id / payment info
+// ======================================================
+
+export interface PaymentSuccessData {
+  order_id?: string;
+  payment_id?: string;
+  transaction_id?: string;
+}
+
+// ======================================================
+// FINAL RESPONSE
+// ======================================================
+
+export type PaymentSuccessResponse =
+  ApiResponse<PaymentSuccessData>;
+  

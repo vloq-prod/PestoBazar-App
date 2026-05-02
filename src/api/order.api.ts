@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
+import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, UserOrderHistoryRequest, UserOrderHistoryResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
 
 
 
@@ -40,3 +40,6 @@ export const viewOrderApi = async (
 
   return response.data;
 };
+
+
+

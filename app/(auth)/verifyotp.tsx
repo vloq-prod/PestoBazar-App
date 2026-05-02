@@ -63,32 +63,35 @@ export default function VerifyOtpScreen() {
   const formattedTimer = `${String(Math.floor(timer / 60)).padStart(2, "0")}:${String(timer % 60).padStart(2, "0")}`;
 
   // ── OTP Input Handlers ──
-  const handleOtpChange = useCallback((text: string, index: number) => {
-    const numericValue = text.replace(/[^0-9]/g, "");
+  const handleOtpChange = useCallback(
+    (text: string, index: number) => {
+      const numericValue = text.replace(/[^0-9]/g, "");
 
-    // If user enters/pastes more than 1 digit (like a 4-digit code from keyboard suggestion)
-    if (numericValue.length > 1) {
-      const digits = numericValue.slice(0, OTP_LENGTH).split("");
-      const nextOtp = [...otp];
-      digits.forEach((d, i) => {
-        if (i < OTP_LENGTH) nextOtp[i] = d;
+      // If user enters/pastes more than 1 digit (like a 4-digit code from keyboard suggestion)
+      if (numericValue.length > 1) {
+        const digits = numericValue.slice(0, OTP_LENGTH).split("");
+        const nextOtp = [...otp];
+        digits.forEach((d, i) => {
+          if (i < OTP_LENGTH) nextOtp[i] = d;
+        });
+        setOtp(nextOtp);
+        inputRefs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
+        return;
+      }
+
+      const digit = numericValue.slice(-1);
+      setOtp((prev) => {
+        const next = [...prev];
+        next[index] = digit;
+        return next;
       });
-      setOtp(nextOtp);
-      inputRefs.current[Math.min(digits.length, OTP_LENGTH - 1)]?.focus();
-      return;
-    }
-
-    const digit = numericValue.slice(-1);
-    setOtp((prev) => {
-      const next = [...prev];
-      next[index] = digit;
-      return next;
-    });
-    setError("");
-    if (digit && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  }, [otp]);
+      setError("");
+      if (digit && index < OTP_LENGTH - 1) {
+        inputRefs.current[index + 1]?.focus();
+      }
+    },
+    [otp],
+  );
 
   const handleKeyPress = useCallback((key: string, index: number) => {
     if (key === "Backspace") {

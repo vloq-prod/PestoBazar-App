@@ -4,10 +4,12 @@ import {
   CodSuccessResponse,
   InitiateOrderRequest,
   InitiateOrderResponse,
+  UserOrderHistoryRequest,
+  UserOrderHistoryResponse,
   ViewOrderRequest,
   ViewOrderResponse,
 } from "../types/order.types";
-import { codSuccessApi, initiateOrderApi, viewOrderApi } from "../api/order.api";
+import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, viewOrderApi } from "../api/order.api";
 
 export const useCodSuccess = () => {
   const queryClient = useQueryClient();
@@ -69,6 +71,27 @@ export const useViewOrder = (
       viewOrderApi(params),
 
     enabled: !!params.order_id,
+
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+
+
+
+export const useUserOrderHistory = (
+  params: UserOrderHistoryRequest
+) => {
+  return useQuery<UserOrderHistoryResponse>({
+    queryKey: [
+      "user-order-history",
+      params.user_id,
+    ],
+
+    queryFn: () =>
+      getUserOrderHistoryApi(params),
+
+    enabled: !!params.user_id,
 
     staleTime: 1000 * 60 * 5,
   });

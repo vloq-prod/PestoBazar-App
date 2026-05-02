@@ -282,7 +282,10 @@ export default function Checkout() {
                 );
                 if (isCod) {
                   const codPayload = { cart_id: String(cartId) };
-                  console.log("💵 Step 4 (COD): Confirming Order...", codPayload);
+                  console.log(
+                    "💵 Step 4 (COD): Confirming Order...",
+                    codPayload,
+                  );
 
                   codSuccessMutate(codPayload, {
                     onSuccess: (res) => {
@@ -294,6 +297,7 @@ export default function Checkout() {
                       router.replace({
                         pathname: "/ordersuccess",
                         params: {
+                          order_id: res.order_id,
                           amount: String(amountToPay),
                           subtotal: String(cart?.cart_amount || 0),
                           shipping: String(shippingCharge),
@@ -317,6 +321,7 @@ export default function Checkout() {
                   router.replace({
                     pathname: "/ordersuccess",
                     params: {
+                      order_id: initRes.data?.order_id,
                       amount: String(amountToPay),
                       subtotal: String(cart?.cart_amount || 0),
                       shipping: String(shippingCharge),
@@ -352,11 +357,9 @@ export default function Checkout() {
     isInitiatingOrder ||
     isCodSuccessPending;
 
-
   useEffect(() => {
     const billing = addressData?.data?.billing_address ?? [];
     const delivery = addressData?.data?.delivery_address ?? [];
-
 
     if (!billing.some((a) => a.id === selectedBillingId)) {
       setSelectedBillingId(billing[0]?.id ?? null);
@@ -468,7 +471,7 @@ export default function Checkout() {
     return (
       <View style={[styles.screenRoot, { backgroundColor: colors.background }]}>
         <View style={{ height: insets.top }} />
-        <AppNavbar title="Checkout" showBack  showNotification/>
+        <AppNavbar title="Checkout" showBack showNotification />
         <View className="flex-1 items-center justify-center gap-2">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text

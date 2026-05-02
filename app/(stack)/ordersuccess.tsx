@@ -158,12 +158,21 @@ export default function OrderSuccess() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => {
+              if (params.order_id) {
+                router.replace({
+                  pathname: "/orderdetails/[id]",
+                  params: { id: params.order_id }
+                });
+              } else {
+                router.replace("/(tabs)");
+              }
+            }}
             activeOpacity={0.7}
             style={[styles.btnSecondary, { borderColor: colors.border }]}
           >
             <ShoppingBag size={18} color={colors.text} />
-            <Text style={[styles.btnSecondaryText, { color: colors.text, fontSize: font(14) }]}>View My Orders</Text>
+            <Text style={[styles.btnSecondaryText, { color: colors.text, fontSize: font(14) }]}>View Order Details</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -298,6 +307,7 @@ const styles = StyleSheet.create({
   },
   btnSecondary: {
     flexDirection: 'row',
+    
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,

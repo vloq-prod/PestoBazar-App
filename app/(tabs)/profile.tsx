@@ -51,7 +51,7 @@ const MENU_SECTIONS = [
         label: "My Orders",
         sub: "Track & manage orders",
         icon: Package,
-        route: "/ordersuccess",
+        route: "/order",
       },
       {
         id: "wishlist",
