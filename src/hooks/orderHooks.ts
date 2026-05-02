@@ -4,12 +4,14 @@ import {
   CodSuccessResponse,
   InitiateOrderRequest,
   InitiateOrderResponse,
+  PaymentSuccessRequest,
+  PaymentSuccessResponse,
   UserOrderHistoryRequest,
   UserOrderHistoryResponse,
   ViewOrderRequest,
   ViewOrderResponse,
 } from "../types/order.types";
-import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, viewOrderApi } from "../api/order.api";
+import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi } from "../api/order.api";
 
 export const useCodSuccess = () => {
   const queryClient = useQueryClient();
@@ -94,5 +96,42 @@ export const useUserOrderHistory = (
     enabled: !!params.user_id,
 
     staleTime: 1000 * 60 * 5,
+  });
+};
+
+
+
+
+// ======================================================
+// src/services/payment/payment.hooks.ts
+// ======================================================
+
+
+export const usePaymentSuccess = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    PaymentSuccessResponse,
+    Error,
+    PaymentSuccessRequest
+  >({
+    mutationFn: paymentSuccessApi,
+
+    onSuccess: (response) => {
+      console.log("✅", response.message);
+
+      // Strategic refresh
+      queryClient.invalidateQueries({
+        queryKey: ["cart"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["user-order-history"],
+      });
+    },
+
+    onError: (error) => {
+      console.log("❌", error.message);
+    },
   });
 };

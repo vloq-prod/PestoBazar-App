@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, UserOrderHistoryRequest, UserOrderHistoryResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
+import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, PaymentSuccessRequest, PaymentSuccessResponse, UserOrderHistoryRequest, UserOrderHistoryResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
 
 
 
@@ -43,3 +43,31 @@ export const viewOrderApi = async (
 
 
 
+
+
+
+export const getUserOrderHistoryApi = async (
+  params: UserOrderHistoryRequest
+): Promise<UserOrderHistoryResponse> => {
+  const response =
+    await apiClient.get<UserOrderHistoryResponse>(
+      `/app-api/v1/user-order-history/${params.user_id}`
+    );
+
+  return response.data;
+};
+
+
+
+
+export const paymentSuccessApi = async (
+  payload: PaymentSuccessRequest
+): Promise<PaymentSuccessResponse> => {
+  const response =
+    await apiClient.post<PaymentSuccessResponse>(
+      "/app-api/v1/payment-success",
+      payload
+    );
+
+  return response.data;
+};

@@ -14,6 +14,7 @@ import { Image } from "expo-image";
 
 // Project Imports
 import AppNavbar from "../../../src/components/comman/AppNavbar";
+import CancelOrderModal from "../../../src/components/comman/CancelOrderModal";
 import { useViewOrder } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
@@ -398,9 +399,11 @@ const OrderDetails = () => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
 
+  const [isCancelModalVisible, setIsCancelModalVisible] = React.useState(false);
+
   const { data, isLoading, error } = useViewOrder({
     order_id:
-      "eyJpdiI6IjFjcWdMd1hDb1lBV1NTWUVDdDVnOVE9PSIsInZhbHVlIjoib3JOMzVuZVVwZVVYcGdabGloVkdrdz09IiwibWFjIjoiMjBkNDU4ODk4YWFjYWQ2YzkwMGY1MjVhZmQwYjJiYWU4NDcwYWY4MDA2Mjg3NmExNjdmZTEwNWNjMDdhOWIxMCIsInRhZyI6IiJ9",
+      "eyJpdiI6IlBRWjdJUzVhbWtvaWRVNy9peGQwWVE9PSIsInZhbHVlIjoiN3g4UnhHTnVRemd1RHVVUS9uTFlTUT09IiwibWFjIjoiZTJlMjc3MmE3ZDIxZDk3M2M0ZGFkZWE5ZjQzY2Q2MzU5ZDYyZTM4YzM0NzIzYWI5MjY4MzJiM2FjMTA1M2M3ZCIsInRhZyI6IiJ9",
   });
 
   const orderData = data?.data;
@@ -621,7 +624,7 @@ const OrderDetails = () => {
                 source={{ uri: item.main_image }}
                 style={[
                   styles.productImage,
-                  { backgroundColor: colors.surface },
+                  { backgroundColor: "#F5F5F5" },
                 ]}
                 contentFit="contain"
               />
@@ -850,7 +853,42 @@ const OrderDetails = () => {
             </Text>
           </View>
         </View>
+
+        {/* ── Cancel Order Button ── */}
+        {currentStatus !== "Cancelled" && currentStatus !== "Delivered" && (
+          <View style={{ paddingHorizontal: spacing(2), marginBottom: spacing(40) }}>
+            <TouchableOpacity
+              style={[
+                styles.cancelOrderBtn,
+                { borderColor: "#EF4444", backgroundColor: "#FEF2F2" },
+              ]}
+              activeOpacity={0.7}
+              onPress={() => setIsCancelModalVisible(true)}
+            >
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(13),
+                  color: "#EF4444",
+                }}
+              >
+                Cancel Order
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
+
+      {/* ── Cancel Order Modal ── */}
+      <CancelOrderModal
+        visible={isCancelModalVisible}
+        onClose={() => setIsCancelModalVisible(false)}
+        onSubmit={(reason, comments) => {
+          // Implement your cancel API call here
+          console.log("Cancelling order with reason:", reason, "and comments:", comments);
+          setIsCancelModalVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -908,9 +946,10 @@ const styles = StyleSheet.create({
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    height: 32,
     borderRadius: 8,
     borderWidth: 1,
   },
@@ -918,10 +957,20 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     fontSize: 11,
     letterSpacing: 0.2,
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
   // Payment summary
   summaryBlock: {
     gap: 2,
+  },
+  cancelOrderBtn: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
   },
   summaryRow: {
     flexDirection: "row",
