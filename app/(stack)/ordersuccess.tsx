@@ -129,12 +129,12 @@ export default function OrderSuccess() {
 
           <View style={styles.ticketDivider}>
              <View style={[styles.leftNotch, { backgroundColor: colors.background, borderColor: colors.border }]} />
-             <View style={[styles.dottedLine, { borderColor: colors.border + '40' }]} />
+             <View style={[styles.dottedLine, { borderColor: colors.border }]} />
              <View style={[styles.rightNotch, { backgroundColor: colors.background, borderColor: colors.border }]} />
           </View>
 
           <View style={[styles.cardContent, { marginTop: spacing(8), marginBottom: 16 }]}>
-            <SummaryRow label="Grand Total" value={totalNum} isTotal />
+            <SummaryRow label="Grand Total" value={totalNum} />
           </View>
         </Animated.View>
 

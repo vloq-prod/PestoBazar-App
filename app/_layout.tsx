@@ -57,19 +57,21 @@ function RootLayoutNav() {
 
     const inTabs = segments[0] === "(tabs)";
     const inWelcome = segments[0] === "welcome";
+    const inAuth = segments[0] === "(auth)";
+    const inStack = segments[0] === "(stack)";
 
-    // ❌ No visitor → go welcome
+    // ❌ No visitor → go welcome (unless already in welcome or auth)
     if (!visitorId || !token) {
-      if (!inWelcome) {
+      if (!inWelcome && !inAuth) {
         console.log("🚨 Redirect → welcome");
         router.replace("/welcome");
       }
       return;
     }
 
-    // ✅ Visitor exists → go tabs
+    // ✅ Visitor exists → only redirect if in welcome or auth
     if (visitorId && token) {
-      if (!inTabs) {
+      if (inWelcome || inAuth) {
         console.log("🚀 Redirect → tabs");
         router.replace("/(tabs)");
       }
@@ -91,6 +93,8 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(stack)" />
+      <Stack.Screen name="(auth)" />
       <Stack.Screen name="welcome" />
     </Stack>
   );

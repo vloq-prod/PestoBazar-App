@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Location from "expo-location";
-import MapView from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import SearchLocationModal from "../../src/modals/SearchLocationModal";
-import { MapPin, Navigation, Search } from "lucide-react-native";
+import { MapPin, Navigation, Search, AlertCircle } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { useMapStore } from "../../src/store/mapStore";
@@ -34,58 +34,101 @@ const MapScreen = () => {
   const { font, spacing } = useResponsive();
   const router = useRouter();
   const { from, type } = useLocalSearchParams<{ from?: string; type?: string }>();
+  const insets = useSafeAreaInsets();
 
   const mapRef = useRef<MapView>(null);
+  const isMounted = useRef(true);
 
   const [selectedAddress, setSelectedAddress] = useState("");
   const [selectedCoords, setSelectedCoords] = useState(DEFAULT_COORDS);
   const [searchVisible, setSearchVisible] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [mapError, setMapError] = useState(false);
+
+  // ── Refs for tracking ──────────────────────────────────────────────────────
+  const isMoving = useRef(false);
+  const geocodeTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastGeocodedCoords = useRef({ latitude: 0, longitude: 0 });
+
+  // ── Cleanup ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
+    };
+  }, []);
 
   // ── Reverse geocode helper ──────────────────────────────────────────────────
   const reverseGeocode = useCallback(
     async (latitude: number, longitude: number) => {
+      if (!isMounted.current) return;
+      console.log("[Map] Geocoding start for:", latitude, longitude);
       try {
         const result = await Location.reverseGeocodeAsync({ latitude, longitude });
-        if (result.length > 0) {
-          setSelectedAddress(buildAddress(result[0]));
+        if (isMounted.current && result && result.length > 0) {
+          const addr = buildAddress(result[0]);
+          setSelectedAddress(addr);
+          lastGeocodedCoords.current = { latitude, longitude };
+          console.log("[Map] Geocoding success:", addr);
         }
-      } catch {}
+      } catch (err) {
+        console.error("[Map] Geocoding error:", err);
+      }
     },
     [],
   );
 
   // ── Move camera to coords ───────────────────────────────────────────────────
   const flyTo = useCallback((latitude: number, longitude: number, zoom = 16) => {
+    console.log("[Map] FlyTo:", latitude, longitude);
+    // Convert zoom to deltas roughly
+    const latDelta = 0.01 / (zoom / 16);
+    const lngDelta = 0.01 / (zoom / 16);
+
     setTimeout(() => {
-      mapRef.current?.animateCamera(
-        { center: { latitude, longitude }, zoom },
-        { duration: 700 },
-      );
-    }, 150);
+      if (mapRef.current) {
+        mapRef.current.animateToRegion(
+          {
+            latitude,
+            longitude,
+            latitudeDelta: latDelta,
+            longitudeDelta: lngDelta,
+          },
+          700,
+        );
+      }
+    }, 100);
   }, []);
 
   // ── Auto-fetch current location on mount ───────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
+        console.log("[Map] Requesting permissions...");
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          setIsInitializing(false);
+          console.log("[Map] Permission denied");
+          if (isMounted.current) setIsInitializing(false);
           return;
         }
+        
+        console.log("[Map] Fetching current position...");
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
+        
         const { latitude, longitude } = loc.coords;
-        setSelectedCoords({ latitude, longitude });
-        flyTo(latitude, longitude);
-        await reverseGeocode(latitude, longitude);
-      } catch {
-        // permission denied or location unavailable — keep default Mumbai coords
+        if (isMounted.current) {
+          setSelectedCoords({ latitude, longitude });
+          flyTo(latitude, longitude);
+          await reverseGeocode(latitude, longitude);
+        }
+      } catch (err) {
+        console.error("[Map] Initial position error:", err);
       } finally {
-        setIsInitializing(false);
+        if (isMounted.current) setIsInitializing(false);
       }
     })();
   }, []);
@@ -94,19 +137,26 @@ const MapScreen = () => {
   const handleCurrentLocation = useCallback(async () => {
     if (isLocating) return;
     setIsLocating(true);
+    console.log("[Map] Manual location fetch...");
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      if (status !== "granted") {
+        console.log("[Map] Permission denied for manual fetch");
+        return;
+      }
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
       const { latitude, longitude } = loc.coords;
-      setSelectedCoords({ latitude, longitude });
-      flyTo(latitude, longitude);
-      await reverseGeocode(latitude, longitude);
-    } catch {
+      if (isMounted.current) {
+        setSelectedCoords({ latitude, longitude });
+        flyTo(latitude, longitude);
+        await reverseGeocode(latitude, longitude);
+      }
+    } catch (err) {
+      console.error("[Map] Manual location error:", err);
     } finally {
-      setIsLocating(false);
+      if (isMounted.current) setIsLocating(false);
     }
   }, [isLocating, flyTo, reverseGeocode]);
 
@@ -117,6 +167,7 @@ const MapScreen = () => {
 
   // ── Confirm handler ─────────────────────────────────────────────────────────
   const handleConfirm = useCallback(() => {
+    console.log("[Map] Confirming location:", selectedCoords);
     useMapStore.getState().setSelectedLocation({
       address: selectedAddress,
       latitude: selectedCoords.latitude,
@@ -188,7 +239,7 @@ const MapScreen = () => {
             position: "relative",
           }}
         >
-          {/* Loading overlay while fetching initial location */}
+          {/* Loading overlay */}
           {isInitializing && (
             <View
               style={[
@@ -215,8 +266,26 @@ const MapScreen = () => {
             </View>
           )}
 
+          {mapError ? (
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", zIndex: 100, padding: 24 }]}>
+              <AlertCircle size={48} color={colors.error || "#ff4d4f"} style={{ marginBottom: 16 }} />
+              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(16), color: colors.text, textAlign: "center", marginBottom: 8 }}>
+                Map failed to load
+              </Text>
+              <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(13), color: colors.textSecondary, textAlign: "center", lineHeight: 20 }}>
+                This could be due to a poor internet connection or missing API configuration.
+              </Text>
+              <TouchableOpacity 
+                onPress={() => setMapError(false)}
+                style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.primary }}
+              >
+                <Text style={{ color: "#fff", fontFamily: "Poppins_600SemiBold" }}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
           <MapView
             ref={mapRef}
+            provider={PROVIDER_GOOGLE}
             style={{ width: "100%", height: "100%" }}
             initialRegion={{
               latitude: selectedCoords.latitude,
@@ -224,17 +293,43 @@ const MapScreen = () => {
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}
-            onPress={async (e) => {
-              const { latitude, longitude } = e.nativeEvent.coordinate;
-              setSelectedCoords({ latitude, longitude });
-              await reverseGeocode(latitude, longitude);
+            onMapReady={() => {
+              console.log("[Map] Map Ready");
+              setIsInitializing(false);
             }}
-            onRegionChangeComplete={async (region) => {
+            onRegionChange={() => {
+              isMoving.current = true;
+            }}
+            onRegionChangeComplete={(region) => {
+              console.log("[Map] Region changed:", region.latitude, region.longitude);
+              isMoving.current = false;
               const { latitude, longitude } = region;
-              setSelectedCoords({ latitude, longitude });
-              await reverseGeocode(latitude, longitude);
+              
+              if (isMounted.current) {
+                setSelectedCoords({ latitude, longitude });
+              }
+
+              // Debounce Reverse Geocoding
+              if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
+              
+              geocodeTimeout.current = setTimeout(() => {
+                const dist = Math.abs(latitude - lastGeocodedCoords.current.latitude) + 
+                             Math.abs(longitude - lastGeocodedCoords.current.longitude);
+                
+                if (dist > 0.0001) {
+                  reverseGeocode(latitude, longitude);
+                }
+              }, 800); // Debounce after 800ms for stability
+            }}
+            onPress={(e) => {
+              const { latitude, longitude } = e.nativeEvent.coordinate;
+              if (isMounted.current) {
+                setSelectedCoords({ latitude, longitude });
+              }
+              // user manually tapped, let the region change handle the geocode via debounce
             }}
           />
+          )}
 
           {/* Centre pin */}
           <View
@@ -284,7 +379,7 @@ const MapScreen = () => {
                 borderColor: colors.border,
                 shadowColor: "#000",
                 right: spacing(14),
-                bottom: spacing(14),
+                bottom: spacing(14) + (insets.bottom > 0 ? insets.bottom - 10 : 0),
               },
             ]}
           >
@@ -310,7 +405,7 @@ const MapScreen = () => {
             borderTopLeftRadius: spacing(20),
             borderTopRightRadius: spacing(20),
             padding: spacing(16),
-            paddingBottom: spacing(20),
+            paddingBottom: insets.bottom > 0 ? insets.bottom + spacing(10) : spacing(20),
           },
         ]}
       >
@@ -386,7 +481,7 @@ const MapScreen = () => {
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
         onSelectLocation={(location) => {
-          if (location.latitude && location.longitude) {
+          if (location.latitude != null && location.longitude != null) {
             const newCoords = {
               latitude: location.latitude,
               longitude: location.longitude,

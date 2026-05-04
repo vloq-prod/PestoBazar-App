@@ -310,7 +310,7 @@ const OrderScreen = () => {
             colors={colors}
             font={font}
             spacing={spacing}
-            onPress={() => handleOrderPress(item.order_code)}
+            onPress={() => handleOrderPress(item.enc_order_id)}
           />
         )}
         ListEmptyComponent={renderEmpty}

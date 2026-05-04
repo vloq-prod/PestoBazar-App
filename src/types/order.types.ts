@@ -40,12 +40,14 @@ export interface InitiateOrderRequest {
 // ======================================================
 
 export interface InitiateOrderData {
-  order_id?: string;
-  payment_id?: string;
-  amount?: number | string;
-  currency?: string;
-  razorpay_order_id?: string;
+  orderId?: string;
   key?: string;
+  mobile?: string;
+  email?: string;
+  first_name?: string;
+  total_cost?: number | string;
+  company_name?: string;
+  currency?: string; // Fallback if needed
 }
 
 // ======================================================
@@ -137,6 +139,8 @@ export interface OrderInfo {
   is_eligible_for_refund: "Yes" | "No";
 
   order_no: string;
+
+  enc_order_id: string;
 }
 
 // ======================================================

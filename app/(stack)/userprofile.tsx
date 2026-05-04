@@ -266,7 +266,7 @@ export default function UserProfile() {
           >
             <View style={[styles.avatarInner, { borderColor: colors.primary }]}>
               <Image
-                source={{ uri: `https://ui-avatars.com/api/?name=${userName || "Guest"}` }}
+                source={require("../../assets/profile.jpeg")}
                 style={styles.avatarImage}
                 contentFit="cover"
               />

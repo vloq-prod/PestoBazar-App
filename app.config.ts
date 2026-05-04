@@ -1,45 +1,65 @@
-export default {
-  expo: {
-    name: "pestobazaar",
-    slug: "pestobazaar",
-    scheme: "pestobazaar",
-    version: "1.0.0",
-    orientation: "portrait",
+import { ExpoConfig, ConfigContext } from "expo/config";
 
-    userInterfaceStyle: "automatic",
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
 
-    // ✅ ADD THIS
-    icon: "./assets/icon.png",
+  name: "Pestobazaar",
+  owner: "daniyalpesto2",
+  slug: "pestobazaar",
+  version: "1.0.0",
+  orientation: "portrait",
 
-    splash: {
-      image: "./assets/icon.png",
-      resizeMode: "contain",
+  newArchEnabled: true,
+  userInterfaceStyle: "automatic",
+
+  scheme: [
+    "pestobazaar",
+    "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh",
+  ],
+
+  icon: "./assets/icon.png",
+
+  splash: {
+    image: "./assets/icon.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff",
+  },
+
+  plugins: [
+    "expo-router",
+    "expo-dev-client",
+    [
+      "expo-location",
+      {
+        locationWhenInUsePermission:
+          "Allow Pestobazaar to access your location.",
+      },
+    ],
+  ],
+
+  ios: {
+    buildNumber: "1",
+    bundleIdentifier: "com.pestobazaar.app",
+  },
+
+  android: {
+    package: "com.pestobazaar.app",
+    versionCode: 1,
+    permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+    adaptiveIcon: {
+      foregroundImage: "./assets/icon.png",
       backgroundColor: "#ffffff",
     },
-
-    ios: {
-      buildNumber: "1",
-      bundleIdentifier: "com.pestobazaar.app",
-    },
-
-    android: {
-      versionCode: 1,
-      package: "com.pestobazaar.app",
-
-      // ✅ ADD THIS
-      adaptiveIcon: {
-        foregroundImage: "./assets/icon.png",
-        backgroundColor: "#ffffff",
-      },
-    },
-
-    extra: {
-      app_name: "pestobazaar",
-      app_version: "1.0.0",
-      app_code: 1,
-      eas: {
-        projectId: "e3cc2f8b-4160-46c3-a5cd-d85cfee7252e",
+    config: {
+      googleMaps: {
+        apiKey: process.env.GOOGLE_MAPS_API_KEY || "",
       },
     },
   },
-};
+
+  extra: {
+    eas: {
+      projectId: "6fb00c5e-083c-410a-8f0f-084eb5d874b4",
+    },
+  },
+});

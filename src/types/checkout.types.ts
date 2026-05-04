@@ -1,9 +1,15 @@
-// 🔹 Request
+// ======================================================
+// REQUEST
+// ======================================================
+
 export interface CheckoutRequest {
   user_id: string;
 }
 
-// 🔹 Cart Summary
+// ======================================================
+// CART SUMMARY
+// ======================================================
+
 export interface CartSummary {
   cart_id: string;
   cart_amount: string;
@@ -11,44 +17,72 @@ export interface CartSummary {
   shipping_charge: string | number;
   amount_to_pay: number;
   free_shipping_message: string;
-  free_shipping: string;
-  gst_amount: number | string;
-  cod_charges?: string; 
+  free_shipping: "Yes" | "No";
+  gst_amount: string | number;
+  cod_charges: string;
 }
 
-// 🔹 Cart Item
+// ======================================================
+// CART ITEM
+// ======================================================
+
 export interface CartItem {
   id: number;
   qty: number;
   price_per_piece: string;
-  pack: number;
+  pack: number | null;
   total_price: string;
+
   name: string;
   slug: string;
-  active: string;
+
+  active: "Active" | "Inactive";
+
   cart_amount: string;
   cart_id: number;
+
   enc_product_id: string;
+
   actual_price: string;
   you_save: string;
+
   variation_id: number;
   product_id: number;
+
   category_slug: string;
   product_slug: string;
+
   shipping_charge: string;
+
   main_image: string;
+  s3_image_path: string;
+
   size: string;
   tax_percent: string;
   gst_amount: string;
+
   stock: number;
   branch_id: number;
-  listing_type: string;
+
+  listing_type: "Static" | "Combo";
   parent_variant_id: number;
+
   sku: string;
-  s3_image_path: string;
 }
 
-// 🔹 Response
+// ======================================================
+// RAZORPAY
+// ======================================================
+
+export interface RazorpayConfig {
+  RAZORPAY_KEY: string;
+  RAZORPAY_SECRET: string;
+}
+
+// ======================================================
+// RESPONSE
+// ======================================================
+
 export interface CheckoutResponse {
   message: string;
   status: number;
@@ -56,9 +90,9 @@ export interface CheckoutResponse {
     cart: CartSummary;
     cart_details: CartItem[];
     cart_app: CartSummary;
+    razorpay: RazorpayConfig;
   };
 }
-
 // 🔹 Request Params
 export interface GetAddressParams {
   user_id: string;

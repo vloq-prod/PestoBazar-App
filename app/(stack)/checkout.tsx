@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import RenderHtml from "react-native-render-html";
+import RazorpayCheckout from "react-native-razorpay";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
@@ -45,7 +46,12 @@ import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal
 import { useRouter, useFocusEffect } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../src/context/ToastContext";
-import { useCodSuccess, useInitiateOrder } from "../../src/hooks/orderHooks";
+import LoadingOverlay from "../../src/components/comman/LoadingOverlay";
+import {
+  useCodSuccess,
+  useInitiateOrder,
+  usePaymentSuccess,
+} from "../../src/hooks/orderHooks";
 
 const SectionTitle = ({ title, colors, font, spacing, rightElement }: any) => (
   <View
@@ -145,6 +151,8 @@ export default function Checkout() {
     useCodSuccess();
   const { mutate: initiateOrderMutate, isPending: isInitiatingOrder } =
     useInitiateOrder();
+  const { mutate: paymentSuccessMutate, isPending: isPaymentSuccessPending } =
+    usePaymentSuccess();
 
   // ── Address state ──────────────────────────────────────────────────────────
   const [selectedBillingId, setSelectedBillingId] = useState<number | null>(
@@ -316,20 +324,75 @@ export default function Checkout() {
                     },
                   });
                 } else {
-                  // Logic for online payment (Razorpay, etc.) using initRes data
+                  // Logic for online payment (Razorpay)
                   console.log("🌐 Step 4 (Online): Payment Data", initRes.data);
-                  router.replace({
-                    pathname: "/ordersuccess",
-                    params: {
-                      order_id: initRes.data?.order_id,
-                      amount: String(amountToPay),
-                      subtotal: String(cart?.cart_amount || 0),
-                      shipping: String(shippingCharge),
-                      gst: String(gstAmount || 0),
-                      cod: "0",
-                      payment_method: "Online",
+
+                  const options = {
+                    description: "Payment for Order",
+                    image:
+                      "https://pestobazaar.confidevtech.com/images/logo.png",
+                    currency: "INR",
+                    key: initRes.data?.key || razorpayKey,
+                    amount:
+                      Number(initRes.data?.total_cost) * 100 ||
+                      amountToPay * 100,
+                    name: initRes.data?.company_name || "Pesto Bazaar",
+                    order_id: initRes.data?.orderId,
+                    prefill: {
+                      email: initRes.data?.email || "",
+                      contact: initRes.data?.mobile || "",
+                      name: initRes.data?.first_name || "",
                     },
-                  });
+                    theme: { color: colors.primary },
+                  };
+
+                  RazorpayCheckout.open(options)
+                    .then((paymentRes: any) => {
+                      console.log("✅ Razorpay Success:", paymentRes);
+                      showToast("Payment Successful!", "success");
+
+                      // Step 5: Inform Backend about Success
+                      const successPayload = {
+                        razorpay_order_id: paymentRes.razorpay_order_id,
+                        razorpay_payment_id: paymentRes.razorpay_payment_id,
+                        razorpay_signature: paymentRes.razorpay_signature,
+                      };
+
+                      paymentSuccessMutate(successPayload, {
+                        onSuccess: (res) => {
+                          console.log(
+                            "✅ Step 5 Success: Backend Notified",
+                            res,
+                          );
+                          router.replace({
+                            pathname: "/ordersuccess",
+                            params: {
+                              order_id: initRes.data?.orderId,
+                              amount: String(amountToPay),
+                              subtotal: String(cart?.cart_amount || 0),
+                              shipping: String(shippingCharge),
+                              gst: String(gstAmount || 0),
+                              cod: "0",
+                              payment_method: "Online",
+                            },
+                          });
+                        },
+                        onError: (err) => {
+                          console.log(
+                            "❌ Step 5 Failed: Backend Notify Error",
+                            err,
+                          );
+                          showToast(
+                            "Payment recorded but verification failed. Please contact support.",
+                            "warning",
+                          );
+                        },
+                      });
+                    })
+                    .catch((error: any) => {
+                      console.log("❌ Razorpay Failed:", error);
+                      showToast("Payment cancelled or failed.", "error");
+                    });
                 }
               },
               onError: (err: any) => {
@@ -355,7 +418,8 @@ export default function Checkout() {
     isValidatingCart ||
     isValidatingPincode ||
     isInitiatingOrder ||
-    isCodSuccessPending;
+    isCodSuccessPending ||
+    isPaymentSuccessPending;
 
   useEffect(() => {
     const billing = addressData?.data?.billing_address ?? [];
@@ -374,6 +438,7 @@ export default function Checkout() {
   const cart = data?.data?.cart_app;
   const items: any[] = data?.data?.cart_details || [];
   const cartId = data?.data?.cart_app?.cart_id;
+  const razorpayKey = data?.data?.razorpay?.RAZORPAY_KEY;
 
   const billingList: any[] = addressData?.data?.billing_address ?? [];
   const deliveryList: any[] = addressData?.data?.delivery_address ?? [];
@@ -472,7 +537,7 @@ export default function Checkout() {
       <View style={[styles.screenRoot, { backgroundColor: colors.background }]}>
         <View style={{ height: insets.top }} />
         <AppNavbar title="Checkout" showBack showNotification />
-        <View className="flex-1 items-center justify-center gap-2">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 8 }}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text
             style={[
@@ -1253,6 +1318,15 @@ export default function Checkout() {
         confirmColor="#EF4444"
         icon={<Trash2 size={24} color="#EF4444" />}
         isLoading={isRemoving}
+      />
+
+      <LoadingOverlay
+        visible={isPlacingOrder}
+        message={
+          isPaymentSuccessPending
+            ? "Verifying Payment..."
+            : "Processing Order..."
+        }
       />
     </View>
   );

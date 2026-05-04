@@ -254,7 +254,7 @@ export default function ProfileScreen() {
   
               <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
                 <Image
-                  source={{ uri: `https://ui-avatars.com/api/?name=${userName || "Guest"}` }}
+                  source={require("../../assets/profile.jpeg")}
                   style={styles.avatarImage}
                 />
               </View>

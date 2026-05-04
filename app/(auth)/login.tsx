@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { gRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,19 +55,19 @@ const carouselData = [
     id: 1,
     title: "Fast Pest Control",
     description: "Get quick and reliable pest control service at your doorstep",
-    image: "https://cdn-icons-png.flaticon.com/512/6195/6195700.png",
+    image: require("../../assets/category/category1.png"),
   },
   {
     id: 2,
     title: "Trusted Experts",
     description: "Verified professionals with years of experience",
-    image: "https://cdn-icons-png.flaticon.com/512/2922/2922510.png",
+    image: require("../../assets/category/category2.png"),
   },
   {
     id: 3,
     title: "100% Safe",
     description: "Eco-friendly chemicals safe for your family and pets",
-    image: "https://cdn-icons-png.flaticon.com/512/3142/3142397.png",
+    image: require("../../assets/category/category3.png"),
   },
 ];
 
@@ -162,9 +162,9 @@ export default function Login() {
   const isExpoGo = Constants.executionEnvironment === "storeClient";
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "",
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
+    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID || "",
     redirectUri: googleRedirectUri,
     scopes: ["openid", "profile", "email"],
     selectAccount: true,
@@ -290,8 +290,8 @@ export default function Login() {
       {/* ── Bottom Form Section ── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
@@ -352,8 +352,8 @@ export default function Login() {
                 renderItem={({ item }) => (
                   <View style={styles.slide}>
                     <Image
-                      source={{ uri: item.image }}
-                      style={{ width: 90, height: 90, resizeMode: "contain" }}
+                      source={item.image}
+                      style={{ width: 140, height: 140, resizeMode: "contain" }}
                     />
                     <Text
                       style={{

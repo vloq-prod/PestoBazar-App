@@ -35,6 +35,8 @@ import {
   FileText,
   RotateCcw,
   XCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react-native";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -389,6 +391,288 @@ const OrderInfoGrid = ({ orderData, colors, font, spacing }: any) => {
   );
 };
 
+const IMAGE_BASE = "https://static-cdn.pestobazaar.com/";
+
+const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) => {
+  const [expanded, setExpanded] = React.useState(false);
+  const isCombo = item.listing_type === "Combo";
+
+  const childItems = isCombo
+    ? (orderData?.order_combo_detail || []).filter(
+        (child: any) => child.parent_variant_id === item.variation_id
+      )
+    : [];
+
+  const comboTotalAmount = childItems.reduce(
+    (acc: number, child: any) => acc + Number(child.total_amount || 0), 0
+  );
+  const displayTotalAmount = isCombo ? comboTotalAmount.toFixed(2) : item.total_amount;
+
+  const imageUri = item.main_image?.startsWith("http")
+    ? item.main_image
+    : IMAGE_BASE + item.main_image;
+
+  return (
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderRadius: 16,
+        marginBottom: isLast ? 0 : spacing(12),
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: "hidden",
+      }}
+    >
+      {/* ── Main Item Row ─────────────────────────────────── */}
+      <View style={{ flexDirection: "row", padding: spacing(14), gap: spacing(14) }}>
+        {/* Image with subtle bg */}
+        <View
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: 12,
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: colors.border,
+            overflow: "hidden",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={{ uri: imageUri }}
+            style={{ width: 72, height: 72 }}
+            contentFit="contain"
+          />
+        </View>
+
+        {/* Content */}
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(13), color: colors.text, lineHeight: font(18) }}
+            numberOfLines={2}
+          >
+            {item.product_name}
+          </Text>
+
+          {/* Price row — directly below name */}
+          <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: spacing(5), gap: spacing(6) }}>
+            <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(15), color: colors.primary }}>
+              ₹{displayTotalAmount}
+            </Text>
+            {item.actual_price && Number(item.actual_price) > Number(displayTotalAmount) && (
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(11),
+                  color: colors.textTertiary,
+                  textDecorationLine: "line-through",
+                }}
+              >
+                ₹{item.actual_price}
+              </Text>
+            )}
+          </View>
+
+          {/* Size & Qty — simple plain text below price */}
+          <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: colors.textTertiary, marginTop: spacing(3) }}>
+            {[item.size, `Qty: ${item.qty}`].filter(Boolean).join("  ·  ")}
+          </Text>
+        </View>
+      </View>
+
+      {/* ── Divider + Action Bar ──────────────────────────── */}
+      <View style={{ flexDirection: "row", borderTopWidth: 1, borderTopColor: colors.border }}>
+
+        {/* For Combo: View Items | Review | Reorder (3 buttons) */}
+        {isCombo && childItems.length > 0 ? (
+          <>
+            {/* View Items */}
+            <TouchableOpacity
+              onPress={() => setExpanded(!expanded)}
+              activeOpacity={0.7}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
+            >
+              {expanded ? <ChevronUp size={13} color={colors.primary} /> : <ChevronDown size={13} color={colors.primary} />}
+              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
+                {expanded ? "Hide" : `${childItems.length} Items`}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ width: 1, backgroundColor: colors.border }} />
+
+            {/* Review */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
+            >
+              <Star size={12} color={colors.primary} fill={colors.primary} />
+              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
+                Review
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ width: 1, backgroundColor: colors.border }} />
+
+            {/* Reorder */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
+            >
+              <RotateCcw size={12} color={colors.textSecondary} />
+              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.textSecondary }}>
+                Reorder
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            {/* For Static: Write Review | Reorder (2 buttons) */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
+            >
+              <Star size={12} color={colors.primary} fill={colors.primary} />
+              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
+                Write Review
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ width: 1, backgroundColor: colors.border }} />
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
+            >
+              <RotateCcw size={12} color={colors.textSecondary} />
+              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.textSecondary }}>
+                Reorder
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+
+      {/* ── Combo Accordion ───────────────────────────────── */}
+      {expanded && isCombo && childItems.length > 0 && (
+        <View
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            backgroundColor: colors.background,
+          }}
+        >
+          {/* Header */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: spacing(14),
+              paddingVertical: spacing(10),
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.text }}>
+              Combo Includes
+            </Text>
+            <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11), color: colors.textTertiary }}>
+              {childItems.length} items
+            </Text>
+          </View>
+
+          {/* Child Item Rows */}
+          {childItems.map((child: any, cIndex: number) => {
+            const childImageUri = child.main_image?.startsWith("http")
+              ? child.main_image
+              : IMAGE_BASE + child.main_image;
+
+            return (
+              <View
+                key={child.id}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: spacing(14),
+                  paddingVertical: spacing(12),
+                  borderBottomWidth: cIndex === childItems.length - 1 ? 0 : 1,
+                  borderBottomColor: colors.border,
+                  gap: spacing(12),
+                }}
+              >
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 8,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Image
+                    source={{ uri: childImageUri }}
+                    style={{ width: 44, height: 44 }}
+                    contentFit="contain"
+                  />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{ fontFamily: "Poppins_500Medium", fontSize: font(12), color: colors.text, lineHeight: font(16) }}
+                    numberOfLines={2}
+                  >
+                    {child.product_name}
+                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", marginTop: spacing(3), gap: spacing(8) }}>
+                    {child.size ? (
+                      <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10), color: colors.textTertiary }}>
+                        {child.size}
+                      </Text>
+                    ) : null}
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10), color: colors.textTertiary }}>
+                      × {child.pack}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(13), color: colors.primary }}>
+                  ₹{child.total_amount}
+                </Text>
+              </View>
+            );
+          })}
+
+          {/* Combo Total Footer */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: spacing(14),
+              paddingVertical: spacing(10),
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              backgroundColor: colors.primary + "08",
+            }}
+          >
+            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12), color: colors.text }}>
+              Combo Total
+            </Text>
+            <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(14), color: colors.primary }}>
+              ₹{comboTotalAmount.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -402,9 +686,10 @@ const OrderDetails = () => {
   const [isCancelModalVisible, setIsCancelModalVisible] = React.useState(false);
 
   const { data, isLoading, error } = useViewOrder({
-    order_id:
-      "eyJpdiI6IlBRWjdJUzVhbWtvaWRVNy9peGQwWVE9PSIsInZhbHVlIjoiN3g4UnhHTnVRemd1RHVVUS9uTFlTUT09IiwibWFjIjoiZTJlMjc3MmE3ZDIxZDk3M2M0ZGFkZWE5ZjQzY2Q2MzU5ZDYyZTM4YzM0NzIzYWI5MjY4MzJiM2FjMTA1M2M3ZCIsInRhZyI6IiJ9",
+    order_id: id || "",
   });
+
+  console.log(" order id enc : ", id)
 
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
@@ -606,133 +891,16 @@ const OrderDetails = () => {
           spacing={spacing}
         />
         <View>
-          {orderData?.order_detail?.map((item, index) => (
-            <View
+          {orderData?.order_detail?.map((item: any, index: number) => (
+            <OrderItemCard
               key={item.id}
-              style={[
-                styles.productRow,
-                {
-                  borderBottomColor: colors.border,
-                  borderBottomWidth:
-                    index === (orderData?.order_detail?.length ?? 0) - 1
-                      ? 0
-                      : 1,
-                },
-              ]}
-            >
-              <Image
-                source={{ uri: item.main_image }}
-                style={[
-                  styles.productImage,
-                  { backgroundColor: "#F5F5F5" },
-                ]}
-                contentFit="contain"
-              />
-              <View style={styles.productInfo}>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_600SemiBold",
-                    fontSize: font(13),
-                    color: colors.text,
-                  }}
-                  numberOfLines={2}
-                >
-                  {item.product_name}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_400Regular",
-                    fontSize: font(11),
-                    color: colors.textTertiary,
-                    marginTop: 2,
-                  }}
-                >
-                  {item.size ? `Size: ${item.size}  ·  ` : ""}Qty: {item.qty}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginTop: spacing(6),
-                    gap: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_700Bold",
-                      fontSize: font(14),
-                      color: colors.primary,
-                    }}
-                  >
-                    ₹{item.total_amount}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_400Regular",
-                      fontSize: font(11),
-                      color: colors.textTertiary,
-                    }}
-                  >
-                    ₹{item.price_per_piece}/unit
-                  </Text>
-                </View>
-
-                {/* Actions Row */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginTop: spacing(10),
-                    gap: 10,
-                  }}
-                >
-                  {/* Review Button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.actionBtn,
-                      {
-                        backgroundColor: colors.primary + "12",
-                        borderColor: colors.primary + "30",
-                      },
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Star
-                      size={12}
-                      color={colors.primary}
-                      fill={colors.primary}
-                    />
-                    <Text
-                      style={[styles.actionBtnText, { color: colors.primary }]}
-                    >
-                      Review
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Reorder Button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.actionBtn,
-                      {
-                        backgroundColor: colors.textSecondary + "10",
-                        borderColor: colors.textSecondary + "20",
-                      },
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <RotateCcw size={12} color={colors.textSecondary} />
-                    <Text
-                      style={[
-                        styles.actionBtnText,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Reorder
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
+              item={item}
+              orderData={orderData}
+              isLast={index === (orderData?.order_detail?.length ?? 0) - 1}
+              colors={colors}
+              font={font}
+              spacing={spacing}
+            />
           ))}
         </View>
 
