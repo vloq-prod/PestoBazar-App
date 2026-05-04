@@ -1,5 +1,7 @@
 import { apiClient } from "../lib/apiClient";
 import {
+  GoogleCallbackRequest,
+  GoogleCallbackResponse,
   SendOtpRequest,
   SendOtpResponse,
   VerifyOtpRequest,
@@ -53,6 +55,17 @@ export const verifyUser = async (
 ): Promise<VerifyUserResponse> => {
   const response = await apiClient.post(
     "/app-api/v1/verify-user",
+    payload
+  );
+
+  return response.data;
+};
+
+export const googleAuthCallback = async (
+  payload: GoogleCallbackRequest
+): Promise<GoogleCallbackResponse> => {
+  const response = await apiClient.post<GoogleCallbackResponse>(
+    "/app-api/v1/auth/google/callback",
     payload
   );
 

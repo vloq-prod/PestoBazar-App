@@ -27,7 +27,8 @@ import Animated, {
   SharedValue,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { useSendOtp, useVerifyUser } from "../../src/hooks/useAuthHooks";
+import { useGoogleAuthCallback, useSendOtp, useVerifyUser } from "../../src/hooks/useAuthHooks";
+import { useAppVisitorStore } from "../../src/store/auth";
 import { z, ZodError } from "zod";
 
 import * as WebBrowser from "expo-web-browser";
@@ -196,6 +197,10 @@ export default function Login() {
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
   const { mutate: sendOtpMutate, isPending: isSendOtpPending } = useSendOtp();
+  const { mutate: googleCallbackMutate, isPending: isGooglePending } = useGoogleAuthCallback();
+
+  const visitorId = useAppVisitorStore((s) => s.visitorId);
+  const setUser = useAppVisitorStore((s) => s.setUser);
 
   const [phone, setPhone] = useState("");
   const [focused, setFocused] = useState(false);
@@ -257,24 +262,46 @@ export default function Login() {
     const handleGoogleResponse = async () => {
       if (response?.type === "success") {
         const { accessToken, idToken } = response.authentication || {};
-        console.log("✅ Google Auth Success");
-        console.log("idToken:", idToken);
-        console.log("accessToken:", accessToken);
-        if (accessToken) {
-          try {
-            const userInfoResponse = await fetch(
-              "https://www.googleapis.com/userinfo/v2/me",
-              { headers: { Authorization: `Bearer ${accessToken}` } },
-            );
-            const user = await userInfoResponse.json();
-            console.log("✅ Google User Info:", JSON.stringify(user, null, 2));
-            console.log("email:", user.email);
-            console.log("name:", user.name);
-          } catch (err) {
-            console.error("❌ Failed to fetch user info:", err);
-          }
+        if (!accessToken) return;
+
+        try {
+          const userInfoResponse = await fetch(
+            "https://www.googleapis.com/userinfo/v2/me",
+            { headers: { Authorization: `Bearer ${accessToken}` } },
+          );
+          const user = await userInfoResponse.json();
+
+          googleCallbackMutate(
+            {
+              email: user.email ?? "",
+              user_name: user.name ?? "",
+              token: idToken ?? accessToken,
+              visitor_id: visitorId ?? "",
+              avatar: user.picture ?? "",
+            },
+            {
+              onSuccess: async (data) => {
+                if (data.status === 0) {
+                  Alert.alert("Google Sign-In Failed", data.message || "Something went wrong.");
+                  return;
+                }
+                await setUser(data.data.user_id, data.data.user_name);
+                if (redirectTo) {
+                  router.replace("/(tabs)");
+                  setTimeout(() => router.push(redirectTo as any), 100);
+                } else {
+                  router.replace("/(tabs)");
+                }
+              },
+              onError: () => {
+                Alert.alert("Google Sign-In Failed", "Could not sign in with Google. Please try again.");
+              },
+            },
+          );
+        } catch (err) {
+          console.error("❌ Failed to fetch Google user info:", err);
+          Alert.alert("Google Sign-In Failed", "Could not retrieve account details.");
         }
-        // TODO: call backend API with idToken/email here
       } else if (response?.type === "error") {
         console.error("❌ Google Auth Error:", response.error);
       }
@@ -600,6 +627,7 @@ export default function Login() {
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleGoogleLogin}
+              disabled={isGooglePending}
               style={[
                 styles.googleBtn,
                 {
@@ -607,7 +635,7 @@ export default function Login() {
                   borderColor: colors.border,
                   backgroundColor:
                     colors.background === "#fff" ? "#fff" : colors.surface,
-                  opacity: isExpoGo ? 0.65 : 1,
+                  opacity: isExpoGo || isGooglePending ? 0.65 : 1,
                 },
               ]}
             >
@@ -625,6 +653,8 @@ export default function Login() {
               >
                 {isExpoGo
                   ? "Google Login Requires Dev Build"
+                  : isGooglePending
+                  ? "Signing in..."
                   : "Continue with Google"}
               </Text>
             </TouchableOpacity>
