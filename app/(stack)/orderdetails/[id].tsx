@@ -448,12 +448,12 @@ const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) 
 
         {/* Content */}
         <View style={{ flex: 1 }}>
-          <Text
+            <Text
             style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(13), color: colors.text, lineHeight: font(18) }}
-            numberOfLines={2}
-          >
-            {item.product_name}
-          </Text>
+              numberOfLines={2}
+            >
+              {item.product_name}
+            </Text>
 
           {/* Price row — directly below name */}
           <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: spacing(5), gap: spacing(6) }}>
@@ -488,34 +488,34 @@ const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) 
         {isCombo && childItems.length > 0 ? (
           <>
             {/* View Items */}
-            <TouchableOpacity
-              onPress={() => setExpanded(!expanded)}
+          <TouchableOpacity
+            onPress={() => setExpanded(!expanded)}
               activeOpacity={0.7}
               style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-            >
+          >
               {expanded ? <ChevronUp size={13} color={colors.primary} /> : <ChevronDown size={13} color={colors.primary} />}
               <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
                 {expanded ? "Hide" : `${childItems.length} Items`}
-              </Text>
-            </TouchableOpacity>
+            </Text>
+          </TouchableOpacity>
 
             <View style={{ width: 1, backgroundColor: colors.border }} />
 
             {/* Review */}
-            <TouchableOpacity
+        <TouchableOpacity
               activeOpacity={0.7}
               style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-            >
+        >
               <Star size={12} color={colors.primary} fill={colors.primary} />
               <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
-                Review
-              </Text>
-            </TouchableOpacity>
+            Review
+          </Text>
+        </TouchableOpacity>
 
             <View style={{ width: 1, backgroundColor: colors.border }} />
 
             {/* Reorder */}
-            <TouchableOpacity
+        <TouchableOpacity
               activeOpacity={0.7}
               style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
             >
@@ -564,23 +564,23 @@ const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) 
         >
           {/* Header */}
           <View
-            style={{
-              flexDirection: "row",
+          style={{
+            flexDirection: "row",
               justifyContent: "space-between",
-              alignItems: "center",
+            alignItems: "center",
               paddingHorizontal: spacing(14),
               paddingVertical: spacing(10),
               borderBottomWidth: 1,
               borderBottomColor: colors.border,
-            }}
-          >
+          }}
+        >
             <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.text }}>
               Combo Includes
-            </Text>
+          </Text>
             <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11), color: colors.textTertiary }}>
               {childItems.length} items
             </Text>
-          </View>
+      </View>
 
           {/* Child Item Rows */}
           {childItems.map((child: any, cIndex: number) => {
@@ -636,8 +636,8 @@ const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) 
                     ) : null}
                     <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10), color: colors.textTertiary }}>
                       × {child.pack}
-                    </Text>
-                  </View>
+                  </Text>
+                </View>
                 </View>
 
                 <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(13), color: colors.primary }}>

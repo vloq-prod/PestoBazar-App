@@ -52,7 +52,12 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
   const btnBg = isBoth ? colors.primary : sel.wa ? "#25D366" : colors.primary;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={StyleSheet.absoluteFill} />
@@ -61,7 +66,10 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
         <View
           style={[
             styles.sheet,
-            { backgroundColor: colors.background ?? "#ffffff", paddingBottom: spacing(36) },
+            {
+              backgroundColor: colors.background ?? "#ffffff",
+              paddingBottom: spacing(36),
+            },
           ]}
         >
           {/* Pull Bar */}
@@ -71,10 +79,16 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
 
           {/* Header */}
           <View style={styles.headerRow}>
-            <Text style={[styles.title, { fontSize: font(18), color: colors.text }]}>
+            <Text
+              style={[styles.title, { fontSize: font(18), color: colors.text }]}
+            >
               Resend OTP
             </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <X size={22} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -89,8 +103,7 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
               },
             ]}
           >
-            How would you like to receive
-            your verification code?
+            How would you like to receive your verification code?
           </Text>
 
           {/* Cards */}
@@ -104,14 +117,25 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
                 {
                   borderColor: sel.sms ? colors.primary : colors.border + "80",
                   borderWidth: sel.sms ? 1.5 : 1,
-                  backgroundColor: sel.sms ? colors.primary + "0A" : colors.surface,
+                  backgroundColor: sel.sms
+                    ? colors.primary + "0A"
+                    : colors.surface,
                   padding: spacing(16),
                 },
               ]}
             >
               <View style={styles.cardTop}>
-                <View style={[styles.iconCircle, { backgroundColor: colors.primary + "1A" }]}>
-                  <MessageSquare size={22} color={colors.primary} strokeWidth={2} />
+                <View
+                  style={[
+                    styles.iconCircle,
+                    { backgroundColor: colors.primary + "1A" },
+                  ]}
+                >
+                  <MessageSquare
+                    size={22}
+                    color={colors.primary}
+                    strokeWidth={2}
+                  />
                 </View>
                 <View
                   style={[
@@ -128,7 +152,11 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
               <Text
                 style={[
                   styles.cardLabel,
-                  { color: colors.text, fontSize: font(15), marginTop: spacing(16) },
+                  {
+                    color: colors.text,
+                    fontSize: font(15),
+                    marginTop: spacing(16),
+                  },
                 ]}
               >
                 SMS
@@ -136,10 +164,14 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
               <Text
                 style={[
                   styles.cardSub,
-                  { color: colors.textSecondary, fontSize: font(12.5), marginTop: spacing(2) },
+                  {
+                    color: colors.textSecondary,
+                    fontSize: font(12.5),
+                    marginTop: spacing(2),
+                  },
                 ]}
               >
-                Standard Text
+                Text Message
               </Text>
             </TouchableOpacity>
 
@@ -158,8 +190,14 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
               ]}
             >
               <View style={styles.cardTop}>
-                <View style={[styles.iconCircle, { backgroundColor: "#25D3661A" }]}>
-                  <MaterialCommunityIcons name="whatsapp" size={26} color="#25D366" />
+                <View
+                  style={[styles.iconCircle, { backgroundColor: "#25D3661A" }]}
+                >
+                  <MaterialCommunityIcons
+                    name="whatsapp"
+                    size={26}
+                    color="#25D366"
+                  />
                 </View>
                 <View
                   style={[
@@ -176,7 +214,11 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
               <Text
                 style={[
                   styles.cardLabel,
-                  { color: colors.text, fontSize: font(15), marginTop: spacing(16) },
+                  {
+                    color: colors.text,
+                    fontSize: font(15),
+                    marginTop: spacing(16),
+                  },
                 ]}
               >
                 WhatsApp
@@ -184,7 +226,11 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
               <Text
                 style={[
                   styles.cardSub,
-                  { color: colors.textSecondary, fontSize: font(12.5), marginTop: spacing(2) },
+                  {
+                    color: colors.textSecondary,
+                    fontSize: font(12.5),
+                    marginTop: spacing(2),
+                  },
                 ]}
               >
                 Instant Message

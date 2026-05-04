@@ -9,6 +9,8 @@ interface AppState {
   // User
   userId: string | null;
   userName: string | null;
+  userEmail: string | null;
+  userAvatar: string | null;
 
   // Visitor actions
   setVisitor: (visitorId: string, token: string) => Promise<void>;
@@ -16,7 +18,8 @@ interface AppState {
   hydrateVisitor: () => Promise<void>;
 
   // User actions
-  setUser: (userId: string, userName: string) => Promise<void>;
+  setUser: (userId: string, userName: string, email?: string, avatar?: string) => Promise<void>;
+  setGoogleUser: (userId: string, userName: string, email: string, avatar: string) => Promise<void>;
   clearUser: () => Promise<void>;
   hydrateUser: () => Promise<void>;
 
@@ -29,6 +32,8 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   token: null,
   userId: null,
   userName: null,
+  userEmail: null,
+  userAvatar: null,
 
   // ── Visitor ──────────────────────────────────────
   setVisitor: async (visitorId, token) => {
@@ -48,25 +53,34 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   },
 
   // ── User ─────────────────────────────────────────
-  setUser: async (userId, userName) => {
-    await StorageUtil.setUser(userId, userName);
-    set({ userId, userName });
+  setUser: async (userId, userName, email, avatar) => {
+    await StorageUtil.setUser(userId, userName, email, avatar);
+    set({ userId, userName, userEmail: email, userAvatar: avatar });
+  },
+
+  setGoogleUser: async (userId, userName, email, avatar) => {
+    await StorageUtil.setUser(userId, userName, email, avatar);
+    set({ userId, userName, userEmail: email, userAvatar: avatar });
   },
 
   clearUser: async () => {
     await StorageUtil.clearUser();
-    set({ userId: null, userName: null });
+    set({ userId: null, userName: null, userEmail: null, userAvatar: null });
   },
 
   hydrateUser: async () => {
     const userId = await StorageUtil.getUserId();
     const userName = await StorageUtil.getUserName();
-    if (userId && userName) set({ userId, userName });
+    const email = await StorageUtil.getUserEmail();
+    const avatar = await StorageUtil.getUserAvatar();
+    if (userId && userName) {
+      set({ userId, userName, userEmail: email, userAvatar: avatar });
+    }
   },
 
   // ── Logout (clears everything) ────────────────────
   logout: async () => {
     await StorageUtil.clearUser();
-    set({ userId: null, userName: null });
+    set({ userId: null, userName: null, userEmail: null, userAvatar: null });
   },
 }));

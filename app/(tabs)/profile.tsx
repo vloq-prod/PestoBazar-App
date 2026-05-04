@@ -196,6 +196,7 @@ export default function ProfileScreen() {
 
   const router = useRouter();
 
+    const userId = useAppVisitorStore((s) => s.userId);
     const userName = useAppVisitorStore((s) => s.userName);
     
     const logout = useAppVisitorStore((s) => s.logout);
@@ -242,75 +243,109 @@ export default function ProfileScreen() {
         >
           {/* ── Hero ───────────────────────────────── */}
           <View style={styles.heroSection}>
-            <View style={styles.heroRow}>
-              <View>
-                <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                  Hey there,
+            {userId ? (
+              <>
+                <View style={styles.heroRow}>
+                  <View>
+                    <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+                      Hey there,
+                    </Text>
+                    <Text style={[styles.userName, { color: colors.text }]}>
+                      {userName || "Guest User"}
+                    </Text>
+                  </View>
+      
+                  <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
+                    <Image
+                      source={require("../../assets/profile.jpeg")}
+                      style={styles.avatarImage}
+                    />
+                  </View>
+                </View>
+      
+                <Text style={[styles.description, { color: colors.textSecondary }]}>
+                  Easily manage your account, track your orders, and keep your
+                  personal details up to date with ease.
                 </Text>
-                <Text style={[styles.userName, { color: colors.text }]}>
-                  {userName || "Guest User"}
-                </Text>
+              </>
+            ) : (
+              <View style={[styles.guestCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={styles.guestCardContent}>
+                  <Text style={[styles.guestTitle, { color: colors.text }]}>
+                    Welcome to Pestobazaar
+                  </Text>
+                  <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
+                    Login or sign up to view your complete profile, manage orders, and save your favorite items.
+                  </Text>
+                  <TouchableOpacity 
+                    style={[styles.loginBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => router.push("/login")}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.loginBtnText}>Login / Sign Up</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-  
-              <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
-                <Image
-                  source={require("../../assets/profile.jpeg")}
-                  style={styles.avatarImage}
-                />
-              </View>
-            </View>
-  
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              Easily manage your account, track your orders, and keep your
-              personal details up to date with ease.
-            </Text>
+            )}
           </View>
   
           {/* ── Account Info ───────────────────────── */}
-          <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-            <View style={styles.inputRow}>
-              <Mail size={16} color={colors.primary} />
-              <Text style={[styles.inputText, { color: colors.text }]}>
-                guestuser@gmail.com
-              </Text>
-              <SquarePen size={16} color={colors.primary} />
+          {/* Hiding Account Info since we don't have email/phone in the store yet */}
+          {/*
+          {userId ? (
+            <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
+              <View style={styles.inputRow}>
+                <Phone size={16} color={colors.primary} />
+                <Text style={[styles.inputText, { color: colors.textSecondary }]}>
+                  +91 XXXXXXXXXX
+                </Text>
+                <SquarePen size={16} color={colors.primary} />
+              </View>
             </View>
-  
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-  
-            <View style={styles.inputRow}>
-              <Phone size={16} color={colors.primary} />
-              <Text style={[styles.inputText, { color: colors.textSecondary }]}>
-                +91 99XXXXXX41
-              </Text>
-              <SquarePen size={16} color={colors.primary} />
-            </View>
-          </View>
+          ) : null}
+          */}
 
         {/* ── Menu Sections ───────────────────────── */}
-        {MENU_SECTIONS.map((section) => (
-          <View key={section.title} style={styles.menuSection}>
-            <Text
-              style={[styles.sectionTitle, { color: colors.textSecondary }]}
-            >
-              {section.title}
-            </Text>
+        {MENU_SECTIONS.map((section) => {
+          const items = section.items.filter((item) => {
+            if (!userId && (item.id === "logout" || item.id === "profile")) return false;
+            return true;
+          });
+          
+          if (items.length === 0) return null;
 
-            <View>
-              {section.items.map((item, index) => (
-                <MenuRow
-                  key={item.id}
-                  item={item}
-                  colors={colors}
-                  isLast={index === section.items.length - 1}
-                  onPressOverride={
-                    item.id === "logout" ? handleLogout : undefined
+          return (
+            <View key={section.title} style={styles.menuSection}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.textSecondary }]}
+              >
+                {section.title}
+              </Text>
+  
+              <View>
+                {items.map((item, index) => {
+                  let onPressOverride;
+                  
+                  if (item.id === "logout") {
+                    onPressOverride = handleLogout;
+                  } else if (!userId && ["orders", "wishlist", "address"].includes(item.id)) {
+                    onPressOverride = () => router.push("/login");
                   }
-                />
-              ))}
+
+                  return (
+                    <MenuRow
+                      key={item.id}
+                      item={item}
+                      colors={colors}
+                      isLast={index === items.length - 1}
+                      onPressOverride={onPressOverride}
+                    />
+                  );
+                })}
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
 
         <View style={styles.footer}>
           <Text style={[styles.appName, { color: colors.textSecondary }]}>
@@ -448,5 +483,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
 
     opacity: 0.3,
+  },
+
+  guestCard: {
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+  },
+  guestCardContent: {
+    gap: 8,
+  },
+  guestTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 18,
+  },
+  guestSub: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  loginBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  loginBtnText: {
+    color: "#fff",
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
   },
 });

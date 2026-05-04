@@ -227,7 +227,7 @@ export default function UserProfile() {
   const { userName } = useAppVisitorStore();
   const [form, setForm] = useState({
     fullName: userName || "Guest User",
-    email: "guestuser@gmail.com",
+    email: "",
     phone: "",
   });
 

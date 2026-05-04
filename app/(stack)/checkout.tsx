@@ -537,7 +537,14 @@ export default function Checkout() {
       <View style={[styles.screenRoot, { backgroundColor: colors.background }]}>
         <View style={{ height: insets.top }} />
         <AppNavbar title="Checkout" showBack showNotification />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
           <ActivityIndicator size="large" color={colors.primary} />
           <Text
             style={[

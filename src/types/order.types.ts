@@ -141,6 +141,8 @@ export interface OrderInfo {
   order_no: string;
 
   enc_order_id: string;
+
+
 }
 
 // ======================================================
@@ -328,6 +330,7 @@ export interface OrderHistoryItem {
   cancelled_at: string | null;
   cancel_reason_id: number | null;
   cancel_reason: string | null;
+  enc_order_id: string;
 }
 
 // ======================================================

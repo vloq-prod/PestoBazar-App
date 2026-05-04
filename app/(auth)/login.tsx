@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
-import { gRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -201,6 +201,7 @@ export default function Login() {
 
   const visitorId = useAppVisitorStore((s) => s.visitorId);
   const setUser = useAppVisitorStore((s) => s.setUser);
+  const setGoogleUser = useAppVisitorStore((s) => s.setGoogleUser);
 
   const [phone, setPhone] = useState("");
   const [focused, setFocused] = useState(false);
@@ -285,7 +286,12 @@ export default function Login() {
                   Alert.alert("Google Sign-In Failed", data.message || "Something went wrong.");
                   return;
                 }
-                await setUser(data.data.user_id, data.data.user_name);
+                await setGoogleUser(
+                  data.data.user_id,
+                  data.data.user_name,
+                  user.email ?? "",
+                  user.picture ?? "",
+                );
                 if (redirectTo) {
                   router.replace("/(tabs)");
                   setTimeout(() => router.push(redirectTo as any), 100);
@@ -317,8 +323,8 @@ export default function Login() {
       {/* ── Bottom Form Section ── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
@@ -439,7 +445,7 @@ export default function Login() {
               {
                 marginTop: -spacing(15),
                 padding: spacing(20),
-                paddingTop: spacing(24),
+                paddingTop: spacing(15),
                 paddingBottom:
                   Platform.OS === "ios"
                     ? insets.bottom + spacing(10)

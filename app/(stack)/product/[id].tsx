@@ -44,10 +44,10 @@ import ProductDescription from "../../../src/components/productDetails/ProductDe
 import DeliveryInfoCard from "../../../src/components/productDetails/DeliveryInfoCard";
 import CustomerAlsoBoughtProduct from "../../../src/components/productDetails/CustomerAlsoBoughtProduct";
 import DocumentButtons from "../../../src/components/productDetails/DocumentButtons";
+
 import ProductDescriptionSheet from "../../../src/modals/shop/CommonBottomSheet";
 import PincodeModal from "../../../src/modals/PincodeSheet";
 import RecentlyViewProducts from "../../../src/components/home/RecentlyViewProducts";
-import BottomSheet from "@gorhom/bottom-sheet";
 import Branches from "../../../src/components/home/Branches";
 
 // ─── Constants ────────────────────────────────────────────────
@@ -62,10 +62,9 @@ const ProductDetails = () => {
   const insets = useSafeAreaInsets();
   const {visitorId, userId} = useAppVisitorStore((state) => state);
 
-  const descriptionSheetRef = useRef<BottomSheet>(null);
-
   const [quantity, setQuantity] = useState(0);
   const [showPincodeModal, setShowPincodeModal] = useState(false);
+  const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);
 
   const productId =
     typeof id === "string" && !isNaN(Number(id)) ? Number(id) : undefined;
@@ -228,7 +227,11 @@ const ProductDetails = () => {
 
   // ─── Modal / Sheet Handlers ─────────────────────────────────
   const openDescriptionSheet = useCallback(() => {
-    descriptionSheetRef.current?.snapToIndex(0);
+    setIsDescriptionVisible(true);
+  }, []);
+
+  const closeDescriptionSheet = useCallback(() => {
+    setIsDescriptionVisible(false);
   }, []);
 
   const openPincodeModal = useCallback(() => setShowPincodeModal(true), []);
@@ -703,7 +706,8 @@ const ProductDetails = () => {
 
       {/* ── Modals ── */}
       <ProductDescriptionSheet
-        ref={descriptionSheetRef}
+        visible={isDescriptionVisible}
+        onClose={closeDescriptionSheet}
         html={rawDescriptionHtml}
       />
       <PincodeModal
