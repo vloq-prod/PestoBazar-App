@@ -12,9 +12,9 @@ import { useCartCount } from "../../hooks/cartHooks";
 type HomeNavbarProps = {
   name?: string;
   onMenuPress?: () => void;
-
   onNotificationPress?: () => void;
   onProfilePress?: () => void;
+  isLight?: boolean;
 };
 
 type IconButtonProps = {
@@ -42,9 +42,9 @@ const IconButton = ({ icon, onPress }: IconButtonProps) => {
 
 const HomeNavbar: React.FC<HomeNavbarProps> = ({
   name = "Guest",
-
   onNotificationPress,
   onProfilePress,
+  isLight = false,
 }) => {
   const router = useRouter();
   const { font, spacing } = useResponsive();
@@ -60,6 +60,8 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
   const cartCount = cartCountData?.data || 0;
 
   const ICON_SIZE = spacing(20);
+  const textColor = isLight ? colors.text : colors.textInverse;
+  const subtitleColor = isLight ? colors.textSecondary : colors.textInverse;
 
   const handleMoveToCart = () => {
     router.push("/(stack)/cart");
@@ -84,7 +86,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
           <Text
             style={{
               fontSize: font(12),
-              color: colors.textInverse,
+              color: subtitleColor,
             }}
           >
             Welcome back 👋
@@ -93,7 +95,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
           <Text
             style={{
               fontSize: font(18),
-              color: colors.textInverse,
+              color: textColor,
               fontWeight: "700",
               lineHeight: font(22),
             }}
@@ -115,7 +117,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
           }}
         >
           <View>
-            <ShoppingCart size={ICON_SIZE} color={colors.textInverse} />
+            <ShoppingCart size={ICON_SIZE} color={textColor} />
             {cartCount > 0 && (
               <View
                 style={{
@@ -130,7 +132,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
                   alignItems: "center",
                   paddingHorizontal: 2,
                   borderWidth: 1.5,
-                  borderColor: colors.primary || "#6B21A8", // Match header background
+                  borderColor: isLight ? "#FFFFFF" : (colors.primary || "#6B21A8"),
                 }}
               >
                 <Text
@@ -149,7 +151,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
 
         <IconButton
           onPress={onNotificationPress}
-          icon={<Bell size={ICON_SIZE} color={colors.textInverse} />}
+          icon={<Bell size={ICON_SIZE} color={textColor} />}
         />
       </View>
     </View>
