@@ -112,12 +112,18 @@ export default function HomeScreen() {
     () => searchVisible.value,
     (currentValue, previousValue) => {
       // When searchVisible goes below 0.5 (white header starts appearing)
-      if (currentValue < 0.5 && (previousValue === null || previousValue >= 0.5)) {
+      if (
+        currentValue < 0.5 &&
+        (previousValue === null || previousValue >= 0.5)
+      ) {
         runOnJS(setIsScrolled)(true);
-      } else if (currentValue >= 0.5 && (previousValue === null || previousValue < 0.5)) {
+      } else if (
+        currentValue >= 0.5 &&
+        (previousValue === null || previousValue < 0.5)
+      ) {
         runOnJS(setIsScrolled)(false);
       }
-    }
+    },
   );
 
   // ── PERFORMANCE OPTIMIZATION: 1:1 Native Scroll-Linked Header ──

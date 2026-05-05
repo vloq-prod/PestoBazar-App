@@ -11,7 +11,11 @@ import {
   getTestimonials,
   getUsp,
 } from "../api/home.api";
-import { BulkEnquiryRequest, BulkEnquiryResponse, CategoryWithSubcategories } from "../types/home.types";
+import {
+  BulkEnquiryRequest,
+  BulkEnquiryResponse,
+  CategoryWithSubcategories,
+} from "../types/home.types";
 
 // useBanner hook
 export const useBanner = () => {
@@ -64,9 +68,8 @@ export const useCategoryWithSubcategories = (rootId: number = 0) => {
       mainCategory,
       mainCategoryId: mainCategory.id,
       mainCategoryName: mainCategory.category_name,
-      subcategories: (
-        subcategoryQueries[index]?.data?.data?.category_master ?? []
-      )
+      subcategories:
+        subcategoryQueries[index]?.data?.data?.category_master ?? [],
     }));
 
   return {
@@ -181,8 +184,6 @@ export const useBranch = () => {
   };
 };
 
-
-
 export const useRecentlyViewed = (visitorId: string) => {
   const query = useQuery({
     queryKey: ["recently-viewed", visitorId],
@@ -194,7 +195,6 @@ export const useRecentlyViewed = (visitorId: string) => {
       }),
 
     enabled: !!visitorId,
-
   });
 
   return {
@@ -204,16 +204,8 @@ export const useRecentlyViewed = (visitorId: string) => {
   };
 };
 
-
-
-
-
 export const useBulkEnquiry = () => {
-  return useMutation<
-    BulkEnquiryResponse,
-    Error,
-    BulkEnquiryRequest
-  >({
+  return useMutation<BulkEnquiryResponse, Error, BulkEnquiryRequest>({
     mutationFn: bulkEnquiryApi,
 
     onSuccess: (response) => {
