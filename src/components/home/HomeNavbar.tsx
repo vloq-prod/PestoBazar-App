@@ -53,7 +53,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
   const { userName, userId, visitorId } = useAppVisitorStore((state) => state);
 
   const { data: cartCountData } = useCartCount({
-    user_id: Number(userId),
+    user_id: userId ?? 0,
     visitor_id: visitorId || "",
   });
 
@@ -132,7 +132,9 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
                   alignItems: "center",
                   paddingHorizontal: 2,
                   borderWidth: 1.5,
-                  borderColor: isLight ? "#FFFFFF" : (colors.primary || "#6B21A8"),
+                  borderColor: isLight
+                    ? "#FFFFFF"
+                    : colors.primary || "#6B21A8",
                 }}
               >
                 <Text

@@ -21,40 +21,48 @@ export const useAddToCart = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  const mutation = useMutation({
-    mutationFn: (payload: AddToCartRequest) => addToCart(payload),
+    const mutation = useMutation({
+      mutationFn: async (payload: AddToCartRequest) => {
+        // ✅ Payload logging
+        console.log("🛒 AddToCart Payload:", payload);
 
-    onError: (error: any) => {
-      showToast(error?.message || "Failed to add to cart", "error");
-    },
+        const data = await addToCart(payload);
+        if (data.status === 0) {
+          throw new Error(data.message || "Failed to update cart");
+        }
+        return data;
+      },
 
-    onSuccess: (data, variables) => {
-      // ✅ Handle API status (1 = Success, 0 = Failure)
-      if (data.status === 1) {
+      onError: (error: any) => {
+        showToast(error?.message || "Failed to add to cart", "error");
+      },
+
+      onSuccess: (data, variables) => {
         showToast(data.message || "Product added to cart", "success");
-      } else {
-        showToast(data.message || "Failed to update cart", "error");
-      }
 
-      queryClient.invalidateQueries({
-        queryKey: ["cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [
-          "cart-count",
-          variables.user_id ?? 0,
-          variables.visitor_id ?? "",
-        ],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [
-          "quick-cart",
-          variables.user_id ?? 0,
-          variables.visitor_id ?? "",
-        ],
-      });
-    },
-  });
+        queryClient.invalidateQueries({
+          queryKey: [
+            "cart",
+            variables.user_id ?? 0,
+            variables.visitor_id ?? "",
+          ],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            "cart-count",
+            variables.user_id ?? 0,
+            variables.visitor_id ?? "",
+          ],
+        });
+        queryClient.invalidateQueries({
+          queryKey: [
+            "quick-cart",
+            variables.user_id ?? 0,
+            variables.visitor_id ?? "",
+          ],
+        });
+      },
+    });
 
   return {
     addToCart: mutation.mutate,
@@ -83,14 +91,25 @@ export const useCart = (params: UseCartParams) => {
 export const useCartCount = (params: GetCartCountParams) => {
   return useQuery<CartCountResponse>({
     queryKey: ["cart-count", params.user_id, params.visitor_id],
-    queryFn: () => getCartCount(params),
+
+    queryFn: async () => {
+      // ✅ Payload logging (request params)
+      console.log("🧾 CartCount Payload:", params);
+
+      const response = await getCartCount(params);
+
+      // ✅ Response logging
+      console.log("📊 CartCount Response:", response);
+
+      return response;
+    },
 
     // 🔥 Important for badge updates
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
-};
+};;
 
 export const useQuickCart = (params: GetQuickCartParams) => {
   return useQuery<QuickCartResponse>({

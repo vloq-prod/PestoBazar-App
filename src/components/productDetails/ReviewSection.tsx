@@ -12,6 +12,7 @@ import { useProductReviews } from "../../hooks/productDetailsHook";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
+import AddReviewForm from "./AddReviewForm";
 
 type Props = {
   product_id: number;
@@ -45,40 +46,35 @@ const ReviewSection = ({ product_id }: Props) => {
     );
   }
   if (!reviews || reviews.length === 0) {
-    return null;
+    return (
+      <View style={[styles.container, { gap: spacing(25) }]}>
+         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+          <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(18), color: colors.text }}>
+            Reviews
+          </Text>
+          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+        </View>
+        <View style={{ paddingHorizontal: 16, alignItems: "center" }}>
+          <Text style={{ color: colors.textSecondary, fontFamily: "Poppins_400Regular", fontSize: font(13), textAlign: "center" }}>
+             No reviews yet. Be the first to share your thoughts!
+          </Text>
+        </View>
+        <AddReviewForm product_id={product_id} />
+      </View>
+    );
   }
 
   return (
     <View style={[styles.container, { gap: spacing(25) }]}>
-      <View className="flex-row items-center gap-3 ">
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
-        />
-
-        <Text
-          numberOfLines={1}
-          style={{
-            fontFamily: "Poppins_700Bold",
-            fontSize: font(18),
-            includeFontPadding: false,
-            textAlignVertical: "center",
-          }}
-        >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+        <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(18), color: colors.text }}>
           Reviews
         </Text>
-
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
-        />
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
       </View>
+
       {/* 🔥 HORIZONTAL SCROLL */}
       <ScrollView
         contentContainerStyle={{
@@ -124,6 +120,9 @@ const ReviewSection = ({ product_id }: Props) => {
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* ─── Add Review Form Component ─── */}
+      {/* <AddReviewForm product_id={product_id} /> */}
     </View>
   );
 };
@@ -148,3 +147,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+

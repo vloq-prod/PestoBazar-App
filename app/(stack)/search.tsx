@@ -6,8 +6,9 @@ import {
   StatusBar,
   ScrollView,
   Image,
+  FlatList,
 } from "react-native";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Search, X } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -25,17 +26,38 @@ export default function SearchScreen() {
   const inputRef = useRef<TextInput>(null);
   const [query, setQuery] = useState("");
 
-  const { data, isLoading, isFetching, isError } = useSearchSuggestions(query);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const { data, isLoading, isFetching, isError } =
+    useSearchSuggestions(debouncedQuery);
+
   const results = data?.data?.result ?? [];
-  const productResults = results.filter(
-    (item: any) => item?.search_type === "product",
-  );
-  const categoryResults = results.filter(
-    (item: any) => item?.search_type === "category",
-  );
+
+  const { productResults, categoryResults } = useMemo(() => {
+    const products = results.filter(
+      (item: any) => item?.search_type === "product",
+    );
+
+    const categories = results.filter(
+      (item: any) => item?.search_type === "category",
+    );
+
+    return {
+      productResults: products,
+      categoryResults: categories,
+    };
+  }, [results]);
   const hasResults = productResults.length > 0 || categoryResults.length > 0;
   const showEmptyState =
     !isLoading && !isError && query.trim().length > 0 && !hasResults;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 400); // delay
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   return (
     <View
@@ -46,11 +68,11 @@ export default function SearchScreen() {
         paddingBottom: insets.bottom,
       }}
     >
-        <StatusBar
-                  barStyle="dark-content"
-                  backgroundColor="transparent"
-                  translucent
-                />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
       {/* ─── Header ─────────────────────────────────────────── */}
       <View
@@ -227,9 +249,16 @@ export default function SearchScreen() {
 
         {!isLoading && !isError && productResults.length > 0 ? (
           <View>
-            {productResults.map((item, index) => (
-              <SearchItem key={index} item={item} />
-            ))}
+            <FlatList
+              data={productResults}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => <SearchItem item={item} />}
+              keyboardShouldPersistTaps="handled"
+              initialNumToRender={5}
+              maxToRenderPerBatch={5}
+              windowSize={5}
+              scrollEnabled={false}
+            />
           </View>
         ) : null}
 

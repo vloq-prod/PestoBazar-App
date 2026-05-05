@@ -92,7 +92,6 @@ export default function HomeScreen() {
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "");
 
-  // ── PERFORMANCE OPTIMIZATION: Progressive Rendering ──
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
 
   useEffect(() => {
@@ -105,13 +104,11 @@ export default function HomeScreen() {
   const lastScrollY = useSharedValue(0);
   const searchVisible = useSharedValue(1);
 
-  // ── PERFORMANCE OPTIMIZATION: Status Bar color synchronization ──
   const [isScrolled, setIsScrolled] = useState(false);
 
   useAnimatedReaction(
     () => searchVisible.value,
     (currentValue, previousValue) => {
-      // When searchVisible goes below 0.5 (white header starts appearing)
       if (
         currentValue < 0.5 &&
         (previousValue === null || previousValue >= 0.5)

@@ -1,14 +1,15 @@
-import { ExpoConfig, ConfigContext } from "expo/config";
+import type { ExpoConfig, ConfigContext } from "@expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
 
   name: "Pestobazaar",
-  owner: "daniyalpesto2",
+  owner: "daniyalpesto3",
   slug: "pestobazaar",
   version: "1.0.0",
   orientation: "portrait",
 
+  // @ts-ignore: newArchEnabled is supported by Expo CLI but might be missing in local type definitions
   newArchEnabled: true,
   userInterfaceStyle: "automatic",
 
@@ -58,8 +59,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
 
   extra: {
-    eas: {
-      projectId: "6fb00c5e-083c-410a-8f0f-084eb5d874b4",
-    },
+  eas: {
+    projectId: "39a653d1-c4b6-4d43-b679-0c85a74c1f85"
   },
+},
 });

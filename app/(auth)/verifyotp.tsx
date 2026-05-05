@@ -74,7 +74,7 @@ export default function VerifyOtpScreen() {
   // ── OTP Input Handlers ──
   const handleOtpChange = useCallback((text: string, index: number) => {
     const numeric = text.replace(/[^0-9]/g, "");
-    
+
     // Auto-fill or Paste (full string arrives in one box)
     if (numeric.length > 1) {
       const digits = numeric.slice(0, OTP_LENGTH).split("");

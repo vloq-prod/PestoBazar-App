@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   StatusBar,
   StyleSheet,
   Text,
@@ -88,7 +89,7 @@ const ProductDetails = () => {
         ? { product_id: productId }
         : {},
   );
-  const { addToCart } = useAddToCart();
+  const { addToCart, loading: isCartLoading } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
   const { data: cartData } = useCart({ user_id: userId ?? 0, visitor_id: visitorId! });
 
@@ -192,37 +193,61 @@ const ProductDetails = () => {
   // ─── Cart Handlers ──────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
     if (!realProductId) return;
-    setQuantity(1);
-    addToCart({
-      user_id: userId ?? 0,
-      visitor_id: visitorId!,
-      product_id: realProductId,
-      qty: 1,
-    });
+    addToCart(
+      {
+        user_id: userId ?? 0,
+        visitor_id: visitorId!,
+        product_id: realProductId,
+        qty: 1,
+      },
+      {
+        onSuccess: (res) => {
+          if (res.status === 1) {
+            setQuantity(1);
+          }
+        },
+      },
+    );
   }, [realProductId, visitorId, addToCart]);
 
   const handleIncrease = useCallback(() => {
     if (!realProductId) return;
-    const newQty = quantity + 1;
-    setQuantity(newQty);
-    addToCart({
-      user_id: userId ?? 0,
-      visitor_id: visitorId!,
-      product_id: realProductId,
-      qty: newQty,
-    });
+    const nextQty = quantity + 1;
+    addToCart(
+      {
+        user_id: userId ?? 0,
+        visitor_id: visitorId!,
+        product_id: realProductId,
+        qty: nextQty,
+      },
+      {
+        onSuccess: (res) => {
+          if (res.status === 1) {
+            setQuantity(nextQty);
+          }
+        },
+      },
+    );
   }, [quantity, realProductId, visitorId, addToCart]);
 
   const handleDecrease = useCallback(() => {
     if (!realProductId) return;
-    const newQty = Math.max(quantity - 1, 0);
-    setQuantity(newQty);
-    addToCart({
-      user_id: userId ?? 0,
-      visitor_id: visitorId!,
-      product_id: realProductId,
-      qty: newQty,
-    });
+    const nextQty = Math.max(quantity - 1, 0);
+    addToCart(
+      {
+        user_id: userId ?? 0,
+        visitor_id: visitorId!,
+        product_id: realProductId,
+        qty: nextQty,
+      },
+      {
+        onSuccess: (res) => {
+          if (res.status === 1) {
+            setQuantity(nextQty);
+          }
+        },
+      },
+    );
   }, [quantity, realProductId, visitorId, addToCart]);
 
   // ─── Modal / Sheet Handlers ─────────────────────────────────
@@ -658,42 +683,63 @@ const ProductDetails = () => {
           {quantity === 0 ? (
             <TouchableOpacity
               activeOpacity={0.9}
+              disabled={isCartLoading}
               onPress={handleAddToCart}
               style={[
                 styles.primaryBtn,
-                { backgroundColor: colors.primary, flex: 1 },
+                {
+                  backgroundColor: colors.primary,
+                  flex: 1,
+                  opacity: isCartLoading ? 0.7 : 1,
+                },
               ]}
             >
-              <Text
-                style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}
-              >
-                Add To Cart
-              </Text>
+              {isCartLoading ? (
+                <ActivityIndicator color={colors.textOnPrimary} />
+              ) : (
+                <Text
+                  style={[
+                    styles.primaryBtnText,
+                    { color: colors.textOnPrimary },
+                  ]}
+                >
+                  Add To Cart
+                </Text>
+              )}
             </TouchableOpacity>
           ) : (
             <View
               style={[
                 styles.stepper,
                 styles.halfBtn,
-                { backgroundColor: colors.primary },
+                {
+                  backgroundColor: colors.primary,
+                  opacity: isCartLoading ? 0.8 : 1,
+                },
               ]}
             >
               <TouchableOpacity
                 activeOpacity={0.85}
+                disabled={isCartLoading}
                 onPress={handleDecrease}
                 style={styles.stepperBtn}
               >
                 <Minus size={18} color={colors.textOnPrimary} />
               </TouchableOpacity>
               <View style={{ flex: 1, alignItems: "center" }}>
-                <Text
-                  style={[styles.stepperVal, { color: colors.textOnPrimary }]}
-                >
-                  {quantity}
-                </Text>
+                {isCartLoading ? (
+                  <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                ) : (
+                  <Text
+                    style={[styles.stepperVal, { color: colors.textOnPrimary }]}
+                  >
+                    {quantity}
+                  </Text>
+                )}
               </View>
               <TouchableOpacity
                 activeOpacity={0.85}
+                disabled={isCartLoading}
                 onPress={handleIncrease}
                 style={styles.stepperBtn}
               >

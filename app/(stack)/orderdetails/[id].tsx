@@ -37,6 +37,7 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react-native";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,7 +117,8 @@ const OrderStatusTracker = ({ currentStatus, colors, font, spacing }: any) => {
               textAlign: "center",
             }}
           >
-            Your order has been cancelled. If you have already paid, the refund will be initiated soon.
+            Your order has been cancelled. If you have already paid, the refund
+            will be initiated soon.
           </Text>
         </View>
       </View>
@@ -207,11 +209,17 @@ const OrderStatusTracker = ({ currentStatus, colors, font, spacing }: any) => {
   );
 };
 
-
 /** Address info block (no card border) */
 const AddressBlock = ({ title, addressInfo, colors, font, spacing }: any) => (
   <View style={{ flex: 1 }}>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing(6) }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: spacing(6),
+      }}
+    >
       <MapPin size={12} color={colors.textTertiary} />
       <Text
         style={{
@@ -235,7 +243,12 @@ const AddressBlock = ({ title, addressInfo, colors, font, spacing }: any) => (
     >
       {addressInfo?.address}, {addressInfo?.city}
       {"\n"}
-      <Text style={{ fontFamily: "Poppins_400Regular", color: colors.textSecondary }}>
+      <Text
+        style={{
+          fontFamily: "Poppins_400Regular",
+          color: colors.textSecondary,
+        }}
+      >
         {addressInfo?.state_name} - {addressInfo?.pincode}
       </Text>
     </Text>
@@ -281,13 +294,13 @@ const OrderInfoGrid = ({ orderData, colors, font, spacing }: any) => {
       <View
         style={[
           styles.quadrantRow,
-          { borderBottomWidth: 1, borderBottomColor: colors.border},
+          { borderBottomWidth: 1, borderBottomColor: colors.border },
         ]}
       >
         <View
           style={[
             styles.quadrantItem,
-            { borderRightWidth: 1, borderRightColor: colors.border},
+            { borderRightWidth: 1, borderRightColor: colors.border },
           ]}
         >
           <View style={styles.quadrantLabelRow}>
@@ -393,20 +406,30 @@ const OrderInfoGrid = ({ orderData, colors, font, spacing }: any) => {
 
 const IMAGE_BASE = "https://static-cdn.pestobazaar.com/";
 
-const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) => {
+const OrderItemCard = ({
+  item,
+  orderData,
+  isLast,
+  colors,
+  font,
+  spacing,
+}: any) => {
   const [expanded, setExpanded] = React.useState(false);
   const isCombo = item.listing_type === "Combo";
 
   const childItems = isCombo
     ? (orderData?.order_combo_detail || []).filter(
-        (child: any) => child.parent_variant_id === item.variation_id
+        (child: any) => child.parent_variant_id === item.variation_id,
       )
     : [];
 
   const comboTotalAmount = childItems.reduce(
-    (acc: number, child: any) => acc + Number(child.total_amount || 0), 0
+    (acc: number, child: any) => acc + Number(child.total_amount || 0),
+    0,
   );
-  const displayTotalAmount = isCombo ? comboTotalAmount.toFixed(2) : item.total_amount;
+  const displayTotalAmount = isCombo
+    ? comboTotalAmount.toFixed(2)
+    : item.total_amount;
 
   const imageUri = item.main_image?.startsWith("http")
     ? item.main_image
@@ -416,172 +439,248 @@ const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) 
     <View
       style={{
         backgroundColor: colors.surface,
-        borderRadius: 16,
-        marginBottom: isLast ? 0 : spacing(12),
-        borderWidth: 1,
-        borderColor: colors.border,
-        overflow: "hidden",
+        paddingBottom: spacing(16),
+        marginBottom: isLast ? 0 : spacing(16),
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
       }}
     >
       {/* ── Main Item Row ─────────────────────────────────── */}
-      <View style={{ flexDirection: "row", padding: spacing(14), gap: spacing(14) }}>
-        {/* Image with subtle bg */}
-        <View
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 12,
-            backgroundColor: colors.background,
-            borderWidth: 1,
-            borderColor: colors.border,
-            overflow: "hidden",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Image
-            source={{ uri: imageUri }}
-            style={{ width: 72, height: 72 }}
-            contentFit="contain"
-          />
-        </View>
-
-        {/* Content */}
-        <View style={{ flex: 1 }}>
-            <Text
-            style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(13), color: colors.text, lineHeight: font(18) }}
-              numberOfLines={2}
+      <View style={{ flexDirection: "column" }}>
+        <View style={{ flexDirection: "row", gap: spacing(14) }}>
+          {/* Left Column: Image + Toggle */}
+          <View style={{ alignItems: "center" }}>
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 12,
+                backgroundColor: colors.background,
+                borderWidth: 1,
+                borderColor: colors.border,
+                overflow: "hidden",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              {item.product_name}
-            </Text>
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width: 72, height: 72 }}
+                contentFit="contain"
+              />
+            </View>
+          </View>
 
-          {/* Price row — directly below name */}
-          <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: spacing(5), gap: spacing(6) }}>
-            <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(15), color: colors.primary }}>
-              ₹{displayTotalAmount}
-            </Text>
-            {item.actual_price && Number(item.actual_price) > Number(displayTotalAmount) && (
+          {/* Right Column: Content */}
+          <View style={{ flex: 1 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(13),
+                  color: colors.text,
+                  lineHeight: font(18),
+                  flex: 1,
+                  marginRight: spacing(8),
+                }}
+                numberOfLines={2}
+              >
+                {item.product_name}
+              </Text>
+
+              {/* Items Toggle (Top Right) */}
+              {isCombo && childItems.length > 0 && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setExpanded(!expanded)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(4),
+                    marginTop: spacing(2),
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(10),
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    {expanded ? "Hide" : "Items"}
+                  </Text>
+                  {expanded ? (
+                    <ChevronUp size={12} color={colors.textTertiary} />
+                  ) : (
+                    <ChevronDown size={12} color={colors.textTertiary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Price, Size, Qty Row */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: spacing(4),
+                gap: spacing(8),
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Poppins_700Bold",
+                  fontSize: font(14),
+                  color: colors.text,
+                }}
+              >
+                ₹{displayTotalAmount}
+              </Text>
+
+              <View
+                style={{
+                  width: 1,
+                  height: spacing(10),
+                  backgroundColor: colors.border,
+                }}
+              />
+
               <Text
                 style={{
                   fontFamily: "Poppins_400Regular",
-                  fontSize: font(11),
-                  color: colors.textTertiary,
-                  textDecorationLine: "line-through",
+                  fontSize: font(12),
+                  color: colors.textSecondary,
                 }}
               >
-                ₹{item.actual_price}
+                {item.size}
               </Text>
-            )}
+
+              <View
+                style={{
+                  width: 1,
+                  height: spacing(10),
+                  backgroundColor: colors.border,
+                }}
+              />
+
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(12),
+                  color: colors.textSecondary,
+                }}
+              >
+                Qty: {item.qty}
+              </Text>
+            </View>
+
+            {/* Original Price (Cut) */}
+            {item.actual_price &&
+              Number(item.actual_price) > Number(displayTotalAmount) && (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: colors.textTertiary,
+                    textDecorationLine: "line-through",
+                    marginTop: 0,
+                  }}
+                >
+                  ₹{item.actual_price}
+                </Text>
+              )}
+
+            {/* Action Buttons */}
+            <View
+              style={{
+                flexDirection: "row",
+                gap: spacing(8),
+                marginTop: spacing(8),
+              }}
+            >
+              <TouchableOpacity
+                activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: spacing(10),
+                  paddingVertical: spacing(5),
+                  backgroundColor: "#FEF9C3", // Light yellow
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 20,
+                  gap: spacing(6),
+                }}
+              >
+                <Star
+                  size={11}
+                  color="#CA8A04"
+                  fill="#CA8A04"
+                  style={{ marginBottom: 1 }}
+                />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(10.5),
+                    color: "#854D0E",
+                    includeFontPadding: false,
+                  }}
+                >
+                  Review
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: spacing(10),
+                  paddingVertical: spacing(5),
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 20,
+                  gap: spacing(6),
+                }}
+              >
+                <RotateCcw
+                  size={11}
+                  color={colors.textSecondary}
+                  style={{ marginBottom: 1 }}
+                />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(10.5),
+                    color: colors.text,
+                    includeFontPadding: false,
+                  }}
+                >
+                  Reorder
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Size & Qty — simple plain text below price */}
-          <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: colors.textTertiary, marginTop: spacing(3) }}>
-            {[item.size, `Qty: ${item.qty}`].filter(Boolean).join("  ·  ")}
-          </Text>
         </View>
-      </View>
-
-      {/* ── Divider + Action Bar ──────────────────────────── */}
-      <View style={{ flexDirection: "row", borderTopWidth: 1, borderTopColor: colors.border }}>
-
-        {/* For Combo: View Items | Review | Reorder (3 buttons) */}
-        {isCombo && childItems.length > 0 ? (
-          <>
-            {/* View Items */}
-          <TouchableOpacity
-            onPress={() => setExpanded(!expanded)}
-              activeOpacity={0.7}
-              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-          >
-              {expanded ? <ChevronUp size={13} color={colors.primary} /> : <ChevronDown size={13} color={colors.primary} />}
-              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
-                {expanded ? "Hide" : `${childItems.length} Items`}
-            </Text>
-          </TouchableOpacity>
-
-            <View style={{ width: 1, backgroundColor: colors.border }} />
-
-            {/* Review */}
-        <TouchableOpacity
-              activeOpacity={0.7}
-              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-        >
-              <Star size={12} color={colors.primary} fill={colors.primary} />
-              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
-            Review
-          </Text>
-        </TouchableOpacity>
-
-            <View style={{ width: 1, backgroundColor: colors.border }} />
-
-            {/* Reorder */}
-        <TouchableOpacity
-              activeOpacity={0.7}
-              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-            >
-              <RotateCcw size={12} color={colors.textSecondary} />
-              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.textSecondary }}>
-                Reorder
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            {/* For Static: Write Review | Reorder (2 buttons) */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-            >
-              <Star size={12} color={colors.primary} fill={colors.primary} />
-              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.primary }}>
-                Write Review
-              </Text>
-            </TouchableOpacity>
-
-            <View style={{ width: 1, backgroundColor: colors.border }} />
-
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing(11), gap: spacing(4) }}
-            >
-              <RotateCcw size={12} color={colors.textSecondary} />
-              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.textSecondary }}>
-                Reorder
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
       </View>
 
       {/* ── Combo Accordion ───────────────────────────────── */}
       {expanded && isCombo && childItems.length > 0 && (
         <View
           style={{
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
-            backgroundColor: colors.background,
+            marginTop: spacing(8),
           }}
         >
-          {/* Header */}
-          <View
-          style={{
-            flexDirection: "row",
-              justifyContent: "space-between",
-            alignItems: "center",
-              paddingHorizontal: spacing(14),
-              paddingVertical: spacing(10),
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-          }}
-        >
-            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11), color: colors.text }}>
-              Combo Includes
-          </Text>
-            <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11), color: colors.textTertiary }}>
-              {childItems.length} items
-            </Text>
-      </View>
-
           {/* Child Item Rows */}
           {childItems.map((child: any, cIndex: number) => {
             const childImageUri = child.main_image?.startsWith("http")
@@ -623,50 +722,77 @@ const OrderItemCard = ({ item, orderData, isLast, colors, font, spacing }: any) 
 
                 <View style={{ flex: 1 }}>
                   <Text
-                    style={{ fontFamily: "Poppins_500Medium", fontSize: font(12), color: colors.text, lineHeight: font(16) }}
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12),
+                      color: colors.text,
+                      lineHeight: font(16),
+                    }}
                     numberOfLines={2}
                   >
                     {child.product_name}
                   </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", marginTop: spacing(3), gap: spacing(8) }}>
-                    {child.size ? (
-                      <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10), color: colors.textTertiary }}>
-                        {child.size}
-                      </Text>
-                    ) : null}
-                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10), color: colors.textTertiary }}>
-                      × {child.pack}
-                  </Text>
-                </View>
-                </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginTop: spacing(4),
+                      gap: spacing(8),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_700Bold",
+                        fontSize: font(13),
+                        color: colors.text,
+                      }}
+                    >
+                      ₹{child.total_amount}
+                    </Text>
 
-                <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(13), color: colors.primary }}>
-                  ₹{child.total_amount}
-                </Text>
+                    <View
+                      style={{
+                        width: 1,
+                        height: spacing(10),
+                        backgroundColor: colors.border,
+                      }}
+                    />
+
+                    {child.size ? (
+                      <>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_400Regular",
+                            fontSize: font(11),
+                            color: colors.textSecondary,
+                          }}
+                        >
+                          {child.size}
+                        </Text>
+                        <View
+                          style={{
+                            width: 1,
+                            height: spacing(10),
+                            backgroundColor: colors.border,
+                          }}
+                        />
+                      </>
+                    ) : null}
+
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(11),
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      Qty: {child.pack}
+                    </Text>
+                  </View>
+                </View>
               </View>
             );
           })}
-
-          {/* Combo Total Footer */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingHorizontal: spacing(14),
-              paddingVertical: spacing(10),
-              borderTopWidth: 1,
-              borderTopColor: colors.border,
-              backgroundColor: colors.primary + "08",
-            }}
-          >
-            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12), color: colors.text }}>
-              Combo Total
-            </Text>
-            <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(14), color: colors.primary }}>
-              ₹{comboTotalAmount.toFixed(2)}
-            </Text>
-          </View>
         </View>
       )}
     </View>
@@ -689,7 +815,7 @@ const OrderDetails = () => {
     order_id: id || "",
   });
 
-  console.log(" order id enc : ", id)
+  console.log(" order id enc : ", id);
 
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
@@ -911,58 +1037,128 @@ const OrderDetails = () => {
           font={font}
           spacing={spacing}
         />
-        <View style={[styles.summaryBlock, { marginBottom: spacing(20) }]}>
-          <View style={styles.summaryRow}>
-            <Text
-              style={{
-                fontFamily: "Poppins_400Regular",
-                fontSize: font(13),
-                color: colors.textSecondary,
-              }}
-            >
-              Subtotal
-            </Text>
-            <Text
-              style={{
-                fontFamily: "Poppins_600SemiBold",
-                fontSize: font(13),
-                color: colors.text,
-              }}
-            >
-              ₹{orderData?.order?.order_amount}
-            </Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text
-              style={{
-                fontFamily: "Poppins_400Regular",
-                fontSize: font(13),
-                color: colors.textSecondary,
-              }}
-            >
-              Shipping
-            </Text>
-            <Text
-              style={{
-                fontFamily: "Poppins_600SemiBold",
-                fontSize: font(13),
-                color: colors.text,
-              }}
-            >
-              + ₹{orderData?.order?.shipping_charge}
-            </Text>
-          </View>
-          {orderData?.order?.cod_charges !== "0" && (
+        <View
+          style={[
+            styles.ticketCard,
+            {
+              backgroundColor: "#F9FAFB",
+              borderColor: colors.border,
+              marginBottom: spacing(24),
+              paddingTop: spacing(16),
+            },
+          ]}
+        >
+          <View style={styles.cardContent}>
             <View style={styles.summaryRow}>
               <Text
                 style={{
                   fontFamily: "Poppins_400Regular",
-                  fontSize: font(13),
+                  fontSize: font(12),
                   color: colors.textSecondary,
                 }}
               >
-                COD Charges
+                Subtotal
               </Text>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(12),
+                  color: colors.text,
+                }}
+              >
+                ₹{orderData?.order?.order_amount}
+              </Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(12),
+                  color: colors.textSecondary,
+                }}
+              >
+                Shipping
+              </Text>
+              {orderData?.order?.shipping_charge === "0" ? (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12),
+                    color: "#10B981", // Green for FREE
+                  }}
+                >
+                  FREE
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12),
+                    color: colors.text,
+                  }}
+                >
+                  + ₹{orderData?.order?.shipping_charge}
+                </Text>
+              )}
+            </View>
+
+            {orderData?.order?.cod_charges !== "0" && (
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(12),
+                    color: colors.textSecondary,
+                  }}
+                >
+                  COD Charges
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12),
+                    color: "#EF4444", // Red for Charges
+                  }}
+                >
+                  + ₹{orderData?.order?.cod_charges}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(12),
+                  color: colors.textSecondary,
+                }}
+              >
+                GST
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(12),
+                  color: colors.text,
+                }}
+              >
+                + ₹{orderData?.order?.shipping_gst || "0"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.ticketDivider}>
+            <View style={[styles.dottedLine, { borderColor: "#D1D5DB" }]} />
+          </View>
+
+          <View
+            style={[
+              styles.cardContent,
+              { marginTop: 0, marginBottom: spacing(8) },
+            ]}
+          >
+            <View style={styles.summaryRow}>
               <Text
                 style={{
                   fontFamily: "Poppins_600SemiBold",
@@ -970,82 +1166,91 @@ const OrderDetails = () => {
                   color: colors.text,
                 }}
               >
-                + ₹{orderData?.order?.cod_charges}
+                Grand Total
               </Text>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(18),
+                    color: colors.primary,
+                  }}
+                >
+                  ₹{orderData?.order?.paid_amount}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(10),
+                    color: colors.textSecondary,
+                    marginTop: -spacing(5),
+                  }}
+                >
+                  via {orderData?.order?.payment_type?.toUpperCase() || "PAID"}
+                </Text>
+              </View>
             </View>
-          )}
-          <View style={styles.summaryRow}>
-            <Text
-              style={{
-                fontFamily: "Poppins_400Regular",
-                fontSize: font(13),
-                color: colors.textSecondary,
-              }}
-            >
-              GST
-            </Text>
-            <Text
-              style={{
-                fontFamily: "Poppins_600SemiBold",
-                fontSize: font(13),
-                color: colors.text,
-              }}
-            >
-              + ₹{orderData?.order?.shipping_gst || "0"}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.divider,
-              { backgroundColor: colors.border, marginVertical: spacing(12) },
-            ]}
-          />
-          <View style={styles.summaryRow}>
-            <Text
-              style={{
-                fontFamily: "Poppins_700Bold",
-                fontSize: font(15),
-                color: colors.text,
-              }}
-            >
-              Order Total
-            </Text>
-            <Text
-              style={{
-                fontFamily: "Poppins_700Bold",
-                fontSize: font(18),
-                color: colors.primary,
-              }}
-            >
-              ₹{orderData?.order?.paid_amount}
-            </Text>
           </View>
         </View>
 
-        {/* ── Cancel Order Button ── */}
-        {currentStatus !== "Cancelled" && currentStatus !== "Delivered" && (
-          <View style={{ paddingHorizontal: spacing(2), marginBottom: spacing(40) }}>
+      </ScrollView>
+
+      {/* ── Sticky Bottom Actions ──────────────────────────── */}
+      <View
+        style={[
+          styles.stickyFooter,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingBottom: spacing(10), // Extra padding for safe area
+          },
+        ]}
+      >
+        <View style={styles.footerActionRow}>
+          <TouchableOpacity
+            style={[
+              styles.footerBtn,
+              { borderColor: colors.primary, backgroundColor: colors.primary },
+            ]}
+            activeOpacity={0.7}
+            onPress={() => {
+              /* Add Invoice Logic Here */
+              console.log("Download Invoice");
+            }}
+          >
+            <Download size={18} color="#fff" />
+            <Text
+              style={[
+                styles.footerBtnText,
+                { color: "#fff", fontSize: font(12) },
+              ]}
+            >
+              Invoice
+            </Text>
+          </TouchableOpacity>
+
+          {currentStatus !== "Cancelled" && currentStatus !== "Delivered" && (
             <TouchableOpacity
               style={[
-                styles.cancelOrderBtn,
-                { borderColor: "#EF4444", backgroundColor: "#FEF2F2" },
+                styles.footerBtn,
+                { borderColor: "#EF4444", backgroundColor: "#EF4444" },
               ]}
               activeOpacity={0.7}
               onPress={() => setIsCancelModalVisible(true)}
             >
+              <XCircle size={18} color="#fff" />
               <Text
-                style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  fontSize: font(13),
-                  color: "#EF4444",
-                }}
+                style={[
+                  styles.footerBtnText,
+                  { color: "#fff", fontSize: font(12) },
+                ]}
               >
                 Cancel Order
               </Text>
             </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        </View>
+      </View>
 
       {/* ── Cancel Order Modal ── */}
       <CancelOrderModal
@@ -1053,7 +1258,12 @@ const OrderDetails = () => {
         onClose={() => setIsCancelModalVisible(false)}
         onSubmit={(reason, comments) => {
           // Implement your cancel API call here
-          console.log("Cancelling order with reason:", reason, "and comments:", comments);
+          console.log(
+            "Cancelling order with reason:",
+            reason,
+            "and comments:",
+            comments,
+          );
           setIsCancelModalVisible(false);
         }}
       />
@@ -1132,19 +1342,48 @@ const styles = StyleSheet.create({
   summaryBlock: {
     gap: 2,
   },
-  cancelOrderBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-  },
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingVertical: 4,
+  },
+  // Ticket Card Styling
+  ticketCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: "hidden",
+    paddingTop: 16,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    letterSpacing: 1,
+  },
+  cardContent: {
+    paddingHorizontal: 16,
+    gap: 4,
+    marginBottom: 8,
+  },
+  ticketDivider: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 24,
+  },
+  dottedLine: {
+    flex: 1,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderRadius: 1,
+    height: 1,
+    marginHorizontal: 2,
   },
   // Dividers
   divider: {
@@ -1184,6 +1423,34 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   quadrantValue: {
+    fontFamily: "Poppins_600SemiBold",
+  },
+  // Sticky Footer
+  stickyFooter: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  footerActionRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  footerBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 8,
+  },
+  footerBtnText: {
     fontFamily: "Poppins_600SemiBold",
   },
 });

@@ -4,8 +4,6 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useCustomerAlsoBought } from "../../hooks/productDetailsHook";
 import ItemCard from "../comman/ItemCard";
-import { useAddToCart } from "../../hooks/cartHooks";
-import { useAppVisitorStore } from "../../store/auth";
 
 // ─── Skeleton Card ───────────────────────────────────────────────
 const SkeletonCard = ({
@@ -85,9 +83,6 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
-  const { addToCart } = useAddToCart();
-  const visitorId = useAppVisitorStore((s) => s.visitorId);
-
   const { products, loading } = useCustomerAlsoBought({
     product_id: productId,
   });
@@ -151,16 +146,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
                   key={item.product_variation_id}
                   style={{ width: cardWidth }}
                 >
-                  <ItemCard
-                    item={updatedItem as any}
-                    onAddToCart={(item, qty) =>
-                      addToCart({
-                        visitor_id: visitorId,
-                        product_id: item.id,
-                        qty,
-                      })
-                    }
-                  />
+                  <ItemCard item={updatedItem as any} />
                 </View>
               );
             })}

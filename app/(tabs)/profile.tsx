@@ -64,6 +64,7 @@ const MENU_SECTIONS = [
         label: "Cart",
         sub: "Review your cart",
         icon: ShoppingCart,
+                route: "/cart",
       },
       {
         id: "address",

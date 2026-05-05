@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
@@ -21,7 +21,7 @@ export default function ListCard({
   const { spacing, font } = useResponsive();
   const router = useRouter();
   const { visitorId, userId } = useAppVisitorStore((s) => s);
-  const { addToCart } = useAddToCart();
+  const { addToCart, loading } = useAddToCart();
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
 
@@ -41,7 +41,25 @@ export default function ListCard({
   const handleQtyInput = (val: string) => {
     setInputVal(val);
     const parsed = parseInt(val);
-    if (!isNaN(parsed) && parsed > 0) setQty(parsed);
+    if (!isNaN(parsed) && parsed > 0) {
+      addToCart(
+        {
+          user_id: userId ?? 0,
+          visitor_id: visitorId,
+          product_id: item.id,
+          qty: parsed,
+        },
+        {
+          onSuccess: (data) => {
+            if (data.status === 1) {
+              setQty(parsed);
+            } else {
+              setInputVal(String(qty));
+            }
+          },
+        },
+      );
+    }
   };
 
   const imgSize = spacing(130);
@@ -218,17 +236,26 @@ export default function ListCard({
         {qty === 0 ? (
           <TouchableOpacity
             activeOpacity={0.82}
+            disabled={loading}
             onPress={(e) => {
               e.stopPropagation();
               const newQty = 1;
-              setQty(newQty);
-              setInputVal("1");
-              addToCart({
-                user_id: userId ?? 0,
-                visitor_id: visitorId,
-                product_id: item.id,
-                qty: newQty,
-              });
+              addToCart(
+                {
+                  user_id: userId ?? 0,
+                  visitor_id: visitorId,
+                  product_id: item.id,
+                  qty: newQty,
+                },
+                {
+                  onSuccess: (data) => {
+                    if (data.status === 1) {
+                      setQty(newQty);
+                      setInputVal("1");
+                    }
+                  },
+                },
+              );
               onAddToCart?.(item, newQty);
             }}
             style={{
@@ -237,17 +264,22 @@ export default function ListCard({
               height: spacing(36),
               alignItems: "center",
               justifyContent: "center",
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            <Text
-              style={{
-                color: "#fff",
-                fontSize: font(12),
-                fontFamily: "Poppins_500Medium",
-              }}
-            >
-              Add to Cart
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: font(12),
+                  fontFamily: "Poppins_500Medium",
+                }}
+              >
+                Add to Cart
+              </Text>
+            )}
           </TouchableOpacity>
         ) : (
           <View
@@ -258,34 +290,31 @@ export default function ListCard({
               backgroundColor: colors.primary,
               borderRadius: spacing(10),
               height: spacing(36),
+              opacity: loading ? 0.8 : 1,
             }}
           >
             <TouchableOpacity
+              disabled={loading}
               onPress={(e) => {
                 e.stopPropagation();
-                if (qty <= 1) {
-                  const nextQty = 0;
-                  setQty(nextQty);
-                  setInputVal("1");
-                  addToCart({
+                const nextQty = qty <= 1 ? 0 : qty - 1;
+                addToCart(
+                  {
                     user_id: userId ?? 0,
                     visitor_id: visitorId,
                     product_id: item.id,
                     qty: nextQty,
-                  });
-                  onAddToCart?.(item, nextQty);
-                } else {
-                  const nextQty = qty - 1;
-                  setQty(nextQty);
-                  setInputVal(String(nextQty));
-                  addToCart({
-                    user_id: userId ?? 0,
-                    visitor_id: visitorId,
-                    product_id: item.id,
-                    qty: nextQty,
-                  });
-                  onAddToCart?.(item, nextQty);
-                }
+                  },
+                  {
+                    onSuccess: (data) => {
+                      if (data.status === 1) {
+                        setQty(nextQty);
+                        setInputVal(nextQty === 0 ? "1" : String(nextQty));
+                      }
+                    },
+                  },
+                );
+                onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >
@@ -300,6 +329,7 @@ export default function ListCard({
               value={inputVal}
               onChangeText={(val) => handleQtyInput(val)}
               keyboardType="number-pad"
+              editable={!loading}
               style={{
                 flex: 1,
                 textAlign: "center",
@@ -309,17 +339,26 @@ export default function ListCard({
             />
 
             <TouchableOpacity
+              disabled={loading}
               onPress={(e) => {
                 e.stopPropagation();
                 const nextQty = qty + 1;
-                setQty(nextQty);
-                setInputVal(String(nextQty));
-                addToCart({
-                  user_id: userId ?? 0,
-                  visitor_id: visitorId,
-                  product_id: item.id,
-                  qty: nextQty,
-                });
+                addToCart(
+                  {
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  },
+                  {
+                    onSuccess: (data) => {
+                      if (data.status === 1) {
+                        setQty(nextQty);
+                        setInputVal(String(nextQty));
+                      }
+                    },
+                  },
+                );
                 onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}

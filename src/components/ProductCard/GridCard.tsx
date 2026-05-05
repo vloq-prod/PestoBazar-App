@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { ListingItem } from "../../types/shop.types";
@@ -20,7 +20,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   const { spacing, font } = useResponsive();
   const router = useRouter();
   const { visitorId, userId } = useAppVisitorStore((s) => s);
-  const { addToCart } = useAddToCart();
+  const { addToCart, loading } = useAddToCart();
 
   const [qty, setQty] = useState(0);
   const [inputVal, setInputVal] = useState("1");
@@ -37,7 +37,25 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   const handleQtyInput = (val: string) => {
     setInputVal(val);
     const parsed = parseInt(val);
-    if (!isNaN(parsed) && parsed > 0) setQty(parsed);
+    if (!isNaN(parsed) && parsed > 0) {
+      addToCart(
+        {
+          user_id: userId ?? 0,
+          visitor_id: visitorId,
+          product_id: item.id,
+          qty: parsed,
+        },
+        {
+          onSuccess: (data) => {
+            if (data.status === 1) {
+              setQty(parsed);
+            } else {
+              setInputVal(String(qty));
+            }
+          },
+        },
+      );
+    }
   };
 
   const getStarType = (index: number, rating: number) => {
@@ -49,7 +67,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.85}
-            onPress={() =>
+      onPress={() =>
         router.push({
           pathname: "(stack)/product/[id]",
           params: {
@@ -233,16 +251,25 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
         {qty === 0 ? (
           <TouchableOpacity
             activeOpacity={0.85}
+            disabled={loading}
             onPress={() => {
               const newQty = 1;
-              setQty(newQty);
-              setInputVal("1");
-              addToCart({
-                user_id: userId ?? 0,
-                visitor_id: visitorId,
-                product_id: item.id,
-                qty: newQty,
-              });
+              addToCart(
+                {
+                  user_id: userId ?? 0,
+                  visitor_id: visitorId,
+                  product_id: item.id,
+                  qty: newQty,
+                },
+                {
+                  onSuccess: (data) => {
+                    if (data.status === 1) {
+                      setQty(newQty);
+                      setInputVal("1");
+                    }
+                  },
+                },
+              );
               onAddToCart?.(item, newQty);
             }}
             style={{
@@ -251,17 +278,22 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
               borderRadius: spacing(10),
               alignItems: "center",
               height: spacing(36),
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            <Text
-              style={{
-                color: colors.background,
-                fontSize: font(12),
-                fontFamily: "Poppins_500Medium",
-              }}
-            >
-              Add to Cart
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text
+                style={{
+                  color: colors.background,
+                  fontSize: font(12),
+                  fontFamily: "Poppins_500Medium",
+                }}
+              >
+                Add to Cart
+              </Text>
+            )}
           </TouchableOpacity>
         ) : (
           <View
@@ -272,33 +304,30 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
               backgroundColor: colors.primary,
               borderRadius: spacing(10),
               height: spacing(36),
+              opacity: loading ? 0.8 : 1,
             }}
           >
             <TouchableOpacity
+              disabled={loading}
               onPress={() => {
-                if (qty <= 1) {
-                  const nextQty = 0;
-                  setQty(nextQty);
-                  setInputVal("1");
-                  addToCart({
+                const nextQty = qty <= 1 ? 0 : qty - 1;
+                addToCart(
+                  {
                     user_id: userId ?? 0,
                     visitor_id: visitorId,
                     product_id: item.id,
                     qty: nextQty,
-                  });
-                  onAddToCart?.(item, nextQty);
-                } else {
-                  const nextQty = qty - 1;
-                  setQty(nextQty);
-                  setInputVal(String(nextQty));
-                  addToCart({
-                    user_id: userId ?? 0,
-                    visitor_id: visitorId,
-                    product_id: item.id,
-                    qty: nextQty,
-                  });
-                  onAddToCart?.(item, nextQty);
-                }
+                  },
+                  {
+                    onSuccess: (data) => {
+                      if (data.status === 1) {
+                        setQty(nextQty);
+                        setInputVal(nextQty === 0 ? "1" : String(nextQty));
+                      }
+                    },
+                  },
+                );
+                onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}
             >
@@ -313,6 +342,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
               value={inputVal}
               onChangeText={handleQtyInput}
               keyboardType="number-pad"
+              editable={!loading}
               style={{
                 color: "#fff",
                 textAlign: "center",
@@ -322,16 +352,25 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
             />
 
             <TouchableOpacity
+              disabled={loading}
               onPress={() => {
                 const nextQty = qty + 1;
-                setQty(nextQty);
-                setInputVal(String(nextQty));
-                addToCart({
-                  user_id: userId ?? 0,
-                  visitor_id: visitorId,
-                  product_id: item.id,
-                  qty: nextQty,
-                });
+                addToCart(
+                  {
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  },
+                  {
+                    onSuccess: (data) => {
+                      if (data.status === 1) {
+                        setQty(nextQty);
+                        setInputVal(String(nextQty));
+                      }
+                    },
+                  },
+                );
                 onAddToCart?.(item, nextQty);
               }}
               style={{ width: spacing(36), alignItems: "center" }}

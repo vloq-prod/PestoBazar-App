@@ -12,8 +12,6 @@ import { useHomeProduct } from "../../hooks/homeHooks";
 import ItemCard from "../comman/ItemCard";
 import { useTheme } from "../../theme";
 import { ChevronRight } from "lucide-react-native";
-import { useAddToCart } from "../../hooks/cartHooks";
-import { useAppVisitorStore } from "../../store/auth";
 import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 
