@@ -43,7 +43,7 @@ import {
 import AddressCard from "../../src/components/checkout/AddressCard";
 import { fmt, formatINR } from "../../src/utils/productHelpers";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../src/context/ToastContext";
 import LoadingOverlay from "../../src/components/comman/LoadingOverlay";

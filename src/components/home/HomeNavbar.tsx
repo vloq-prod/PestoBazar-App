@@ -83,25 +83,41 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
         </TouchableOpacity>
 
         <View>
-          <Text
-            style={{
-              fontSize: font(12),
-              color: subtitleColor,
-            }}
-          >
-            Welcome back 👋
-          </Text>
+          {!userId ? (
+            <Text
+              style={{
+                fontSize: font(15),
+                color: textColor,
+                fontFamily: "Poppins_700Bold",
+              }}
+            >
+              Welcome 👋
+            </Text>
+          ) : (
+            <>
+              <Text
+                style={{
+                  fontSize: font(12),
+                  color: subtitleColor,
+                  fontFamily: "Poppins_400Regular",
+                }}
+              >
+                Welcome back 👋
+              </Text>
 
-          <Text
-            style={{
-              fontSize: font(18),
-              color: textColor,
-              fontWeight: "700",
-              lineHeight: font(22),
-            }}
-          >
-            {userName}
-          </Text>
+              <Text
+                style={{
+                  fontSize: font(18),
+                  color: textColor,
+                  fontWeight: "700",
+                  lineHeight: font(22),
+                  fontFamily: "Poppins_700Bold",
+                }}
+              >
+                {userName}
+              </Text>
+            </>
+          )}
         </View>
       </View>
 

@@ -152,12 +152,15 @@ export default function CartScreen() {
   };
 
   const handleContinue = () => {
+    console.log("🛒 Continue Pressed! userId:", userId);
     if (userId) {
-      router.push("/checkout");
+      console.log("➡️ Navigating to /(stack)/checkout");
+      router.push("/(stack)/checkout");
     } else {
+      console.log("🔑 Navigating to /login");
       router.push({
         pathname: "/login",
-        params: { redirectTo: "/checkout" },
+        params: { redirectTo: "/(stack)/checkout" },
       });
     }
   };
@@ -165,7 +168,7 @@ export default function CartScreen() {
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background }]}
-      edges={["top", "bottom"]}
+      edges={["top"]} // Removed "bottom" to allow absolute footer to handle safe area
     >
       <StatusBar barStyle="dark-content" />
 

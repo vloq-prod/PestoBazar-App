@@ -16,6 +16,62 @@ import {
 } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
 
+// ─── Local Assets Mapping ──────────────────────────────────────
+const LOCAL_ASSETS: Record<string, any> = {
+  // Main Categories (from assets/maincat/)
+
+  HouseHold: require("../../../assets/maincat/Household-pesticides.jpg"),
+  "Household Pesticides": require("../../../assets/maincat/Household-pesticides.jpg"),
+  Agrochemicals: require("../../../assets/maincat/Agrochemicals.jpg"),
+  "Pest Equipment": require("../../../assets/maincat/Pestequipment.jpg"),
+  "Gardening tools and supplies": require("../../../assets/maincat/Gardeningtoolsandsupplies.jpg"),
+
+  // FoggersandMachines Subcategories
+  Foggers: require("../../../assets/FoggersandMachines/Foggers.png"),
+  Machines: require("../../../assets/FoggersandMachines/Machines.png"),
+  Sprays: require("../../../assets/FoggersandMachines/Sprays.png"),
+  Sprayers: require("../../../assets/FoggersandMachines/Sprays.png"),
+
+  // HouseHold Subcategories (Handles both singular and plural)
+  "Bugs Control": require("../../../assets/HouseHold/Bugs Control.jpg"),
+  "Bug Control": require("../../../assets/HouseHold/Bugs Control.jpg"),
+  Lizard: require("../../../assets/HouseHold/Lizard.png"),
+  Lizards: require("../../../assets/HouseHold/Lizard.png"),
+  Termite: require("../../../assets/HouseHold/Termite.png"),
+  Termites: require("../../../assets/HouseHold/Termite.png"),
+  Cockroach: require("../../../assets/HouseHold/Cockroach.png"),
+  Cockroaches: require("../../../assets/HouseHold/Cockroach.png"),
+  Mosquito: require("../../../assets/HouseHold/Mosquito.jpg"),
+  Mosquitoes: require("../../../assets/HouseHold/Mosquito.jpg"),
+  Ant: require("../../../assets/HouseHold/ant.jpg"),
+  Ants: require("../../../assets/HouseHold/ant.jpg"),
+  Fly: require("../../../assets/HouseHold/Fly.jpg"),
+  Flies: require("../../../assets/HouseHold/Fly.jpg"),
+  Snake: require("../../../assets/HouseHold/Snake.png"),
+  Snakes: require("../../../assets/HouseHold/Snake.png"),
+  Rat: require("../../../assets/HouseHold/rat.png"),
+  Rats: require("../../../assets/HouseHold/rat.png"),
+};
+
+const getLocalImage = (name: string) => {
+  if (!name) return null;
+  const normalized = name.trim().toLowerCase();
+
+  // Try exact match or common variations
+  const foundKey = Object.keys(LOCAL_ASSETS).find((key) => {
+    const k = key.toLowerCase();
+    // Exact match
+    if (k === normalized) return true;
+    // Handle "Control" suffix variations (e.g. "Ant Control" matches "Ant")
+    if (normalized.includes(k) || k.includes(normalized)) return true;
+    return false;
+  });
+
+  return foundKey ? LOCAL_ASSETS[foundKey] : null;
+};
+
+
+
 const COLUMNS = 3;
 const H_PADDING = 16;
 const GAP = 10;
@@ -147,7 +203,7 @@ const CategoryCardSection = () => {
               params: {
                 slug: String(mainCategoryId),
                 name: mainCategoryName,
-                image: mainCategoryImage ?? "",
+                image: getLocalImage(mainCategoryName) ?? (mainCategoryImage ?? ""),
                 selectedSubCategoryId: String(item.id),
               },
             })
@@ -166,7 +222,7 @@ const CategoryCardSection = () => {
             }}
           >
             <Image
-              source={{ uri: item.s3_image_path }}
+              source={getLocalImage(item.category_name) ?? { uri: item.s3_image_path }}
               style={{ width: cardSize * 0.72, height: cardSize * 0.72 }}
               contentFit="contain"
             />
