@@ -27,7 +27,11 @@ import Animated, {
   SharedValue,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
-import { useGoogleAuthCallback, useSendOtp, useVerifyUser } from "../../src/hooks/useAuthHooks";
+import {
+  useGoogleAuthCallback,
+  useSendOtp,
+  useVerifyUser,
+} from "../../src/hooks/useAuthHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { z, ZodError } from "zod";
 
@@ -38,7 +42,8 @@ import { useEffect } from "react";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_REDIRECT_SCHEME = "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh";
+const GOOGLE_REDIRECT_SCHEME =
+  "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh";
 
 type SafeParseReturn<T> =
   | { success: true; data: T }
@@ -197,7 +202,8 @@ export default function Login() {
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
   const { mutate: sendOtpMutate, isPending: isSendOtpPending } = useSendOtp();
-  const { mutate: googleCallbackMutate, isPending: isGooglePending } = useGoogleAuthCallback();
+  const { mutate: googleCallbackMutate, isPending: isGooglePending } =
+    useGoogleAuthCallback();
 
   const visitorId = useAppVisitorStore((s) => s.visitorId);
   const setUser = useAppVisitorStore((s) => s.setUser);
@@ -216,7 +222,7 @@ export default function Login() {
       ? colors.primary
       : colors.border;
 
-  const handleSkip = () => router.replace("/");
+  const handleSkip = () => router.replace("/(tabs)");
 
   const handleGetOtp = useCallback(() => {
     const result = phoneSchema.safeParse({ mobile_no: phone });
@@ -283,7 +289,10 @@ export default function Login() {
             {
               onSuccess: async (data) => {
                 if (data.status === 0) {
-                  Alert.alert("Google Sign-In Failed", data.message || "Something went wrong.");
+                  Alert.alert(
+                    "Google Sign-In Failed",
+                    data.message || "Something went wrong.",
+                  );
                   return;
                 }
                 await setGoogleUser(
@@ -300,13 +309,19 @@ export default function Login() {
                 }
               },
               onError: () => {
-                Alert.alert("Google Sign-In Failed", "Could not sign in with Google. Please try again.");
+                Alert.alert(
+                  "Google Sign-In Failed",
+                  "Could not sign in with Google. Please try again.",
+                );
               },
             },
           );
         } catch (err) {
           console.error("❌ Failed to fetch Google user info:", err);
-          Alert.alert("Google Sign-In Failed", "Could not retrieve account details.");
+          Alert.alert(
+            "Google Sign-In Failed",
+            "Could not retrieve account details.",
+          );
         }
       } else if (response?.type === "error") {
         console.error("❌ Google Auth Error:", response.error);
@@ -347,7 +362,10 @@ export default function Login() {
           >
             {/* Skip Button */}
             <TouchableOpacity
-              onPress={handleSkip}
+              onPress={() => {
+                router.replace("/(tabs)");
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={[
                 styles.skipButton,
                 {
@@ -356,6 +374,7 @@ export default function Login() {
                   paddingVertical: spacing(7),
                   borderRadius: spacing(20),
                   backgroundColor: "rgba(255,255,255,0.18)",
+                  zIndex: 10,
                 },
               ]}
             >
@@ -660,8 +679,8 @@ export default function Login() {
                 {isExpoGo
                   ? "Google Login Requires Dev Build"
                   : isGooglePending
-                  ? "Signing in..."
-                  : "Continue with Google"}
+                    ? "Signing in..."
+                    : "Continue with Google"}
               </Text>
             </TouchableOpacity>
 

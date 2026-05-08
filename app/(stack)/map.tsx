@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
 
@@ -22,7 +25,14 @@ import { useMapStore } from "../../src/store/mapStore";
 
 // ── Helper ───────────────────────────────────────────────────────────────────
 const buildAddress = (item: Location.LocationGeocodedAddress) =>
-  [item.name, item.street, item.subregion, item.city, item.region, item.postalCode]
+  [
+    item.name,
+    item.street,
+    item.subregion,
+    item.city,
+    item.region,
+    item.postalCode,
+  ]
     .filter(Boolean)
     .join(", ");
 
@@ -33,7 +43,10 @@ const MapScreen = () => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const router = useRouter();
-  const { from, type } = useLocalSearchParams<{ from?: string; type?: string }>();
+  const { from, type } = useLocalSearchParams<{
+    from?: string;
+    type?: string;
+  }>();
   const insets = useSafeAreaInsets();
 
   const mapRef = useRef<MapView>(null);
@@ -66,7 +79,10 @@ const MapScreen = () => {
       if (!isMounted.current) return;
       console.log("[Map] Geocoding start for:", latitude, longitude);
       try {
-        const result = await Location.reverseGeocodeAsync({ latitude, longitude });
+        const result = await Location.reverseGeocodeAsync({
+          latitude,
+          longitude,
+        });
         if (isMounted.current && result && result.length > 0) {
           const addr = buildAddress(result[0]);
           setSelectedAddress(addr);
@@ -81,44 +97,58 @@ const MapScreen = () => {
   );
 
   // ── Move camera to coords ───────────────────────────────────────────────────
-  const flyTo = useCallback((latitude: number, longitude: number, zoom = 16) => {
-    console.log("[Map] FlyTo:", latitude, longitude);
-    // Convert zoom to deltas roughly
-    const latDelta = 0.01 / (zoom / 16);
-    const lngDelta = 0.01 / (zoom / 16);
+  const flyTo = useCallback(
+    (latitude: number, longitude: number, zoom = 16) => {
+      console.log("[Map] FlyTo:", latitude, longitude);
+      // Convert zoom to deltas roughly
+      const latDelta = 0.01 / (zoom / 16);
+      const lngDelta = 0.01 / (zoom / 16);
 
-    setTimeout(() => {
-      if (mapRef.current) {
-        mapRef.current.animateToRegion(
-          {
-            latitude,
-            longitude,
-            latitudeDelta: latDelta,
-            longitudeDelta: lngDelta,
-          },
-          700,
-        );
-      }
-    }, 100);
-  }, []);
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(
+            {
+              latitude,
+              longitude,
+              latitudeDelta: latDelta,
+              longitudeDelta: lngDelta,
+            },
+            700,
+          );
+        }
+      }, 100);
+    },
+    [],
+  );
 
   // ── Auto-fetch current location on mount ───────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
         console.log("[Map] Requesting permissions...");
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
+        const { status: existingStatus } =
+          await Location.getForegroundPermissionsAsync();
+        console.log("[Map] Existing permission status:", existingStatus);
+
+        let finalStatus = existingStatus;
+        if (existingStatus !== "granted") {
+          console.log("[Map] Requesting fresh permissions...");
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          finalStatus = status;
+        }
+
+        console.log("[Map] Final permission status:", finalStatus);
+        if (finalStatus !== "granted") {
           console.log("[Map] Permission denied");
           if (isMounted.current) setIsInitializing(false);
           return;
         }
-        
+
         console.log("[Map] Fetching current position...");
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-        
+
         const { latitude, longitude } = loc.coords;
         if (isMounted.current) {
           setSelectedCoords({ latitude, longitude });
@@ -163,7 +193,9 @@ const MapScreen = () => {
   // ── Address display helpers ─────────────────────────────────────────────────
   const parts = selectedAddress ? selectedAddress.split(",") : [];
   const title = parts.length ? parts[0] : "Selected Location";
-  const subtitle = parts.length ? parts.slice(1).join(",") : "Choose your address";
+  const subtitle = parts.length
+    ? parts.slice(1).join(",")
+    : "Choose your address";
 
   // ── Confirm handler ─────────────────────────────────────────────────────────
   const handleConfirm = useCallback(() => {
@@ -184,14 +216,19 @@ const MapScreen = () => {
   }, [selectedAddress, selectedCoords, from, type]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <StatusBar backgroundColor={colors.background} />
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <View
         style={[
           styles.headerWrap,
-          { backgroundColor: colors.background, borderBottomColor: colors.border },
+          {
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
         ]}
       >
         <AppNavbar showBack title="Select Location" />
@@ -267,68 +304,116 @@ const MapScreen = () => {
           )}
 
           {mapError ? (
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.surface, justifyContent: "center", alignItems: "center", zIndex: 100, padding: 24 }]}>
-              <AlertCircle size={48} color={colors.error || "#ff4d4f"} style={{ marginBottom: 16 }} />
-              <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(16), color: colors.text, textAlign: "center", marginBottom: 8 }}>
+            <View
+              style={[
+                StyleSheet.absoluteFillObject,
+                {
+                  backgroundColor: colors.surface,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 100,
+                  padding: 24,
+                },
+              ]}
+            >
+              <AlertCircle
+                size={48}
+                color={colors.error || "#ff4d4f"}
+                style={{ marginBottom: 16 }}
+              />
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(16),
+                  color: colors.text,
+                  textAlign: "center",
+                  marginBottom: 8,
+                }}
+              >
                 Map failed to load
               </Text>
-              <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(13), color: colors.textSecondary, textAlign: "center", lineHeight: 20 }}>
-                This could be due to a poor internet connection or missing API configuration.
-              </Text>
-              <TouchableOpacity 
-                onPress={() => setMapError(false)}
-                style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.primary }}
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(13),
+                  color: colors.textSecondary,
+                  textAlign: "center",
+                  lineHeight: 20,
+                }}
               >
-                <Text style={{ color: "#fff", fontFamily: "Poppins_600SemiBold" }}>Retry</Text>
+                This could be due to a poor internet connection or missing API
+                configuration.
+              </Text>
+              <TouchableOpacity
+                onPress={() => setMapError(false)}
+                style={{
+                  marginTop: 20,
+                  paddingHorizontal: 20,
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                  backgroundColor: colors.primary,
+                }}
+              >
+                <Text
+                  style={{ color: "#fff", fontFamily: "Poppins_600SemiBold" }}
+                >
+                  Retry
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
-          <MapView
-            ref={mapRef}
-            provider={PROVIDER_GOOGLE}
-            style={{ width: "100%", height: "100%" }}
-            initialRegion={{
-              latitude: selectedCoords.latitude,
-              longitude: selectedCoords.longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            onMapReady={() => {
-              console.log("[Map] Map Ready");
-              setIsInitializing(false);
-            }}
-            onRegionChange={() => {
-              isMoving.current = true;
-            }}
-            onRegionChangeComplete={(region) => {
-              console.log("[Map] Region changed:", region.latitude, region.longitude);
-              isMoving.current = false;
-              const { latitude, longitude } = region;
-              
-              if (isMounted.current) {
-                setSelectedCoords({ latitude, longitude });
-              }
+            <MapView
+              ref={mapRef}
+              provider={PROVIDER_GOOGLE}
+              style={{ width: "100%", height: "100%" }}
+              initialRegion={{
+                latitude: selectedCoords.latitude,
+                longitude: selectedCoords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              onMapReady={() => {
+                console.log("[Map] Map Ready");
+                setIsInitializing(false);
+              }}
+              onRegionChange={() => {
+                isMoving.current = true;
+              }}
+              onRegionChangeComplete={(region) => {
+                console.log(
+                  "[Map] Region changed:",
+                  region.latitude,
+                  region.longitude,
+                );
+                isMoving.current = false;
+                const { latitude, longitude } = region;
 
-              // Debounce Reverse Geocoding
-              if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
-              
-              geocodeTimeout.current = setTimeout(() => {
-                const dist = Math.abs(latitude - lastGeocodedCoords.current.latitude) + 
-                             Math.abs(longitude - lastGeocodedCoords.current.longitude);
-                
-                if (dist > 0.0001) {
-                  reverseGeocode(latitude, longitude);
+                if (isMounted.current) {
+                  setSelectedCoords({ latitude, longitude });
                 }
-              }, 800); // Debounce after 800ms for stability
-            }}
-            onPress={(e) => {
-              const { latitude, longitude } = e.nativeEvent.coordinate;
-              if (isMounted.current) {
-                setSelectedCoords({ latitude, longitude });
-              }
-              // user manually tapped, let the region change handle the geocode via debounce
-            }}
-          />
+
+                // Debounce Reverse Geocoding
+                if (geocodeTimeout.current)
+                  clearTimeout(geocodeTimeout.current);
+
+                geocodeTimeout.current = setTimeout(() => {
+                  const dist =
+                    Math.abs(latitude - lastGeocodedCoords.current.latitude) +
+                    Math.abs(longitude - lastGeocodedCoords.current.longitude);
+
+                  if (dist > 0.0001) {
+                    reverseGeocode(latitude, longitude);
+                  }
+                }, 800); // Debounce after 800ms for stability
+              }}
+              onPress={(e) => {
+                const { latitude, longitude } = e.nativeEvent.coordinate;
+                if (isMounted.current) {
+                  setSelectedCoords({ latitude, longitude });
+                }
+                // user manually tapped, let the region change handle the geocode via debounce
+              }}
+            />
           )}
 
           {/* Centre pin */}
@@ -379,7 +464,8 @@ const MapScreen = () => {
                 borderColor: colors.border,
                 shadowColor: "#000",
                 right: spacing(14),
-                bottom: spacing(14) + (insets.bottom > 0 ? insets.bottom - 10 : 0),
+                bottom:
+                  spacing(14) + (insets.bottom > 0 ? insets.bottom - 10 : 0),
               },
             ]}
           >
@@ -405,7 +491,8 @@ const MapScreen = () => {
             borderTopLeftRadius: spacing(20),
             borderTopRightRadius: spacing(20),
             padding: spacing(16),
-            paddingBottom: insets.bottom > 0 ? insets.bottom + spacing(10) : spacing(20),
+            paddingBottom:
+              insets.bottom > 0 ? insets.bottom + spacing(10) : spacing(20),
           },
         ]}
       >

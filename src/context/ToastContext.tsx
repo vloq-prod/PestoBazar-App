@@ -32,20 +32,17 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const showToast = useCallback(
-    (message: string, type: ToastType = "info") => {
-      const id = `toast-${Date.now()}-${counterRef.current++}`;
+  const showToast = useCallback((message: string, type: ToastType = "info") => {
+    const id = `toast-${Date.now()}-${counterRef.current++}`;
 
-      setToasts((prev) => {
-        const updated = [...prev, { id, message, type }];
-        // keep max 3, drop oldest
-        return updated.length > MAX_TOASTS
-          ? updated.slice(updated.length - MAX_TOASTS)
-          : updated;
-      });
-    },
-    [],
-  );
+    setToasts((prev) => {
+      const updated = [...prev, { id, message, type }];
+      // keep max 3, drop oldest
+      return updated.length > MAX_TOASTS
+        ? updated.slice(updated.length - MAX_TOASTS)
+        : updated;
+    });
+  }, []);
 
   return (
     <ToastContext.Provider value={{ toasts, showToast, removeToast }}>

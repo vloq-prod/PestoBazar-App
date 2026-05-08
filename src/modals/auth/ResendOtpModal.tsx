@@ -12,6 +12,7 @@ import { X, MessageSquare, Check, Send } from "lucide-react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type OtpChannel = "sms" | "whatsapp" | "both";
 
@@ -26,6 +27,7 @@ type Selection = { sms: boolean; wa: boolean };
 const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
+  const insets = useSafeAreaInsets();
 
   const [sel, setSel] = useState<Selection>({ sms: true, wa: false });
 
@@ -68,7 +70,7 @@ const ResendOtpModal: React.FC<Props> = ({ visible, onClose, onSelect }) => {
             styles.sheet,
             {
               backgroundColor: colors.background ?? "#ffffff",
-              paddingBottom: spacing(36),
+              paddingBottom: spacing(36) + insets.bottom,
             },
           ]}
         >

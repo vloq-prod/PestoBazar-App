@@ -94,6 +94,8 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
     }, 400);
   };
 
+  console.log("api key : ", process.env.EXPO_PUBLIC_GOOGLE_MAP_API_KEY)
+
   const handleSelect = async (item: PlaceItem) => {
     try {
       setLoading(true);

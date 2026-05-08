@@ -96,7 +96,6 @@ function RootLayoutNav() {
         headerShown: false,
         animation: "slide_from_right",
         gestureEnabled: true,
-        fullScreenGestureEnabled: true,
       }}
     >
       <Stack.Screen name="(tabs)" />

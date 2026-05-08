@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
@@ -72,6 +73,7 @@ export default function Address() {
   const {
     data: addressData,
     isLoading,
+    isRefetching,
     refetch,
   } = useAddress({ user_id: userId! });
 
@@ -140,7 +142,14 @@ export default function Address() {
         }
       />
       {list.length === 0 ? (
-        <View
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/map",
+              params: { from: "address", type },
+            })
+          }
+          activeOpacity={0.7}
           style={[
             styles.emptyAddrBox,
             {
@@ -150,20 +159,32 @@ export default function Address() {
             },
           ]}
         >
-          <MapPin size={22} color={colors.textTertiary} />
+          <View
+            style={{
+              width: spacing(40),
+              height: spacing(40),
+              borderRadius: 20,
+              backgroundColor: colors.backgroundgray,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: spacing(8),
+            }}
+          >
+            <Plus size={20} color={colors.textSecondary} />
+          </View>
           <Text
             style={[
               styles.emptyAddrText,
               {
                 color: colors.textSecondary,
-                fontSize: font(12.5),
-                marginTop: spacing(8),
+                fontSize: font(13),
+                fontFamily: "Poppins_500Medium",
               },
             ]}
           >
             {emptyText}
           </Text>
-        </View>
+        </TouchableOpacity>
       ) : (
         <View style={{ gap: spacing(12) }}>
           {list.map((addr) => (
@@ -211,51 +232,30 @@ export default function Address() {
             styles.scroll,
             { paddingBottom: insets.bottom + 20 },
           ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
         >
-          {billingList.length === 0 && deliveryList.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <View
-                style={[
-                  styles.iconWrap,
-                  { backgroundColor: colors.primary + "15" },
-                ]}
-              >
-                <MapPin size={32} color={colors.primary} />
-              </View>
-              <Text
-                style={[
-                  styles.emptyTitle,
-                  { color: colors.text, fontSize: font(16) },
-                ]}
-              >
-                No Addresses Found
-              </Text>
-              <Text
-                style={[
-                  styles.emptySub,
-                  { color: colors.textSecondary, fontSize: font(13) },
-                ]}
-              >
-                Add a new address to continue shopping
-              </Text>
-            </View>
-          ) : (
-            <>
-              {renderAddressList(
-                billingList,
-                "Billing Address",
-                "No billing address added",
-                "billing",
-              )}
-              <View style={{ height: spacing(12) }} />
-              {renderAddressList(
-                deliveryList,
-                "Delivery Address",
-                "No delivery address added",
-                "delivery",
-              )}
-            </>
-          )}
+          <>
+            {renderAddressList(
+              billingList,
+              "Billing Address",
+              "No billing address added",
+              "billing",
+            )}
+            <View style={{ height: spacing(12) }} />
+            {renderAddressList(
+              deliveryList,
+              "Delivery Address",
+              "No delivery address added",
+              "delivery",
+            )}
+          </>
         </ScrollView>
       )}
 

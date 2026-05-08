@@ -11,10 +11,36 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
-import { formatINR } from "../../src/utils/productHelpers";
-import { BadgeCheck, ShoppingBag, ArrowRight } from "lucide-react-native";
+import { BadgeCheck, ShoppingBag, ArrowRight, Receipt, Download } from "lucide-react-native";
+import Svg, { Path } from "react-native-svg";
+
+const formatPrice = (price: any) => {
+  if (price === undefined || price === null) return "0";
+  const cleanPrice = String(price).replace(/[₹\s,]/g, "");
+  const num = Number(cleanPrice);
+  if (isNaN(num)) return price;
+  return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, "");
+};
+
+const WavyDivider = ({ color, spacing }: { color: string; spacing: any }) => {
+  return (
+    <View
+      style={{ height: 10, overflow: "hidden", marginVertical: spacing(8) }}
+    >
+      <Svg height="10" width="1000">
+        <Path
+          d="M0 5 Q 3 1, 6 5 T 12 5 T 18 5 T 24 5 T 30 5 T 36 5 T 42 5 T 48 5 T 54 5 T 60 5 T 66 5 T 72 5 T 78 5 T 84 5 T 90 5 T 96 5 T 102 5 T 108 5 T 114 5 T 120 5 T 126 5 T 132 5 T 138 5 T 144 5 T 150 5 T 156 5 T 162 5 T 168 5 T 174 5 T 180 5 T 186 5 T 192 5 T 198 5 T 204 5 T 210 5 T 216 5 T 222 5 T 228 5 T 234 5 T 240 5 T 246 5 T 252 5 T 258 5 T 264 5 T 270 5 T 276 5 T 282 5 T 288 5 T 294 5 T 300 5 T 306 5 T 312 5 T 318 5 T 324 5 T 330 5 T 336 5 T 342 5 T 348 5 T 354 5 T 360 5 T 366 5 T 372 5 T 378 5 T 384 5 T 390 5 T 396 5 T 402 5 T 408 5 T 414 5 T 420 5 T 426 5 T 432 5 T 438 5 T 444 5 T 450 5 T 456 5 T 462 5 T 468 5 T 474 5 T 480 5 T 486 5 T 492 5 T 498 5"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+      </Svg>
+    </View>
+  );
+};
 
 export default function OrderSuccess() {
   const { colors } = useTheme();
@@ -30,7 +56,14 @@ export default function OrderSuccess() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
+    // Invalidate cart related queries to ensure count is updated
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+    queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+    queryClient.invalidateQueries({ queryKey: ["quick-cart"] });
+
     Animated.spring(scaleAnim, {
       toValue: 1,
       tension: 40,
@@ -52,7 +85,7 @@ export default function OrderSuccess() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [queryClient]);
 
   // Robust number parsing
   const parseSafe = (val: any) => {
@@ -67,13 +100,6 @@ export default function OrderSuccess() {
   const shippingNum = parseSafe(shipping);
   const gstNum = parseSafe(gst);
   const codNum = parseSafe(cod);
-
-  const SummaryRow = ({ label, value, isTotal }: any) => (
-    <View style={[styles.infoRow, isTotal && { marginTop: spacing(8), paddingTop: spacing(8), borderTopWidth: 1, borderTopColor: colors.border + '40' }]}>
-      <Text style={[styles.infoLabel, { color: isTotal ? colors.text : colors.textSecondary, fontSize: font(isTotal ? 13 : 11), fontFamily: isTotal ? 'Poppins_600SemiBold' : 'Poppins_400Regular' }]}>{label}</Text>
-      <Text style={[styles.infoValue, { color: isTotal ? colors.primary : colors.text, fontSize: font(isTotal ? 15 : 11), fontFamily: isTotal ? 'Poppins_700Bold' : 'Poppins_600SemiBold' }]}>{formatINR(value)}</Text>
-    </View>
-  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -97,44 +123,228 @@ export default function OrderSuccess() {
           
           <Text style={[styles.successTitle, { color: colors.text, fontSize: font(22) }]}>Order Confirmed!</Text>
           <Text style={[styles.successSubtitle, { color: colors.textSecondary, fontSize: font(13) }]}>
-            Your payment was successful
+            {payment_method === "COD"
+              ? "Your order has been placed successfully"
+              : "Your payment was successful"}
           </Text>
         </Animated.View>
 
         {/* ── Detailed Breakdown Card ── */}
-        <Animated.View 
+        <Animated.View
           style={[
-            styles.ticketCard, 
-            { 
-              backgroundColor: "#F3F4F6", 
+            styles.ticketCard,
+            {
+              backgroundColor: colors.background,
               borderColor: colors.border,
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
+              transform: [{ translateY: slideAnim }],
+              marginBottom: spacing(32),
+            },
           ]}
         >
-          <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: colors.textTertiary, fontSize: font(10) }]}>BILLING SUMMARY</Text>
-            <View style={[styles.statusBadge, { backgroundColor: '#fff' }]}>
-              <Text style={{ color: colors.primary, fontSize: font(9), fontFamily: 'Poppins_600SemiBold' }}>{payment_method || 'PAID'}</Text>
+          {/* Internal Header */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingTop: 16,
+              paddingBottom: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+              marginBottom: 16,
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: 8,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundgray,
+                }}
+              >
+                <Receipt size={16} color={colors.textSecondary} />
+              </View>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(14),
+                  color: colors.text,
+                }}
+              >
+                Bill Summary
+              </Text>
+            </View>
+
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: colors.backgroundgray, borderWidth: 1, borderColor: colors.border }
+              ]}
+            >
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: font(9),
+                  fontFamily: "Poppins_600SemiBold",
+                  textTransform: "uppercase"
+                }}
+              >
+                {payment_method || "PAID"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.cardContent}>
-            <SummaryRow label="Subtotal" value={subTotalNum} />
-            <SummaryRow label="Shipping Fee" value={shippingNum} />
-            <SummaryRow label="Tax (GST)" value={gstNum} />
-            {codNum > 0 && <SummaryRow label="COD Charges" value={codNum} />}
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12.5),
+                  color: colors.text,
+                }}
+              >
+                Item Total
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(12.5),
+                  color: colors.text,
+                }}
+              >
+                ₹{formatPrice(subtotal)}
+              </Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12.5),
+                  color: colors.text,
+                }}
+              >
+                Shipping
+              </Text>
+              {parseSafe(shipping) === 0 ? (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12.5),
+                    color: "#10B981",
+                  }}
+                >
+                  FREE
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  + ₹{formatPrice(shipping)}
+                </Text>
+              )}
+            </View>
+
+            {parseSafe(cod) > 0 && (
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  COD Charges
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12.5),
+                    color: "#EF4444",
+                  }}
+                >
+                  + ₹{formatPrice(cod)}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12.5),
+                  color: colors.text,
+                }}
+              >
+                GST (Govt. Taxes)
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(12.5),
+                  color: colors.text,
+                }}
+              >
+                + ₹{formatPrice(gst || "0")}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.ticketDivider}>
-             <View style={[styles.leftNotch, { backgroundColor: colors.background, borderColor: colors.border }]} />
-             <View style={[styles.dottedLine, { borderColor: colors.border }]} />
-             <View style={[styles.rightNotch, { backgroundColor: colors.background, borderColor: colors.border }]} />
-          </View>
+          <WavyDivider color={colors.border} spacing={spacing} />
 
-          <View style={[styles.cardContent, { marginTop: spacing(8), marginBottom: 16 }]}>
-            <SummaryRow label="Grand Total" value={totalNum} />
+          <View
+            style={[
+              styles.cardContent,
+              { marginTop: 0, marginBottom: spacing(16) },
+            ]}
+          >
+            <View style={styles.summaryRow}>
+              <View>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(14),
+                    color: colors.textSecondary,
+                  }}
+                >
+                  Grand Total
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(10),
+                    color: colors.textSecondary,
+                    marginTop: -1,
+                  }}
+                >
+                  Payment by {payment_method || "Online"}
+                </Text>
+              </View>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(20),
+                    color: colors.text,
+                  }}
+                >
+                  ₹{formatPrice(amount)}
+                </Text>
+              </View>
+            </View>
           </View>
         </Animated.View>
 
@@ -160,10 +370,7 @@ export default function OrderSuccess() {
           <TouchableOpacity
             onPress={() => {
               if (params.order_id) {
-                router.replace({
-                  pathname: "/orderdetails/[id]",
-                  params: { id: params.order_id }
-                });
+                router.replace(`/(stack)/orderdetails/${params.order_id}`);
               } else {
                 router.replace("/(tabs)");
               }
@@ -246,48 +453,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  infoLabel: {
-    // defined inline
-  },
-  infoValue: {
-    // defined inline
-  },
-  ticketDivider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 24,
-  },
-  dottedLine: {
-    flex: 1,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderRadius: 1,
-    height: 1,
-    marginHorizontal: 2,
-  },
-  leftNotch: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    position: 'absolute',
-    left: -11,
-    zIndex: 10,
-    borderWidth: 1,
-  },
-  rightNotch: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    position: 'absolute',
-    right: -11,
-    zIndex: 10,
-    borderWidth: 1,
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   buttonGroup: {
     gap: 10,

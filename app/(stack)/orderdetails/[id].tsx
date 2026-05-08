@@ -15,7 +15,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Svg, { Path } from "react-native-svg";
 
@@ -58,7 +58,9 @@ import Footer from "../../../src/components/home/Footer";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
-  const num = Number(price);
+  // Remove any existing ₹ symbol and commas from the string
+  const cleanPrice = String(price).replace(/[₹\s,]/g, "");
+  const num = Number(cleanPrice);
   if (isNaN(num)) return price;
   // If it's a whole number, return it without decimals.
   // Otherwise, return it with decimals (up to 2), but remove trailing zeros.
@@ -195,7 +197,7 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
               style={{
                 fontFamily: "Poppins_600SemiBold",
                 fontSize: font(13),
-                color: colors.tetx,
+                color: colors.text,
                 includeFontPadding: false,
               }}
             >
@@ -274,7 +276,7 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
               style={{
                 fontFamily: "Poppins_600SemiBold",
                 fontSize: font(13),
-                color: colors.tetx,
+                color: colors.text,
                 includeFontPadding: false,
               }}
             >
@@ -318,6 +320,7 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
 const OrderDetails = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -385,10 +388,18 @@ const OrderDetails = () => {
               color: "#EF4444",
               fontSize: font(16),
               fontFamily: "Poppins_600SemiBold",
+              textAlign: "center",
+              paddingHorizontal: 20,
             }}
           >
-            Oops! Error loading details.
+            {error instanceof Error ? error.message : "Oops! Error loading details."}
           </Text>
+          <TouchableOpacity 
+            onPress={() => router.replace("/(tabs)")}
+            style={{ marginTop: 20, padding: 10 }}
+          >
+            <Text style={{ color: colors.primary, fontFamily: "Poppins_600SemiBold" }}>Go to Home</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );

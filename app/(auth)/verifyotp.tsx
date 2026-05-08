@@ -227,7 +227,7 @@ export default function VerifyOtpScreen() {
               autoComplete: "sms-otp",
             }}
             theme={{
-              containerStyle: styles.otpContainer,
+              containerStyle: { ...styles.otpContainer, gap: spacing(12) },
               pinCodeContainerStyle: {
                 ...styles.otpBox,
                 width: spacing(68),
@@ -377,8 +377,10 @@ export default function VerifyOtpScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   otpContainer: {
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    gap: 12, // Default gap, can use spacing(12) if needed
   },
   otpBox: {
     borderWidth: 1.2,

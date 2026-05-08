@@ -8,7 +8,7 @@ export default function StackLayout() {
         animation: "slide_from_right",
         gestureEnabled: true,
         gestureDirection: "horizontal",
-        fullScreenGestureEnabled: true, // ✅ Important for Android swipe gesture
+        fullScreenGestureEnabled: true,
       }}
     >
       <Stack.Screen name="address" />

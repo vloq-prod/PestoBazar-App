@@ -23,14 +23,11 @@ export const useCodSuccess = () => {
       console.log("✅", response.message);
       console.log("Order ID:", response.order_id);
 
-      // refresh strategic cache
-      queryClient.invalidateQueries({
-        queryKey: ["cart"],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["user-order-history"],
-      });
+      // Strategic refresh
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      queryClient.invalidateQueries({ queryKey: ["quick-cart"] });
+      queryClient.invalidateQueries({ queryKey: ["user-order-history"] });
     },
 
     onError: (error) => {
@@ -121,13 +118,10 @@ export const usePaymentSuccess = () => {
       console.log("✅", response.message);
 
       // Strategic refresh
-      queryClient.invalidateQueries({
-        queryKey: ["cart"],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["user-order-history"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      queryClient.invalidateQueries({ queryKey: ["quick-cart"] });
+      queryClient.invalidateQueries({ queryKey: ["user-order-history"] });
     },
 
     onError: (error) => {

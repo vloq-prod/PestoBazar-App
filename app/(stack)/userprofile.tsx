@@ -224,10 +224,10 @@ export default function UserProfile() {
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
 
-  const { userName } = useAppVisitorStore();
+  const { userName, userEmail, userAvatar } = useAppVisitorStore();
   const [form, setForm] = useState({
-    fullName: userName || "Guest User",
-    email: "",
+    fullName: userName || "",
+    email: userEmail || "",
     phone: "",
   });
 
@@ -266,7 +266,7 @@ export default function UserProfile() {
           >
             <View style={[styles.avatarInner, { borderColor: colors.primary }]}>
               <Image
-                source={require("../../assets/profile.jpeg")}
+                source={userAvatar ? { uri: userAvatar } : require("../../assets/profile.jpeg")}
                 style={styles.avatarImage}
                 contentFit="cover"
               />

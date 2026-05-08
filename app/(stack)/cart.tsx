@@ -25,7 +25,7 @@ import { useAppVisitorStore } from "../../src/store/auth";
 import CartItem from "../../src/components/cart/CartItem";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
-import { ArrowRight, Info, MoveRight, ShoppingBag } from "lucide-react-native";
+import { Info, MoveRight } from "lucide-react-native";
 import LottieView from "lottie-react-native";
 import { useRouter } from "expo-router";
 import CartItemSkeleton from "../../src/skeleton/CartItemSkeleton";
@@ -174,64 +174,80 @@ export default function CartScreen() {
 
       <AppNavbar title="Cart Item" showBack count={`${cartCount}`} />
 
-      <ScrollView
-        style={[
-          styles.content,
-        ]}
-        contentContainerStyle={{
-          paddingTop: spacing(20),
-          paddingBottom: insets.bottom + 170,
-          flexGrow: 1,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="px-4">
-          {isLoading ? (
-            <>
-              {[1, 2, 3, 4, 5].map((_, i) => (
-                <CartItemSkeleton key={i} />
-              ))}
-            </>
-          ) : error ? (
-            <View style={styles.emptyContainer}>
-               <Text>Error loading cart data</Text>
-            </View>
-          ) : items && items.length > 0 ? (
-            items.map((item) => (
-              <CartItem
-                key={item.id}
-                item={item}
-                onDecrease={handleDecrease}
-                onIncrease={handleIncrease}
-                onRemove={handleRemove}
-                onChangeQty={handleChangeQty}
-              />
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <LottieView
-                source={require("../../assets/lottieview/Empty Cart.json")}
-                autoPlay
-                loop
-                style={{ width: spacing(220), height: spacing(220), marginBottom: spacing(10) }}
-              />
-              <Text style={[styles.emptyTitle, { color: colors.text, fontSize: font(20) }]}>
-                Your cart is empty
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textSecondary, fontSize: font(14) }]}>
-                Looks like you haven&apos;t added anything to your cart yet.
-              </Text>
-              <TouchableOpacity
-                onPress={() => router.replace("/(tabs)")}
-                style={[styles.shopNowBtn, { backgroundColor: colors.primary }]}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.shopNowText, { fontSize: font(15) }]}>Shop Now</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+      {isLoading || (items && items.length > 0) || error ? (
+        <ScrollView
+          style={[styles.content]}
+          contentContainerStyle={{
+            paddingTop: spacing(20),
+            paddingBottom: insets.bottom + 170,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="px-4">
+            {isLoading ? (
+              <>
+                {[1, 2, 3, 4, 5].map((_, i) => (
+                  <CartItemSkeleton key={i} />
+                ))}
+              </>
+            ) : error ? (
+              <View style={styles.emptyContainer}>
+                <Text>Error loading cart data</Text>
+              </View>
+            ) : (
+              items?.map((item) => (
+                <CartItem
+                  key={item.id}
+                  item={item}
+                  onDecrease={handleDecrease}
+                  onIncrease={handleIncrease}
+                  onRemove={handleRemove}
+                  onChangeQty={handleChangeQty}
+                />
+              ))
+            )}
+          </View>
+        </ScrollView>
+      ) : (
+        <View style={[styles.emptyContainer, { flex: 1 }]}>
+          <LottieView
+            source={require("../../assets/lottieview/Empty Cart.json")}
+            autoPlay
+            loop
+            style={{
+              width: spacing(220),
+              height: spacing(220),
+              marginBottom: spacing(10),
+            }}
+          />
+          <Text
+            style={[
+              styles.emptyTitle,
+              { color: colors.text, fontSize: font(20) },
+            ]}
+          >
+            Your cart is empty
+          </Text>
+          <Text
+            style={[
+              styles.emptySubtitle,
+              { color: colors.textSecondary, fontSize: font(14) },
+            ]}
+          >
+            Looks like you haven&apos;t added anything to your cart yet.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.replace("/(tabs)")}
+            style={[styles.shopNowBtn, { backgroundColor: colors.primary }]}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.shopNowText, { fontSize: font(15) }]}>
+              Shop Now
+            </Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+      )}
 
       {items && items.length > 0 && (
         <View
@@ -349,8 +365,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emptyContainer: {
-    flex: 1,
-    height: 500, // Approximate height to center in scroll
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 40,

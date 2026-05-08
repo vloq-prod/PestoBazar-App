@@ -33,7 +33,7 @@ const CategoryDetails = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(
     null,
   );
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const categoriesWithAll: CategoryItem[] = React.useMemo(() => {
     if (!categories || categories.length === 0) return [];
@@ -103,7 +103,7 @@ const CategoryDetails = () => {
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: colors.background }]}
-      edges={["top", "bottom"]}
+      edges={["top"]}
     >
       <StatusBar
         barStyle="dark-content"
@@ -163,8 +163,8 @@ const CategoryDetails = () => {
       </View>
 
       <AddToCartPreview
-        pbandroid={Math.max(insets.bottom, 16)}
-        pbios={insets.bottom}
+        pbandroid={Math.max(insets.bottom, 20) + 12}
+        pbios={insets.bottom + 20}
       />
     </SafeAreaView>
   );

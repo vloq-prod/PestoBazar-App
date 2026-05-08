@@ -29,7 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "expo-router",
     "expo-dev-client",
-    
+
     [
       "expo-location",
       {
@@ -54,14 +54,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     config: {
       googleMaps: {
-        apiKey: process.env.GOOGLE_MAPS_API_KEY || "",
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAP_API_KEY || "",
       },
     },
   },
 
   extra: {
-  eas: {
-    projectId: "39a653d1-c4b6-4d43-b679-0c85a74c1f85"
+    eas: {
+      projectId: "39a653d1-c4b6-4d43-b679-0c85a74c1f85",
+    },
   },
-},
 });

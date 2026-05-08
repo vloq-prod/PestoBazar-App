@@ -115,13 +115,14 @@ export default function CategoryRightPanel({
   selectedCategory,
   categoryId,
   viewMode,
-  onToggleView,
+
   hasSidebar,
-  hasSubcategories = false,
+
   mainCategoryId,
 
   onCountChange,
   cartPreviewVisible,
+
 }: CategoryRightPanelProps) {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -129,10 +130,17 @@ export default function CategoryRightPanel({
 
   const resolvedCategoryId = categoryId === "0" ? mainCategoryId : categoryId;
 
-  const { products, totalCount, loading, loadingMore, hasMore, allLoaded, loadMore } =
-    useListing({
-      category_id: String(resolvedCategoryId),
-    });
+  const {
+    products,
+    totalCount,
+    loading,
+    loadingMore,
+    hasMore,
+    allLoaded,
+    loadMore,
+  } = useListing({
+    category_id: String(resolvedCategoryId),
+  });
 
   const headerTitle = hasSidebar
     ? (selectedCategory?.category_name ?? "")
@@ -151,17 +159,14 @@ export default function CategoryRightPanel({
   };
 
   useEffect(() => {
-  if (onCountChange) {
-    onCountChange(totalCount);
-  }
-}, [products]);
+    if (onCountChange) {
+      onCountChange(totalCount);
+    }
+  }, [products]);
 
   if (loading) {
     return <ProductSkeleton />;
   }
-
-
-  
 
   return (
     <View style={styles.root}>

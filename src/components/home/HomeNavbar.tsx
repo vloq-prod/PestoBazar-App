@@ -50,7 +50,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
   const { font, spacing } = useResponsive();
   const { colors } = useTheme();
 
-  const { userName, userId, visitorId } = useAppVisitorStore((state) => state);
+  const { userName, userId, visitorId, userAvatar } = useAppVisitorStore((state) => state);
 
   const { data: cartCountData } = useCartCount({
     user_id: userId ?? 0,
@@ -73,7 +73,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
       <View className="flex-row items-center gap-3">
         <TouchableOpacity onPress={onProfilePress}>
           <Image
-            source={profile}
+            source={userAvatar ? { uri: userAvatar } : profile}
             style={{
               width: spacing(45),
               height: spacing(45),

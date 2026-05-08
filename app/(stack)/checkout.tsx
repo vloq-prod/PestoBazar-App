@@ -493,43 +493,43 @@ export default function Checkout() {
     }
   }, [shippingData]);
 
-  useEffect(() => {
-    console.log("\n======= CHECKOUT PRICE DEBUG =======");
-    console.log("[CART API]");
-    console.log("  cart_amount     :", cart?.cart_amount);
-    console.log("  shipping_charge :", cart?.shipping_charge);
-    console.log("  gst_amount      :", cart?.gst_amount);
-    console.log("  cod_charges     :", cart?.cod_charges);
-    console.log("  amount_to_pay   :", cart?.amount_to_pay);
-    console.log("  free_shipping   :", cart?.free_shipping);
-    console.log("[SHIPPING API]");
-    console.log("  cart_amount     :", shippingCart?.cart_amount);
-    console.log("  shipping_charge :", shippingCart?.shipping_charge);
-    console.log("  cod_charges     :", shippingCart?.cod_charges);
-    console.log("  amount_to_pay   :", shippingCart?.amount_to_pay);
-    console.log("  free_shipping   :", shippingCart?.free_shipping);
-    console.log(" message shipping: ", shippingData?.message);
-    console.log("[COMPUTED]");
-    console.log("  shippingCharge  :", shippingCharge);
-    console.log("  codCharge       :", codCharge);
-    console.log("  amountToPay     :", amountToPay);
-    console.log("  paymentMethod   :", paymentMethod);
-    console.log("  isCod           :", isCod);
-    console.log("  effectiveAddrId :", effectiveAddressId);
-    console.log("[IDs]");
-    console.log("  userId          :", userId);
-    console.log("  visitorId       :", visitorId);
-    console.log("  cartId          :", cartId);
-    console.log("===================================\n");
-  }, [
-    shippingCart,
-    cart,
-    shippingCharge,
-    codCharge,
-    amountToPay,
-    paymentMethod,
-    effectiveAddressId,
-  ]);
+  // useEffect(() => {
+  //   console.log("\n======= CHECKOUT PRICE DEBUG =======");
+  //   console.log("[CART API]");
+  //   console.log("  cart_amount     :", cart?.cart_amount);
+  //   console.log("  shipping_charge :", cart?.shipping_charge);
+  //   console.log("  gst_amount      :", cart?.gst_amount);
+  //   console.log("  cod_charges     :", cart?.cod_charges);
+  //   console.log("  amount_to_pay   :", cart?.amount_to_pay);
+  //   console.log("  free_shipping   :", cart?.free_shipping);
+  //   console.log("[SHIPPING API]");
+  //   console.log("  cart_amount     :", shippingCart?.cart_amount);
+  //   console.log("  shipping_charge :", shippingCart?.shipping_charge);
+  //   console.log("  cod_charges     :", shippingCart?.cod_charges);
+  //   console.log("  amount_to_pay   :", shippingCart?.amount_to_pay);
+  //   console.log("  free_shipping   :", shippingCart?.free_shipping);
+  //   console.log(" message shipping: ", shippingData?.message);
+  //   console.log("[COMPUTED]");
+  //   console.log("  shippingCharge  :", shippingCharge);
+  //   console.log("  codCharge       :", codCharge);
+  //   console.log("  amountToPay     :", amountToPay);
+  //   console.log("  paymentMethod   :", paymentMethod);
+  //   console.log("  isCod           :", isCod);
+  //   console.log("  effectiveAddrId :", effectiveAddressId);
+  //   console.log("[IDs]");
+  //   console.log("  userId          :", userId);
+  //   console.log("  visitorId       :", visitorId);
+  //   console.log("  cartId          :", cartId);
+  //   console.log("===================================\n");
+  // }, [
+  //   shippingCart,
+  //   cart,
+  //   shippingCharge,
+  //   codCharge,
+  //   amountToPay,
+  //   paymentMethod,
+  //   effectiveAddressId,
+  // ]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isPending) {
@@ -650,22 +650,41 @@ export default function Checkout() {
             }
           />
           {billingList.length === 0 ? (
-            <View
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/map",
+                  params: { from: "checkout", type: "billing" },
+                })
+              }
+              activeOpacity={0.7}
               style={[
                 styles.emptyAddrBox,
                 { borderColor: colors.border, backgroundColor: colors.surface },
               ]}
             >
-              <MapPin size={22} color={colors.textTertiary} />
+              <View
+                style={{
+                  width: spacing(36),
+                  height: spacing(36),
+                  borderRadius: 18,
+                  backgroundColor: colors.backgroundgray,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: spacing(4),
+                }}
+              >
+                <Plus size={18} color={colors.textSecondary} />
+              </View>
               <Text
                 style={[
                   styles.emptyAddrText,
-                  { color: colors.textSecondary, fontSize: font(12) },
+                  { color: colors.textSecondary, fontSize: font(12.5), fontFamily: "Poppins_500Medium" },
                 ]}
               >
                 No billing address added
               </Text>
-            </View>
+            </TouchableOpacity>
           ) : (
             <View style={[styles.addrList, { gap: spacing(10) }]}>
               {billingList.map((addr) => (
@@ -753,7 +772,14 @@ export default function Checkout() {
               }
             />
             {deliveryList.length === 0 ? (
-              <View
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/map",
+                    params: { from: "checkout", type: "delivery" },
+                  })
+                }
+                activeOpacity={0.7}
                 style={[
                   styles.emptyAddrBox,
                   {
@@ -762,16 +788,28 @@ export default function Checkout() {
                   },
                 ]}
               >
-                <MapPin size={22} color={colors.textTertiary} />
+                <View
+                  style={{
+                    width: spacing(36),
+                    height: spacing(36),
+                    borderRadius: 18,
+                    backgroundColor: colors.backgroundgray,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: spacing(4),
+                  }}
+                >
+                  <Plus size={18} color={colors.textSecondary} />
+                </View>
                 <Text
                   style={[
                     styles.emptyAddrText,
-                    { color: colors.textSecondary, fontSize: font(12) },
+                    { color: colors.textSecondary, fontSize: font(12.5), fontFamily: "Poppins_500Medium" },
                   ]}
                 >
                   No delivery address added
                 </Text>
-              </View>
+              </TouchableOpacity>
             ) : (
               <View style={[styles.addrList, { gap: spacing(10) }]}>
                 {deliveryList.map((addr) => (

@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
+import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 
 import { Image } from "expo-image";
 import {
@@ -31,6 +32,7 @@ import {
   Share2,
   Info,
   LogOut,
+  MoveRight,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../src/store/auth";
@@ -58,13 +60,14 @@ const MENU_SECTIONS = [
         label: "Wishlist",
         sub: "Your saved items",
         icon: Heart,
+        // route: "/ordersuccess"
       },
       {
         id: "cart",
         label: "Cart",
         sub: "Review your cart",
         icon: ShoppingCart,
-                route: "/cart",
+        route: "/cart",
       },
       {
         id: "address",
@@ -197,102 +200,116 @@ export default function ProfileScreen() {
 
   const router = useRouter();
 
-    const userId = useAppVisitorStore((s) => s.userId);
-    const userName = useAppVisitorStore((s) => s.userName);
-    
-    const logout = useAppVisitorStore((s) => s.logout);
-  
-    const insets = useSafeAreaInsets();
-  
-    const handleLogout = () => {
-      Alert.alert(
-        "Confirm Logout",
-        "Are you sure you want to logout from your account?",
-        [
-          { text: "Cancel", style: "cancel" },
+  const userId = useAppVisitorStore((s) => s.userId);
+  const userName = useAppVisitorStore((s) => s.userName);
+  const userAvatar = useAppVisitorStore((s) => s.userAvatar);
+
+  const logout = useAppVisitorStore((s) => s.logout);
+
+  const insets = useSafeAreaInsets();
+  const [logoutModalVisible, setLogoutModalVisible] = React.useState(false);
+
+  const handleLogout = () => {
+    setLogoutModalVisible(true);
+  };
+
+  const confirmLogout = async () => {
+    await logout();
+    setLogoutModalVisible(false);
+    router.replace("/login");
+  };
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View
+        style={{ height: insets.top, backgroundColor: colors.background }}
+      />
+
+      <StatusBar barStyle={"dark-content"} />
+
+      <AppNavbar title="Profile" showBack />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.scroll,
           {
-            text: "Logout",
-            style: "destructive",
-            onPress: async () => {
-              await logout();
-  
-              router.replace("/login");
-            },
+            paddingBottom: insets.bottom + 60,
           },
-        ],
-      );
-    };
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <View
-          style={{ height: insets.top, backgroundColor: colors.background }}
-        />
-  
-        <StatusBar barStyle={"dark-content"} />
-  
-        <AppNavbar title="Profile" showBack />
-  
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[
-            styles.scroll,
-            {
-              paddingBottom: insets.bottom + 60,
-            },
-          ]}
-        >
-          {/* ── Hero ───────────────────────────────── */}
-          <View style={styles.heroSection}>
-            {userId ? (
-              <>
-                <View style={styles.heroRow}>
-                  <View>
-                    <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                      Hey there,
-                    </Text>
-                    <Text style={[styles.userName, { color: colors.text }]}>
-                      {userName || "Guest User"}
-                    </Text>
-                  </View>
-      
-                  <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
-                    <Image
-                      source={require("../../assets/profile.jpeg")}
-                      style={styles.avatarImage}
-                    />
-                  </View>
-                </View>
-      
-                <Text style={[styles.description, { color: colors.textSecondary }]}>
-                  Easily manage your account, track your orders, and keep your
-                  personal details up to date with ease.
+        ]}
+      >
+        {/* ── Hero ───────────────────────────────── */}
+        <View style={styles.heroSection}>
+          <>
+            <View style={styles.heroRow}>
+              <View>
+                <Text
+                  style={[styles.greeting, { color: colors.textSecondary }]}
+                >
+                  Hey there,
                 </Text>
-              </>
-            ) : (
-              <View style={[styles.guestCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={styles.guestCardContent}>
-                  <Text style={[styles.guestTitle, { color: colors.text }]}>
-                    Welcome to Pestobazaar
-                  </Text>
-                  <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
-                    Login or sign up to view your complete profile, manage orders, and save your favorite items.
-                  </Text>
-                  <TouchableOpacity 
-                    style={[styles.loginBtn, { backgroundColor: colors.primary }]}
-                    onPress={() => router.push("/login")}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.loginBtnText}>Login / Sign Up</Text>
-                  </TouchableOpacity>
-                </View>
+                <Text
+                  style={[
+                    styles.userName,
+                    { color: colors.text, fontSize: userId ? 23 : 18 },
+                  ]}
+                >
+                  {userName || "Guest User"}
+                </Text>
               </View>
+
+              <View
+                style={[styles.avatarRing, { borderColor: colors.primary }]}
+              >
+                <Image
+                  source={
+                    userAvatar
+                      ? { uri: userAvatar }
+                      : require("../../assets/profile.jpeg")
+                  }
+                  style={styles.avatarImage}
+                />
+              </View>
+            </View>
+
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              Easily manage your account, track your orders, and keep your
+              personal details up to date with ease.
+            </Text>
+
+            {!userId && (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push("/login")}
+                style={{ marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 }}
+
+              >
+
+                <View style={{flexDirection: "row", alignItems: "center", gap: 4}}>
+
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: 14,
+                  }}
+                >
+                  Login / Signup
+                  
+                </Text>
+
+              <MoveRight size={22} color={colors.primary} />
+                </View>
+
+                <View  style={{height: 1,flex:1, backgroundColor: colors.textSecondary,}}/>
+              </TouchableOpacity>
             )}
-          </View>
-  
-          {/* ── Account Info ───────────────────────── */}
-          {/* Hiding Account Info since we don't have email/phone in the store yet */}
-          {/*
+          </>
+        </View>
+
+        {/* ── Account Info ───────────────────────── */}
+        {/* Hiding Account Info since we don't have email/phone in the store yet */}
+        {/*
           {userId ? (
             <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
               <View style={styles.inputRow}>
@@ -309,10 +326,11 @@ export default function ProfileScreen() {
         {/* ── Menu Sections ───────────────────────── */}
         {MENU_SECTIONS.map((section) => {
           const items = section.items.filter((item) => {
-            if (!userId && (item.id === "logout" || item.id === "profile")) return false;
+            if (!userId && (item.id === "logout" || item.id === "profile"))
+              return false;
             return true;
           });
-          
+
           if (items.length === 0) return null;
 
           return (
@@ -322,14 +340,17 @@ export default function ProfileScreen() {
               >
                 {section.title}
               </Text>
-  
+
               <View>
                 {items.map((item, index) => {
                   let onPressOverride;
-                  
+
                   if (item.id === "logout") {
                     onPressOverride = handleLogout;
-                  } else if (!userId && ["orders", "wishlist", "address"].includes(item.id)) {
+                  } else if (
+                    !userId &&
+                    ["orders", "wishlist", "address"].includes(item.id)
+                  ) {
                     onPressOverride = () => router.push("/login");
                   }
 
@@ -358,6 +379,15 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      <ConfirmationModal
+        visible={logoutModalVisible}
+        onClose={() => setLogoutModalVisible(false)}
+        onConfirm={confirmLogout}
+        title="Logout"
+        description="Are you sure you want to logout from your account?"
+        confirmText="Logout"
+      />
     </View>
   );
 }
