@@ -9,6 +9,7 @@ import {
   StatusBar,
   StyleSheet,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -89,7 +90,6 @@ export default function ShopScreen() {
   const filterRef = useRef<FilterBottomSheetRef>(null);
   const sortRef = useRef<SortBottomSheetRef>(null);
   const listRef = useRef<FlatList<ListingItem>>(null);
-  const momentumRef = useRef(false);
   const lastScrollY = useSharedValue(0);
   const cartPreviewVisible = useSharedValue(1);
   const bulkFabVisible = useSharedValue(1);
@@ -154,16 +154,9 @@ export default function ShopScreen() {
     });
   }, []);
 
-  const onMomentumScrollBegin = useCallback(() => {
-    momentumRef.current = false;
-  }, []);
-
   const onEndReached = useCallback(() => {
-    if (!momentumRef.current && hasMore && !loadingMore) {
-      loadMore();
-      momentumRef.current = true;
-    }
-  }, [hasMore, loadingMore, loadMore]);
+    loadMore();
+  }, [loadMore]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -253,7 +246,7 @@ export default function ShopScreen() {
   );
 
   const keyExtractor = useCallback(
-    (item: ListingItem, index: number) => `${item.id}_${index}`,
+    (item: ListingItem) => String(item.id),
     [],
   );
 
@@ -478,12 +471,15 @@ export default function ShopScreen() {
           ListEmptyComponent={ListEmpty}
           ListFooterComponent={ListFooter}
           onEndReached={onEndReached}
-          onEndReachedThreshold={0.6}
-          onMomentumScrollBegin={onMomentumScrollBegin}
-          removeClippedSubviews={isGrid}
+          onEndReachedThreshold={0.2}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          updateCellsBatchingPeriod={50}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
           contentInsetAdjustmentBehavior="automatic"
+          removeClippedSubviews={Platform.OS === "android"}
         />
 
         <AddToCartPreview visible={cartPreviewVisible} />

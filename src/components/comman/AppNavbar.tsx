@@ -14,6 +14,7 @@ import { useResponsive } from "../../utils/useResponsive";
 
 type AppNavbarProps = {
   title?: string;
+  subtitle?: string;
   count?: string | number;
   showBack?: boolean;
   showSearch?: boolean;
@@ -28,6 +29,7 @@ type AppNavbarProps = {
 
 const AppNavbar = ({
   title = "",
+  subtitle,
   count,
   showBack = false,
   showSearch = false,
@@ -81,7 +83,7 @@ const AppNavbar = ({
           </TouchableOpacity>
         )}
 
-        {(!!title || count !== undefined) && (
+        {(!!title || !!subtitle || count !== undefined) && (
           <View
             style={{
               justifyContent: "center",
@@ -101,7 +103,7 @@ const AppNavbar = ({
               </Text>
             )}
 
-            {count !== undefined && count !== null && (
+            {!!subtitle ? (
               <Text
                 style={{
                   fontSize: font(10.5),
@@ -111,9 +113,21 @@ const AppNavbar = ({
                   color: colors.textSecondary ?? colors.text,
                 }}
               >
-                {count === 1 ? ` ${count} Item` : `${count} Items`}
+                {subtitle}
               </Text>
-            )}
+            ) : count !== undefined && count !== null ? (
+              <Text
+                style={{
+                  fontSize: font(10.5),
+                  lineHeight: font(12),
+                  fontFamily: "Poppins_500Medium",
+                  letterSpacing: 0.2,
+                  color: colors.textSecondary ?? colors.text,
+                }}
+              >
+                {count === 1 ? `${count} Item` : `${count} Items`}
+              </Text>
+            ) : null}
           </View>
         )}
       </View>

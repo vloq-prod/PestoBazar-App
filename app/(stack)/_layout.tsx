@@ -2,7 +2,15 @@ import { Stack } from "expo-router";
 
 export default function StackLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+        gestureEnabled: true,
+        gestureDirection: "horizontal",
+        fullScreenGestureEnabled: true, // ✅ Important for Android swipe gesture
+      }}
+    >
       <Stack.Screen name="address" />
       <Stack.Screen name="cart" />
       <Stack.Screen name="search" />

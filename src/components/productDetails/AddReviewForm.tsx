@@ -295,7 +295,8 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     gap: 20,
   },
   header: {

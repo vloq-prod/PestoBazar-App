@@ -163,7 +163,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                   marginBottom: 5,
                 }}
               >
-                Reason for cancellation <Text style={{ color: "#EF4444" }}>*</Text>
+                Reason for cancellation <Text style={{ color: "#e10320" }}>*</Text>
               </Text>
               
               <TouchableOpacity
@@ -289,7 +289,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                 <TouchableOpacity
                   style={{
                     flex: 1,
-                    backgroundColor: reason ? "#EF4444" : colors.border + "80",
+                    backgroundColor: reason ? "#e10320" : colors.border + "80",
                     paddingVertical: spacing(14),
                     borderRadius: 12,
                     alignItems: "center",

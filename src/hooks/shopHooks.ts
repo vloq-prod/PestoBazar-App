@@ -37,11 +37,17 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
 
   // ✅ FLATTEN DATA (NO STATE)
   const products: ListingItem[] = useMemo(() => {
-    return (
-      query.data?.pages.flatMap(
-        (page: ListingApiResponse) => page?.data?.data ?? [],
-      ) ?? []
-    );
+    const allItems = query.data?.pages.flatMap(
+      (page: ListingApiResponse) => page?.data?.data ?? [],
+    ) ?? [];
+    
+    // Uniqueify by id to prevent duplicate key errors
+    const seen = new Set();
+    return allItems.filter(item => {
+      const duplicate = seen.has(item.id);
+      seen.add(item.id);
+      return !duplicate;
+    });
   }, [query.data]);
 
   const totalCount = useMemo(() => {

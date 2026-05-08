@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+} from "react-native";
 import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
@@ -315,7 +321,8 @@ export default function ItemCard({
           >
             <TouchableOpacity
               disabled={loading}
-              onPress={() => {
+              onPress={(e) => {
+                e.stopPropagation();
                 const nextQty = qty <= 1 ? 0 : qty - 1;
                 addToCart(
                   {
@@ -335,12 +342,18 @@ export default function ItemCard({
                 );
                 onAddToCart?.(item, nextQty);
               }}
-              style={{ width: spacing(36), alignItems: "center" }}
+              style={{
+                width: spacing(44),
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {qty === 1 ? (
-                <Trash2 size={spacing(14)} color={colors.background} />
+                <Trash2 size={spacing(16)} color={colors.background} />
               ) : (
-                <Minus size={spacing(14)} color={colors.background} />
+                <Minus size={spacing(16)} color={colors.background} />
               )}
             </TouchableOpacity>
 
@@ -352,14 +365,18 @@ export default function ItemCard({
               style={{
                 color: "#fff",
                 textAlign: "center",
-                fontSize: font(13),
+                fontSize: font(14),
+                fontFamily: "Poppins_600SemiBold",
                 flex: 1,
+                padding: 0,
+                height: "100%",
               }}
             />
 
             <TouchableOpacity
               disabled={loading}
-              onPress={() => {
+              onPress={(e) => {
+                e.stopPropagation();
                 const nextQty = qty + 1;
                 addToCart(
                   {
@@ -379,9 +396,15 @@ export default function ItemCard({
                 );
                 onAddToCart?.(item, nextQty);
               }}
-              style={{ width: spacing(36), alignItems: "center" }}
+              style={{
+                width: spacing(44),
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Plus size={spacing(14)} color="#fff" />
+              <Plus size={spacing(16)} color="#fff" />
             </TouchableOpacity>
           </View>
         )}

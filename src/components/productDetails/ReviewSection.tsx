@@ -47,29 +47,23 @@ const ReviewSection = ({ product_id }: Props) => {
   }
   if (!reviews || reviews.length === 0) {
     return (
-      <View style={[styles.container, { gap: spacing(25) }]}>
-         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-          <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(18), color: colors.text }}>
-            Reviews
-          </Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        </View>
-        <View style={{ paddingHorizontal: 16, alignItems: "center" }}>
-          <Text style={{ color: colors.textSecondary, fontFamily: "Poppins_400Regular", fontSize: font(13), textAlign: "center" }}>
-             No reviews yet. Be the first to share your thoughts!
-          </Text>
-        </View>
-        <AddReviewForm product_id={product_id} />
+      <View style={styles.container}>
+        {/* <AddReviewForm product_id={product_id} /> */}
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { gap: spacing(25) }]}>
+    <View style={[styles.container, { gap: spacing(24) }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(18), color: colors.text }}>
+        <Text
+          style={{
+            fontFamily: "Poppins_700Bold",
+            fontSize: font(18),
+            color: colors.text,
+          }}
+        >
           Reviews
         </Text>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
@@ -131,7 +125,7 @@ export default ReviewSection;
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 12,
+    paddingTop: 0,
   },
   centered: {
     padding: 24,
@@ -147,4 +141,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-

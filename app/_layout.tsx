@@ -91,7 +91,14 @@ function RootLayoutNav() {
 
   // 🔥 ALWAYS RENDER BOTH (NO CONDITION)
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+        gestureEnabled: true,
+        fullScreenGestureEnabled: true,
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(stack)" />
       <Stack.Screen name="(auth)" />

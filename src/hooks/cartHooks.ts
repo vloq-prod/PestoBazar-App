@@ -103,11 +103,6 @@ export const useCartCount = (params: GetCartCountParams) => {
 
       return response;
     },
-
-    // 🔥 Important for badge updates
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
   });
 };;
 
@@ -115,9 +110,6 @@ export const useQuickCart = (params: GetQuickCartParams) => {
   return useQuery<QuickCartResponse>({
     queryKey: ["quick-cart", params.user_id, params.visitor_id],
     queryFn: () => getQuickCart(params),
-
-    // optimized for small UI preview (header / mini cart)
-    staleTime: 1000 * 60 * 2, // 2 min cache
   });
 };
 

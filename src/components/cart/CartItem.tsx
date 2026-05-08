@@ -118,8 +118,11 @@ const CartItem = ({
               {item.name}
             </Text>
 
-            <TouchableOpacity onPress={() => onRemove(item)}>
-              <Trash2 size={spacing(16)} color={colors.error} />
+            <TouchableOpacity 
+              onPress={() => onRemove(item)}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            >
+              <Trash2 size={spacing(18)} color={colors.error} />
             </TouchableOpacity>
           </View>
 
@@ -160,14 +163,15 @@ const CartItem = ({
                 onPress={() => onDecrease(item)}
                 disabled={qty <= 1}
                 style={{
-                  width: spacing(32),
-                  height: spacing(32),
-                  borderRadius: spacing(22),
+                  width: spacing(36),
+                  height: spacing(36),
+                  borderRadius: spacing(18),
                   justifyContent: "center",
                   alignItems: "center",
                   backgroundColor:
                     qty <= 1 ? colors.inputBackground : colors.primary,
                 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Minus
                   size={spacing(16)}
@@ -214,14 +218,15 @@ const CartItem = ({
                 onPress={() => onIncrease(item)}
                 disabled={qty >= item.stock}
                 style={{
-                  width: spacing(32),
-                  height: spacing(32),
-                  borderRadius: spacing(22),
+                  width: spacing(36),
+                  height: spacing(36),
+                  borderRadius: spacing(18),
                   justifyContent: "center",
                   alignItems: "center",
                   backgroundColor:
                     qty >= item.stock ? colors.inputBackground : colors.primary,
                 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Plus
                   size={spacing(16)}

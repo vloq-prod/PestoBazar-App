@@ -3,7 +3,8 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
- Platform } from "react-native";
+  Platform,
+} from "react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../../theme";
 import React, { useState, useRef } from "react";
@@ -89,11 +90,12 @@ const ShopItemCard = ({
           justifyContent: "center",
           backgroundColor: qty === 1 ? "rgba(255,255,255,0.18)" : "transparent",
         }}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         {qty === 1 ? (
-          <Trash2 size={15} color="#fff" strokeWidth={2.2} />
+          <Trash2 size={16} color="#fff" strokeWidth={2.2} />
         ) : (
-          <Minus size={15} color="#fff" strokeWidth={2.5} />
+          <Minus size={16} color="#fff" strokeWidth={2.5} />
         )}
       </TouchableOpacity>
 
@@ -130,8 +132,9 @@ const ShopItemCard = ({
           alignItems: "center",
           justifyContent: "center",
         }}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <Plus size={15} color="#fff" strokeWidth={2.5} />
+        <Plus size={16} color="#fff" strokeWidth={2.5} />
       </TouchableOpacity>
     </View>
   );

@@ -31,7 +31,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { useAddToCart, useCart } from "../../../src/hooks/cartHooks";
+import { useAddToCart, useCartCount } from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import type { ProductVariation } from "../../../src/types/productdetails.types";
@@ -91,7 +91,7 @@ const ProductDetails = () => {
   );
   const { addToCart, loading: isCartLoading } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
-  const { data: cartData } = useCart({ user_id: userId ?? 0, visitor_id: visitorId! });
+  const { data: cartCountData } = useCartCount({ user_id: userId ?? 0, visitor_id: visitorId! });
 
   // ─── Data Extraction ────────────────────────────────────────
   const productInfo = data?.product;
@@ -668,7 +668,7 @@ const ProductDetails = () => {
                     { color: colors.textOnPrimary },
                   ]}
                 >
-                  {cartData?.data?.cart?.cart_count}
+                  {cartCountData?.data ?? 0}
                 </Text>
               </View>
             </View>
