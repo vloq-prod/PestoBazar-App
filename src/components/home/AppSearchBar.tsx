@@ -66,32 +66,18 @@ export default function AppSearchBar({ onPress }: any) {
     return () => clearTimeout(t);
   }, [phase, text]);
 
-  const HEIGHT = spacing(38);
+  const HEIGHT = spacing(42);
 
   return (
     <View
       className="flex-row items-center gap-3"
       style={{ paddingHorizontal: 16 }}
     >
-      {/* Menu */}
-      <View
-        style={{
-          height: HEIGHT,
-          width: HEIGHT,
-          borderRadius: spacing(12),
-          backgroundColor: colors.surface,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Menu size={spacing(18)} color={colors.primary} />
-      </View>
-
       {/* Search Bar */}
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => (onPress ? onPress() : router.push("/search"))}
-        className="flex-1 flex-row items-center  border"
+        className="flex-1 flex-row items-center border"
         style={{
           height: HEIGHT,
           borderRadius: spacing(12),
@@ -100,9 +86,9 @@ export default function AppSearchBar({ onPress }: any) {
           paddingHorizontal: spacing(12),
         }}
       >
-        <Feather name="search" size={spacing(16)} color={colors.primary} />
+        <Feather name="search" size={spacing(18)} color={colors.primary} />
 
-        <View className="flex-row items-center flex-1 ml-2">
+        <View className="flex-row items-center  py-3 flex-1 ml-2">
           <Text
             style={{
               fontSize: font(12),

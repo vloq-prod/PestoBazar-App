@@ -15,6 +15,7 @@ import {
   CategoryWithSubcategories,
 } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
+import { ChevronRight } from "lucide-react-native";
 
 // ─── Local Assets Mapping ──────────────────────────────────────
 const LOCAL_ASSETS: Record<string, any> = {
@@ -70,9 +71,7 @@ const getLocalImage = (name: string) => {
   return foundKey ? LOCAL_ASSETS[foundKey] : null;
 };
 
-
-
-const COLUMNS = 3;
+const COLUMNS = 4;
 const H_PADDING = 16;
 const GAP = 10;
 
@@ -147,7 +146,7 @@ const SkeletonSection = ({
         }}
       />
 
-      {/* Grid — FlatList ensures always 3 columns on every device */}
+      {/* Grid — FlatList ensures always 4 columns on every device */}
       <FlatList
         data={skeletonData}
         keyExtractor={(item) => `sk-${item.id}`}
@@ -183,7 +182,7 @@ const CategoryCardSection = () => {
   const cardSize = itemWidth;
 
   const visibleCategories = categoriesWithSubcategories.filter(
-    (cat) => cat.subcategories.length > 0,
+    (cat) => cat.subcategories.length >= 8,
   );
 
   // ── Sub-category card ──────────────────────────────────────
@@ -203,7 +202,8 @@ const CategoryCardSection = () => {
               params: {
                 slug: String(mainCategoryId),
                 name: mainCategoryName,
-                image: getLocalImage(mainCategoryName) ?? (mainCategoryImage ?? ""),
+                image:
+                  getLocalImage(mainCategoryName) ?? mainCategoryImage ?? "",
                 selectedSubCategoryId: String(item.id),
               },
             })
@@ -222,7 +222,9 @@ const CategoryCardSection = () => {
             }}
           >
             <Image
-              source={getLocalImage(item.category_name) ?? { uri: item.s3_image_path }}
+              source={
+                getLocalImage(item.category_name) ?? { uri: item.s3_image_path }
+              }
               style={{ width: cardSize * 0.72, height: cardSize * 0.72 }}
               contentFit="contain"
             />
@@ -289,20 +291,64 @@ const CategoryCardSection = () => {
           key={category.mainCategoryId}
           style={{ marginBottom: spacing(20) }}
         >
-          <Text
+          <View
             style={{
-              fontSize: font(16),
-              fontFamily: "Poppins_600SemiBold",
-              color: colors.text,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
               marginBottom: spacing(12),
             }}
           >
-            {category.mainCategoryName}
-          </Text>
+            <Text
+              style={{
+                fontSize: font(16),
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.text,
+              }}
+            >
+              {category.mainCategoryName}
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+
+                alignItems: "center",
+              }}
+            >
+              <TouchableOpacity
+                style={{ flexDirection: "row", alignItems: "center" }}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(stack)/category/[slug]",
+                    params: {
+                      slug: String(category.mainCategoryId),
+                      name: category.mainCategoryName,
+                      image:
+                        getLocalImage(category.mainCategoryName) ??
+                        category.mainCategory.s3_image_path ??
+                        "",
+                    },
+                  })
+                }
+              >
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: colors.primary,
+                    fontFamily: "Poppins_500Medium",
+                  }}
+                >
+                  View All
+                </Text>
+                <ChevronRight size={14} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+          </View>
 
           <FlatList
             key={`cat-${category.mainCategoryId}`}
-            data={category.subcategories}
+            data={category.subcategories.slice(0, 8)}
             renderItem={createSubCategoryRenderer(
               category.mainCategoryId,
               category.mainCategoryName,
