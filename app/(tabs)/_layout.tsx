@@ -9,8 +9,9 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="category" />
-      <Tabs.Screen name="shop" />
+
       <Tabs.Screen name="profile" />
+      <Tabs.Screen name="deals" />
     </Tabs>
   );
 }

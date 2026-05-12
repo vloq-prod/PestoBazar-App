@@ -1,216 +1,155 @@
-import { useEffect } from "react";
+import React from "react";
 import {
   ActivityIndicator,
-  ImageSourcePropType,
-  ScrollView,
-  StyleSheet,
+  FlatList,
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { ChevronRight } from "lucide-react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
-
-import AppNavbar from "../../src/components/comman/AppNavbar";
-import { useCategory } from "../../src/hooks/homeHooks";
-import { useTheme } from "../../src/theme";
-import { CategoryItem } from "../../src/types/home.types";
-import { useResponsive } from "../../src/utils/useResponsive";
-
-import image1 from "../../assets/maincat/Household-pesticides.jpg";
-import image2 from "../../assets/maincat/Froggersandmachines.jpg";
-import image3 from "../../assets/maincat/Pestequipment.jpg";
-import image4 from "../../assets/maincat/Agrochemicals.jpg";
-import image5 from "../../assets/maincat/Gardeningtoolsandsupplies.jpg";
 import { useRouter } from "expo-router";
 
-type CategoryCardData = {
-  image: ImageSourcePropType;
-  description: string;
+import AppNavbar from "../../src/components/comman/AppNavbar";
+import { useCategoryWithSubcategories } from "../../src/hooks/homeHooks";
+import { useTheme } from "../../src/theme";
+import {
+  CategoryItem,
+  CategoryWithSubcategories,
+} from "../../src/types/home.types";
+import { useResponsive } from "../../src/utils/useResponsive";
+import { ChevronRight } from "lucide-react-native";
+
+const LOCAL_ASSETS: Record<string, any> = {
+  HouseHold: require("../../assets/maincat/Household-pesticides.jpg"),
+  "Household Pesticides": require("../../assets/maincat/Household-pesticides.jpg"),
+  Agrochemicals: require("../../assets/maincat/Agrochemicals.jpg"),
+  "Pest Equipment": require("../../assets/maincat/Pestequipment.jpg"),
+  "Gardening tools and supplies": require("../../assets/maincat/Gardeningtoolsandsupplies.jpg"),
+
+  Foggers: require("../../assets/FoggersandMachines/Foggers.png"),
+  Machines: require("../../assets/FoggersandMachines/Machines.png"),
+  Sprays: require("../../assets/FoggersandMachines/Sprays.png"),
+  snake: require("../../assets/HouseHold/Snake.png"),
+
+  "Bugs Control": require("../../assets/HouseHold/Bugs Control.png"),
+  Lizard: require("../../assets/HouseHold/Lizard.png"),
+  Termite: require("../../assets/HouseHold/Termite.png"),
+  Cockroach: require("../../assets/HouseHold/Cockroach.png"),
+  Mosquito: require("../../assets/HouseHold/Mosquito.png"),
+  Ant: require("../../assets/HouseHold/ant.jpg"),
+  Fly: require("../../assets/HouseHold/Fly.jpg"),
+  Rat: require("../../assets/HouseHold/rat.png"),
 };
 
-type CategoryCardProps = {
-  item: CategoryItem;
-  data: CategoryCardData;
-  index: number;
-  cardHeight: number;
-  borderRadius: number;
-  padding: number;
-  titleFontSize: number;
-  titleLineHeight: number;
-  rowGap: number;
-  iconSize: number;
-  iconContainerSize: number;
-  itemCountColor: string;
-  backgroundColor: string;
+const getLocalImage = (name: string) => {
+  if (!name) return null;
+
+  const normalized = name.trim().toLowerCase();
+
+  const foundKey = Object.keys(LOCAL_ASSETS).find((key) => {
+    const k = key.toLowerCase();
+
+    return normalized.includes(k) || k.includes(normalized);
+  });
+
+  return foundKey ? LOCAL_ASSETS[foundKey] : null;
 };
 
-const categoryData: Record<string, CategoryCardData> = {
-  "household-pesticides": {
-    image: image1,
-    description:
-      "Effective solutions to control common household pests. Keep your home clean and hygienic.",
-  },
-  "foggers-machines": {
-    image: image2,
-    description:
-      "Advanced fogging machines for large areas. Ensures deep and efficient pest control.",
-  },
-  "pest-control-equipment": {
-    image: image3,
-    description:
-      "Professional tools for pest control work. Built for durability and performance.",
-  },
-  agrochemicals: {
-    image: image4,
-    description:
-      "High-quality agrochemicals for crops. Improves yield and plant protection.",
-  },
-  "gardening-tools-supplies": {
-    image: image5,
-    description:
-      "Essential gardening tools and supplies. Maintain healthy and beautiful plants.",
-  },
-};
+const COLUMNS = 4;
+const GAP = 10;
+const H_PADDING = 16;
 
-const fallbackCategoryData: CategoryCardData = {
-  image: image1,
-  description: "Explore pest control and gardening essentials.",
-};
-
-function CategoryCard({
-  item,
-  data,
-  index,
-  cardHeight,
-  borderRadius,
-  padding,
-  titleFontSize,
-  titleLineHeight,
-  iconSize,
-  iconContainerSize,
-  itemCountColor,
-  backgroundColor,
-}: CategoryCardProps) {
-  const translateX = useSharedValue(60);
-  const opacity = useSharedValue(0);
-  const router = useRouter();
-
-  useEffect(() => {
-    const delay = index * 100;
-    translateX.value = withDelay(delay, withTiming(0, { duration: 420 }));
-    opacity.value = withDelay(delay, withTiming(1, { duration: 420 }));
-  }, [index, opacity, translateX]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-    opacity: opacity.value,
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        styles.card,
-        animatedStyle,
-        {
-          height: cardHeight,
-          borderRadius,
-          backgroundColor,
-        },
-      ]}
-    >
-      <View style={[styles.mediaLayer, { borderRadius }]}>
-        <Image source={data.image} style={styles.image} contentFit="cover" />
-        <View style={styles.overlay} />
-      </View>
-
-      <View style={[styles.content, { padding }]}>
-        <View style={styles.topRow}>
-          <Text
-            numberOfLines={2}
-            style={[
-              styles.title,
-              {
-                fontSize: titleFontSize,
-                lineHeight: titleLineHeight,
-              },
-            ]}
-          >
-            {item.category_name}
-          </Text>
-
-          <Text
-            numberOfLines={1}
-            style={[styles.itemCount, { color: itemCountColor }]}
-          >
-            1200 Items
-          </Text>
-        </View>
-
-        <View style={[styles.bottomRow, { columnGap: 10 }]}>
-          <Text numberOfLines={2} style={styles.description}>
-            {data.description}
-          </Text>
-
-          <TouchableOpacity
-            onPress={() =>
-              router.push({
-                pathname: "/category/[slug]",
-                params: {
-                  slug: item.id,
-                  name: item.category_name,
-                  image: item.s3_image_path,
-                },
-              })
-            }
-            style={[
-              styles.iconContainer,
-              {
-                width: iconContainerSize,
-                height: iconContainerSize,
-                borderRadius: iconContainerSize / 2,
-              },
-            ]}
-          >
-            <ChevronRight size={iconSize} color="#FFFFFF" strokeWidth={2.4} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Animated.View>
-  );
-}
-
-export default function OrdersScreen() {
+export default function CategoryScreen() {
   const { colors } = useTheme();
-  const { hp, scale, font } = useResponsive();
-  const insets = useSafeAreaInsets();
-  const { categories, loading, error } = useCategory(0);
+  const { spacing, font } = useResponsive();
+  const router = useRouter();
+  const { width } = useWindowDimensions();
 
-  const cardHeight = hp(20);
-  const borderRadius = scale(18);
-  const contentPadding = scale(14);
-  const titleFontSize = font(15);
-  const titleLineHeight = font(21);
-  const rowGap = scale(10);
-  const iconContainerSize = scale(32);
-  const iconSize = scale(20);
+  const { categoriesWithSubcategories, loading, error } =
+    useCategoryWithSubcategories(0);
 
-  return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-      edges={["top"]}
-    >
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+  const itemWidth = (width - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+
+  const cardSize = itemWidth;
+
+  // only categories having subcategories
+  const visibleCategories = categoriesWithSubcategories.filter(
+    (category: CategoryWithSubcategories) =>
+      category.subcategories.filter((item) => item.category_name).length > 0,
+  );
+
+  const renderSubCategoryCard = (category: CategoryWithSubcategories) => {
+    return ({ item }: { item: CategoryItem }) => (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={{
+          width: itemWidth,
+          marginBottom: GAP,
+          alignItems: "center",
+        }}
+        onPress={() =>
+          router.push({
+            pathname: "/(stack)/category/[slug]",
+            params: {
+              slug: String(category.mainCategoryId),
+              name: category.mainCategoryName,
+              image:
+                getLocalImage(category.mainCategoryName) ??
+                category.mainCategory.s3_image_path ??
+                "",
+              selectedSubCategoryId: String(item.id),
+            },
+          })
+        }
+      >
+        <View
+          style={{
+            width: cardSize,
+            height: cardSize,
+            backgroundColor: colors.surface,
+            borderRadius: spacing(12),
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={
+              getLocalImage(item.category_name) ?? {
+                uri: item.s3_image_path,
+              }
+            }
+            style={{
+              width: cardSize * 0.88,
+              height: cardSize * 0.72,
+            }}
+            contentFit="contain"
+          />
+        </View>
+
+        <Text
+          numberOfLines={2}
+          style={{
+            marginTop: spacing(6),
+            width: "92%",
+            textAlign: "center",
+            color: colors.text,
+            fontSize: font(11),
+            fontFamily: "Poppins_600SemiBold",
+          }}
+        >
+          {item.category_name}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <AppNavbar
           title="Category"
           showBack
@@ -219,147 +158,140 @@ export default function OrdersScreen() {
           showNotification
         />
 
-        {loading ? (
-          <View style={styles.feedbackContainer}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text
-              style={[styles.feedbackText, { color: colors.textSecondary }]}
-            >
-              Loading categories...
-            </Text>
-          </View>
-        ) : error ? (
-          <View style={styles.feedbackContainer}>
-            <Text style={[styles.feedbackText, { color: colors.error }]}>
-              Unable to load categories right now.
-            </Text>
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              {
-                paddingBottom: insets.bottom + scale(60),
-              },
-            ]}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <AppNavbar
+          title="Category"
+          showBack
+          showSearch
+          showCart
+          showNotification
+        />
+
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Text
+            style={{
+              color: colors.error,
+              fontFamily: "Poppins_500Medium",
+            }}
           >
-            <View style={[styles.grid, { rowGap: scale(10) }]}>
-              {categories.map((item, index) => (
-                <CategoryCard
-                  key={item.id}
-                  item={item}
-                  data={categoryData[item.slug] ?? fallbackCategoryData}
-                  index={index}
-                  cardHeight={cardHeight}
-                  borderRadius={borderRadius}
-                  padding={contentPadding}
-                  titleFontSize={titleFontSize}
-                  titleLineHeight={titleLineHeight}
-                  rowGap={rowGap}
-                  iconSize={iconSize}
-                  iconContainerSize={iconContainerSize}
-                  itemCountColor={colors.textTertiary}
-                  backgroundColor={colors.background}
-                />
-              ))}
+            Unable to load categories
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+      edges={["top"]}
+    >
+      <AppNavbar
+        title="Category"
+        showBack
+        showSearch
+        showCart
+        showNotification
+      />
+
+      <FlatList
+        data={visibleCategories}
+        keyExtractor={(item) => item.mainCategoryId.toString()}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: H_PADDING,
+          paddingTop: spacing(14),
+          paddingBottom: spacing(100),
+        }}
+        renderItem={({ item: category }) => {
+          const visibleSubcategories = category.subcategories.filter(
+            (sub) => sub.category_name && sub.category_name,
+          );
+
+          return (
+            <View style={{ marginBottom: spacing(22) }}>
+              {/* CATEGORY TITLE */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: spacing(12),
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(16),
+                    color: colors.text,
+                    fontFamily: "Poppins_600SemiBold",
+                  }}
+                >
+                  {category.mainCategoryName}
+                </Text>
+
+                {/* <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.primary,
+                      fontSize: font(12),
+                      fontFamily: "Poppins_500Medium",
+                    }}
+                  >
+                    {visibleSubcategories.length} Items
+                  </Text>
+
+                  <ChevronRight
+                    size={14}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity> */}
+              </View>
+
+              {/* ALL SUBCATEGORY ITEMS */}
+              <FlatList
+                data={visibleSubcategories}
+                renderItem={renderSubCategoryCard(category)}
+                keyExtractor={(sub) => sub.id.toString()}
+                numColumns={COLUMNS}
+                scrollEnabled={false}
+                columnWrapperStyle={{
+                  gap: GAP,
+                }}
+              />
             </View>
-          </ScrollView>
-        )}
-      </View>
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 12,
-    paddingHorizontal: 16,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  card: {
-    width: "100%",
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.06)",
-    borderCurve: "continuous",
-  },
-  mediaLayer: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: "hidden",
-    borderCurve: "continuous",
-  },
-  image: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.58)",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  bottomRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-  },
-  title: {
-    flex: 1,
-    minWidth: 0,
-    fontFamily: "Poppins_600SemiBold",
-    color: "#FFFFFF",
-    letterSpacing: 0.4,
-  },
-  itemCount: {
-    fontSize: 12,
-    fontFamily: "Poppins_400Regular",
-    flexShrink: 0,
-  },
-  description: {
-    flex: 1,
-    minWidth: 0,
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#FFFFFF",
-    fontFamily: "Poppins_400Regular",
-  },
-  iconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    backgroundColor: "rgba(255,255,255,0.14)",
-  },
-  feedbackContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    gap: 10,
-  },
-  feedbackText: {
-    fontSize: 14,
-    textAlign: "center",
-    fontFamily: "Poppins_400Regular",
-  },
-});

@@ -20,7 +20,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const H_PADDING = 16 * 2;
 const GAP = 10;
 
-const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.2;
+const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.7;
 
 // ─────────────────────────────────────────────
 // Skeleton Card (matches real UI)
@@ -109,46 +109,75 @@ const SkeletonSection = () => {
   );
 };
 
+const sectionDescriptions: Record<string, string> = {
+  "Best Selling": "Freshly added products curated just for you.",
+  "New Arrivals": "Most popular picks customers are loving right now.",
+  "Top Rated": "Highest rated products based on customer reviews.",
+  Trending: "Best-selling products trusted by thousands.",
+};
 // ─────────────────────────────────────────────
 // Section Header
 // ─────────────────────────────────────────────
-const SectionHeader = ({ title, onViewAll }: any) => {
+const SectionHeader = ({ title, onViewAll, description }: any) => {
   const { colors } = useTheme();
 
   return (
     <View
       style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
         paddingHorizontal: 16,
-        alignItems: "center",
       }}
     >
-      <Text
+      <View
         style={{
-          fontSize: 18,
-          color: colors.text,
-          fontFamily: "Poppins_600SemiBold",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
-      >
-        {title}
-      </Text>
-
-      <TouchableOpacity
-        onPress={onViewAll}
-        style={{ flexDirection: "row", alignItems: "center" }}
       >
         <Text
           style={{
-            fontSize: 13,
-            color: colors.primary,
-            fontFamily: "Poppins_500Medium",
+            fontSize: 20,
+            lineHeight: 26,
+            color: colors.text,
+            fontFamily: "Poppins_700Bold",
+            includeFontPadding: false,
           }}
         >
-          View All
+          {title}
         </Text>
-        <ChevronRight size={14} color={colors.primary} />
-      </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center" }}
+          onPress={onViewAll}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              color: colors.primary,
+              fontFamily: "Poppins_600SemiBold",
+              includeFontPadding: false,
+            }}
+          >
+            View All
+          </Text>
+
+          <ChevronRight size={14} color={colors.primary} strokeWidth={2.4} />
+        </TouchableOpacity>
+      </View>
+      {/* Description */}
+      {!!description && (
+        <Text
+          style={{
+          
+            fontSize: 11,
+            lineHeight: 18,
+            color: colors.textSecondary,
+            fontFamily: "Poppins_400Regular",
+          }}
+        >
+          {description}
+        </Text>
+      )}
     </View>
   );
 };
@@ -212,6 +241,7 @@ const HomeProduct = () => {
         <View key={index} style={{ gap: 12 }}>
           <SectionHeader
             title={section.title}
+            description={sectionDescriptions[section.title]}
             onViewAll={() =>
               router.push({
                 pathname: "(stack)/viewall/[all]",

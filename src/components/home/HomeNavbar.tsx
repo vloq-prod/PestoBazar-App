@@ -50,7 +50,9 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
   const { font, spacing } = useResponsive();
   const { colors } = useTheme();
 
-  const { userName, userId, visitorId, userAvatar } = useAppVisitorStore((state) => state);
+  const { userName, userId, visitorId, userAvatar } = useAppVisitorStore(
+    (state) => state,
+  );
 
   const { data: cartCountData } = useCartCount({
     user_id: userId ?? 0,
@@ -123,6 +125,10 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
 
       {/* RIGHT */}
       <View className="flex-row items-center">
+        <IconButton
+          onPress={onNotificationPress}
+          icon={<Bell size={ICON_SIZE} color={textColor} />}
+        />
         <TouchableOpacity
           onPress={handleMoveToCart}
           style={{
@@ -166,11 +172,6 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
             )}
           </View>
         </TouchableOpacity>
-
-        <IconButton
-          onPress={onNotificationPress}
-          icon={<Bell size={ICON_SIZE} color={textColor} />}
-        />
       </View>
     </View>
   );

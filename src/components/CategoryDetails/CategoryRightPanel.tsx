@@ -3,11 +3,10 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { LayoutGrid, List, PackageSearch } from "lucide-react-native";
+import { PackageSearch } from "lucide-react-native";
 import { withTiming, type SharedValue } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -162,7 +161,7 @@ export default function CategoryRightPanel({
     if (onCountChange) {
       onCountChange(totalCount);
     }
-  }, [products]);
+  }, [onCountChange, totalCount]);
 
   if (loading) {
     return <ProductSkeleton />;

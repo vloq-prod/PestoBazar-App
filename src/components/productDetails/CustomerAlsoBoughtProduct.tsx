@@ -1,9 +1,15 @@
-import { StyleSheet, Text, View, ScrollView, Pressable } from "react-native";
+import { Dimensions, Text, View, ScrollView } from "react-native";
 import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useCustomerAlsoBought } from "../../hooks/productDetailsHook";
 import ItemCard from "../comman/ItemCard";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+const H_PADDING = 16 * 2;
+const GAP = 10;
+const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.7;
 
 // ─── Skeleton Card ───────────────────────────────────────────────
 const SkeletonCard = ({
@@ -13,11 +19,10 @@ const SkeletonCard = ({
   spacing: (n: number) => number;
   colors: any;
 }) => {
-  const cardWidth = spacing(158);
   return (
     <View
       style={{
-        width: cardWidth,
+        width: ITEM_WIDTH,
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: spacing(14),
@@ -91,8 +96,6 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
   // hide section if no data and not loading
   if (!loading && products.length === 0) return null;
 
-  const cardWidth = spacing(158);
-
   return (
     <View style={{ gap: spacing(14) }}>
       {/* ── Section Header ── */}
@@ -125,7 +128,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: spacing(16),
-          gap: spacing(10),
+          gap: GAP,
           paddingBottom: spacing(4),
         }}
       >
@@ -144,7 +147,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
               return (
                 <View
                   key={item.product_variation_id}
-                  style={{ width: cardWidth }}
+                  style={{ width: ITEM_WIDTH }}
                 >
                   <ItemCard item={updatedItem as any} />
                 </View>
@@ -156,5 +159,3 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
 };
 
 export default CustomerAlsoBoughtProduct;
-
-const styles = StyleSheet.create({});

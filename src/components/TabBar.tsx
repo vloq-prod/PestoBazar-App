@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Platform, Pressable, View, LayoutChangeEvent } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Home, LayoutGrid, Store, User } from "lucide-react-native";
+import { Home, LayoutGrid, User } from "lucide-react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,6 +11,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme";
+import { Image } from "expo-image";
+import dealsimage from "../../assets/deal.png";
 
 type TabCfg = {
   label: string;
@@ -20,27 +22,22 @@ type TabCfg = {
 const TAB_CONFIG: Record<string, TabCfg> = {
   index: { label: "Home", Icon: Home },
   category: { label: "Category", Icon: LayoutGrid },
-  shop: { label: "Shop", Icon: Store },
   profile: { label: "Profile", Icon: User },
 };
 
-const FALLBACK_CFG: TabCfg = { label: "", Icon: Home };
+const FALLBACK_CFG: TabCfg = {
+  label: "",
+  Icon: () => null,
+};
 
-// ── iOS Spring config ─────────────────────────────────────
-const SPRING_CFG = {
-  damping: 18,
-  stiffness: 180,
-  mass: 0.8,
-} as const;
-
-// ── Android Timing config ─────────────────────────────────
+const SPRING_CFG = { damping: 18, stiffness: 180, mass: 0.8 } as const;
 const TIMING_CFG = {
   duration: 220,
   easing: Easing.out(Easing.quad),
 } as const;
 
 // ─────────────────────────────────────────────────────────
-// iOS TabItem — plain, no per-item animation needed
+// iOS TabItem
 // ─────────────────────────────────────────────────────────
 function IOSTabItem({
   routeName,
@@ -86,7 +83,7 @@ function IOSTabItem({
 }
 
 // ─────────────────────────────────────────────────────────
-// Android TabItem — top indicator bar animation
+// Android TabItem
 // ─────────────────────────────────────────────────────────
 function AndroidTabItem({
   routeName,
@@ -204,65 +201,95 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View
       style={{
+        flexDirection: "row",
+        alignItems: "center",
         position: "absolute",
         left: 0,
         right: 0,
         bottom: bottomOffset,
-        paddingHorizontal: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.2,
-        shadowRadius: 9,
-        elevation: 8,
       }}
     >
       <View
         style={{
-          backgroundColor: colors.background,
-          borderRadius: 40,
-          borderColor: colors.border,
-          borderWidth: 1,
-          padding: pillInset,
+          flex: 1,
+          paddingHorizontal: 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.2,
+          shadowRadius: 9,
+          elevation: 8,
         }}
       >
         <View
           style={{
-            flexDirection: "row",
-            position: "relative",
-            borderRadius: 40 - pillInset,
-            overflow: "hidden",
+            backgroundColor: colors.background,
+            borderRadius: 40,
+            borderColor: colors.border,
+            borderWidth: 1,
+            padding: pillInset,
           }}
         >
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              {
-                position: "absolute",
-                top: 0,
-                bottom: 0,
-                borderRadius: 40 - pillInset,
-                backgroundColor: colors.primary,
-              },
-              pillStyle,
-            ]}
-          />
-
-          {state.routes.map((route, index) => {
-            const isFocused = state.index === index;
-            return (
-              <IOSTabItem
-                key={route.key}
-                routeName={route.name}
-                isFocused={isFocused}
-                activeColor={colors.textInverse}
-                inactiveColor={colors.text}
-                onPress={() => handlePress(route.key, route.name, isFocused)}
-                onLongPress={() => handleLongPress(route.key)}
-                onLayout={(e) => handleLayout(index, e)}
-              />
-            );
-          })}
+          <View
+            style={{
+              flexDirection: "row",
+              position: "relative",
+              borderRadius: 40 - pillInset,
+              overflow: "hidden",
+            }}
+          >
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                {
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  borderRadius: 40 - pillInset,
+                  backgroundColor: colors.primary,
+                },
+                pillStyle,
+              ]}
+            />
+            {state.routes.map((route, index) => {
+              const isFocused = state.index === index;
+              return (
+                <IOSTabItem
+                  key={route.key}
+                  routeName={route.name}
+                  isFocused={isFocused}
+                  activeColor={colors.textInverse}
+                  inactiveColor={colors.text}
+                  onPress={() => handlePress(route.key, route.name, isFocused)}
+                  onLongPress={() => handleLongPress(route.key)}
+                  onLayout={(e) => handleLayout(index, e)}
+                />
+              );
+            })}
+          </View>
         </View>
+      </View>
+
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          marginRight: 16,
+          backgroundColor: colors.background,
+          borderRadius: 999,
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.2,
+          shadowRadius: 9,
+          elevation: 8,
+        }}
+      >
+        <Image
+          style={{ width: 42, height: 42 }}
+          source={dealsimage}
+          contentFit="contain"
+        />
       </View>
     </View>
   );
@@ -296,13 +323,16 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View
-      className="flex-row border-t"
       style={{
+        flexDirection: "row",
         backgroundColor: colors.tabBar,
+        borderTopWidth: 1,
         borderTopColor: colors.border,
         paddingBottom: insets.bottom || 10,
+        alignItems: "center",
       }}
     >
+      {/* Regular tabs — flex: 1 each */}
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;
         return (
@@ -317,6 +347,48 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
           />
         );
       })}
+
+      {/* ── Deals — vertical left divider + full circle ── */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingTop: 6,
+          paddingBottom: 4,
+          paddingRight: 12,
+        }}
+      >
+        {/* Straight vertical divider */}
+        <View
+          style={{
+            width: 1,
+            height: 38,
+            backgroundColor: colors.border,
+            marginRight: 14,
+          }}
+        />
+
+        {/* Deals circle button */}
+        <Pressable
+          android_ripple={null}
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 26,
+            backgroundColor: colors.surfaceElevated,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={dealsimage}
+            contentFit="contain"
+            style={{ width: 38, height: 38 }}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 }

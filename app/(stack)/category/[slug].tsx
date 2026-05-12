@@ -33,7 +33,7 @@ const CategoryDetails = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryItem | null>(
     null,
   );
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const categoriesWithAll: CategoryItem[] = React.useMemo(() => {
     if (!categories || categories.length === 0) return [];
@@ -80,7 +80,6 @@ const CategoryDetails = () => {
 
   const hasSidebar = categories.length > 0;
   const hasSubcategories = hasSidebar;
-  const resolvedViewMode: ViewMode = hasSubcategories ? "list" : viewMode;
 
   const categoryId = React.useMemo(() => {
     if (!hasSidebar) return String(mainCategoryId);
@@ -116,24 +115,22 @@ const CategoryDetails = () => {
         showBack 
         count={productCount} 
         rightComponent={
-          !hasSubcategories ? (
-            <TouchableOpacity
-              onPress={toggleViewMode}
-              style={{
-                padding: 6,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.primary,
-                backgroundColor: colors.primary + "12",
-              }}
-            >
-              {resolvedViewMode === "grid" ? (
-                <LayoutGrid size={20} color={colors.primary} />
-              ) : (
-                <List size={20} color={colors.primary} />
-              )}
-            </TouchableOpacity>
-          ) : undefined
+          <TouchableOpacity
+            onPress={toggleViewMode}
+            style={{
+              padding: 6,
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: colors.primary,
+              backgroundColor: colors.primary + "12",
+            }}
+          >
+            {viewMode === "grid" ? (
+              <LayoutGrid size={20} color={colors.primary} />
+            ) : (
+              <List size={20} color={colors.primary} />
+            )}
+          </TouchableOpacity>
         }
       />
 
@@ -152,7 +149,7 @@ const CategoryDetails = () => {
         <CategoryRightPanel
           selectedCategory={selectedCategory}
           categoryId={categoryId}
-          viewMode={resolvedViewMode}
+          viewMode={viewMode}
           onToggleView={toggleViewMode}
           hasSidebar={hasSidebar}
           hasSubcategories={hasSubcategories}

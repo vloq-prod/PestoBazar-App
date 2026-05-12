@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  type LayoutChangeEvent,
 } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -61,7 +62,9 @@ const ProductDetails = () => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
-  const {visitorId, userId} = useAppVisitorStore((state) => state);
+  const { visitorId, userId } = useAppVisitorStore((state) => state);
+  const scrollViewRef = useRef<Animated.ScrollView>(null);
+  const reviewSectionY = useRef(0);
 
   const [quantity, setQuantity] = useState(0);
   const [showPincodeModal, setShowPincodeModal] = useState(false);
@@ -91,7 +94,10 @@ const ProductDetails = () => {
   );
   const { addToCart, loading: isCartLoading } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
-  const { data: cartCountData } = useCartCount({ user_id: userId ?? 0, visitor_id: visitorId! });
+  const { data: cartCountData } = useCartCount({
+    user_id: userId ?? 0,
+    visitor_id: visitorId!,
+  });
 
   // ─── Data Extraction ────────────────────────────────────────
   const productInfo = data?.product;
@@ -262,6 +268,17 @@ const ProductDetails = () => {
   const openPincodeModal = useCallback(() => setShowPincodeModal(true), []);
   const closePincodeModal = useCallback(() => setShowPincodeModal(false), []);
 
+  const handleReviewSectionLayout = useCallback((event: LayoutChangeEvent) => {
+    reviewSectionY.current = event.nativeEvent.layout.y;
+  }, []);
+
+  const scrollToReviews = useCallback(() => {
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(reviewSectionY.current - insets.top - 56, 0),
+      animated: true,
+    });
+  }, [insets.top]);
+
   // ─── Effects ────────────────────────────────────────────────
   useEffect(() => {
     if (!realProductId || !visitorId) return;
@@ -328,6 +345,7 @@ const ProductDetails = () => {
 
       {/* ── Scroll Content ── */}
       <Animated.ScrollView
+        ref={scrollViewRef}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="never"
@@ -351,7 +369,9 @@ const ProductDetails = () => {
               }}
             >
               {hasRating && (
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={scrollToReviews}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -386,7 +406,7 @@ const ProductDetails = () => {
                       | {totalReviews} Reviews
                     </Text>
                   )}
-                </View>
+                </TouchableOpacity>
               )}
 
               {discountPercentage > 0 && (
@@ -628,10 +648,12 @@ const ProductDetails = () => {
 
         {/* ── USP ── */}
         <HomeUsp />
-        <Branches />
+
         {/* ── Reviews ── */}
         {realProductId !== undefined && (
-          <ReviewSection product_id={realProductId} />
+          <View onLayout={handleReviewSectionLayout}>
+            <ReviewSection product_id={realProductId} />
+          </View>
         )}
       </Animated.ScrollView>
 
@@ -728,7 +750,10 @@ const ProductDetails = () => {
               </TouchableOpacity>
               <View style={{ flex: 1, alignItems: "center" }}>
                 {isCartLoading ? (
-                  <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.textOnPrimary}
+                  />
                 ) : (
                   <Text
                     style={[styles.stepperVal, { color: colors.textOnPrimary }]}
@@ -802,9 +827,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderTopWidth: 1,
   },
-  footerRow: { 
-    flexDirection: "row", 
-    alignItems: "center", 
+  footerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     padding: 16,
     paddingHorizontal: 20,

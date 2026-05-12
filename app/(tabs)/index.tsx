@@ -296,14 +296,14 @@ export default function HomeScreen() {
         return <MemoHomeProduct />;
       case "feature_banner_0":
         return <MemoFeatureBanner item={item.data} />;
-      case "deals_of_the_day":
-        return <MemoDealsOfTheDay />;
+      // case "deals_of_the_day":
+      //   // return <MemoDealsOfTheDay />;
       case "feature_banner_1":
         return <MemoFeatureBanner item={item.data} />;
       case "recently_viewed":
         return <MemoRecentlyViewProducts />;
-      case "featured_products":
-        return <MemoFeaturedProducts />;
+      // case "featured_products":
+      //   // return <MemoFeaturedProducts />;
       case "home_bottom_carousel":
         return <MemoHomeBottomCarousel item={item.data} />;
       case "testimonial":
@@ -450,10 +450,10 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           style={{ flex: 1 }}
           contentContainerStyle={{
-            paddingTop: HEADER_HEIGHT,
+            paddingTop: HEADER_HEIGHT - 12,
             paddingBottom: insets.bottom + 120,
           }}
-          ItemSeparatorComponent={() => <View style={{ height: 30 }} />}
+          ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={5}
@@ -462,8 +462,8 @@ export default function HomeScreen() {
       </View>
 
       {/* Floating Elements */}
-      <AddToCartPreview visible={searchVisible} />
-      <BulkOrderFAB visible={searchVisible} />
+      <AddToCartPreview visible={searchVisible} horizontalPosition="left" />
+      <BulkOrderFAB visible={searchVisible} pbandroid={12} pbios={90} />
     </View>
   );
 }

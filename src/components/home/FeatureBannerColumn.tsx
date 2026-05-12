@@ -68,7 +68,7 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
  
     if (app_redirect_key === "categories") {
       router.push({
-        pathname: "(tabs)/shop",
+        pathname: "(stack)/shop",
         params: {
           category_slug: app_redirect_value,
         },

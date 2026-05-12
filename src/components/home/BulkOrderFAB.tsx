@@ -1,11 +1,12 @@
 import React from "react";
 import {
+  Platform,
   TouchableOpacity,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
-import { ChevronLeft, ChevronRight, MoveRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
@@ -16,6 +17,7 @@ import Animated, {
   type SharedValue,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
 
 import image1 from "../../../assets/image.png";
 import { Image } from "expo-image";
@@ -24,13 +26,27 @@ import { useRouter } from "expo-router";
 type Props = {
   onPress?: () => void;
   visible?: SharedValue<number>;
+  pbandroid?: number;
+  pbios?: number;
 };
 
-const BulkOrderFAB: React.FC<Props> = ({ onPress, visible }) => {
+const BulkOrderFAB: React.FC<Props> = ({
+  onPress,
+  visible,
+  pbandroid,
+  pbios,
+}) => {
   const { colors } = useTheme();
+  const { spacing } = useResponsive();
   const { height } = useWindowDimensions();
   const manualOpen = useSharedValue(1);
-  const bottomOffset = Math.max(120, Math.min(height * 0.22, 200));
+  const defaultBottomOffset = Math.max(120, Math.min(height * 0.22, 200));
+  const bottomOffset =
+    pbandroid !== undefined || pbios !== undefined
+      ? Platform.OS === "ios"
+        ? spacing(pbios ?? 90)
+        : spacing(pbandroid ?? 12)
+      : defaultBottomOffset;
 
   const router = useRouter();
 

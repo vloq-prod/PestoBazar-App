@@ -31,6 +31,7 @@ export const palette = {
   yellow: "#FBC30B",
   error: "#ef4444",
   info: "#3b82f6",
+  saleRed: "#EB001B",
 } as const;
 
 export const lightTheme = {
@@ -85,6 +86,7 @@ export const lightTheme = {
   tabBarInactive: palette.gray400,
 
   starColor: palette.yellow,
+  saleRed: palette.saleRed,
   statusBar: "dark" as const,
 } as const;
 
@@ -138,6 +140,7 @@ export const darkTheme = {
   tabBar: palette.gray900,
   tabBarActive: palette.purpleLight,
   tabBarInactive: palette.gray600,
+  saleRed: palette.saleRed,
 
   starColor: palette.yellow,
   statusBar: "light" as const,

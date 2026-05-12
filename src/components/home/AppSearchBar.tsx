@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
   withDelay,
 } from "react-native-reanimated";
+import { Image } from "expo-image";
 
 const SEARCH_HINTS = [
   "Rat Control",
@@ -86,7 +87,27 @@ export default function AppSearchBar({ onPress }: any) {
           paddingHorizontal: spacing(12),
         }}
       >
-        <Feather name="search" size={spacing(18)} color={colors.primary} />
+        {/* LEFT LOGO */}
+        <View
+          style={{
+            width: spacing(30),
+            height: spacing(30),
+
+            overflow: "hidden",
+          
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            source={require("../../../assets/Pestobazaarlogosmall.png")}
+            style={{
+              width: "78%",
+              height: "78%",
+            }}
+            resizeMode="contain"
+          />
+        </View>
+        
 
         <View className="flex-row items-center  py-3 flex-1 ml-2">
           <Text
@@ -111,6 +132,8 @@ export default function AppSearchBar({ onPress }: any) {
             ))}
           </View>
         </View>
+
+        <Feather name="search" size={spacing(18)} color={colors.primary} />
       </TouchableOpacity>
     </View>
   );

@@ -24,12 +24,14 @@ type Props = {
   visible?: SharedValue<number>;
   pbandroid?: number;
   pbios?: number;
+  horizontalPosition?: "left" | "center" | "right";
 };
 
 const AddToCartPreview: React.FC<Props> = ({
   visible,
   pbandroid = 12,
   pbios = 90,
+  horizontalPosition = "center",
 }) => {
   const router = useRouter();
   const { colors } = useTheme();
@@ -59,6 +61,12 @@ const AddToCartPreview: React.FC<Props> = ({
   const imageStackWidth =
     imageSize * latestItems.length -
     imageOverlap * Math.max(latestItems.length - 1, 0);
+  const containerHorizontalStyle =
+    horizontalPosition === "left"
+      ? { left: horizontalInset }
+      : horizontalPosition === "right"
+        ? { right: horizontalInset }
+        : { left: horizontalInset, right: horizontalInset };
   const animatedContainerStyle = useAnimatedStyle(() => {
     const progress = visible?.value ?? 1;
 
@@ -87,9 +95,8 @@ const AddToCartPreview: React.FC<Props> = ({
         animatedContainerStyle,
         {
           bottom: Platform.OS === "ios" ? spacing(pbios) : spacing(pbandroid),
-          left: horizontalInset,
-          right: horizontalInset,
         },
+        containerHorizontalStyle,
       ]}
     >
       <TouchableOpacity

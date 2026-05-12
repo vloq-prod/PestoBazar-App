@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, TouchableOpacity, Dimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useTheme } from "../../theme";
@@ -7,17 +7,12 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const ITEM_WIDTH = SCREEN_WIDTH * 0.84;
-const ITEM_HEIGHT = ITEM_WIDTH * 0.48;
+const ITEM_WIDTH = SCREEN_WIDTH * 0.90;
+const ITEM_HEIGHT = ITEM_WIDTH * 0.50;
 
 interface Props {
   data: BannerItem[];
   onBannerPress?: (banner: BannerItem) => void;
-}
-
-interface BannerRedirect {
-  app_redirect_key: string;
-  app_redirect_value: string;
 }
 
 // ─── Skeleton ────────────────────────────────────────────────
@@ -47,13 +42,14 @@ const SkeletonCarousel = () => {
 export default function SlidingBanners({ data, onBannerPress }: Props) {
   const { colors } = useTheme();
   const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   // ✅ Show skeleton immediately when data not yet arrived
   if (!data?.length) {
     return <SkeletonCarousel />;
   }
 
-  const handleBannerPress = (banner: BannerRedirect) => {
+  const handleBannerPress = (banner: BannerItem) => {
     const { app_redirect_key, app_redirect_value } = banner;
 
     if (app_redirect_key === "products") {
@@ -65,14 +61,14 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
 
     if (app_redirect_key === "categories") {
       router.push({
-        pathname: "(tabs)/shop",
+        pathname: "(stack)/shop",
         params: { category_slug: app_redirect_value },
       });
     }
   };
 
   return (
-    <View>
+    <View style={{ gap: 8,  }}>
       <Carousel
         width={SCREEN_WIDTH}
         height={ITEM_HEIGHT}
@@ -80,29 +76,22 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
         loop
         autoPlay
         autoPlayInterval={3500}
-        scrollAnimationDuration={650}
-        mode="parallax"
-        modeConfig={{
-          parallaxScrollingScale: 1,
-          parallaxScrollingOffset: 70,
-          parallaxAdjacentItemScale: 0.88,
-        }}
+        scrollAnimationDuration={500}
+        onSnapToItem={setActiveIndex}
         renderItem={({ item }) => (
           <TouchableOpacity
             activeOpacity={0.92}
-            onPress={() => handleBannerPress(item)}
+            onPress={() => {
+              onBannerPress?.(item);
+              handleBannerPress(item);
+            }}
             style={{
               alignSelf: "center",
-              borderRadius: 16,
+              borderRadius: 12,
               overflow: "hidden",
               width: ITEM_WIDTH,
               height: ITEM_HEIGHT,
               backgroundColor: colors.backgroundSkeleton,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.12,
-              shadowRadius: 8,
-              elevation: 5,
             }}
           >
             <Image
@@ -113,6 +102,27 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
           </TouchableOpacity>
         )}
       />
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+        }}
+      >
+        {data.map((item, index) => (
+          <View
+            key={`${item.s3_image_path}-${index}`}
+            style={{
+              width: activeIndex === index ? 16 : 6,
+              height: 6,
+              borderRadius: 999,
+              backgroundColor:
+                activeIndex === index ? colors.primary : colors.border,
+            }}
+          />
+        ))}
+      </View>
     </View>
   );
 }

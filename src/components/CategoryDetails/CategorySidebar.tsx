@@ -20,6 +20,7 @@ import { useResponsive } from "../../utils/useResponsive";
 import image1 from "../../../assets/category/category4.png";
 
 const ITEM_HEIGHT = 100;
+const ITEM_GAP = 20;
 const ANIM_DURATION = 220;
 const EASING = Easing.out(Easing.quad);
 
@@ -46,7 +47,7 @@ const SkeletonBox = ({
 };
 
 const SidebarSkeleton = () => (
-  <View style={{ paddingHorizontal: 6, paddingTop: 10, gap: 10 }}>
+  <View style={{ paddingHorizontal: 6, paddingTop: 10, gap: ITEM_GAP }}>
     {Array.from({ length: 7 }).map((_, i) => (
       <View
         key={i}
@@ -114,7 +115,6 @@ const CategorySidebarItem = ({
         styles.itemOuter,
         {
           flexDirection: "row",
-          marginBottom: spacing(4),
         },
       ]}
     >
@@ -145,8 +145,8 @@ const CategorySidebarItem = ({
             styles.label,
             {
               color: isActive ? primaryColor : textSecondaryColor,
-              fontSize: font(10.5),
-              lineHeight: font(15),
+              fontSize: font(9),
+
               paddingHorizontal: spacing(2),
               fontFamily: isActive
                 ? "Poppins_600SemiBold"
@@ -188,8 +188,7 @@ const CategorySidebar = ({
   const { colors } = useTheme();
   const { spacing } = useResponsive();
   const listRef = useRef<FlatList<CategoryItem>>(null);
-  const itemSpacing = spacing(4);
-  const itemTotalHeight = ITEM_HEIGHT + itemSpacing;
+  const itemTotalHeight = ITEM_HEIGHT + ITEM_GAP;
   const listTopPadding = spacing(10);
 
   // ── Auto-scroll to active item when selectedSlug changes ──────────────────
@@ -248,11 +247,8 @@ const CategorySidebar = ({
         styles.root,
         {
           backgroundColor: colors.surface,
-          shadowColor: "#000",
-          shadowOffset: { width: 2, height: 0 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 4,
+          borderRightWidth: 1,
+          borderRightColor: colors.border
         },
       ]}
     >
@@ -281,7 +277,7 @@ const CategorySidebar = ({
             index,
           })}
           onScrollToIndexFailed={handleScrollToIndexFailed}
-          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={{ height: ITEM_GAP }} />}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={5}
@@ -299,11 +295,11 @@ export default CategorySidebar;
 
 const styles = StyleSheet.create({
   root: {
-    width: "22%",
+    width: "19%",
   },
   listContent: {},
   itemOuter: {
-    height: ITEM_HEIGHT,
+    alignSelf: "flex-start",
   },
   itemInner: {
     flex: 1,

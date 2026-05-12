@@ -1,4 +1,4 @@
-import { Text, View, ScrollView } from "react-native";
+import { Dimensions, Text, View, ScrollView } from "react-native";
 import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -6,6 +6,13 @@ import ItemCard from "../comman/ItemCard";
 import { useAppVisitorStore } from "../../store/auth";
 import { useQuery } from "@tanstack/react-query";
 import { getRecentlyViewed } from "../../api/home.api";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+const H_PADDING = 16 * 2;
+const GAP = 10;
+
+const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.7;
 
 // ─── Skeleton Card ───────────────────────────────────────────────
 const SkeletonCard = ({
@@ -17,7 +24,7 @@ const SkeletonCard = ({
 }) => (
   <View
     style={{
-      width: spacing(158),
+      width: ITEM_WIDTH,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: spacing(14),
@@ -85,10 +92,7 @@ const RecentlyViewProducts = () => {
 
   const products = data ?? [];
 
- 
   if (!isLoading && products.length === 0) return null;
-
-  const cardWidth = spacing(158);
 
   return (
     <View style={{ gap: spacing(14) }}>
@@ -105,15 +109,20 @@ const RecentlyViewProducts = () => {
           Recently Viewed
         </Text>
         <Text
-          style={{
-            fontSize: font(12),
-            fontFamily: "Poppins_400Regular",
-            color: colors.textSecondary,
-            lineHeight: font(18),
-          }}
+                 style={{
+               
+                   fontSize: 11,
+                   lineHeight: 18,
+                   color: colors.textSecondary,
+                   fontFamily: "Poppins_400Regular",
+                 }}
         >
           Browse The Collection You Viewed
         </Text>
+
+
+        
+
       </View>
 
       {/* ── Horizontal Scroll ── */}
@@ -122,7 +131,7 @@ const RecentlyViewProducts = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: spacing(16),
-          gap: spacing(10),
+          gap: GAP,
           paddingBottom: spacing(4),
         }}
       >
@@ -132,7 +141,7 @@ const RecentlyViewProducts = () => {
             ))
           : products.map((item, index) => {
               return (
-                <View key={index} style={{ width: cardWidth }}>
+                <View key={index} style={{ width: ITEM_WIDTH }}>
                   <ItemCard
                     key={index}
                     item={item as any}

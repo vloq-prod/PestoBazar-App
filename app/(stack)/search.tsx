@@ -136,7 +136,7 @@ export default function SearchScreen() {
             onSubmitEditing={() => {
               if (!query.trim()) return;
               router.push({
-                pathname: "/(tabs)/shop",
+                pathname: "/(stack)/shop",
                 params: { search: query },
               });
             }}
@@ -289,7 +289,7 @@ export default function SearchScreen() {
                   activeOpacity={0.8}
                   onPress={() => {
                     router.push({
-                      pathname: "(tabs)/shop",
+                      pathname: "(stack)/shop",
                       params: {
                         category_slug: item.product_url,
                       },

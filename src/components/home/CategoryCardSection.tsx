@@ -34,16 +34,16 @@ const LOCAL_ASSETS: Record<string, any> = {
   Sprayers: require("../../../assets/FoggersandMachines/Sprays.png"),
 
   // HouseHold Subcategories (Handles both singular and plural)
-  "Bugs Control": require("../../../assets/HouseHold/Bugs Control.jpg"),
-  "Bug Control": require("../../../assets/HouseHold/Bugs Control.jpg"),
+  "Bugs Control": require("../../../assets/HouseHold/Bugs Control.png"),
+  "Bug Control": require("../../../assets/HouseHold/Bugs Control.png"),
   Lizard: require("../../../assets/HouseHold/Lizard.png"),
   Lizards: require("../../../assets/HouseHold/Lizard.png"),
   Termite: require("../../../assets/HouseHold/Termite.png"),
   Termites: require("../../../assets/HouseHold/Termite.png"),
   Cockroach: require("../../../assets/HouseHold/Cockroach.png"),
   Cockroaches: require("../../../assets/HouseHold/Cockroach.png"),
-  Mosquito: require("../../../assets/HouseHold/Mosquito.jpg"),
-  Mosquitoes: require("../../../assets/HouseHold/Mosquito.jpg"),
+  Mosquito: require("../../../assets/HouseHold/Mosquito.png"),
+  Mosquitoes: require("../../../assets/HouseHold/Mosquito.png"),
   Ant: require("../../../assets/HouseHold/ant.jpg"),
   Ants: require("../../../assets/HouseHold/ant.jpg"),
   Fly: require("../../../assets/HouseHold/Fly.jpg"),
@@ -74,6 +74,11 @@ const getLocalImage = (name: string) => {
 const COLUMNS = 4;
 const H_PADDING = 16;
 const GAP = 10;
+
+const getVisibleSubcategories = (subcategories: CategoryItem[]) =>
+  subcategories
+    .filter((item) => !/snake/i.test(item.category_name || ""))
+    .slice(0, 8);
 
 // ─── Skeleton Item ────────────────────────────────────────────
 const SkeletonItem = ({
@@ -182,7 +187,7 @@ const CategoryCardSection = () => {
   const cardSize = itemWidth;
 
   const visibleCategories = categoriesWithSubcategories.filter(
-    (cat) => cat.subcategories.length >= 8,
+    (cat) => getVisibleSubcategories(cat.subcategories).length >= 8,
   );
 
   // ── Sub-category card ──────────────────────────────────────
@@ -225,7 +230,7 @@ const CategoryCardSection = () => {
               source={
                 getLocalImage(item.category_name) ?? { uri: item.s3_image_path }
               }
-              style={{ width: cardSize * 0.72, height: cardSize * 0.72 }}
+              style={{ width: cardSize * 0.9, height: cardSize * 0.72 }}
               contentFit="contain"
             />
           </View>
@@ -287,10 +292,7 @@ const CategoryCardSection = () => {
   return (
     <View style={{ paddingHorizontal: H_PADDING }}>
       {visibleCategories.map((category: CategoryWithSubcategories) => (
-        <View
-          key={category.mainCategoryId}
-          style={{ marginBottom: spacing(20) }}
-        >
+        <View key={category.mainCategoryId}>
           <View
             style={{
               flexDirection: "row",
@@ -348,7 +350,7 @@ const CategoryCardSection = () => {
 
           <FlatList
             key={`cat-${category.mainCategoryId}`}
-            data={category.subcategories.slice(0, 8)}
+            data={getVisibleSubcategories(category.subcategories)}
             renderItem={createSubCategoryRenderer(
               category.mainCategoryId,
               category.mainCategoryName,
