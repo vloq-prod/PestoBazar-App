@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import GradientDivider from "../../src/components/common/GradientDivider";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -111,48 +112,7 @@ const PillDot = ({
 };
 
 // ─── Gradient Divider ─────────────────────────────────────────
-const GradientDivider = ({
-  label,
-  colors,
-  font,
-  spacing,
-}: {
-  label: string;
-  colors: any;
-  font: (n: number) => number;
-  spacing: (n: number) => number;
-}) => (
-  <View
-    style={{
-      flexDirection: "row",
-      alignItems: "center",
-      marginTop: spacing(22),
-    }}
-  >
-    <LinearGradient
-      colors={[colors.border, "transparent"]}
-      start={{ x: 1, y: 0 }}
-      end={{ x: 0, y: 0 }}
-      style={{ flex: 1, height: 1 }}
-    />
-    <Text
-      style={{
-        marginHorizontal: spacing(12),
-        fontSize: font(12),
-        color: colors.textTertiary,
-        fontFamily: "Poppins_500Medium",
-      }}
-    >
-      {label}
-    </Text>
-    <LinearGradient
-      colors={[colors.border, "transparent"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{ flex: 1, height: 1 }}
-    />
-  </View>
-);
+
 
 export default function Login() {
   const router = useRouter();

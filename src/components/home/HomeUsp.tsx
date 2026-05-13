@@ -5,6 +5,7 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useUsp } from "../../hooks/homeHooks";
 import { UspItem } from "../../types/home.types";
+import GradientDivider from "../common/GradientDivider";
 
 // ─── UspCard ──────────────────────────────────────────────────────────────────
 
@@ -17,17 +18,15 @@ const UspCard: React.FC<UspCardProps> = ({ item }) => {
   const { spacing, font } = useResponsive();
 
   return (
-    <LinearGradient
-      colors={[colors.primary + "28", colors.primary + "08"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
       style={[
         styles.card,
         {
           flex: 1,
+          backgroundColor: colors.backgroundgray,
           borderRadius: spacing(18),
           borderWidth: 1,
-          borderColor: colors.primary + "20",
+          borderColor: colors.border,
           padding: spacing(14),
           gap: spacing(12),
         },
@@ -55,7 +54,7 @@ const UspCard: React.FC<UspCardProps> = ({ item }) => {
           {item.text}
         </Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -82,59 +81,42 @@ const HomeUsp: React.FC = () => {
   const row1 = uspList.slice(0, 2);
   const row2 = uspList.slice(2, 5);
 
-
-
   return (
     <View
       style={[
         styles.section,
         {
-          
           gap: spacing(25),
         },
       ]}
     >
       {/* ── Header ── */}
 
-      <View className="flex-row items-center gap-3 ">
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
-        />
-
-        <Text
-          numberOfLines={1}
-          style={{
-            fontFamily: "Poppins_700Bold",
-            fontSize: font(18),
-            includeFontPadding: false,
-            textAlignVertical: "center",
-          }}
-        >
-          Why customers love us
-        </Text>
-
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
+      {/* ── Header ── */}
+      <View style={{ paddingHorizontal: EDGE_PADDING }}>
+        <GradientDivider
+          label="Why customers love us"
+          colors={colors}
+          font={font}
+          spacing={spacing}
+          marginTop={0}
+          fontSize={font(18)}
+          textColor={colors.text}
+          fontFamily="Poppins_700Bold"
         />
       </View>
 
-
-      <View style={[styles.grid, { gap: CARD_GAP, paddingHorizontal: EDGE_PADDING, }]}>
-     
+      <View
+        style={[
+          styles.grid,
+          { gap: CARD_GAP, paddingHorizontal: EDGE_PADDING },
+        ]}
+      >
         <View style={[styles.row, { gap: CARD_GAP }]}>
           {row1.map((item, i) => (
             <UspCard key={i} item={item} />
           ))}
         </View>
-
 
         {row2.length > 0 && (
           <View style={[styles.row, { gap: CARD_GAP }]}>

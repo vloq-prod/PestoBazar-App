@@ -1,9 +1,10 @@
-import { Text, View, Image, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import React from "react";
+import { Image } from "expo-image";
+import { Tag } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
 
 interface Props {
   item: any;
@@ -14,17 +15,18 @@ const SearchItem: React.FC<Props> = ({ item }) => {
   const { font, spacing } = useResponsive();
   const router = useRouter();
 
-  const sellingPrice = Number(item?.selling_price) || 0;
+  const price = Number(item?.selling_price) || 0;
   const mrp = Number(item?.mrp) || 0;
 
-  const discountPercentage =
-    mrp > sellingPrice && mrp > 0
-      ? Math.round(((mrp - sellingPrice) / mrp) * 100)
-      : 0;
+  const discount =
+    mrp > price && mrp > 0
+      ? Math.round(((mrp - price) / mrp) * 100)
+      : null;
 
-  const productTitle = item?.size
-    ? `${item.product_name} - ${item.size}`
-    : item.product_name;
+  const formatPrice = (val: number) => {
+    const fixed = val.toFixed(2);
+    return fixed.endsWith(".00") ? String(Math.trunc(val)) : fixed;
+  };
 
   return (
     <TouchableOpacity
@@ -37,123 +39,115 @@ const SearchItem: React.FC<Props> = ({ item }) => {
           },
         })
       }
-      activeOpacity={0.8}
-      style={{
-        flexDirection: "row",
-        alignItems: "flex-start",
-        paddingVertical: spacing(10),
-        paddingHorizontal: spacing(4),
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-        gap: spacing(10),
-      }}
+      activeOpacity={0.88}
+      style={{ flex: 1 }}
     >
-      {/* Product Image */}
-      <Image
-        source={{ uri: item.image_path }}
+      {/* IMAGE BLOCK WITH FLOATING DISCOUNT BADGE */}
+      <View
         style={{
-          width: spacing(54),
-          height: spacing(54),
-          borderRadius: 12,
-          backgroundColor: colors.backgroundgray,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: spacing(14),
+          overflow: "hidden",
+          backgroundColor: colors.surfaceElevated,
+          alignItems: "center",
         }}
-        resizeMode="contain"
-      />
-
-      {/* Info */}
-      <View style={{ flex: 1, minWidth: 0 }}>
-        {/* Title */}
-        <Text
-          numberOfLines={2}
+      >
+        <Image
+          source={{ uri: item.image_path }}
           style={{
-            fontSize: font(13.5),
-            fontFamily: "Poppins_600SemiBold",
-            color: colors.text,
-            lineHeight: font(20),
+            width: "90%",
+            aspectRatio: 1,
           }}
-        >
-          {productTitle}
-        </Text>
+          contentFit="contain"
+        />
 
-        {/* 🔥 Price Row (FIXED ALIGNMENT) */}
+        {/* Discount badge */}
+        {discount && (
+          <View
+            style={{
+              position: "absolute",
+              top: spacing(8),
+              left: spacing(8),
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: spacing(8),
+              height: spacing(22),
+              borderRadius: spacing(7),
+              backgroundColor: colors.saleRed,
+            }}
+          >
+            <Tag
+              size={spacing(10)}
+              color={colors.textInverse}
+              strokeWidth={2.2}
+            />
+            <Text
+              style={{
+                marginLeft: spacing(4),
+                fontSize: font(10),
+                color: colors.textInverse,
+                fontFamily: "Poppins_600SemiBold",
+                includeFontPadding: false,
+                textAlignVertical: "center",
+              }}
+            >
+              {discount}%
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* INFO BELOW IMAGE */}
+      <View style={{ paddingTop: spacing(3) }}>
+        {/* Price row */}
         <View
           style={{
             flexDirection: "row",
-            alignItems: "center", // ✅ IMPORTANT FIX
-            marginTop: spacing(4),
+            alignItems: "center",
+            gap: spacing(4),
           }}
         >
-          {/* Left Side (Price + MRP + Offer) */}
-          <View
+          <Text
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: spacing(6),
-              flexShrink: 1,
+              fontSize: font(16),
+              color: colors.text,
+              fontFamily: "Poppins_700Bold",
+              includeFontPadding: false,
             }}
           >
-            {/* Selling Price */}
+            ₹{formatPrice(price)}
+          </Text>
+
+          {discount && (
             <Text
               style={{
-                fontSize: font(13),
-                fontFamily: "Poppins_700Bold",
-                color: colors.primary,
+                fontSize: font(9),
+                color: colors.textTertiary,
+                textDecorationLine: "line-through",
+                fontFamily: "Poppins_400Regular",
+                includeFontPadding: false,
               }}
             >
-              ₹{sellingPrice}
+              ₹{formatPrice(mrp)}
             </Text>
-
-            {/* MRP */}
-            {mrp > 0 && (
-              <Text
-                style={{
-                  fontSize: font(11),
-                  fontFamily: "Poppins_400Regular",
-                  color: colors.textSecondary,
-                  textDecorationLine: "line-through",
-                }}
-              >
-                MRP: ₹{mrp}
-              </Text>
-            )}
-
-            {/* ✅ New Offer UI (No Gradient) */}
-            {discountPercentage > 0 && (
-              <View
-                style={{
-                  borderWidth: 0.5,
-                  borderRadius: spacing(20),
-                  borderColor: colors.error + "80",
-                  backgroundColor: colors.error + "12",
-                  paddingVertical: spacing(2),
-                  paddingHorizontal: spacing(8),
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: font(10.5),
-                    fontFamily: "Poppins_600SemiBold",
-                    color: colors.error,
-                    includeFontPadding: false,
-                  }}
-                >
-                  {discountPercentage}% off
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Right Arrow */}
-          <View
-            style={{
-              marginLeft: "auto",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <ChevronRight size={spacing(16)} color={colors.textSecondary} />
-          </View>
+          )}
         </View>
+
+        {/* Product name */}
+        <Text
+          numberOfLines={2}
+          style={{
+            fontSize: font(11),
+            fontFamily: "Poppins_500Medium",
+            color: colors.text,
+            marginTop: spacing(1),
+            lineHeight: font(16),
+          }}
+        >
+          {item.product_name}
+        </Text>
       </View>
     </TouchableOpacity>
   );

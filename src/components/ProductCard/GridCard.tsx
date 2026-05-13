@@ -37,6 +37,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
 
   const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
 
+  // Format: hide .00, keep meaningful decimals like .06
+  const formatPrice = (val: number) => {
+    const fixed = val.toFixed(2);
+    return fixed.endsWith(".00") ? String(Math.trunc(val)) : fixed;
+  };
+
   const rating = Number(item.avg_rating);
   const showRating = rating > 0;
 
@@ -328,7 +334,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
               includeFontPadding: false,
             }}
           >
-            ₹{Number(item.selling_price)}
+            ₹{formatPrice(price)}
           </Text>
 
           {discount && (
@@ -341,7 +347,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 includeFontPadding: false,
               }}
             >
-              ₹{item.mrp}
+              ₹{formatPrice(mrp)}
             </Text>
           )}
         </View>

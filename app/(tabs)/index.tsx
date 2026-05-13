@@ -408,7 +408,6 @@ export default function HomeScreen() {
               backgroundColor: "rgba(109,40,217,0.28)",
             }}
           />
-
           <SafeAreaView edges={["top"]} style={{ gap: 8 }}>
             <StatusBar
               barStyle={isScrolled ? "dark-content" : "light-content"}

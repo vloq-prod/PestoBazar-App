@@ -30,7 +30,7 @@ const LOCAL_ASSETS: Record<string, any> = {
 
   Foggers: require("../../assets/FoggersandMachines/Foggers.png"),
   Machines: require("../../assets/FoggersandMachines/Machines.png"),
-  Sprays: require("../../assets/FoggersandMachines/Sprays.png"),
+  Sprayers: require("../../assets/FoggersandMachines/Sprays.png"),
   snake: require("../../assets/HouseHold/Snake.png"),
 
   "Bugs Control": require("../../assets/HouseHold/Bugs Control.png"),
@@ -38,8 +38,8 @@ const LOCAL_ASSETS: Record<string, any> = {
   Termite: require("../../assets/HouseHold/Termite.png"),
   Cockroach: require("../../assets/HouseHold/Cockroach.png"),
   Mosquito: require("../../assets/HouseHold/Mosquito.png"),
-  Ant: require("../../assets/HouseHold/ant.jpg"),
-  Fly: require("../../assets/HouseHold/Fly.jpg"),
+  Ant: require("../../assets/HouseHold/ant.png"),
+  Fly: require("../../assets/HouseHold/Fly.png"),
   Rat: require("../../assets/HouseHold/rat.png"),
 };
 
@@ -80,6 +80,11 @@ export default function CategoryScreen() {
       category.subcategories.filter((item) => item.category_name).length > 0,
   );
 
+  const getDynamicLightColor = (id: number) => {
+    const hue = (id * 137.5) % 360;
+    return `hsl(${hue}, 75%, 96%)`;
+  };
+
   const renderSubCategoryCard = (category: CategoryWithSubcategories) => {
     return ({ item }: { item: CategoryItem }) => (
       <TouchableOpacity
@@ -108,10 +113,8 @@ export default function CategoryScreen() {
           style={{
             width: cardSize,
             height: cardSize,
-            backgroundColor: colors.surface,
+            backgroundColor: getDynamicLightColor(item.id),
             borderRadius: spacing(12),
-            borderWidth: 1,
-            borderColor: colors.border,
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -137,8 +140,8 @@ export default function CategoryScreen() {
             width: "92%",
             textAlign: "center",
             color: colors.text,
-            fontSize: font(11),
-            fontFamily: "Poppins_600SemiBold",
+            fontSize: font(10),
+            fontFamily: "Poppins_500Medium",
           }}
         >
           {item.category_name}

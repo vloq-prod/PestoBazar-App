@@ -31,7 +31,7 @@ const LOCAL_ASSETS: Record<string, any> = {
   Foggers: require("../../../assets/FoggersandMachines/Foggers.png"),
   Machines: require("../../../assets/FoggersandMachines/Machines.png"),
   Sprays: require("../../../assets/FoggersandMachines/Sprays.png"),
-  Sprayers: require("../../../assets/FoggersandMachines/Sprays.png"),
+  sprayers: require("../../../assets/FoggersandMachines/Sprays.png"),
 
   // HouseHold Subcategories (Handles both singular and plural)
   "Bugs Control": require("../../../assets/HouseHold/Bugs Control.png"),
@@ -44,10 +44,10 @@ const LOCAL_ASSETS: Record<string, any> = {
   Cockroaches: require("../../../assets/HouseHold/Cockroach.png"),
   Mosquito: require("../../../assets/HouseHold/Mosquito.png"),
   Mosquitoes: require("../../../assets/HouseHold/Mosquito.png"),
-  Ant: require("../../../assets/HouseHold/ant.jpg"),
-  Ants: require("../../../assets/HouseHold/ant.jpg"),
-  Fly: require("../../../assets/HouseHold/Fly.jpg"),
-  Flies: require("../../../assets/HouseHold/Fly.jpg"),
+  Ant: require("../../../assets/HouseHold/ant.png"),
+  Ants: require("../../../assets/HouseHold/ant.png"),
+  Fly: require("../../../assets/HouseHold/Fly.png"),
+  Flies: require("../../../assets/HouseHold/Fly.png"),
   Snake: require("../../../assets/HouseHold/Snake.png"),
   Snakes: require("../../../assets/HouseHold/Snake.png"),
   Rat: require("../../../assets/HouseHold/rat.png"),
@@ -195,8 +195,15 @@ const CategoryCardSection = () => {
     mainCategoryId: number,
     mainCategoryName: string,
     mainCategoryImage?: string,
-  ) =>
-    function renderItem({ item }: { item: CategoryItem }) {
+  ) => {
+    const getDynamicLightColor = (index: number, id: number) => {
+      const hue = ((index + id) * 137.5) % 360;
+      return `hsl(${hue}, 75%, 96%)`;
+    };
+
+    return ({ item, index }: { item: CategoryItem; index: number }) => {
+      const bgColor = getDynamicLightColor(index, item.id);
+
       return (
         <TouchableOpacity
           activeOpacity={0.8}
@@ -218,10 +225,8 @@ const CategoryCardSection = () => {
             style={{
               width: cardSize,
               height: cardSize,
-              backgroundColor: colors.surface,
+              backgroundColor: bgColor,
               borderRadius: spacing(12),
-              borderWidth: 1,
-              borderColor: colors.border,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -239,11 +244,11 @@ const CategoryCardSection = () => {
             numberOfLines={2}
             style={{
               marginTop: spacing(6),
-              fontSize: font(11),
+              fontSize: font(10),
               color: colors.text,
               textAlign: "center",
               width: "90%",
-              fontFamily: "Poppins_600SemiBold",
+              fontFamily: "Poppins_500Medium",
             }}
           >
             {item.category_name}
@@ -251,6 +256,7 @@ const CategoryCardSection = () => {
         </TouchableOpacity>
       );
     };
+  };
 
   // ── Loading ───────────────────────────────────────────────
   if (loading) {

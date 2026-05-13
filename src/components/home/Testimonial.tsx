@@ -6,6 +6,8 @@ import { useTestimonial } from "../../hooks/homeHooks";
 import Entypo from "@expo/vector-icons/Entypo";
 import { MapPinIcon, Star } from "lucide-react-native";
 import Carousel from "react-native-reanimated-carousel";
+import { useResponsive } from "../../utils/useResponsive";
+import GradientDivider from "../common/GradientDivider";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.75;
@@ -133,6 +135,7 @@ const TestimonialCard = ({
 const Testimonial = () => {
   const { colors } = useTheme();
   const { testimonials, loading, error } = useTestimonial();
+  const { spacing, font } = useResponsive();
 
   if (loading) {
     return (
@@ -159,33 +162,16 @@ const Testimonial = () => {
 
   return (
     <View style={{gap: 25}}>
-      <View className="flex-row items-center gap-3 ">
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
-        />
-
-        <Text
-          numberOfLines={1}
-          style={{
-            fontFamily: "Poppins_700Bold",
-            fontSize: 18,
-            includeFontPadding: false,
-            textAlignVertical: "center",
-          }}
-        >
-         Testimonials
-        </Text>
-
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
+      <View style={{ paddingHorizontal: spacing(16) }}>
+        <GradientDivider
+          label="Testimonials"
+          colors={colors}
+          font={font}
+          spacing={spacing}
+          marginTop={0}
+          fontSize={font(18)}
+          textColor={colors.text}
+          fontFamily="Poppins_700Bold"
         />
       </View>
 

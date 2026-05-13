@@ -19,6 +19,8 @@ import Animated, {
 import { useBranch } from "../../hooks/homeHooks";
 import { BranchItem } from "../../types/home.types";
 import { useTheme } from "../../theme";
+import { useResponsive } from "../../utils/useResponsive";
+import GradientDivider from "../common/GradientDivider";
 
 const CARD_WIDTH = 260;
 const CARD_HEIGHT = 170;
@@ -113,6 +115,7 @@ const BranchCard = ({ item, index }: { item: BranchItem; index: number }) => {
 const Branches = () => {
   const { branches, loading, error } = useBranch();
   const { colors } = useTheme();
+  const { spacing, font } = useResponsive();
 
   if (loading) {
     return (
@@ -130,34 +133,16 @@ const Branches = () => {
 
   return (
     <View  style={{gap: 25}}>
-      <View className="flex-row items-center gap-3 ">
-        <View
-          style={{
-            flex: 1, // 🔥 dynamic width
-            height: 1,
-            backgroundColor: colors.border,
-          }}
-        />
-
-        <Text
-          numberOfLines={1}
-          style={{
-            
-            fontFamily: "Poppins_700Bold",
-            fontSize: 18,
-            includeFontPadding: false,
-            textAlignVertical: "center",
-          }}
-        >
-          We Deliver From <Text>Near You</Text>
-        </Text>
-
-        <View
-          style={{
-            flex: 1,
-            height: 1,
-            backgroundColor: colors.border,
-          }}
+      <View style={{ paddingHorizontal: spacing(16) }}>
+        <GradientDivider
+          label="We Deliver From Near You"
+          colors={colors}
+          font={font}
+          spacing={spacing}
+          marginTop={0}
+          fontSize={font(18)}
+          textColor={colors.text}
+          fontFamily="Poppins_700Bold"
         />
       </View>
 

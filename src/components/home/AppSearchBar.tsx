@@ -77,7 +77,7 @@ export default function AppSearchBar({ onPress }: any) {
       {/* Search Bar */}
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={() => (onPress ? onPress() : router.push("/search"))}
+        onPress={() => (onPress ? onPress() : router.push("(stack)/shop"))}
         className="flex-1 flex-row items-center border"
         style={{
           height: HEIGHT,

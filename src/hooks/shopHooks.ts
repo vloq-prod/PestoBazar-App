@@ -37,13 +37,14 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
 
   // ✅ FLATTEN DATA (NO STATE)
   const products: ListingItem[] = useMemo(() => {
-    const allItems = query.data?.pages.flatMap(
-      (page: ListingApiResponse) => page?.data?.data ?? [],
-    ) ?? [];
-    
+    const allItems =
+      query.data?.pages.flatMap(
+        (page: ListingApiResponse) => page?.data?.data ?? [],
+      ) ?? [];
+
     // Uniqueify by id to prevent duplicate key errors
     const seen = new Set();
-    return allItems.filter(item => {
+    return allItems.filter((item) => {
       const duplicate = seen.has(item.id);
       seen.add(item.id);
       return !duplicate;
@@ -51,8 +52,8 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
   }, [query.data]);
 
   const totalCount = useMemo(() => {
-  return query.data?.pages?.[0]?.data?.total_count ?? 0;
-}, [query.data]);
+    return query.data?.pages?.[0]?.data?.total_count ?? 0;
+  }, [query.data]);
 
   // ✅ LOAD MORE
   const loadMore = useCallback(() => {
@@ -64,7 +65,7 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
   return {
     products,
     loading: query.isLoading,
-     totalCount, 
+    totalCount,
     loadingMore: query.isFetchingNextPage,
     hasMore: query.hasNextPage,
     allLoaded: !query.hasNextPage && products.length > 0,
