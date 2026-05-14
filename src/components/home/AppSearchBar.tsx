@@ -71,7 +71,7 @@ export default function AppSearchBar({ onPress }: any) {
 
   return (
     <View
-      className="flex-row items-center gap-3"
+      className="flex-row items-center gap-3 "
       style={{ paddingHorizontal: 16 }}
     >
       {/* Search Bar */}
@@ -94,7 +94,7 @@ export default function AppSearchBar({ onPress }: any) {
             height: spacing(30),
 
             overflow: "hidden",
-          
+
             justifyContent: "center",
           }}
         >
@@ -107,7 +107,6 @@ export default function AppSearchBar({ onPress }: any) {
             resizeMode="contain"
           />
         </View>
-        
 
         <View className="flex-row items-center  py-3 flex-1 ml-2">
           <Text

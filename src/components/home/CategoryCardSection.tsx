@@ -296,7 +296,7 @@ const CategoryCardSection = () => {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <View style={{ paddingHorizontal: H_PADDING }}>
+    <View style={{ paddingHorizontal: H_PADDING }} >
       {visibleCategories.map((category: CategoryWithSubcategories) => (
         <View key={category.mainCategoryId}>
           <View

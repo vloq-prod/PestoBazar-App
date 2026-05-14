@@ -42,12 +42,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     buildNumber: "1",
     bundleIdentifier: "com.pestobazaar.app",
+    associatedDomains: ["applinks:pestobazaar.com"],
   },
 
   android: {
     package: "com.pestobazaar.app",
     versionCode: 1,
     permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        data: [
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/product" },
+          { scheme: "pestobazaar", host: "product" }
+        ],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
     adaptiveIcon: {
       foregroundImage: "./assets/icon.png",
       backgroundColor: "#ffffff",

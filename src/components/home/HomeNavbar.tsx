@@ -70,7 +70,7 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
   };
 
   return (
-    <View className="flex-row justify-between items-center px-4 py-2">
+    <View className="flex-row justify-between items-center px-4 ">
       {/* LEFT */}
       <View className="flex-row items-center gap-3">
         <TouchableOpacity onPress={onProfilePress}>
@@ -86,15 +86,28 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
 
         <View>
           {!userId ? (
-            <Text
-              style={{
-                fontSize: font(15),
-                color: textColor,
-                fontFamily: "Poppins_700Bold",
-              }}
-            >
-              Welcome 👋
-            </Text>
+            <View>
+              <Text
+                style={{
+                  fontSize: font(15),
+                  color: textColor,
+                  fontFamily: "Poppins_700Bold",
+                }}
+              >
+                Hii Guest 👋
+              </Text>
+              <View className="flex-row items-center gap-1">
+                <Text
+                  style={{
+                    fontSize: font(11),
+                    color: subtitleColor,
+                    fontFamily: "Poppins_400Regular",
+                  }}
+                >
+                  Welcome to Pestobazaar
+                </Text>
+              </View>
+            </View>
           ) : (
             <>
               <Text
@@ -153,10 +166,6 @@ const HomeNavbar: React.FC<HomeNavbarProps> = ({
                   justifyContent: "center",
                   alignItems: "center",
                   paddingHorizontal: 2,
-                  borderWidth: 1.5,
-                  borderColor: isLight
-                    ? "#FFFFFF"
-                    : colors.primary || "#6B21A8",
                 }}
               >
                 <Text

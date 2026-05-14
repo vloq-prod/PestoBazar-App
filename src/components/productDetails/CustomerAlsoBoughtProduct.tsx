@@ -102,7 +102,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
       <View style={{ paddingHorizontal: spacing(16) }}>
         <Text
           style={{
-            fontSize: font(18),
+            fontSize: font(15),
             fontFamily: "Poppins_700Bold",
             color: colors.text,
             lineHeight: font(22),
@@ -112,7 +112,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
         </Text>
         <Text
           style={{
-            fontSize: font(12),
+            fontSize: font(11),
             fontFamily: "Poppins_400Regular",
             color: colors.textSecondary,
             lineHeight: font(18),

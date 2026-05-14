@@ -165,7 +165,7 @@ export const CategoryList: React.FC = () => {
   // console.log("djalfjasdlf;k", categories)
 
   return (
-    <View className="py-1">
+    <View className="">
       {loading ? (
         <SkeletonRow ITEM_SIZE={ITEM_SIZE} />
       ) : (

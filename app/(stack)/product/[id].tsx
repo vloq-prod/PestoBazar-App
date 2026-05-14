@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Share,
   type LayoutChangeEvent,
 } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -146,6 +147,22 @@ const ProductDetails = () => {
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
+
+  const handleShare = useCallback(async () => {
+    try {
+      const shareUrl = `pestobazaar://product/${realProductId ?? productId}`;
+      const fallbackUrl = `https://pestobazaar.com/product/${realProductId ?? productId}`;
+      const message = `Check out this product on PestoBazaar: ${resolvedProductName}\n\n${fallbackUrl}`;
+      
+      await Share.share({
+        message,
+        url: fallbackUrl, // url is iOS only, but good practice
+        title: resolvedProductName, // Android only
+      });
+    } catch (error) {
+      console.error("Error sharing product:", error);
+    }
+  }, [realProductId, productId, resolvedProductName]);
 
   // ─── Helpers ────────────────────────────────────────────────
   const formatPrice = (value: number) => {
@@ -335,6 +352,7 @@ const ProductDetails = () => {
               <Search size={23} color={colors.borderblack} />
             </TouchableOpacity> */}
             <TouchableOpacity
+              onPress={handleShare}
               style={[styles.iconBtn, { borderColor: colors.border }]}
             >
               <LucideShare2 size={23} color={colors.borderblack} />

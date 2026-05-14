@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View, Image, ActivityIndicator, StyleSheet } from "react-native";
+import { Text, View, Image, ActivityIndicator, StyleSheet, ScrollView, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -7,13 +7,29 @@ import { useUsp } from "../../hooks/homeHooks";
 import { UspItem } from "../../types/home.types";
 import GradientDivider from "../common/GradientDivider";
 
+const TECHNICAL_ICON = require("../../../assets/usp/Technical.png");
+const GENUINE_ICON = require("../../../assets/usp/Genuine.png");
+const VERIFIED_ICON = require("../../../assets/usp/Verified.png");
+const PROTECTION_ICON = require("../../../assets/usp/Protection.png");
+const TRUSTED_ICON = require("../../../assets/usp/Trusted.png");
+
+const USP_IMAGE_MAP: { [key: string]: any } = {
+  "Dedicated Technical Support": TECHNICAL_ICON,
+  "100% Genuine Product": GENUINE_ICON,
+  "Verified Seller": VERIFIED_ICON,
+  "Buyer Protection": PROTECTION_ICON,
+  "Trusted Delivery": TRUSTED_ICON,
+};
+
 // ─── UspCard ──────────────────────────────────────────────────────────────────
 
 interface UspCardProps {
   item: UspItem;
+  width: number;
+  index: number;
 }
 
-const UspCard: React.FC<UspCardProps> = ({ item }) => {
+const UspCard: React.FC<UspCardProps> = ({ item, width, index }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
@@ -22,43 +38,66 @@ const UspCard: React.FC<UspCardProps> = ({ item }) => {
       style={[
         styles.card,
         {
-          flex: 1,
-          backgroundColor: colors.backgroundgray,
-          borderRadius: spacing(18),
+          width: width,
+          backgroundColor: colors.surface,
+          borderTopLeftRadius: width / 2,
+          borderTopRightRadius: width / 2,
+          borderBottomLeftRadius: spacing(4),
+          borderBottomRightRadius: spacing(4),
           borderWidth: 1,
           borderColor: colors.border,
-          padding: spacing(14),
-          gap: spacing(12),
+          padding: spacing(8),
+          alignItems: "center",
         },
       ]}
     >
-      {/* Icon */}
-      <Image
-        source={{ uri: item.image }}
-        style={{ width: spacing(55), height: spacing(40) }}
-        resizeMode="cover"
+      {/* Premium Reflective Gradient */}
+      <LinearGradient
+        colors={["rgba(255,255,255,0.08)", "transparent", "rgba(0,0,0,0.05)"]}
+        style={StyleSheet.absoluteFill}
       />
 
-      {/* Text */}
-      <View style={{ gap: spacing(5) }}>
-        <Text
-          numberOfLines={2}
-          style={{
-            fontFamily: "Poppins_600SemiBold",
-            fontSize: font(12),
-            color: colors.text,
-            lineHeight: font(17),
-            includeFontPadding: false,
-          }}
-        >
-          {item.text}
-        </Text>
+      {/* Icon/Image Container */}
+      <View
+        style={{
+          width: spacing(58),
+          height: spacing(58),
+          borderRadius: spacing(29),
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: spacing(10),
+          marginTop: spacing(6),
+       
+        }}
+      >
+        <Image
+          source={USP_IMAGE_MAP[item.text] || { uri: item.image }}
+          style={{ width: spacing(65), height: spacing(45) }}
+          resizeMode="contain"
+        />
       </View>
+
+      {/* Text */}
+      <Text
+        numberOfLines={2}
+        style={{
+          fontFamily: "Poppins_600SemiBold",
+          fontSize: font(9),
+          color: colors.text,
+          textAlign: "center",
+          lineHeight: font(12),
+          paddingHorizontal: spacing(2),
+        }}
+      >
+        {item.text}
+      </Text>
     </View>
   );
 };
 
 // ─── HomeUsp ──────────────────────────────────────────────────────────────────
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const HomeUsp: React.FC = () => {
   const { colors } = useTheme();
@@ -66,7 +105,12 @@ const HomeUsp: React.FC = () => {
   const { uspList, loading } = useUsp();
 
   const EDGE_PADDING = spacing(16);
-  const CARD_GAP = spacing(10);
+  const GAP = spacing(12);
+  const VISIBLE_ITEMS = 3.3; // Show 3 full items and part of the 4th
+
+  const CARD_WIDTH =
+    (SCREEN_WIDTH - EDGE_PADDING * 2 - GAP * Math.floor(VISIBLE_ITEMS)) /
+    VISIBLE_ITEMS;
 
   if (loading) {
     return (
@@ -78,20 +122,15 @@ const HomeUsp: React.FC = () => {
 
   if (!uspList || uspList.length === 0) return null;
 
-  const row1 = uspList.slice(0, 2);
-  const row2 = uspList.slice(2, 5);
-
   return (
     <View
       style={[
         styles.section,
         {
-          gap: spacing(25),
+          gap: spacing(18),
         },
       ]}
     >
-      {/* ── Header ── */}
-
       {/* ── Header ── */}
       <View style={{ paddingHorizontal: EDGE_PADDING }}>
         <GradientDivider
@@ -100,32 +139,27 @@ const HomeUsp: React.FC = () => {
           font={font}
           spacing={spacing}
           marginTop={0}
-          fontSize={font(18)}
+          fontSize={font(16)}
           textColor={colors.text}
           fontFamily="Poppins_700Bold"
         />
       </View>
 
-      <View
-        style={[
-          styles.grid,
-          { gap: CARD_GAP, paddingHorizontal: EDGE_PADDING },
-        ]}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={CARD_WIDTH + GAP}
+        decelerationRate="fast"
+        contentContainerStyle={{
+          paddingHorizontal: EDGE_PADDING,
+          gap: GAP,
+          paddingBottom: spacing(4),
+        }}
       >
-        <View style={[styles.row, { gap: CARD_GAP }]}>
-          {row1.map((item, i) => (
-            <UspCard key={i} item={item} />
-          ))}
-        </View>
-
-        {row2.length > 0 && (
-          <View style={[styles.row, { gap: CARD_GAP }]}>
-            {row2.map((item, i) => (
-              <UspCard key={i} item={item} />
-            ))}
-          </View>
-        )}
-      </View>
+        {uspList.map((item, i) => (
+          <UspCard key={i} item={item} width={CARD_WIDTH} index={i} />
+        ))}
+      </ScrollView>
     </View>
   );
 };

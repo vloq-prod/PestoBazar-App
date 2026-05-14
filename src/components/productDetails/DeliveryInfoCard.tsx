@@ -145,17 +145,17 @@ const DeliveryInfoCard = ({ variationId, onOpenPincode }: Props) => {
               <>
                 <Text
                   style={{
-                    fontSize: font(12),
+                    fontSize: font(11),
                     fontFamily: "Poppins_600SemiBold",
                     color: colors.text,
-                    includeFontPadding: false,
+  
                   }}
                 >
                   {deliveryDateMessage}
                 </Text>
                 <Text
                   style={{
-                    fontSize: font(11),
+                    fontSize: font(10),
                     fontFamily: "Poppins_400Regular",
                     color: colors.textSecondary,
                     includeFontPadding: false,

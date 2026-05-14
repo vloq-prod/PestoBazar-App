@@ -77,7 +77,7 @@ const SkeletonCard = ({
 const RecentlyViewProducts = () => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
-  const {visitorId, userId} = useAppVisitorStore((state) => state);
+  const { visitorId, userId } = useAppVisitorStore((state) => state);
 
   const { data, isLoading } = useQuery({
     queryKey: ["recently-viewed", visitorId],
@@ -100,7 +100,7 @@ const RecentlyViewProducts = () => {
       <View style={{ paddingHorizontal: spacing(16), gap: spacing(1) }}>
         <Text
           style={{
-            fontSize: font(18),
+            fontSize: font(15),
             fontFamily: "Poppins_700Bold",
             color: colors.text,
             lineHeight: font(22),
@@ -109,20 +109,15 @@ const RecentlyViewProducts = () => {
           Recently Viewed
         </Text>
         <Text
-                 style={{
-               
-                   fontSize: 11,
-                   lineHeight: 18,
-                   color: colors.textSecondary,
-                   fontFamily: "Poppins_400Regular",
-                 }}
+          style={{
+            fontSize: font(11),
+            lineHeight: 18,
+            color: colors.textSecondary,
+            fontFamily: "Poppins_400Regular",
+          }}
         >
           Browse The Collection You Viewed
         </Text>
-
-
-        
-
       </View>
 
       {/* ── Horizontal Scroll ── */}
@@ -142,10 +137,7 @@ const RecentlyViewProducts = () => {
           : products.map((item, index) => {
               return (
                 <View key={index} style={{ width: ITEM_WIDTH }}>
-                  <ItemCard
-                    key={index}
-                    item={item as any}
-                  />
+                  <ItemCard key={index} item={item as any} />
                 </View>
               );
             })}
