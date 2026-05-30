@@ -136,10 +136,10 @@ const SectionHeader = ({ title, onViewAll, description }: any) => {
       >
         <Text
           style={{
-            fontSize: 20,
+            fontSize: 16,
+            fontFamily: "Poppins_600SemiBold",
             lineHeight: 26,
             color: colors.text,
-            fontFamily: "Poppins_700Bold",
             includeFontPadding: false,
           }}
         >

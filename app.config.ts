@@ -9,14 +9,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: "1.0.0",
   orientation: "portrait",
 
-  // @ts-ignore: newArchEnabled is supported by Expo CLI but might be missing in local type definitions
+  // @ts-ignore
   newArchEnabled: true,
   userInterfaceStyle: "automatic",
 
-  scheme: [
-    "pestobazaar",
-    "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh",
-  ],
+  // yaha array ki jagah single scheme rakho
+  scheme: "pestobazaar",
 
   icon: "./assets/icon.png",
 
@@ -42,38 +40,60 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     buildNumber: "1",
     bundleIdentifier: "com.pestobazaar.app",
-    associatedDomains: ["applinks:pestobazaar.com"],
+
+    // iOS Universal Links
+    associatedDomains: [
+      "applinks:pestobazaar.com"
+    ],
   },
 
   android: {
     package: "com.pestobazaar.app",
     versionCode: 1,
-    permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+
+    permissions: [
+      "INTERNET",
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION"
+    ],
+
     intentFilters: [
       {
         action: "VIEW",
         autoVerify: true,
+
         data: [
-          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/product" },
-          { scheme: "pestobazaar", host: "product" }
+          {
+            scheme: "https",
+            host: "pestobazaar.com",
+            pathPrefix: "/product"
+          }
         ],
-        category: ["BROWSABLE", "DEFAULT"],
-      },
+
+        category: [
+          "BROWSABLE",
+          "DEFAULT"
+        ]
+      }
     ],
+
     adaptiveIcon: {
       foregroundImage: "./assets/icon.png",
       backgroundColor: "#ffffff",
     },
+
     config: {
       googleMaps: {
-        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAP_API_KEY || "",
+        apiKey:
+          process.env.EXPO_PUBLIC_GOOGLE_MAP_API_KEY || "",
       },
     },
   },
 
   extra: {
     eas: {
-      projectId: "39a653d1-c4b6-4d43-b679-0c85a74c1f85",
+      projectId:
+        "39a653d1-c4b6-4d43-b679-0c85a74c1f85",
     },
   },
 });

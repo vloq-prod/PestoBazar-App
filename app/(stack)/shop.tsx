@@ -144,6 +144,7 @@ export default function ShopScreen() {
   const {
     products,
     loading: listingLoading,
+    totalCount,
     loadingMore,
     allLoaded,
     loadMore,
@@ -575,7 +576,7 @@ export default function ShopScreen() {
                         color: colors.text,
                       }}
                     >
-                      {listingLoading ? "—" : products.length}
+                      {listingLoading ? "—" :  totalCount}
                     </Text>{" "}
                     Products
                   </Text>

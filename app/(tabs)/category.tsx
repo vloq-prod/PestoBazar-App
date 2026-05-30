@@ -250,7 +250,8 @@ export default function CategoryScreen() {
                   style={{
                     fontSize: font(16),
                     color: colors.text,
-                    fontFamily: "Poppins_600SemiBold",
+                   
+                fontFamily: "Poppins_600SemiBold",
                   }}
                 >
                   {category.mainCategoryName}

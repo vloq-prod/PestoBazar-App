@@ -455,7 +455,7 @@ const ProductDetails = () => {
             {/* Product name */}
             <Text
               style={{
-                fontSize: font(15),
+                fontSize: font(13),
                 fontFamily: "Poppins_600SemiBold",
                 color: colors.text,
                 lineHeight: font(22),
@@ -656,6 +656,11 @@ const ProductDetails = () => {
           <DescriptionAccordion data={descriptionUi} />
         )}
 
+
+        {/* ── USP ── */}
+        <HomeUsp /> 
+
+        
         {/* ── Related + Recent ── */}
         {realProductId !== undefined && (
           <>
@@ -664,8 +669,7 @@ const ProductDetails = () => {
           </>
         )}
 
-        {/* ── USP ── */}
-        <HomeUsp />
+
 
         {/* ── Reviews ── */}
         {realProductId !== undefined && (
@@ -835,7 +839,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.80)",
     borderWidth: 0.5,
   },
-  headerTitle: { fontSize: 15, fontWeight: "600" },
+  headerTitle: { fontSize: 13, fontFamily: "Poppins_500Medium" },
 
   // Footer
   footer: {

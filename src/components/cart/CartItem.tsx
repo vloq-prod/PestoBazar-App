@@ -110,7 +110,7 @@ const CartItem = ({
               numberOfLines={2}
               style={{
                 flex: 1,
-                fontSize: font(13),
+                fontSize: font(12),
                 fontFamily: "Poppins_500Medium",
                 color: colors.text,
               }}
@@ -118,7 +118,7 @@ const CartItem = ({
               {item.name}
             </Text>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => onRemove(item)}
               hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
             >

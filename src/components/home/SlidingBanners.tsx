@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { View, TouchableOpacity, Dimensions } from "react-native";
+import { View, TouchableOpacity, useWindowDimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import TopImage from "../../../assets/Top_banner.svg"
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const ITEM_WIDTH = SCREEN_WIDTH * 0.90;
-const ITEM_HEIGHT = ITEM_WIDTH * 0.50;
+const SIDE_PADDING = 16 ;
+const ASPECT_RATIO = 0.5;
 
 interface Props {
   data: BannerItem[];
@@ -18,18 +18,16 @@ interface Props {
 // ─── Skeleton ────────────────────────────────────────────────
 const SkeletonCarousel = () => {
   const { colors } = useTheme();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const IMAGE_WIDTH = SCREEN_WIDTH - SIDE_PADDING * 2;
+  const IMAGE_HEIGHT = IMAGE_WIDTH * ASPECT_RATIO;
 
   return (
-    <View
-      style={{
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <View style={{ paddingHorizontal: SIDE_PADDING }}>
       <View
         style={{
-          width: ITEM_WIDTH + 40,
-          height: ITEM_HEIGHT,
+          width: IMAGE_WIDTH,
+          height: IMAGE_HEIGHT,
           borderRadius: 14,
           backgroundColor: colors.backgroundSkeleton,
         }}
@@ -42,9 +40,12 @@ const SkeletonCarousel = () => {
 export default function SlidingBanners({ data, onBannerPress }: Props) {
   const { colors } = useTheme();
   const router = useRouter();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // ✅ Show skeleton immediately when data not yet arrived
+  const IMAGE_WIDTH = SCREEN_WIDTH - SIDE_PADDING * 2;
+  const IMAGE_HEIGHT = IMAGE_WIDTH * ASPECT_RATIO;
+
   if (!data?.length) {
     return <SkeletonCarousel />;
   }
@@ -68,10 +69,10 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
   };
 
   return (
-    <View style={{ gap: 8,  }}>
+    <View style={{ gap: 8 }}>
       <Carousel
-        width={SCREEN_WIDTH}
-        height={ITEM_HEIGHT}
+        width={SCREEN_WIDTH}           // ← full width scroll unit
+        height={IMAGE_HEIGHT}
         data={data}
         loop
         autoPlay
@@ -79,29 +80,33 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
         scrollAnimationDuration={500}
         onSnapToItem={setActiveIndex}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.92}
-            onPress={() => {
-              onBannerPress?.(item);
-              handleBannerPress(item);
-            }}
-            style={{
-              alignSelf: "center",
-              borderRadius: 12,
-              overflow: "hidden",
-              width: ITEM_WIDTH,
-              height: ITEM_HEIGHT,
-              backgroundColor: colors.backgroundSkeleton,
-            }}
-          >
-            <Image
-              source={{ uri: item.s3_image_path }}
-              style={{ width: "100%", height: "100%" }}
-              contentFit="cover"
-            />
-          </TouchableOpacity>
+          // paddingHorizontal yahan — image chhota, scroll full width
+          <View style={{ paddingHorizontal: SIDE_PADDING }}>
+            <TouchableOpacity
+              activeOpacity={0.92}
+              onPress={() => {
+                onBannerPress?.(item);
+                handleBannerPress(item);
+              }}
+              style={{
+                borderRadius: 12,
+                overflow: "hidden",
+                width: IMAGE_WIDTH,
+                height: IMAGE_HEIGHT,
+                backgroundColor: colors.backgroundSkeleton,
+              }}
+            >
+              <Image
+                source={TopImage}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+              />
+            </TouchableOpacity>
+          </View>
         )}
       />
+
+      {/* Pagination dots */}
       <View
         style={{
           flexDirection: "row",

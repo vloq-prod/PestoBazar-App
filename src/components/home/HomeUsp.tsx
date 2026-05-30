@@ -1,5 +1,13 @@
 import React from "react";
-import { Text, View, Image, ActivityIndicator, StyleSheet, ScrollView, Dimensions } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -33,46 +41,49 @@ const UspCard: React.FC<UspCardProps> = ({ item, width, index }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
+  const RADIUS = 16; // Slightly more rounded for premium feel
+
   return (
     <View
       style={[
         styles.card,
         {
           width: width,
-          backgroundColor: colors.surface,
-          borderTopLeftRadius: width / 2,
-          borderTopRightRadius: width / 2,
-          borderBottomLeftRadius: spacing(4),
-          borderBottomRightRadius: spacing(4),
+          backgroundColor: "#FFFFFF", // Start with white
+          borderRadius: RADIUS,
           borderWidth: 1,
-          borderColor: colors.border,
-          padding: spacing(8),
+          borderColor: "#E5E7EB", // Very subtle gray border
+          padding: spacing(6),
           alignItems: "center",
+          justifyContent: "center",
+          // Add subtle shadow for depth (not flat)
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 3,
         },
       ]}
     >
-      {/* Premium Reflective Gradient */}
+      {/* Subtle depth gradient */}
       <LinearGradient
-        colors={["rgba(255,255,255,0.08)", "transparent", "rgba(0,0,0,0.05)"]}
-        style={StyleSheet.absoluteFill}
+        colors={["#F9FAFB", "#F3F4F6"]}
+        style={[StyleSheet.absoluteFill, { borderRadius: RADIUS }]}
       />
 
       {/* Icon/Image Container */}
       <View
         style={{
-          width: spacing(58),
-          height: spacing(58),
-          borderRadius: spacing(29),
+          width: spacing(44),
+          height: spacing(44),
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: spacing(10),
-          marginTop: spacing(6),
-       
+          marginBottom: spacing(5),
         }}
       >
         <Image
           source={USP_IMAGE_MAP[item.text] || { uri: item.image }}
-          style={{ width: spacing(65), height: spacing(45) }}
+          style={{ width: "100%", height: "100%" }}
           resizeMode="contain"
         />
       </View>
@@ -82,11 +93,11 @@ const UspCard: React.FC<UspCardProps> = ({ item, width, index }) => {
         numberOfLines={2}
         style={{
           fontFamily: "Poppins_600SemiBold",
-          fontSize: font(9),
-          color: colors.text,
+          fontSize: font(10.5), // Larger text as requested
+          color: "#1F2937", // Slightly darker for better contrast
           textAlign: "center",
-          lineHeight: font(12),
-          paddingHorizontal: spacing(2),
+          lineHeight: font(14),
+          paddingHorizontal: spacing(1),
         }}
       >
         {item.text}

@@ -296,7 +296,7 @@ const CategoryCardSection = () => {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <View style={{ paddingHorizontal: H_PADDING }} >
+    <View style={{ paddingHorizontal: H_PADDING }}>
       {visibleCategories.map((category: CategoryWithSubcategories) => (
         <View key={category.mainCategoryId}>
           <View
@@ -309,7 +309,7 @@ const CategoryCardSection = () => {
           >
             <Text
               style={{
-                fontSize: font(16),
+                fontSize: 16,
                 fontFamily: "Poppins_600SemiBold",
                 color: colors.text,
               }}

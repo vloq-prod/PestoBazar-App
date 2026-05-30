@@ -39,9 +39,10 @@ const GradientDivider: React.FC<GradientDividerProps> = ({
     <Text
       style={{
         marginHorizontal: spacing(12),
-        fontSize: fontSize ?? font(12),
+        fontSize: fontSize ?? font(16),
         color: textColor ?? colors.textTertiary,
-        fontFamily: fontFamily ?? "Poppins_500Medium",
+
+        fontFamily: "Poppins_600SemiBold",
       }}
     >
       {label}

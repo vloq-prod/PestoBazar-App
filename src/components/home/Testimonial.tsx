@@ -168,7 +168,7 @@ const Testimonial = () => {
           colors={colors}
           font={font}
           spacing={spacing}
-          marginTop={0}
+      
           fontSize={font(18)}
           textColor={colors.text}
           fontFamily="Poppins_700Bold"
