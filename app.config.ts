@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
 
   name: "Pestobazaar",
-  owner: "daniyalpesto3",
+  owner: "pestobazaar4",
   slug: "pestobazaar",
   version: "1.0.0",
   orientation: "portrait",
@@ -13,7 +13,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   userInterfaceStyle: "automatic",
 
-  // yaha array ki jagah single scheme rakho
+
   scheme: "pestobazaar",
 
   icon: "./assets/icon.png",
@@ -93,7 +93,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     eas: {
       projectId:
-        "39a653d1-c4b6-4d43-b679-0c85a74c1f85",
+        "bcd4ecfe-2559-4aa8-9b66-bf1723ab5793",
     },
   },
 });

@@ -1,5 +1,5 @@
 import { apiClient } from "../lib/apiClient";
-import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, PaymentSuccessRequest, PaymentSuccessResponse, UserOrderHistoryRequest, UserOrderHistoryResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
+import { CodSuccessRequest, CodSuccessResponse, InitiateOrderRequest, InitiateOrderResponse, PaymentSuccessRequest, PaymentSuccessResponse, ReturnRefundListPayload, ReturnRefundResponse, UserOrderHistoryRequest, UserOrderHistoryResponse, ViewOrderRequest, ViewOrderResponse } from "../types/order.types";
 
 
 
@@ -68,6 +68,19 @@ export const paymentSuccessApi = async (
       "/app-api/v1/payment-success",
       payload
     );
+
+  return response.data;
+};
+
+
+
+export const getReturnRefundListApi = async (
+  payload: ReturnRefundListPayload
+): Promise<ReturnRefundResponse> => {
+  const response = await apiClient.post(
+    "/app-api/v1/return-refund-list",
+    payload
+  );
 
   return response.data;
 };

@@ -1,3 +1,6 @@
+
+
+
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -91,7 +94,7 @@ export default function Address() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null);
 
-    console.log("user id: ", userId)
+  console.log("user id: ", userId)
 
   const billingList = React.useMemo(
     () => [...(addressData?.data?.billing_address ?? [])],
@@ -192,7 +195,7 @@ export default function Address() {
               key={addr.id}
               item={addr}
               isSelected={false} // Address screen doesn't need selection state
-              onSelect={() => {}} // No-op
+              onSelect={() => { }} // No-op
               onEdit={() =>
                 router.push({
                   pathname: "/addaddress",

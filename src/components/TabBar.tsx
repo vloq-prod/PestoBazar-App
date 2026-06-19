@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+  import { useCallback, useEffect, useRef } from "react";
 import { Platform, Pressable, View, LayoutChangeEvent } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Home, LayoutGrid, User } from "lucide-react-native";

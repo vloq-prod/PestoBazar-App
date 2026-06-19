@@ -391,3 +391,61 @@ export interface PaymentSuccessData {
 export type PaymentSuccessResponse =
   ApiResponse<PaymentSuccessData>;
   
+
+
+
+
+  // types/returnRefund.ts
+
+export interface ReturnRefundItem {
+  order_id: number;
+  order_amount: string;
+  shipping_charge: string;
+  full_name: string;
+  mobile: string;
+  invoice_no: string;
+  invoice_path: string | null;
+  payment_id: string;
+  order_no: string;
+  branch_id: number;
+  branch_name: string;
+
+  refund_status: string;
+  refund_id: number | null;
+  refund_amount: string;
+  refundable_amount: string;
+  total_refunded_amount: string;
+  is_eligible_for_refund: string;
+
+  return_id: number;
+  payment_type: string;
+
+  refund_table_id: number | null;
+  gateway: string | null;
+  razorpay_refund_id: string | null;
+  receipt: string | null;
+
+  refund_record_amount: string | null;
+  currency: string | null;
+  refund_record_status: string | null;
+
+  refund_created_at: string | null;
+  refund_processed_at: string | null;
+}
+
+export interface ReturnRefundResponse {
+  message: string;
+  status: number;
+  data: {
+    data: ReturnRefundItem[];
+    total_count: number;
+    page_no: number;
+    page_size: number;
+  };
+}
+
+
+export interface ReturnRefundListPayload {
+  page_no?: number;
+  page_size?: number;
+}

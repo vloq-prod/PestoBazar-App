@@ -6,12 +6,13 @@ import {
   InitiateOrderResponse,
   PaymentSuccessRequest,
   PaymentSuccessResponse,
+  ReturnRefundListPayload,
   UserOrderHistoryRequest,
   UserOrderHistoryResponse,
   ViewOrderRequest,
   ViewOrderResponse,
 } from "../types/order.types";
-import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi } from "../api/order.api";
+import { codSuccessApi, getReturnRefundListApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi } from "../api/order.api";
 
 export const useCodSuccess = () => {
   const queryClient = useQueryClient();
@@ -127,5 +128,17 @@ export const usePaymentSuccess = () => {
     onError: (error) => {
       console.log("❌", error.message);
     },
+  });
+};
+
+
+
+export const useReturnRefundList = (
+  payload: ReturnRefundListPayload
+) => {
+  return useQuery({
+    queryKey: ["return-refund-list", payload],
+    queryFn: () => getReturnRefundListApi(payload),
+    staleTime: 1000 * 60 * 5,
   });
 };

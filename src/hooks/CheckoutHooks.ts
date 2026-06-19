@@ -35,12 +35,6 @@ export const useAddress = (params: GetAddressParams) => {
     queryKey: ["address", params.user_id],
     queryFn: () => getAddressApi(params),
     enabled: !!params.user_id,
-
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-
-    // ❌ NO select
   });
 };
 // done

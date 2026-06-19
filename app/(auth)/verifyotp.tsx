@@ -19,7 +19,17 @@ import { useAppVisitorStore } from "../../src/store/auth";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import ResendOtpModal from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
-import { useOtpListener, useGetHash } from "@avasapp/react-native-otp-autofill";
+
+let useOtpListener = () => ({ receivedOtp: "", startListener: () => {} });
+let useGetHash = () => ({ hash: [] as string[] });
+
+try {
+  const OtpAutofill = require("@avasapp/react-native-otp-autofill");
+  useOtpListener = OtpAutofill.useOtpListener;
+  useGetHash = OtpAutofill.useGetHash;
+} catch (e) {
+  console.warn("AvasOtpAutofill native module is not available.");
+}
 
 const OTP_LENGTH = 4;
 

@@ -198,7 +198,7 @@ export default function Login() {
         onSuccess: (data) => {
           if (data.data.exists === 0) {
             router.push({
-              pathname: "/userinfo",
+              pathname: "/(auth)/userinfo",
               params: { mobile: phone, ...(redirectTo ? { redirectTo } : {}) },
             });
           } else {
@@ -207,7 +207,7 @@ export default function Login() {
               {
                 onSuccess: () => {
                   router.push({
-                    pathname: "/verifyotp",
+                    pathname: "/(auth)/verifyotp",
                     params: {
                       mobile: phone,
                       isNewUser: "0",

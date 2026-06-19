@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 
 // Project Imports
 import AppNavbar from "../../src/components/comman/AppNavbar";
-import { useUserOrderHistory } from "../../src/hooks/orderHooks";
+import { useUserOrderHistory, useReturnRefundList } from "../../src/hooks/orderHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -20,6 +20,7 @@ import { useResponsive } from "../../src/utils/useResponsive";
 // Components
 import OrderCard from "../../src/components/order/OrderCard";
 import OrderSkeleton from "../../src/components/order/OrderSkeleton";
+import ReturnCard from "../../src/components/order/ReturnCard";
 
 // Icons
 import { ShoppingBag, Package, RotateCcw } from "lucide-react-native";
@@ -44,7 +45,18 @@ const OrderScreen = () => {
     },
   );
 
+  const { data: returnsData, isLoading: isReturnsLoading, refetch: refetchReturns, isRefetching: isRefetchingReturns } = useReturnRefundList({
+    page_no: 1,
+    page_size: 10,
+  });
+
   const orders = data?.data?.order_master ?? [];
+  const returns = returnsData?.data?.data ?? [];
+
+  const currentData = activeTab === "orders" ? orders : returns;
+  const currentIsLoading = activeTab === "orders" ? isLoading : isReturnsLoading;
+  const currentIsRefetching = activeTab === "orders" ? isRefetching : isRefetchingReturns;
+  const currentRefetch = activeTab === "orders" ? refetch : refetchReturns;
 
   const handleOrderPress = (orderId: string) => {
     router.push({
@@ -54,13 +66,17 @@ const OrderScreen = () => {
   };
 
   const renderEmpty = () => {
-    if (isLoading) return null;
+    if (currentIsLoading) return null;
     return (
       <View style={styles.emptyContainer}>
         <View
           style={[styles.emptyIcon, { backgroundColor: colors.primary + "12" }]}
         >
-          <ShoppingBag size={40} color={colors.primary} />
+          {activeTab === "orders" ? (
+            <ShoppingBag size={40} color={colors.primary} />
+          ) : (
+            <RotateCcw size={40} color={colors.primary} />
+          )}
         </View>
         <Text
           style={[
@@ -68,7 +84,7 @@ const OrderScreen = () => {
             { color: colors.text, fontSize: font(18) },
           ]}
         >
-          No Orders Yet
+          {activeTab === "orders" ? "No Orders Yet" : "No Returns"}
         </Text>
         <Text
           style={[
@@ -76,18 +92,21 @@ const OrderScreen = () => {
             { color: colors.textTertiary, fontSize: font(13) },
           ]}
         >
-          Looks like you haven't placed any orders. Discover amazing products
-          today!
+          {activeTab === "orders" 
+            ? "Looks like you haven't placed any orders. Discover amazing products today!" 
+            : "You don't have any return or refund requests at the moment."}
         </Text>
-        <TouchableOpacity
-          onPress={() => router.push("/(tabs)")}
-          activeOpacity={0.7}
-          style={[styles.shopBtn, { backgroundColor: colors.primary }]}
-        >
-          <Text style={[styles.shopBtnText, { fontSize: font(14) }]}>
-            Start Shopping
-          </Text>
-        </TouchableOpacity>
+        {activeTab === "orders" && (
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)")}
+            activeOpacity={0.7}
+            style={[styles.shopBtn, { backgroundColor: colors.primary }]}
+          >
+            <Text style={[styles.shopBtnText, { fontSize: font(14) }]}>
+              Start Shopping
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -139,7 +158,7 @@ const OrderScreen = () => {
     );
   };
 
-  if (error) {
+  if (error && activeTab === "orders") {
     return (
       <SafeAreaView
         style={[styles.root, { backgroundColor: colors.background }]}
@@ -200,21 +219,36 @@ const OrderScreen = () => {
           <TabItem 
             type="returns" 
             label="Returns" 
-            count={0} 
+            count={returns.length} 
             icon={RotateCcw} 
           />
         </View>
       </View>
 
       <FlatList
-        data={(isLoading ? [1, 2, 3, 4, 5] : orders) as any[]}
-        keyExtractor={(item: any, index) =>
-          isLoading ? `skeleton-${index}` : String(item.id)
-        }
+        data={(currentIsLoading ? [1, 2, 3, 4, 5] : currentData) as any[]}
+        keyExtractor={(item: any, index) => {
+          if (currentIsLoading) return `skeleton-${index}`;
+          if (activeTab === "orders") return `order-${item.id}-${index}`;
+          return `return-${item.refund_id}-${item.return_id}-${index}`;
+        }}
         renderItem={({ item }: { item: any }) => {
-          if (isLoading) {
+          if (currentIsLoading) {
             return <OrderSkeleton colors={colors} />;
           }
+
+          if (activeTab === "returns") {
+            return (
+              <ReturnCard
+                item={item}
+                colors={colors}
+                font={font}
+                spacing={spacing}
+                onPress={() => {}}
+              />
+            );
+          }
+
           return (
             <OrderCard
               item={item}
@@ -226,11 +260,11 @@ const OrderScreen = () => {
           );
         }}
         ListEmptyComponent={renderEmpty}
-        onRefresh={refetch}
-        refreshing={isRefetching}
+        onRefresh={currentRefetch}
+        refreshing={currentIsRefetching}
         contentContainerStyle={[
           styles.listContent,
-          !isLoading && orders.length === 0 && styles.listEmpty,
+          !currentIsLoading && currentData.length === 0 && styles.listEmpty,
         ]}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={false}

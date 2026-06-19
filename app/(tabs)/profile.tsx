@@ -92,24 +92,28 @@ const MENU_SECTIONS = [
         label: "Terms & Conditions",
         sub: "Read terms of service",
         icon: FileText,
+        route: "/terms"
       },
       {
         id: "shipping",
         label: "Shipping & Cancellation",
         sub: "Delivery and cancellation info",
         icon: Package,
+        route: "/shipping"
       },
       {
         id: "returns",
         label: "Return & Refund",
         sub: "Refund and return policy",
         icon: RotateCcw,
+        route: "/returns"
       },
       {
         id: "privacy",
         label: "Privacy Policy",
         sub: "How we use your data",
         icon: Lock,
+        route: "/privacy"
       },
     ],
   },
@@ -128,6 +132,7 @@ const MENU_SECTIONS = [
         label: "About Us",
         sub: "Learn more about our company",
         icon: Info,
+        route: "/about"
       },
       {
         id: "logout",

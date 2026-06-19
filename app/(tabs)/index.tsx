@@ -380,7 +380,7 @@ const AppSearchBar = React.memo(({ onPress }: any) => {
             }}
           >
             Search by{" "}
-          </Text>
+          </Text> 
 
           <View className="flex-row">
             {characters.map((char, index) => (
@@ -583,6 +583,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const visitorId = useAppVisitorStore((state) => state.visitorId);
   const { colors } = useTheme();
+  const { spacing } = useResponsive();
 
   const scrollY = useSharedValue(0);
 
@@ -647,11 +648,12 @@ export default function HomeScreen() {
   // HEADER HEIGHTS
   // ─────────────────────────────────────────────
 
-  const NAVBAR_HEIGHT = 44;
-  const SEARCH_HEIGHT = 42;
-  const CATEGORY_HEIGHT = 86;
-  const TOP_PADDING = 10;
-  const GAP = 10;
+  const NAVBAR_HEIGHT = spacing(44);
+  const SEARCH_HEIGHT = spacing(42);
+  const CATEGORY_HEIGHT = spacing(86);
+  const TOP_PADDING = spacing(10);
+  const BOTTOM_PADDING = spacing(5);
+  const GAP = spacing(10);
 
   const HEADER_HEIGHT =
     insets.top +
@@ -660,7 +662,8 @@ export default function HomeScreen() {
     GAP +
     SEARCH_HEIGHT +
     GAP +
-    CATEGORY_HEIGHT;
+    CATEGORY_HEIGHT +
+    BOTTOM_PADDING;
 
   // ─────────────────────────────────────────────
   // SECTIONS
@@ -760,7 +763,7 @@ export default function HomeScreen() {
         <View
           style={{
             paddingTop: insets.top + TOP_PADDING,
-        
+            paddingBottom: BOTTOM_PADDING,
             gap: GAP,
             flex: 1,
           }}
