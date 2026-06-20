@@ -12,6 +12,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import dealsimage from "../../assets/deal.png";
 
 type TabCfg = {
@@ -147,6 +148,7 @@ function AndroidTabItem({
 // ─────────────────────────────────────────────────────────
 function IOSTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const bottomOffset = (insets.bottom || 0) + -13;
   const pillInset = 3;
@@ -269,7 +271,8 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
         </View>
       </View>
 
-      <View
+      <Pressable
+        onPress={() => router.push("/(stack)/deals")}
         style={{
           width: 64,
           height: 64,
@@ -290,7 +293,7 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
           source={dealsimage}
           contentFit="contain"
         />
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -300,6 +303,7 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
 // ─────────────────────────────────────────────────────────
 function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const handlePress = useCallback(
@@ -371,6 +375,7 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
         {/* Deals circle button */}
         <Pressable
           android_ripple={null}
+          onPress={() => router.push("/(stack)/deals")}
           style={{
             width: 52,
             height: 52,

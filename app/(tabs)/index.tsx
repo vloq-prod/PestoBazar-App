@@ -54,6 +54,7 @@ import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
 import RecentlyViewProducts from "../../src/components/home/RecentlyViewProducts";
 import OurServices from "../../src/components/home/OurServices";
+import Diy from "../../src/components/diy/diy";
 import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 
@@ -575,6 +576,7 @@ const MemoHomeBottomCarousel = React.memo(HomeBottomCarousel);
 const MemoTestimonial = React.memo(Testimonial);
 const MemoHomeUsp = React.memo(HomeUsp);
 const MemoOurServices = React.memo(OurServices);
+const MemoDiy = React.memo(Diy);
 const MemoBranches = React.memo(Branches);
 const MemoFooter = React.memo(Footer);
 
@@ -675,6 +677,7 @@ export default function HomeScreen() {
       { id: "category_card_section" },
       { id: "home_product", data: homeProducts },
       { id: "feature_banner_0", data: featureBanners?.[0] },
+      { id: "diy" },
       { id: "deals_of_the_day", data: deals },
       { id: "feature_banner_1", data: featureBanners?.[1] },
       { id: "recently_viewed", data: recentlyViewed },
@@ -720,6 +723,8 @@ export default function HomeScreen() {
         return <MemoHomeProduct />;
       case "feature_banner_0":
         return <MemoFeatureBanner item={item.data} />;
+      case "diy":
+        return <MemoDiy />;
       case "feature_banner_1":
         return <MemoFeatureBanner item={item.data} />;
       case "recently_viewed":

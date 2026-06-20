@@ -21,6 +21,7 @@ type AppNavbarProps = {
   showNotification?: boolean;
   showThemeToggle?: boolean;
   showCart?: boolean;
+  hideBorder?: boolean;
   onSearchPress?: () => void;
   onNotificationPress?: () => void;
   onCartPress?: () => void;
@@ -36,6 +37,7 @@ const AppNavbar = ({
   showNotification = false,
   showThemeToggle = false,
   showCart = false,
+  hideBorder = false,
   onSearchPress,
   onNotificationPress,
 
@@ -56,7 +58,7 @@ const AppNavbar = ({
         justifyContent: "space-between",
         paddingHorizontal: spacing(12),
         paddingVertical: spacing(8),
-        borderBottomWidth: 1,
+        borderBottomWidth: hideBorder ? 0 : 1,
         borderBottomColor: colors.border,
       }}
     >
