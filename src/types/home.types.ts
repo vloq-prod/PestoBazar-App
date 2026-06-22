@@ -16,6 +16,51 @@ export interface BannerApiResponse {
   data: BannerData;
 }
 
+// app header banner
+export interface AppHeaderBannerItem {
+  id: number;
+  desktop_banner: string;
+  mobile_banner: string;
+  redirect: string;
+  banner_type: string;
+  sequence: number;
+  s3_image_path: string;
+  is_s3_uploaded: string | null;
+  desktop_banner_url: string;
+  mobile_banner_url: string;
+  s3_image_url: string;
+}
+
+export interface AppHeaderBannerApiResponse {
+  message: string;
+  status: number;
+  data: {
+    data: AppHeaderBannerItem[];
+  };
+}
+
+// app main banner
+export interface AppMainBannerItem {
+  id: number;
+  desktop_banner: string;
+  mobile_banner: string;
+  redirect: string;
+  banner_type: string;
+  sequence: number;
+  s3_image_path: string;
+  is_s3_uploaded: string | null;
+  desktop_banner_url: string;
+  mobile_banner_url: string;
+  s3_image_url: string;
+}
+
+export interface AppMainBannerApiResponse {
+  message: string;
+  status: number;
+  data: {
+    data: AppMainBannerItem[];
+  };
+}
 
 // category
 export interface CategoryItem {
@@ -87,6 +132,60 @@ export interface DealsApiResponse {
   message: string;
   status: number;
   data: DealItem[];
+}
+
+// Deals Listing Page
+export interface DealsListingBanner {
+  id: number;
+  desktop_banner: string;
+  mobile_banner: string;
+  redirect: string;
+  banner_type: string;
+  sequence: number;
+  s3_image_path: string;
+  is_s3_uploaded: string | null;
+  desktop_banner_url: string;
+  mobile_banner_url: string;
+  s3_image_url: string;
+}
+
+export interface DealsListingProductImage {
+  asset_type: string;
+  s3_image_path: string;
+}
+
+export interface DealsListingItem {
+  id: number;
+  product_id: number;
+  url: string;
+  size: string;
+  unit: string;
+  mrp: string;
+  selling_price: string;
+  discount_percentage: string;
+  product_name: string;
+  overview: string;
+  avg_rating: string;
+  total_reviews: number;
+  listing_type: string;
+  image_path: string;
+  product_variation_id: number;
+  enc_product_variation_id: string;
+  deal_start_date: string;
+  expiry_date: string;
+  product_all_images: DealsListingProductImage[];
+}
+
+export interface DealsListingApiResponse {
+  message: string;
+  status: number;
+  data: {
+    banner: DealsListingBanner;
+    data: DealsListingItem[];
+    total_count: number;
+    page_no: number;
+    page_size: number;
+  };
 }
 
 // Feature items 

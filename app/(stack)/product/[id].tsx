@@ -150,7 +150,6 @@ const ProductDetails = () => {
 
   const handleShare = useCallback(async () => {
     try {
-      const shareUrl = `pestobazaar://product/${realProductId ?? productId}`;
       const fallbackUrl = `https://pestobazaar.com/product/${realProductId ?? productId}`;
       const message = `Check out this product on PestoBazaar: ${resolvedProductName}\n\n${fallbackUrl}`;
       

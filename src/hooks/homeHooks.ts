@@ -10,6 +10,8 @@ import {
   getRecentlyViewed,
   getTestimonials,
   getUsp,
+  getAppHeaderBanner,
+  getAppMainBanner,
 } from "../api/home.api";
 import {
   BulkEnquiryRequest,
@@ -26,6 +28,36 @@ export const useBanner = () => {
 
   return {
     banners: query.data?.data || null,
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
+// useAppHeaderBanner hook
+export const useAppHeaderBanner = () => {
+  const query = useQuery({
+    queryKey: ["app-header-banner"],
+    queryFn: getAppHeaderBanner,
+  });
+
+  return {
+    banners: query.data?.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
+// useAppMainBanner hook
+export const useAppMainBanner = () => {
+  const query = useQuery({
+    queryKey: ["app-main-banner"],
+    queryFn: getAppMainBanner,
+  });
+
+  return {
+    banners: query.data?.data?.data || [],
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
@@ -123,6 +155,23 @@ export const useDeals = () => {
 
   return {
     deals: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
+// useDealsListing hook
+export const useDealsListing = (page_no: number = 1, page_size: number = 16) => {
+  const query = useQuery({
+    queryKey: ["deals-listing", page_no, page_size],
+    queryFn: () => require("../api/home.api").getDealsListing(page_no, page_size),
+  });
+
+  return {
+    banner: query.data?.data?.banner || null,
+    deals: query.data?.data?.data || [],
+    totalCount: query.data?.data?.total_count || 0,
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

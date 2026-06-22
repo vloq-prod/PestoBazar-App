@@ -1,11 +1,10 @@
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Dimensions, Image } from 'react-native';
 import React from 'react';
 import AppNavbar from '../../src/components/comman/AppNavbar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme';
 import { useDiyListing } from '../../src/hooks/diyHooks';
 import ItemCard from '../../src/components/comman/ItemCard';
-import { Image } from 'expo-image';
 import { useResponsive } from '../../src/utils/useResponsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -30,8 +29,8 @@ const DiyScreen = () => {
       <View style={{ width: SCREEN_WIDTH, marginBottom: spacing(16) }}>
         <Image 
           source={{ uri: imageUrl }}
-          style={{ width: SCREEN_WIDTH, borderWidth: 1, aspectRatio: 2.5 }} // Adjust aspectRatio as needed for the banner
-          contentFit="cover"
+          style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / 2.5 }} 
+          resizeMode="cover"
         />
       </View>
     );

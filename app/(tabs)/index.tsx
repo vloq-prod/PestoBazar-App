@@ -13,12 +13,15 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
+  Platform,
 } from "react-native";
 import { useTheme } from "../../src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, ShoppingCart } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import profile from "../../assets/profile.jpeg";
+import heroImage from "../../assets/hero-image.png";
+import heroBottom from "../../assets/hero-bottom.png";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useCartCount } from "../../src/hooks/cartHooks";
 import { Feather } from "@expo/vector-icons";
@@ -115,7 +118,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
 
     const cartCount = cartCountData?.data || 0;
 
-    const ICON_SIZE = spacing(20);
+    const ICON_SIZE = spacing(24);
     const textColor = isLight ? colors.text : colors.textInverse;
     const subtitleColor = isLight ? colors.textSecondary : colors.textInverse;
 
@@ -127,16 +130,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
       <View className="flex-row justify-between items-center px-4 ">
         {/* LEFT */}
         <View className="flex-row items-center gap-3">
-          <TouchableOpacity>
-            <Image
-              source={userAvatar ? { uri: userAvatar } : profile}
-              style={{
-                width: spacing(45),
-                height: spacing(45),
-                borderRadius: spacing(22),
-              }}
-            />
-          </TouchableOpacity>
+
 
           <View>
             {!userId ? (
@@ -193,10 +187,10 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
         {/* RIGHT */}
         <View className="flex-row items-center">
           <IconButton
-            onPress={() => {}}
+            onPress={() => { }}
             icon={<Bell size={ICON_SIZE} color={textColor} />}
           />
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleMoveToCart}
             style={{
               width: spacing(40),
@@ -233,7 +227,36 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
                   </Text>
                 </View>
               )}
+
+
             </View>
+          </TouchableOpacity> */}  
+
+          <TouchableOpacity
+            activeOpacity={0.85}
+          >
+            {userAvatar ? (
+              <Image
+                source={{ uri: userAvatar }}
+                style={{
+                  width: spacing(45),
+                  height: spacing(45),
+                  borderRadius: spacing(22),
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: spacing(45),
+                  height: spacing(45),
+                  borderRadius: spacing(22),
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Feather name="user" size={spacing(24)} color={textColor} />
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -381,7 +404,7 @@ const AppSearchBar = React.memo(({ onPress }: any) => {
             }}
           >
             Search by{" "}
-          </Text> 
+          </Text>
 
           <View className="flex-row">
             {characters.map((char, index) => (
@@ -590,6 +613,19 @@ export default function HomeScreen() {
   const scrollY = useSharedValue(0);
 
   const headerStyle = useAnimatedStyle(() => {
+    const shadowOpacity = interpolate(
+      scrollY.value,
+      [0, 40],
+      [0, 0.25],
+      Extrapolation.CLAMP
+    );
+    const elevation = interpolate(
+      scrollY.value,
+      [0, 40],
+      [0, 8],
+      Extrapolation.CLAMP
+    );
+
     return {
       transform: [
         {
@@ -601,6 +637,11 @@ export default function HomeScreen() {
           ),
         },
       ],
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity,
+      shadowRadius: 8,
+      elevation,
     };
   });
 
@@ -653,7 +694,7 @@ export default function HomeScreen() {
   const NAVBAR_HEIGHT = spacing(44);
   const SEARCH_HEIGHT = spacing(42);
   const CATEGORY_HEIGHT = spacing(86);
-  const TOP_PADDING = spacing(10);
+  const TOP_PADDING = Platform.OS === "android" ? spacing(10) : 0;
   const BOTTOM_PADDING = spacing(5);
   const GAP = spacing(10);
 
@@ -716,7 +757,18 @@ export default function HomeScreen() {
   const renderItem = useCallback(({ item }: any) => {
     switch (item.id) {
       case "sliding_banners":
-        return <MemoSlidingBanners data={item.data} />;
+        return (
+          <View>
+            <Image
+              source={heroBottom}
+              style={{ width: '100%', height: 140, marginTop: -1 }} // Increased height
+              contentFit="fill"
+            />
+            <View style={{ marginTop: 15 }}>
+              <MemoSlidingBanners data={item.data} />
+            </View>
+          </View>
+        );
       case "category_card_section":
         return <MemoCategoryCardSection />;
       case "home_product":
@@ -765,6 +817,14 @@ export default function HomeScreen() {
           headerStyle,
         ]}
       >
+        <Image
+          source={heroImage}
+          style={{ position: "absolute", width: '100%', height: '100%' }}
+          contentFit="cover"
+          pointerEvents="none"
+          transition={0}
+          cachePolicy="memory-disk"
+        />
         <View
           style={{
             paddingTop: insets.top + TOP_PADDING,
@@ -798,8 +858,10 @@ export default function HomeScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
+        bounces={false}
+        overScrollMode="never"
         contentContainerStyle={{
-          paddingTop: HEADER_HEIGHT + 13,
+          paddingTop: HEADER_HEIGHT,
           paddingBottom: insets.bottom + 120,
         }}
         ItemSeparatorComponent={() => <View style={{ height: 15 }} />}

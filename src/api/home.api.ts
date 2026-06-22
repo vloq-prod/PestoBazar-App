@@ -12,12 +12,32 @@ import {
   HomeProductApiResponse,
   TestimonialApiResponse,
   UspApiResponse,
+  AppHeaderBannerApiResponse,
+  AppMainBannerApiResponse,
 } from "../types/home.types";
 
 // banner api
 export const getBanners = async (): Promise<BannerApiResponse> => {
   const response = await apiClient.get<BannerApiResponse>(
     "/app-api/v1/app-banner",
+  );
+
+  return response.data;
+};
+
+// app header banner api
+export const getAppHeaderBanner = async (): Promise<AppHeaderBannerApiResponse> => {
+  const response = await apiClient.get<AppHeaderBannerApiResponse>(
+    "/app-api/v1/app-header-banner"
+  );
+
+  return response.data;
+};
+
+// app main banner api
+export const getAppMainBanner = async (): Promise<AppMainBannerApiResponse> => {
+  const response = await apiClient.get<AppMainBannerApiResponse>(
+    "/app-api/v1/app-main-banner"
   );
 
   return response.data;
@@ -48,6 +68,17 @@ export const getDealsOfTheDay = async (): Promise<DealsApiResponse> => {
     "/app-api/v1/app-home-deals-of-the-day",
   );
 
+  return response.data;
+};
+
+// Deals Listing API
+export const getDealsListing = async (
+  page_no: number = 1,
+  page_size: number = 16
+): Promise<any> => {
+  const response = await apiClient.get<any>(
+    `/app-api/v1/deals-of-the-day?page_no=${page_no}&page_size=${page_size}`
+  );
   return response.data;
 };
 
