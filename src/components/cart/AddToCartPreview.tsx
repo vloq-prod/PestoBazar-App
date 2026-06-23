@@ -18,7 +18,24 @@ import Animated, {
   interpolate,
   type SharedValue,
   useAnimatedStyle,
+  LinearTransition,
+  withTiming,
+  Easing,
 } from "react-native-reanimated";
+
+const dropFrom100px = () => {
+  "worklet";
+  return {
+    initialValues: {
+      opacity: 0,
+      transform: [{ translateY: -100 }],
+    },
+    animations: {
+      opacity: withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) }),
+      transform: [{ translateY: withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) }) }],
+    },
+  };
+};
 
 type Props = {
   visible?: SharedValue<number>;
@@ -126,32 +143,44 @@ const AddToCartPreview: React.FC<Props> = ({
             },
           ]}
         >
-          {latestItems.map((item: any, index: number) => (
-            <View
-              key={`${item.id ?? item.product_id ?? index}-${index}`}
-              style={[
-                styles.imageFrame,
-                {
-                  width: imageSize,
-                  height: imageSize,
-                  borderRadius: imageSize / 2,
-                  borderColor: colors.primary,
-                  zIndex: index + 1,
-                  marginLeft: index === 0 ? 0 : -imageOverlap,
-                },
-              ]}
-            >
-              <Image
-                source={{ uri: item.s3_image_path }}
-                style={{
-                  width: imageSize,
-                  height: imageSize,
-                  borderRadius: imageSize / 2,
-                }}
-                resizeMode="cover"
-              />
-            </View>
-          ))}
+          {latestItems.map((item: any, index: number) => {
+            const uniqueKey = item.product_id 
+              ? String(item.product_id) 
+              : item.id 
+                ? String(item.id) 
+                : item.s3_image_path 
+                  ? String(item.s3_image_path) 
+                  : String(index);
+                  
+            return (
+              <Animated.View
+                key={uniqueKey}
+                entering={dropFrom100px}
+                layout={LinearTransition.duration(300).easing(Easing.out(Easing.cubic))}
+                style={[
+                  styles.imageFrame,
+                  {
+                    width: imageSize,
+                    height: imageSize,
+                    borderRadius: imageSize / 2,
+                    borderColor: colors.primary,
+                    zIndex: index + 1,
+                    marginLeft: index === 0 ? 0 : -imageOverlap,
+                  },
+                ]}
+              >
+                <Image
+                  source={{ uri: item.s3_image_path }}
+                  style={{
+                    width: imageSize,
+                    height: imageSize,
+                    borderRadius: imageSize / 2,
+                  }}
+                  resizeMode="cover"
+                />
+              </Animated.View>
+            );
+          })}
         </View>
 
         <View

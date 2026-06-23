@@ -52,6 +52,7 @@ import HomeUsp from "../../src/components/home/HomeUsp";
 import Branches from "../../src/components/home/Branches";
 import CategoryCardSection from "../../src/components/home/CategoryCardSection";
 import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
+import PromoBanner from "../../src/components/home/PromoBanner";
 import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
@@ -73,6 +74,8 @@ import {
   useCategory,
 } from "../../src/hooks/homeHooks";
 import { Image } from "expo-image";
+
+const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
 
 // ─────────────────────────────────────────────
 // SUB-COMPONENTS
@@ -661,11 +664,30 @@ export default function HomeScreen() {
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "");
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
+  const promoHeight = useSharedValue(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisibleSectionsCount(14);
     }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show promo banner smoothly after 1 second
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      promoHeight.value = withTiming(100, { duration: 800 });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Smoothly hide promo banner after 6 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (promoHeight.value > 0) {
+        promoHeight.value = withTiming(0, { duration: 1000 });
+      }
+    }, 6000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -675,7 +697,12 @@ export default function HomeScreen() {
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       const currentY = event.contentOffset.y;
-      scrollY.value = currentY; // ✅ Update scrollY for header animation
+      scrollY.value = currentY; 
+
+      // Hide promo banner as soon as user scrolls
+      if (currentY > 5 && promoHeight.value > 0) {
+        promoHeight.value = withTiming(0, { duration: 300 });
+      }
 
       // Hide FAB on scroll down, show on scroll up
       if (currentY > lastScrollY.value && currentY > 150) {
@@ -698,7 +725,7 @@ export default function HomeScreen() {
   const BOTTOM_PADDING = spacing(5);
   const GAP = spacing(10);
 
-  const HEADER_HEIGHT =
+  const HEADER_HEIGHT_BASE =
     insets.top +
     TOP_PADDING +
     NAVBAR_HEIGHT +
@@ -707,6 +734,22 @@ export default function HomeScreen() {
     GAP +
     CATEGORY_HEIGHT +
     BOTTOM_PADDING;
+
+  const animatedHeaderContainerStyle = useAnimatedStyle(() => {
+    return {
+      height: HEADER_HEIGHT_BASE + promoHeight.value,
+    };
+  });
+
+  const promoAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      position: 'relative', // Now sits inside header naturally at top
+      height: promoHeight.value,
+      opacity: interpolate(promoHeight.value, [0, 100], [0, 1], Extrapolation.CLAMP),
+      overflow: "hidden",
+      zIndex: 10, // above heroImage
+    };
+  });
 
   // ─────────────────────────────────────────────
   // SECTIONS
@@ -802,7 +845,7 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* ANIMATED HEADER */}
+      {/* ANIMATED HEADER (Unified with Promo) */}
       <Animated.View
         style={[
           {
@@ -812,19 +855,27 @@ export default function HomeScreen() {
             right: 0,
             zIndex: 100,
             backgroundColor: colors.primary,
-            height: HEADER_HEIGHT,
+            overflow: "hidden",
           },
           headerStyle,
+          animatedHeaderContainerStyle,
         ]}
       >
+        {/* Full Header Background Image */}
         <Image
           source={heroImage}
-          style={{ position: "absolute", width: '100%', height: '100%' }}
+          style={{ position: "absolute", width: '100%', height: '100%', top: 0, left: 0 }}
           contentFit="cover"
           pointerEvents="none"
           transition={0}
           cachePolicy="memory-disk"
         />
+        
+        {/* Seamless Promo Banner Top Section */}
+        <Animated.View style={promoAnimatedStyle}>
+          <PromoBanner />
+        </Animated.View>
+
         <View
           style={{
             paddingTop: insets.top + TOP_PADDING,
@@ -861,9 +912,10 @@ export default function HomeScreen() {
         bounces={false}
         overScrollMode="never"
         contentContainerStyle={{
-          paddingTop: HEADER_HEIGHT,
+          paddingTop: HEADER_HEIGHT_BASE,
           paddingBottom: insets.bottom + 120,
         }}
+        ListHeaderComponent={<Animated.View style={{ height: promoHeight }} />}
         ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
         initialNumToRender={4}
         maxToRenderPerBatch={4}
@@ -872,7 +924,7 @@ export default function HomeScreen() {
       />
 
       {/* FLOATING ELEMENTS (Animations Preserved) */}
-      <AddToCartPreview horizontalPosition="left" visible={fabVisible} />
+      <AddToCartPreview horizontalPosition="left" />
       <BulkOrderFAB pbandroid={12} pbios={90} visible={fabVisible} />
     </View>
   );
