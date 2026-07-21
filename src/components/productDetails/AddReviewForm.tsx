@@ -277,7 +277,7 @@ const FormField = ({
   const { font, spacing } = useResponsive();
   const [focused, setFocused] = useState(false);
   return (
-    <View style={{ marginBottom: spacing(14) }}>
+    <View>
       <Text
         style={{
           fontFamily: "Poppins_500Medium",
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     paddingBottom: 20,
-    gap: 20,
+    gap: 10,
   },
   header: {
     gap: 4,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   formFields: {
-    gap: 4,
+    gap: 10,
   },
 
   mediaSection: {
