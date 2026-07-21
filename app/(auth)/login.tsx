@@ -40,6 +40,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect } from "react";
+import RNOtpVerify from 'react-native-otp-verify';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -121,6 +122,14 @@ export default function Login() {
   const { colors } = useTheme();
   const { font, spacing, hp } = useResponsive();
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    RNOtpVerify.getHash()
+      .then(hash => {
+        console.log("OTP Hash:", hash);
+      })
+      .catch(console.log);
+  }, []);
 
   const googleRedirectUri = AuthSession.makeRedirectUri({
     native: `${GOOGLE_REDIRECT_SCHEME}:/oauth2redirect`,
