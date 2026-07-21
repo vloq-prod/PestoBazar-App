@@ -138,10 +138,10 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { fontSize: font(17), color: colors.text }]}>
+        <Text style={[styles.title, { fontSize: font(17), color: colors.text, includeFontPadding: false, lineHeight: font(22) }]}>
           Write a Review
         </Text>
-        <Text style={[styles.subtitle, { fontSize: font(12), color: colors.textSecondary }]}>
+        <Text style={[styles.subtitle, { fontSize: font(12), color: colors.textSecondary, includeFontPadding: false, lineHeight: font(16) }]}>
           Your feedback matters to us and other shoppers
         </Text>
       </View>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   header: {
-    gap: 4,
+    gap: 2,
   },
   title: {
     fontFamily: "Poppins_700Bold",
