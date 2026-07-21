@@ -253,11 +253,11 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
         ]}
       >
         {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="#fff" size="small" />
         ) : (
           <>
-            <Text style={styles.submitBtnText}>Submit Review</Text>
-            <Send size={18} color="#fff" />
+            <Text style={[styles.submitBtnText, { fontSize: font(13.5) }]}>Submit Review</Text>
+            <Send size={15} color="#fff" />
           </>
         )}
       </TouchableOpacity>
@@ -412,18 +412,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitBtn: {
-    height: 56,
-    borderRadius: 16,
+    height: 48,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    marginTop: 10,
+    gap: 8,
   },
   submitBtnText: {
     color: "#fff",
-    fontFamily: "Poppins_700Bold",
-    fontSize: 15,
+    fontFamily: "Poppins_600SemiBold",
   },
 });
 
