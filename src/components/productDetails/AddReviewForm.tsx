@@ -13,15 +13,11 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import {
   Star,
-  User,
-  Mail,
   Camera,
   Video,
   Send,
-  MessageSquare,
   X,
 } from "lucide-react-native";
-import { FontAwesome } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useAppVisitorStore } from "../../store/auth";
@@ -160,10 +156,10 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
               activeOpacity={0.7}
               style={styles.starTouch}
             >
-              <FontAwesome
-                name={star <= rating ? "star" : "star-o"}
-                size={34}
+              <Star
+                size={32}
                 color={star <= rating ? "#FFB800" : colors.textTertiary}
+                fill={star <= rating ? "#FFB800" : "transparent"}
               />
             </TouchableOpacity>
           ))}
@@ -178,14 +174,12 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
         <FormField
           label="Your Name"
           placeholder="Enter your name"
-          icon={User}
           value={form.name}
           onChange={setField("name")}
         />
         <FormField
           label="Email Address"
           placeholder="example@mail.com"
-          icon={Mail}
           value={form.email}
           onChange={setField("email")}
           keyboardType="email-address"
@@ -193,7 +187,6 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
         <FormField
           label="Detailed Review"
           placeholder="What did you like or dislike? How was the quality?"
-          icon={MessageSquare}
           value={form.comment}
           onChange={setField("comment")}
           multiline
@@ -275,65 +268,51 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
 const FormField = ({
   label,
   placeholder,
-  icon: Icon,
   value,
   onChange,
   multiline = false,
   keyboardType = "default",
 }: any) => {
   const { colors } = useTheme();
-  const { font } = useResponsive();
+  const { font, spacing } = useResponsive();
   const [focused, setFocused] = useState(false);
   return (
-    <View style={{ gap: 6, marginBottom: 16 }}>
+    <View style={{ marginBottom: spacing(14) }}>
       <Text
         style={{
           fontFamily: "Poppins_500Medium",
-          fontSize: font(12),
-          color: colors.textSecondary,
-          marginLeft: 4,
+          fontSize: font(12.5),
+          color: colors.text,
+          marginLeft: 1,
+          marginBottom: 6,
         }}
       >
         {label}
       </Text>
-      <View
-        style={[
-          styles.inputContainer,
-          {
-            backgroundColor: colors.background,
-            borderColor: focused ? colors.primary : colors.border,
-            borderWidth: focused ? 1.5 : 1,
-            height: multiline ? 120 : 52,
-            paddingVertical: multiline ? 12 : 0,
-          },
-        ]}
-      >
-        {Icon && (
-          <Icon
-            size={18}
-            color={focused ? colors.primary : colors.textSecondary}
-            style={{ marginTop: multiline ? 2 : 0 }}
-          />
-        )}
-        <TextInput
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder}
-          placeholderTextColor={colors.textTertiary}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          multiline={multiline}
-          keyboardType={keyboardType}
-          style={[
-            styles.textInput,
-            {
-              color: colors.text,
-              fontSize: font(14),
-              textAlignVertical: multiline ? "top" : "center",
-            },
-          ]}
-        />
-      </View>
+      <TextInput
+        style={{
+          borderWidth: 1.2,
+          borderColor: focused ? colors.primary : colors.border,
+          borderRadius: 12,
+          backgroundColor: colors.inputBackground ?? colors.surface,
+          color: colors.text,
+          fontSize: font(13),
+          fontFamily: "Poppins_400Regular",
+          paddingHorizontal: spacing(12),
+          paddingVertical: spacing(12),
+          minHeight: multiline ? 100 : 48,
+          textAlignVertical: multiline ? "top" : "center",
+        }}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textTertiary}
+        multiline={multiline}
+        numberOfLines={multiline ? 4 : 1}
+        value={value}
+        onChangeText={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        keyboardType={keyboardType}
+      />
     </View>
   );
 };
@@ -371,17 +350,7 @@ const styles = StyleSheet.create({
   formFields: {
     gap: 4,
   },
-  inputContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    gap: 12,
-  },
-  textInput: {
-    flex: 1,
-    fontFamily: "Poppins_400Regular",
-  },
+
   mediaSection: {
     gap: 10,
   },
