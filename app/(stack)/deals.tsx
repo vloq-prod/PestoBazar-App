@@ -17,6 +17,7 @@ const DealsScreen = () => {
   
   // Fetch Deals products and banner
   const { deals, banner, loading } = useDealsListing(1, 16);
+  console.log(deals)
 
   const renderHeader = () => {
     if (!banner) return null;
