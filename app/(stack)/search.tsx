@@ -101,11 +101,11 @@ export default function SearchScreen() {
             alignItems: "center",
             height: 42,
             paddingHorizontal: 12,
-            borderRadius: 5,
-            backgroundColor: colors.inputBackground,
+            borderRadius: 12,
+            backgroundColor: colors.inputBackground || colors.surface,
             borderWidth: 1,
-            borderColor: "transparent",
-            gap: 8,
+            borderColor: colors.border,
+            gap: 10,
           }}
         >
           <Search
@@ -131,7 +131,7 @@ export default function SearchScreen() {
               fontSize: 14,
               fontFamily: "Poppins_400Regular",
               includeFontPadding: false,
-              textAlignVertical: "center",
+              paddingVertical: 0,
             }}
             onSubmitEditing={() => {
               if (!query.trim()) return;
@@ -248,7 +248,13 @@ export default function SearchScreen() {
         ) : null}
 
         {!isLoading && !isError && productResults.length > 0 ? (
-          <View>
+          <View
+            style={{
+              borderRadius: 12,
+              backgroundColor: colors.surface,
+              overflow: "hidden",
+            }}
+          >
             <FlatList
               data={productResults}
               keyExtractor={(item, index) => index.toString()}
@@ -258,6 +264,16 @@ export default function SearchScreen() {
               maxToRenderPerBatch={5}
               windowSize={5}
               scrollEnabled={false}
+              ItemSeparatorComponent={() => (
+                <View
+                  style={{
+                    borderBottomWidth: 1.5,
+                    borderStyle: "dashed",
+                    borderColor: colors.border,
+                    marginHorizontal: 14,
+                  }}
+                />
+              )}
             />
           </View>
         ) : null}

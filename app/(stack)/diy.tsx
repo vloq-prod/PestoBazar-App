@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, Dimensions, Image } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Dimensions } from 'react-native';
 import React from 'react';
+import { Image } from 'expo-image';
 import AppNavbar from '../../src/components/comman/AppNavbar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme';
@@ -21,16 +22,22 @@ const DiyScreen = () => {
     if (!banner) return null;
     
     // Banner will take full width
-    const imageUrl = banner.mobile_banner_url;
-    console.log("image Url: ", imageUrl)
-    if (!imageUrl) return null;
+    const baseUrl = "https://static-cdn.pestobazaar.com/";
+    const rawUrl = banner.mobile_banner_url || banner.mobile_banner;
+    if (!rawUrl) return null;
+
+    const imageUrl = rawUrl.startsWith("http")
+      ? rawUrl
+      : baseUrl + (rawUrl.startsWith("/") ? rawUrl.slice(1) : rawUrl);
+
+    console.log("DIY Banner image URL: ", imageUrl);
 
     return (
       <View style={{ width: SCREEN_WIDTH, marginBottom: spacing(16) }}>
         <Image 
           source={{ uri: imageUrl }}
           style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / 2.5 }} 
-          resizeMode="cover"
+          contentFit="cover"
         />
       </View>
     );

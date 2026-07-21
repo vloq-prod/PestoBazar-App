@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 
 // Project Imports
 import AppNavbar from "../../src/components/comman/AppNavbar";
-import { useUserOrderHistory, useReturnRefundList } from "../../src/hooks/orderHooks";
+import { useUserOrderHistory, useReturnHistory } from "../../src/hooks/orderHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -45,13 +45,12 @@ const OrderScreen = () => {
     },
   );
 
-  const { data: returnsData, isLoading: isReturnsLoading, refetch: refetchReturns, isRefetching: isRefetchingReturns } = useReturnRefundList({
-    page_no: 1,
-    page_size: 10,
-  });
+  console.log("user id: ", userId)
+
+  const { data: returnsData, isLoading: isReturnsLoading, refetch: refetchReturns, isRefetching: isRefetchingReturns } = useReturnHistory(userId || "");
 
   const orders = data?.data?.order_master ?? [];
-  const returns = returnsData?.data?.data ?? [];
+  const returns = returnsData?.order_return ?? [];
 
   const currentData = activeTab === "orders" ? orders : returns;
   const currentIsLoading = activeTab === "orders" ? isLoading : isReturnsLoading;
@@ -92,8 +91,8 @@ const OrderScreen = () => {
             { color: colors.textTertiary, fontSize: font(13) },
           ]}
         >
-          {activeTab === "orders" 
-            ? "Looks like you haven't placed any orders. Discover amazing products today!" 
+          {activeTab === "orders"
+            ? "Looks like you haven't placed any orders. Discover amazing products today!"
             : "You don't have any return or refund requests at the moment."}
         </Text>
         {activeTab === "orders" && (
@@ -111,7 +110,7 @@ const OrderScreen = () => {
     );
   };
 
-  const TabItem = ({ type, label, count, icon: Icon }: { type: TabType, label: string, count: number, icon: any }) => {
+  const TabItem = ({ type, label, icon: Icon }: { type: TabType, label: string, icon: any }) => {
     const isActive = activeTab === type;
     return (
       <TouchableOpacity
@@ -119,40 +118,27 @@ const OrderScreen = () => {
         activeOpacity={0.8}
         style={[
           styles.tabItem,
-          { 
-            backgroundColor: isActive ? "#F5F5F5" : "transparent",
+          {
+            backgroundColor: isActive ? colors.primary : "transparent",
+            shadowColor: isActive ? colors.primary : "transparent",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isActive ? 0.2 : 0,
+            shadowRadius: 4,
+            elevation: isActive ? 3 : 0,
           }
         ]}
       >
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: spacing(8) }}>
-          <Icon size={16} color={isActive ? colors.text : colors.textTertiary} strokeWidth={isActive ? 2 : 1.5} />
+          <Icon size={18} color={isActive ? "#FFFFFF" : colors.textTertiary} strokeWidth={isActive ? 2 : 1.5} />
           <Text
             style={{
-              fontFamily: isActive ? "Poppins_600SemiBold" : "Poppins_400Regular",
-              fontSize: font(13),
-              color: isActive ? colors.text : colors.textTertiary,
+              fontFamily: isActive ? "Poppins_600SemiBold" : "Poppins_500Medium",
+              fontSize: font(14),
+              color: isActive ? "#FFFFFF" : colors.textTertiary,
             }}
           >
             {label}
           </Text>
-          <View 
-            style={[
-              styles.countBadge, 
-              { backgroundColor: isActive ? colors.text : colors.border }
-            ]}
-          >
-            <Text 
-              style={[
-                styles.countText, 
-                { 
-                  fontSize: font(10), 
-                  color: isActive ? colors.surface : colors.textTertiary 
-                }
-              ]}
-            >
-              {count}
-            </Text>
-          </View>
         </View>
       </TouchableOpacity>
     );
@@ -209,18 +195,16 @@ const OrderScreen = () => {
       {/* Refined Tab Switcher */}
       <View style={styles.tabsWrapper}>
         <View style={[styles.segmentedContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <TabItem 
-            type="orders" 
-            label="Orders" 
-            count={orders.length} 
-            icon={Package} 
+          <TabItem
+            type="orders"
+            label="Orders"
+            icon={Package}
           />
-          
-          <TabItem 
-            type="returns" 
-            label="Returns" 
-            count={returns.length} 
-            icon={RotateCcw} 
+
+          <TabItem
+            type="returns"
+            label="Returns"
+            icon={RotateCcw}
           />
         </View>
       </View>
@@ -230,7 +214,7 @@ const OrderScreen = () => {
         keyExtractor={(item: any, index) => {
           if (currentIsLoading) return `skeleton-${index}`;
           if (activeTab === "orders") return `order-${item.id}-${index}`;
-          return `return-${item.refund_id}-${item.return_id}-${index}`;
+          return `return-${item.return_id}-${index}`;
         }}
         renderItem={({ item }: { item: any }) => {
           if (currentIsLoading) {
@@ -244,7 +228,12 @@ const OrderScreen = () => {
                 colors={colors}
                 font={font}
                 spacing={spacing}
-                onPress={() => {}}
+                onPress={() => {
+                  router.push({
+                    pathname: "/(stack)/returndetails/[id]",
+                    params: { id: item.enc_return_id },
+                  });
+                }}
               />
             );
           }
@@ -285,33 +274,25 @@ const styles = StyleSheet.create({
   },
   tabsWrapper: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 10,
+
+
   },
   segmentedContainer: {
     flexDirection: "row",
     borderRadius: 16,
     borderWidth: 1,
-    padding: 4,
+    padding: 2,
     alignItems: "center",
   },
   tabItem: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: 13,
   },
-  countBadge: {
-    paddingHorizontal: 7,
-    height: 18,
-    borderRadius: 100,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  countText: {
-    fontFamily: "Poppins_700Bold",
-    lineHeight: 14,
-  },
+
   listContent: {
     paddingHorizontal: 13,
     paddingBottom: 40,

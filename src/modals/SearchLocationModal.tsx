@@ -13,8 +13,9 @@ import {
   StyleSheet,
 } from "react-native";
 import axios from "axios";
-import { Search, X, MapPin } from "lucide-react-native";
+import { Search, X, MapPin, ArrowUpLeft, LocateFixed } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Location from "expo-location";
 
 import { useTheme } from "../theme";
 import { useResponsive } from "../utils/useResponsive";
@@ -129,6 +130,47 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
     }
   };
 
+  const handleCurrentLocation = async () => {
+    try {
+      setLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      const res = await axios.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        {
+          params: {
+            latlng: `${latitude},${longitude}`,
+            key: process.env.EXPO_PUBLIC_GOOGLE_MAP_API_KEY,
+          },
+        }
+      );
+
+      const data = res.data.results[0];
+      if (data) {
+        onSelectLocation({
+          address: data.formatted_address,
+          latitude,
+          longitude,
+          placeId: data.place_id,
+        });
+        setSearch("");
+        setResults([]);
+        onClose();
+      }
+    } catch (error) {
+      console.log("Error fetching current location:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderItem = ({ item }: { item: PlaceItem }) => {
     const parts = item.description.split(",");
     const title = parts[0];
@@ -138,48 +180,45 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => handleSelect(item)}
-        style={[
-          styles.row,
-          {
-            borderBottomColor: colors.border,
-          },
-        ]}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: spacing(14),
+        }}
       >
-        <View
-          style={[
-            styles.iconWrap,
-            {
-              backgroundColor: colors.primaryLight,
-            },
-          ]}
-        >
-          <MapPin size={16} color={colors.primary} />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: font(14),
-              color: colors.text,
-              fontFamily: "Poppins_500Medium",
-            }}
-          >
-            {title}
-          </Text>
-
+        <View style={{ flex: 1, paddingRight: spacing(12) }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <MapPin size={16} color={colors.primary} />
+            <Text
+              numberOfLines={1}
+              style={{
+                fontSize: font(14),
+                color: colors.text,
+                fontFamily: "Poppins_500Medium",
+                flex: 1,
+                includeFontPadding: false,
+              }}
+            >
+              {title}
+            </Text>
+          </View>
           <Text
             numberOfLines={2}
             style={{
-              marginTop: 2,
+              marginTop: 4,
               fontSize: font(12),
               color: colors.textSecondary,
               fontFamily: "Poppins_400Regular",
+              includeFontPadding: false,
+              lineHeight: font(16),
             }}
           >
-            {subtitle}
+            {subtitle.trim()}
           </Text>
         </View>
+
+        <ArrowUpLeft size={18} color={colors.textTertiary || colors.border} />
       </TouchableOpacity>
     );
   };
@@ -209,8 +248,8 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
             style={{
               height: "70%",
               backgroundColor: colors.background,
-              borderTopLeftRadius: spacing(22),
-              borderTopRightRadius: spacing(22),
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
               overflow: "visible",
             }}
           >
@@ -229,56 +268,59 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
                 onPress={onClose}
                 activeOpacity={0.8}
                 style={{
-                  width: spacing(38),
-                  height: spacing(38),
-                  borderRadius: spacing(19),
+                  width: spacing(36),
+                  height: spacing(36),
+                  borderRadius: spacing(18),
                   backgroundColor: colors.background,
-                  justifyContent: "center",
                   alignItems: "center",
+                  justifyContent: "center",
                   borderWidth: 0.5,
                   borderColor: colors.border,
+                  elevation: 5,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  shadowOffset: { width: 0, height: 3 },
                 }}
               >
-                <X size={18} color={colors.text} strokeWidth={2.5} />
+                <X size={font(16)} color={colors.text} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
-            {/* Header */}
+            {/* Header + Search Box */}
             <View
               style={{
+                paddingVertical: spacing(12),
                 paddingHorizontal: spacing(16),
-                paddingVertical: spacing(14),
-                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomWidth: 1,
                 borderBottomColor: colors.border,
               }}
             >
               <Text
                 style={{
                   fontSize: font(16),
-                  color: colors.text,
                   fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  includeFontPadding: false,
+                  lineHeight: font(20),
                 }}
               >
                 Search Address
               </Text>
-            </View>
 
-            {/* Search Box */}
-            <View
-              style={{
-                paddingHorizontal: spacing(16),
-                paddingTop: spacing(14),
-              }}
-            >
+              {/* Search Box inside Header */}
               <View
                 style={{
-                  height: spacing(50),
-                  borderRadius: spacing(14),
-                  backgroundColor: colors.backgroundgray,
+                  height: spacing(42),
+                  borderRadius: spacing(12),
+                  backgroundColor: colors.inputBackground || colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
                   flexDirection: "row",
                   alignItems: "center",
                   paddingHorizontal: spacing(14),
                   gap: spacing(10),
+                  marginTop: 10,
                 }}
               >
                 <Search size={18} color={colors.textSecondary} />
@@ -294,19 +336,59 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
                     fontSize: font(14),
                     color: colors.text,
                     fontFamily: "Poppins_400Regular",
+                    includeFontPadding: false,
+                    paddingVertical: 0,
                   }}
                 />
+
+                {search.length > 0 && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      setSearch("");
+                      setResults([]);
+                    }}
+                    style={{ padding: 4 }}
+                  >
+                    <X size={16} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
-            {/* Body */}
-            <View
-              style={{
-                flex: 1,
-                paddingTop: spacing(10),
-                paddingBottom: Math.max(insets.bottom, spacing(16)),
-              }}
-            >
+            {/* Gray Area Below Header */}
+            <View style={{ flex: 1, backgroundColor: colors.backgroundgray || "#F5F5F5" }}>
+              {/* Current Location (Only when not searching) */}
+              {search.trim().length === 0 && (
+                <TouchableOpacity
+                  onPress={handleCurrentLocation}
+                  activeOpacity={0.8}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: spacing(16),
+                    paddingVertical: spacing(16),
+                    gap: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                    backgroundColor: colors.surface,
+                  }}
+                >
+                  <LocateFixed size={20} color={colors.primary} />
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(14), color: colors.primary, includeFontPadding: false }}>
+                    Use my current location
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Body */}
+              <View
+                style={{
+                  flex: 1,
+                  paddingTop: spacing(16),
+                  paddingBottom: Math.max(insets.bottom, spacing(16)),
+                }}
+              >
               {loading ? (
                 <ActivityIndicator
                   size="small"
@@ -314,12 +396,37 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
                   style={{ marginTop: 30 }}
                 />
               ) : (
-                <FlatList
-                  data={results}
-                  keyExtractor={(item) => item.place_id}
-                  renderItem={renderItem}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
+                <View
+                  style={
+                    results.length > 0
+                      ? {
+                          borderRadius: 12,
+                          backgroundColor: colors.surface,
+                          marginHorizontal: spacing(16),
+                          overflow: "hidden",
+                        }
+                      : { marginHorizontal: spacing(16) }
+                  }
+                >
+                  <FlatList
+                    data={results}
+                    keyExtractor={(item) => item.place_id}
+                    renderItem={renderItem}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    ItemSeparatorComponent={() => (
+                      <View
+                        style={{
+                          borderBottomWidth: 1.5,
+                          borderStyle: "dashed",
+                          borderColor: colors.border,
+                          marginHorizontal: spacing(14),
+                        }}
+                      />
+                    )}
+                    contentContainerStyle={{
+                      paddingBottom: 4,
+                    }}
                   ListEmptyComponent={
                     search.length > 1 ? (
                       <Text
@@ -335,7 +442,9 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
                     ) : null
                   }
                 />
-              )}
+              </View>
+            )}
+              </View>
             </View>
           </View>
         </View>

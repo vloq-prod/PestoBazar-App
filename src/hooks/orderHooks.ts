@@ -6,13 +6,16 @@ import {
   InitiateOrderResponse,
   PaymentSuccessRequest,
   PaymentSuccessResponse,
-  ReturnRefundListPayload,
   UserOrderHistoryRequest,
   UserOrderHistoryResponse,
   ViewOrderRequest,
   ViewOrderResponse,
+  CancelReasonResponse,
+  CancelOrderRequest,
+  CancelOrderResponse,
+  ReturnReasonResponse,
 } from "../types/order.types";
-import { codSuccessApi, getReturnRefundListApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi } from "../api/order.api";
+import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi, getCancelReasonApi, cancelOrderApi, getCustomerReturnOrder, getReturnHistory, uploadReturnVideo, returnProduct, saveReturnImage, getReturnReasonApi, getOrderDetail } from "../api/order.api";
 
 export const useCodSuccess = () => {
   const queryClient = useQueryClient();
@@ -72,7 +75,7 @@ export const useViewOrder = (
 
     enabled: !!params.order_id,
 
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 };
 
@@ -96,13 +99,6 @@ export const useUserOrderHistory = (
     staleTime: 1000 * 60 * 5,
   });
 };
-
-
-
-
-// ======================================================
-// src/services/payment/payment.hooks.ts
-// ======================================================
 
 
 export const usePaymentSuccess = () => {
@@ -132,13 +128,105 @@ export const usePaymentSuccess = () => {
 };
 
 
+export const useCancelReason = () => {
+  return useQuery<CancelReasonResponse>({
+    queryKey: ["cancel-reason"],
+    queryFn: getCancelReasonApi,
+    staleTime: 1000 * 60 * 5,
+  });
+};
 
-export const useReturnRefundList = (
-  payload: ReturnRefundListPayload
+export const useCancelOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<CancelOrderResponse, Error, CancelOrderRequest>({
+    mutationFn: cancelOrderApi,
+
+    onSuccess: (response, variables) => {
+      console.log("✅", response.message);
+
+      // Optimistic update for instant change
+      queryClient.setQueryData(["view-order", variables.order_id], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            order: {
+              ...oldData.data.order,
+              current_status: "Cancelled",
+            }
+          }
+        };
+      });
+
+      // Strategic refresh
+      queryClient.invalidateQueries({ queryKey: ["user-order-history"] });
+      queryClient.invalidateQueries({ queryKey: ["view-order", variables.order_id] });
+      queryClient.invalidateQueries({ queryKey: ["view-order"] });
+    },
+
+    onError: (error) => {
+      console.log("❌", error.message);
+    },
+  });
+};
+
+
+export const useCustomerReturnOrder = (
+  returnId?: string,
 ) => {
   return useQuery({
-    queryKey: ["return-refund-list", payload],
-    queryFn: () => getReturnRefundListApi(payload),
+    queryKey: ["customer-return-order", returnId],
+    queryFn: () => getCustomerReturnOrder(returnId!),
+    enabled: !!returnId,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+
+export const useReturnHistory = (userId?: string) => {
+  return useQuery({
+    queryKey: ["return-history", userId],
+    queryFn: () => getReturnHistory(userId!),
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useUploadReturnVideo = () => {
+  return useMutation({
+    mutationFn: uploadReturnVideo,
+  });
+};
+
+export const useReturnProduct = () => {
+  return useMutation({
+    mutationFn: returnProduct,
+  });
+};
+
+
+export const useSaveReturnImage = () => {
+  return useMutation({
+    mutationFn: saveReturnImage,
+  });
+};
+
+export const useReturnReason = () => {
+  return useQuery<ReturnReasonResponse>({
+    queryKey: ["return-reason"],
+    queryFn: getReturnReasonApi,
+  });
+};
+
+export const useOrderDetail = (
+  orderId?: string,
+) => {
+  return useQuery({
+    queryKey: ["order-detail", orderId],
+    queryFn: () => getOrderDetail(orderId!),
+    enabled: !!orderId,
     staleTime: 1000 * 60 * 5,
   });
 };

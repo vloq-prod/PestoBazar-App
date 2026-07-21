@@ -16,47 +16,83 @@ import { X, ChevronDown, Check } from "lucide-react-native";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCancelReason, useCancelOrder } from "../../hooks/orderHooks";
+import { useAppVisitorStore } from "../../store/auth";
+import { ActivityIndicator } from "react-native";
 
 interface CancelOrderModalProps {
   visible: boolean;
+  orderId?: string | number;
   onClose: () => void;
-  onSubmit: (reason: string, comments: string) => void;
+  onSuccess?: () => void;
+  orderNumber: string;
 }
 
-const CANCELLATION_REASONS = [
-  "Expected delivery date has changed and is too late",
-  "Ordered the wrong item by mistake",
-  "Found a better price elsewhere",
-  "Item no longer needed",
-  "Shipping address is incorrect",
-  "Other",
-];
+
 
 const INPUT_HEIGHT = 48;
 
 const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
   visible,
+  orderId,
   onClose,
-  onSubmit,
+  onSuccess,
+  orderNumber
 }) => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
+  const userId = useAppVisitorStore((state) => state.userId);
 
-  const [reason, setReason] = useState("");
+  // Fetch cancel reasons
+  const { data: cancelReasonsData, isLoading: isLoadingReasons } = useCancelReason();
+  const reasonsList = cancelReasonsData?.data?.return_reason || [];
+
+  // Submit cancel order
+  const cancelOrderMutation = useCancelOrder();
+
+  const [reasonId, setReasonId] = useState<number | null>(null);
+  const [reasonText, setReasonText] = useState("");
   const [comments, setComments] = useState("");
-  
+
   // State for the nested reason picker modal
   const [reasonModalVisible, setReasonModalVisible] = useState(false);
 
   const handleSubmit = () => {
-    if (!reason) return;
-    onSubmit(reason, comments);
-    handleClose();
+    console.log("Submitting cancel order:", { orderId, userId, reasonId, comments });
+
+    if (!reasonId || !orderId || !userId) {
+      console.log("Validation failed:", {
+        missingReason: !reasonId,
+        missingOrderId: !orderId,
+        missingUserId: !userId
+      });
+      return;
+    }
+
+    cancelOrderMutation.mutate(
+      {
+        order_id: orderId.toString(),
+        user_id: userId,
+        cancel_reason_id: reasonId,
+        cancel_reason: comments,
+      },
+      {
+        onSuccess: (data) => {
+          console.log("Cancel Order Success Response:", data);
+          if (onSuccess) onSuccess();
+          handleClose();
+        },
+        onError: (error) => {
+          console.log("Cancel Order Error:", error);
+        }
+      }
+    );
   };
 
   const handleClose = () => {
-    setReason("");
+    setReasonId(null);
+    setReasonText("");
     setComments("");
     setReasonModalVisible(false);
     onClose();
@@ -71,7 +107,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <View
@@ -90,7 +126,6 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
               backgroundColor: colors.background,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
-              paddingHorizontal: spacing(16),
             }}
           >
             {/* 🔥 Floating Cross */}
@@ -130,10 +165,10 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             {/* Header */}
             <View
               style={{
-                paddingVertical: spacing(16),
-                borderBottomWidth: 0.5,
+                paddingVertical: spacing(12),
+                paddingHorizontal: spacing(16),
+                borderBottomWidth: 1,
                 borderBottomColor: colors.border,
-                marginBottom: spacing(16),
               }}
             >
               <Text
@@ -141,38 +176,57 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                   fontSize: font(16),
                   fontFamily: "Poppins_600SemiBold",
                   color: colors.text,
+                  includeFontPadding: false,
+                  lineHeight: font(20),
                 }}
               >
                 Cancel this order?
               </Text>
+              {orderId && (
+                <Text
+                  style={{
+                    fontSize: font(13),
+                    fontFamily: "Poppins_400Regular",
+                    color: colors.text,
+                    includeFontPadding: false,
+                    lineHeight: font(18),
+                  }}
+                >
+                  Order #{orderNumber}
+                </Text>
+              )}
             </View>
 
             {/* Form Content */}
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, spacing(20)) }}
+              contentContainerStyle={{ 
+                paddingHorizontal: spacing(16),
+                paddingTop: spacing(16),
+                paddingBottom: Math.max(insets.bottom, spacing(24)) 
+              }}
             >
               {/* Reason Selector (styled like addaddress StatePicker) */}
               <Text
                 style={{
                   fontFamily: "Poppins_500Medium",
                   fontSize: font(12),
-                  color: colors.textSecondary,
+                  color: colors.text,
                   marginLeft: 1,
                   marginBottom: 5,
                 }}
               >
                 Reason for cancellation <Text style={{ color: "#e10320" }}>*</Text>
               </Text>
-              
+
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setReasonModalVisible(true)}
                 style={{
                   height: INPUT_HEIGHT,
-                  borderWidth: reason ? 1.8 : 1.2,
-                  borderColor: reason ? colors.primary : colors.border,
+                  borderWidth: reasonId ? 1.8 : 1.2,
+                  borderColor: reasonId ? colors.primary : colors.border,
                   borderRadius: 12,
                   backgroundColor: colors.inputBackground ?? colors.surface,
                   paddingHorizontal: spacing(12),
@@ -181,21 +235,27 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                   justifyContent: "space-between",
                 }}
               >
-                <Text
-                  style={{
-                    fontFamily: reason ? "Poppins_500Medium" : "Poppins_400Regular",
-                    fontSize: font(13),
-                    color: reason ? colors.text : colors.textTertiary,
-                    flex: 1,
-                  }}
-                  numberOfLines={1}
-                >
-                  {reason || "Select a reason"}
-                </Text>
-                <ChevronDown
-                  size={16}
-                  color={reason ? colors.primary : colors.textTertiary}
-                />
+                {isLoadingReasons ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Text
+                      style={{
+                        fontFamily: reasonId ? "Poppins_500Medium" : "Poppins_400Regular",
+                        fontSize: font(13),
+                        color: reasonId ? colors.text : colors.textTertiary,
+                        flex: 1,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {reasonText || "Select a reason"}
+                    </Text>
+                    <ChevronDown
+                      size={16}
+                      color={reasonId ? colors.primary : colors.textTertiary}
+                    />
+                  </>
+                )}
               </TouchableOpacity>
 
               {/* Additional Comments */}
@@ -203,9 +263,9 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                 style={{
                   fontFamily: "Poppins_500Medium",
                   fontSize: font(12),
-                  color: colors.textSecondary,
+                  color: colors.text,
                   marginLeft: 1,
-                  marginTop: spacing(16),
+                  marginTop: spacing(10),
                   marginBottom: 5,
                 }}
               >
@@ -239,7 +299,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                   backgroundColor: colors.primary + "10",
                   padding: spacing(12),
                   borderRadius: 8,
-                  marginTop: spacing(20),
+                  marginTop: spacing(10),
                 }}
               >
                 <Text
@@ -258,16 +318,17 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
               <View
                 style={{
                   flexDirection: "row",
-                  gap: spacing(12),
-                  marginTop: spacing(24),
+                  gap: spacing(10),
+                  marginTop: spacing(20),
+                  justifyContent: "flex-end",
                 }}
               >
                 <TouchableOpacity
                   style={{
-                    flex: 1,
                     borderWidth: 1,
                     borderColor: colors.border,
-                    paddingVertical: spacing(14),
+                    paddingVertical: spacing(10),
+                    paddingHorizontal: spacing(20),
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
@@ -277,9 +338,9 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                 >
                   <Text
                     style={{
-                      fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(14),
-                      color: colors.text,
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(13),
+                      color: colors.textSecondary,
                     }}
                   >
                     Keep Order
@@ -288,26 +349,31 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
                 <TouchableOpacity
                   style={{
-                    flex: 1,
-                    backgroundColor: reason ? "#e10320" : colors.border + "80",
-                    paddingVertical: spacing(14),
+                    backgroundColor: colors.primary,
+                    opacity: reasonId ? 1 : 0.5,
+                    paddingVertical: spacing(10),
+                    paddingHorizontal: spacing(20),
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  activeOpacity={reason ? 0.8 : 1}
-                  disabled={!reason}
+                  activeOpacity={reasonId && !cancelOrderMutation.isPending ? 0.8 : 1}
+                  disabled={!reasonId || cancelOrderMutation.isPending}
                   onPress={handleSubmit}
                 >
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(14),
-                      color: reason ? "#FFFFFF" : colors.textTertiary,
-                    }}
-                  >
-                    Confirm Cancel
-                  </Text>
+                  {cancelOrderMutation.isPending ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(13),
+                        color: "#FFFFFF",
+                      }}
+                    >
+                      Confirm Cancel
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -327,61 +393,93 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             <View
               style={{
                 backgroundColor: colors.background,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
                 paddingBottom: insets.bottom + spacing(16),
                 maxHeight: "80%",
               }}
             >
+              {/* 🔥 Floating Cross */}
+              <View
+                style={{
+                  position: "absolute",
+                  top: -spacing(50),
+                  left: 0,
+                  right: 0,
+                  alignItems: "center",
+                  zIndex: 10,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => setReasonModalVisible(false)}
+                  activeOpacity={0.8}
+                  style={{
+                    width: spacing(36),
+                    height: spacing(36),
+                    borderRadius: spacing(18),
+                    backgroundColor: colors.background,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 0.5,
+                    borderColor: colors.border,
+                    elevation: 5,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.15,
+                    shadowRadius: 6,
+                    shadowOffset: { width: 0, height: 3 },
+                  }}
+                >
+                  <X size={font(16)} color={colors.text} strokeWidth={2.5} />
+                </TouchableOpacity>
+              </View>
+
               {/* Header */}
               <View
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  paddingVertical: spacing(12),
                   paddingHorizontal: spacing(16),
-                  paddingTop: spacing(20),
-                  paddingBottom: spacing(12),
                   borderBottomWidth: 1,
                   borderBottomColor: colors.border,
                 }}
               >
                 <Text
                   style={{
-                    fontFamily: "Poppins_600SemiBold",
                     fontSize: font(16),
+                    fontFamily: "Poppins_600SemiBold",
                     color: colors.text,
+                    includeFontPadding: false,
+                    lineHeight: font(20),
                   }}
                 >
                   Select Reason
                 </Text>
-                <TouchableOpacity
-                  onPress={() => setReasonModalVisible(false)}
+                <Text
                   style={{
-                    width: spacing(32),
-                    height: spacing(32),
-                    borderRadius: spacing(16),
-                    backgroundColor: colors.inputBackground || colors.surface,
-                    alignItems: "center",
-                    justifyContent: "center",
+                    fontSize: font(13),
+                    fontFamily: "Poppins_400Regular",
+                    color: colors.textSecondary,
+                    includeFontPadding: false,
+                    lineHeight: font(18),
+                    marginTop: 4,
                   }}
                 >
-                  <X size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
+                  Please tell us why you are cancelling this order
+                </Text>
               </View>
 
               {/* List */}
               <FlatList
-                data={CANCELLATION_REASONS}
-                keyExtractor={(item) => item}
+                data={reasonsList}
+                keyExtractor={(item) => item.id.toString()}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => {
-                  const isSelected = reason === item;
+                  const isSelected = reasonId === item.id;
                   return (
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => {
-                        setReason(item);
+                        setReasonId(item.id);
+                        setReasonText(item.reason);
                         setReasonModalVisible(false);
                       }}
                       style={{
@@ -405,7 +503,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
                           flex: 1,
                         }}
                       >
-                        {item}
+                        {item.reason}
                       </Text>
                       {isSelected && <Check size={16} color={colors.primary} />}
                     </TouchableOpacity>

@@ -1,3 +1,4 @@
+import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addToCart,
@@ -16,6 +17,9 @@ import {
   RemoveCartItemRequest,
 } from "../types/cart.types";
 import { useToast } from "../context/ToastContext";
+import { getCartQuantity } from "../api/home.api";
+import { GetCartQuantityParams, GetCartQuantityResponse } from "../types/home.types";
+import { useCartStore } from "../store/cartStore";
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
@@ -60,6 +64,9 @@ export const useAddToCart = () => {
             variables.user_id ?? 0,
             variables.visitor_id ?? "",
           ],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["cart-quantity"],
         });
       },
     });
@@ -225,6 +232,10 @@ export const useCartAction = () => {
           variables.visitor_id ?? "",
         ],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["cart-quantity"],
+      });
     },
 
     onSuccess: (data, variables) => {
@@ -254,10 +265,51 @@ export const useRemoveCartItem = () => {
       queryClient.invalidateQueries({
         queryKey: ["cart-count"],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: ["cart-quantity"],
+      });
     },
 
     onError: (error) => {
       showToast(error.message || "Failed to remove item", "error");
     },
   });
+};
+
+export const useCartQuantity = ({
+  visitor_id,
+  user_id,
+}: GetCartQuantityParams) => {
+  const setCart = useCartStore((state) => state.setCart);
+
+  return useQuery<GetCartQuantityResponse>({
+    queryKey: ["cart-quantity", visitor_id, user_id],
+    queryFn: async () => {
+      const response = await getCartQuantity({ visitor_id, user_id });
+      if (response?.status === 1 && Array.isArray(response.data)) {
+        setCart(response.data);
+      }
+      return response;
+    },
+    enabled: !!visitor_id && !!user_id,
+  });
+};
+
+export const useCartQuantitySync = ({
+  visitor_id,
+  user_id,
+}: GetCartQuantityParams) => {
+  const { data } = useCartQuantity({ visitor_id, user_id });
+  const setCart = useCartStore((state) => state.setCart);
+
+  React.useEffect(() => {
+    if (data?.status === 1 && Array.isArray(data.data)) {
+      setCart(data.data);
+    }
+  }, [data, setCart]);
+};
+
+export const useProductQuantity = (productId: number | undefined) => {
+  return useCartStore((state) => (productId ? state.items[productId] ?? 0 : 0));
 };

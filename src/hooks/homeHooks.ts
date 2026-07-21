@@ -12,11 +12,14 @@ import {
   getUsp,
   getAppHeaderBanner,
   getAppMainBanner,
+  submitRating,
 } from "../api/home.api";
 import {
   BulkEnquiryRequest,
   BulkEnquiryResponse,
   CategoryWithSubcategories,
+  SubmitRatingRequest,
+  SubmitRatingResponse,
 } from "../types/home.types";
 
 // useBanner hook
@@ -265,5 +268,16 @@ export const useBulkEnquiry = () => {
     onError: (error) => {
       console.log("❌", error.message);
     },
+  });
+};
+
+
+export const useSubmitRating = () => {
+  return useMutation<
+    SubmitRatingResponse,
+    Error,
+    SubmitRatingRequest
+  >({
+    mutationFn: submitRating,
   });
 };

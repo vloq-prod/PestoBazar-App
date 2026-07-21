@@ -23,7 +23,9 @@ import {
 } from "lucide-react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { Image } from "expo-image";
-// import * as ImagePicker from "expo-image-picker"; // ⚠️ Requires installation: npx expo install expo-image-picker
+import * as ImagePicker from "expo-image-picker";
+import { useAppVisitorStore } from "../../store/auth";
+import { useSubmitRating } from "../../hooks/homeHooks";
 
 interface Props {
   product_id: number;
@@ -41,33 +43,32 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
     comment: "",
   });
   const [media, setMedia] = useState<{ uri: string; type: "image" | "video" }[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { visitorId, userId } = useAppVisitorStore();
+  const { mutate: submitRatingMutation, isPending: isSubmitting } = useSubmitRating();
 
   const setField = (key: keyof typeof form) => (val: string) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
   const pickMedia = async (type: "image" | "video") => {
-    // ⚠️ MOCK Implementation for now. To use actual picker:
-    // 1. Run: npx expo install expo-image-picker
-    // 2. Uncomment the ImagePicker imports and logic
-    
-    /*
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Denied", "We need media library permissions to upload review media.");
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: type === "image" ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
-      allowsMultipleSelection: true,
+      allowsMultipleSelection: type === "image",
       quality: 0.8,
     });
 
-    if (!result.canceled) {
-      const newMedia = result.assets.map(asset => ({ uri: asset.uri, type: asset.type as "image" | "video" }));
-      setMedia(prev => [...prev, ...newMedia]);
+    if (!result.canceled && result.assets) {
+      const newMedia = result.assets.map((asset) => ({
+        uri: asset.uri,
+        type: type,
+      }));
+      setMedia((prev) => [...prev, ...newMedia]);
     }
-    */
-
-    Alert.alert("Note", "Please run 'npx expo install expo-image-picker' to enable media uploads. I've added a mock selection for now.", [
-      { text: "Mock Image", onPress: () => setMedia(prev => [...prev, { uri: "https://picsum.photos/200", type: "image" }]) },
-      { text: "Cancel", style: "cancel" }
-    ]);
   };
 
   const removeMedia = (index: number) => {
@@ -84,79 +85,57 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
       return;
     }
 
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      Alert.alert("Success", "Your review has been submitted successfully!");
-      setForm({ name: "", email: "", comment: "" });
-      setRating(0);
-      setMedia([]);
-      onSuccess?.();
-    }, 2000);
-  };
+    const imagesPayload = media
+      .filter((m) => m.type === "image")
+      .map((m, index) => {
+        const uri = m.uri;
+        const filename = uri.split("/").pop() || `image_${index}.jpg`;
+        const ext = filename.split(".").pop() || "jpg";
+        const mime = `image/${ext === "png" ? "png" : "jpeg"}`;
+        return {
+          uri,
+          name: filename,
+          type: mime,
+        };
+      });
 
-  const FormField = ({
-    label,
-    placeholder,
-    icon: Icon,
-    value,
-    onChange,
-    multiline = false,
-    keyboardType = "default",
-  }: any) => {
-    const [focused, setFocused] = useState(false);
-    return (
-      <View style={{ gap: 6, marginBottom: 16 }}>
-        <Text
-          style={{
-            fontFamily: "Poppins_500Medium",
-            fontSize: font(12),
-            color: colors.textSecondary,
-            marginLeft: 4,
-          }}
-        >
-          {label}
-        </Text>
-        <View
-          style={[
-            styles.inputContainer,
-            {
-              backgroundColor: colors.background,
-              borderColor: focused ? colors.primary : colors.border,
-              borderWidth: focused ? 1.5 : 1,
-              height: multiline ? 120 : 52,
-              paddingVertical: multiline ? 12 : 0,
-            },
-          ]}
-        >
-          {Icon && (
-            <Icon
-              size={18}
-              color={focused ? colors.primary : colors.textSecondary}
-              style={{ marginTop: multiline ? 2 : 0 }}
-            />
-          )}
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder={placeholder}
-            placeholderTextColor={colors.textTertiary}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            multiline={multiline}
-            keyboardType={keyboardType}
-            style={[
-              styles.textInput,
-              {
-                color: colors.text,
-                fontSize: font(14),
-                textAlignVertical: multiline ? "top" : "center",
-              },
-            ]}
-          />
-        </View>
-      </View>
+    const videoItem = media.find((m) => m.type === "video");
+    const videoPayload = videoItem
+      ? {
+          uri: videoItem.uri,
+          name: videoItem.uri.split("/").pop() || "video.mp4",
+          type: "video/mp4",
+        }
+      : undefined;
+
+    submitRatingMutation(
+      {
+        visitor_id: visitorId || "",
+        product_id: String(product_id),
+        user_id: userId || "",
+        rating: String(rating),
+        rating_comment: form.comment,
+        rating_full_name: form.name,
+        rating_email: form.email || "guest@pestobazaar.com",
+        images: imagesPayload,
+        video: videoPayload,
+      },
+      {
+        onSuccess: (data) => {
+          if (data.status === 1) {
+            Alert.alert("Success", data.message || "Your review has been submitted successfully!");
+            setForm({ name: "", email: "", comment: "" });
+            setRating(0);
+            setMedia([]);
+            onSuccess?.();
+          } else {
+            Alert.alert("Failed", data.message || "Failed to submit review");
+          }
+        },
+        onError: (err: any) => {
+          Alert.alert("Error", err?.message || "Something went wrong while submitting the review");
+        },
+      }
     );
   };
 
@@ -289,6 +268,72 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
           </>
         )}
       </TouchableOpacity>
+    </View>
+  );
+};
+
+const FormField = ({
+  label,
+  placeholder,
+  icon: Icon,
+  value,
+  onChange,
+  multiline = false,
+  keyboardType = "default",
+}: any) => {
+  const { colors } = useTheme();
+  const { font } = useResponsive();
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={{ gap: 6, marginBottom: 16 }}>
+      <Text
+        style={{
+          fontFamily: "Poppins_500Medium",
+          fontSize: font(12),
+          color: colors.textSecondary,
+          marginLeft: 4,
+        }}
+      >
+        {label}
+      </Text>
+      <View
+        style={[
+          styles.inputContainer,
+          {
+            backgroundColor: colors.background,
+            borderColor: focused ? colors.primary : colors.border,
+            borderWidth: focused ? 1.5 : 1,
+            height: multiline ? 120 : 52,
+            paddingVertical: multiline ? 12 : 0,
+          },
+        ]}
+      >
+        {Icon && (
+          <Icon
+            size={18}
+            color={focused ? colors.primary : colors.textSecondary}
+            style={{ marginTop: multiline ? 2 : 0 }}
+          />
+        )}
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textTertiary}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          style={[
+            styles.textInput,
+            {
+              color: colors.text,
+              fontSize: font(14),
+              textAlignVertical: multiline ? "top" : "center",
+            },
+          ]}
+        />
+      </View>
     </View>
   );
 };

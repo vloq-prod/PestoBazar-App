@@ -19,7 +19,7 @@ const Bone = ({
   borderRadius = 8,
   style,
 }: {
-  width: number | string;
+  width?: number | string;
   height: number;
   borderRadius?: number;
   style?: any;
@@ -90,8 +90,7 @@ const ProductDetailsSkeleton = () => {
         </View>
 
         {/* ── Price card ── */}
-        <View
-       
+        <View     
         >
           <View style={[styles.row, { alignItems: "center" }]}>
             <Bone width={100} height={30} borderRadius={6} />

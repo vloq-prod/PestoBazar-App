@@ -13,7 +13,7 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
-import { useAddToCart } from "../../hooks/cartHooks";
+import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 
 interface Props {
   item: ListingItem;
@@ -28,8 +28,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   const { visitorId, userId } = useAppVisitorStore((s) => s);
   const { addToCart, loading } = useAddToCart();
 
-  const [qty, setQty] = useState(0);
+  const qty = useProductQuantity(item.id);
   const [inputVal, setInputVal] = useState("1");
+
+  React.useEffect(() => {
+    setInputVal(qty === 0 ? "1" : String(qty));
+  }, [qty]);
 
   // ✅ Clean calculations
   const price = Number(item.selling_price);
@@ -58,12 +62,8 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
           qty: parsed,
         },
         {
-          onSuccess: (data) => {
-            if (data.status === 1) {
-              setQty(parsed);
-            } else {
-              setInputVal(String(qty));
-            }
+          onError: () => {
+            setInputVal(String(qty));
           },
         },
       );
@@ -163,22 +163,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
               disabled={loading}
               onPress={() => {
                 const newQty = 1;
-                addToCart(
-                  {
-                    user_id: userId ?? 0,
-                    visitor_id: visitorId,
-                    product_id: item.id,
-                    qty: newQty,
-                  },
-                  {
-                    onSuccess: (data) => {
-                      if (data.status === 1) {
-                        setQty(newQty);
-                        setInputVal("1");
-                      }
-                    },
-                  },
-                );
+                addToCart({
+                  user_id: userId ?? 0,
+                  visitor_id: visitorId,
+                  product_id: item.id,
+                  qty: newQty,
+                });
                 onAddToCart?.(item, newQty);
               }}
               style={{
@@ -229,22 +219,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 disabled={loading}
                 onPress={() => {
                   const nextQty = qty <= 1 ? 0 : qty - 1;
-                  addToCart(
-                    {
-                      user_id: userId ?? 0,
-                      visitor_id: visitorId,
-                      product_id: item.id,
-                      qty: nextQty,
-                    },
-                    {
-                      onSuccess: (data) => {
-                        if (data.status === 1) {
-                          setQty(nextQty);
-                          setInputVal(nextQty === 0 ? "1" : String(nextQty));
-                        }
-                      },
-                    },
-                  );
+                  addToCart({
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  });
                   onAddToCart?.(item, nextQty);
                 }}
                 style={{
@@ -284,22 +264,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 disabled={loading}
                 onPress={() => {
                   const nextQty = qty + 1;
-                  addToCart(
-                    {
-                      user_id: userId ?? 0,
-                      visitor_id: visitorId,
-                      product_id: item.id,
-                      qty: nextQty,
-                    },
-                    {
-                      onSuccess: (data) => {
-                        if (data.status === 1) {
-                          setQty(nextQty);
-                          setInputVal(String(nextQty));
-                        }
-                      },
-                    },
-                  );
+                  addToCart({
+                    user_id: userId ?? 0,
+                    visitor_id: visitorId,
+                    product_id: item.id,
+                    qty: nextQty,
+                  });
                   onAddToCart?.(item, nextQty);
                 }}
                 style={{

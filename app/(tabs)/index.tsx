@@ -676,7 +676,7 @@ export default function HomeScreen() {
   // Show promo banner smoothly after 1 second
   useEffect(() => {
     const timer = setTimeout(() => {
-      promoHeight.value = withTiming(100, { duration: 800 });
+      promoHeight.value = withTiming(106, { duration: 800 });
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
@@ -745,8 +745,8 @@ export default function HomeScreen() {
     return {
       position: 'relative', // Now sits inside header naturally at top
       height: promoHeight.value,
-      opacity: interpolate(promoHeight.value, [0, 100], [0, 1], Extrapolation.CLAMP),
       overflow: "hidden",
+      justifyContent: "flex-end", // Aligns content to bottom so the wave slides down first
       zIndex: 10, // above heroImage
     };
   });
@@ -756,7 +756,7 @@ export default function HomeScreen() {
   // ─────────────────────────────────────────────
 
   const sections = useMemo(
-    () => [
+    () => [    
       { id: "sliding_banners", data: slidingbanners },
       { id: "category_card_section" },
       { id: "home_product", data: homeProducts },

@@ -13,7 +13,7 @@ import { useResponsive } from "../../utils/useResponsive";
 import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
-import { useAddToCart } from "../../hooks/cartHooks";
+import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 
 export default function ItemCard({
   item,
@@ -29,8 +29,12 @@ export default function ItemCard({
   const { visitorId, userId } = useAppVisitorStore((s) => s);
   const { addToCart, loading } = useAddToCart();
 
-  const [qty, setQty] = useState(0);
+  const qty = useProductQuantity(item.id);
   const [inputVal, setInputVal] = useState("1");
+
+  React.useEffect(() => {
+    setInputVal(qty === 0 ? "1" : String(qty));
+  }, [qty]);
 
   const handleQtyInput = (val: string) => {
     setInputVal(val);
@@ -44,12 +48,8 @@ export default function ItemCard({
           qty: parsed,
         },
         {
-          onSuccess: (data) => {
-            if (data.status === 1) {
-              setQty(parsed);
-            } else {
-              setInputVal(String(qty));
-            }
+          onError: () => {
+            setInputVal(String(qty));
           },
         },
       );
@@ -76,66 +76,36 @@ export default function ItemCard({
   // ── Add to cart action ──────────────────────────────────────
   const handleAddToCart = (e: any) => {
     e.stopPropagation();
-    addToCart(
-      {
-        user_id: userId ?? 0,
-        visitor_id: visitorId,
-        product_id: item.id,
-        qty: 1,
-      },
-      {
-        onSuccess: (data) => {
-          if (data.status === 1) {
-            setQty(1);
-            setInputVal("1");
-          }
-        },
-      },
-    );
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: 1,
+    });
     onAddToCart?.(item, 1);
   };
 
   const handleDecrement = (e: any) => {
     e.stopPropagation();
     const nextQty = qty <= 1 ? 0 : qty - 1;
-    addToCart(
-      {
-        user_id: userId ?? 0,
-        visitor_id: visitorId,
-        product_id: item.id,
-        qty: nextQty,
-      },
-      {
-        onSuccess: (data) => {
-          if (data.status === 1) {
-            setQty(nextQty);
-            setInputVal(nextQty === 0 ? "1" : String(nextQty));
-          }
-        },
-      },
-    );
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: nextQty,
+    });
     onAddToCart?.(item, nextQty);
   };
 
   const handleIncrement = (e: any) => {
     e.stopPropagation();
     const nextQty = qty + 1;
-    addToCart(
-      {
-        user_id: userId ?? 0,
-        visitor_id: visitorId,
-        product_id: item.id,
-        qty: nextQty,
-      },
-      {
-        onSuccess: (data) => {
-          if (data.status === 1) {
-            setQty(nextQty);
-            setInputVal(String(nextQty));
-          }
-        },
-      },
-    );
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: nextQty,
+    });
     onAddToCart?.(item, nextQty);
   };
 

@@ -33,7 +33,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { useAddToCart, useCartCount } from "../../../src/hooks/cartHooks";
+import { useAddToCart, useCartCount, useProductQuantity } from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import type { ProductVariation } from "../../../src/types/productdetails.types";
@@ -67,7 +67,6 @@ const ProductDetails = () => {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const reviewSectionY = useRef(0);
 
-  const [quantity, setQuantity] = useState(0);
   const [showPincodeModal, setShowPincodeModal] = useState(false);
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);
 
@@ -107,7 +106,8 @@ const ProductDetails = () => {
   const variationmaster = data?.variationmaster;
   const selectedVariation = data?.variation;
   const realProductId = selectedVariation?.id;
-  // console.log("realproductt id: ", realProductId);
+  console.log("product details id: ", realProductId);
+  const quantity = useProductQuantity(realProductId ?? productId);
   const pricing = data?.pricing;
 
   // ─── Derived Values ─────────────────────────────────────────
@@ -215,61 +215,34 @@ const ProductDetails = () => {
   // ─── Cart Handlers ──────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
     if (!realProductId) return;
-    addToCart(
-      {
-        user_id: userId ?? 0,
-        visitor_id: visitorId!,
-        product_id: realProductId,
-        qty: 1,
-      },
-      {
-        onSuccess: (res) => {
-          if (res.status === 1) {
-            setQuantity(1);
-          }
-        },
-      },
-    );
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId!,
+      product_id: realProductId,
+      qty: 1,
+    });
   }, [realProductId, visitorId, addToCart]);
 
   const handleIncrease = useCallback(() => {
     if (!realProductId) return;
     const nextQty = quantity + 1;
-    addToCart(
-      {
-        user_id: userId ?? 0,
-        visitor_id: visitorId!,
-        product_id: realProductId,
-        qty: nextQty,
-      },
-      {
-        onSuccess: (res) => {
-          if (res.status === 1) {
-            setQuantity(nextQty);
-          }
-        },
-      },
-    );
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId!,
+      product_id: realProductId,
+      qty: nextQty,
+    });
   }, [quantity, realProductId, visitorId, addToCart]);
 
   const handleDecrease = useCallback(() => {
     if (!realProductId) return;
     const nextQty = Math.max(quantity - 1, 0);
-    addToCart(
-      {
-        user_id: userId ?? 0,
-        visitor_id: visitorId!,
-        product_id: realProductId,
-        qty: nextQty,
-      },
-      {
-        onSuccess: (res) => {
-          if (res.status === 1) {
-            setQuantity(nextQty);
-          }
-        },
-      },
-    );
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId!,
+      product_id: realProductId,
+      qty: nextQty,
+    });
   }, [quantity, realProductId, visitorId, addToCart]);
 
   // ─── Modal / Sheet Handlers ─────────────────────────────────

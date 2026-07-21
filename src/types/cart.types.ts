@@ -13,6 +13,8 @@ export interface CartSummary {
   amount_to_pay: number;
   free_shipping_message: string;
   free_shipping: string;
+  gst_amount?: number | string;
+  cod_charges?: string;
 }
 
 // src/types/cart.types.ts
@@ -27,6 +29,7 @@ export interface CartItem {
   slug: string;
   active: string;
 
+  cart_amount?: string;
   cart_id: number;
   enc_product_id: string;
 
@@ -81,59 +84,6 @@ export interface UseCartParams {
   visitor_id?: string;
 }
 
-export interface CartSummary {
-  cart_id: string;
-  cart_amount: string;
-  cart_count: number;
-  shipping_charge: string;
-  amount_to_pay: number;
-  free_shipping_message: string;
-  free_shipping: string;
-  gst_amount: number | string;
-  cod_charges: string;
-}
-
-export interface CartItem {
-  id: number;
-  qty: number;
-  price_per_piece: string;
-  pack: number;
-  total_price: string;
-
-  name: string;
-  slug: string;
-  active: string;
-
-  cart_amount: string;
-  cart_id: number;
-
-  enc_product_id: string;
-
-  actual_price: string;
-  you_save: string;
-
-  variation_id: number;
-  product_id: number;
-
-  category_slug: string;
-  product_slug: string;
-
-  shipping_charge: string;
-  main_image: string;
-
-  size: string;
-  tax_percent: string;
-  gst_amount: string;
-
-  stock: number;
-  branch_id: number;
-
-  listing_type: string;
-  parent_variant_id: number;
-
-  sku: string;
-  s3_image_path: string;
-}
 
 export interface RazorpayConfig {
   RAZORPAY_KEY: string;

@@ -339,3 +339,52 @@ export interface BulkEnquiryData {
 
 export type BulkEnquiryResponse =
   ApiResponse<BulkEnquiryData>;
+
+
+
+
+export interface CartQuantityItem {
+  product_id: number;
+  qty: number;
+}
+
+export interface GetCartQuantityResponse {
+  message: string;
+  status: number;
+  data: CartQuantityItem[];
+}
+
+export interface GetCartQuantityParams {
+  visitor_id: string;
+  user_id: string;
+}
+
+
+
+
+export interface SubmitRatingRequest {
+  visitor_id: string;
+  product_id: string;
+  user_id: string;
+  rating: string;
+  rating_comment: string;
+  rating_full_name: string;
+  rating_email: string;
+
+  images?: {
+    uri: string;
+    name: string;
+    type: string;
+  }[];
+
+  video?: {
+    uri: string;
+    name: string;
+    type: string;
+  };
+}
+
+export interface SubmitRatingResponse {
+  status: number;
+  message: string;
+}

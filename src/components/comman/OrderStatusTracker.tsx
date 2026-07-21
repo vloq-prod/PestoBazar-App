@@ -62,6 +62,8 @@ const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
   const isCancelled = currentStatus?.toLowerCase() === "cancelled";
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
+
+  console.log("current staus: ", currentStatus)
   React.useEffect(() => {
     if (!isCancelled) {
       Animated.loop(
@@ -133,11 +135,34 @@ const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
     );
   }
 
-  const currentIndex = ORDER_STATUSES.findIndex(
-    (s) => s.label.toLowerCase() === currentStatus?.toLowerCase(),
-  );
+  const getActiveIndex = (status: string) => {
+    const s = (status || "").toLowerCase().trim();
+    if (s.includes("delivered") || s.includes("completed") || s.includes("refunded")) {
+      return 4; // Product Delivered
+    }
+    if (s.includes("delivery") || s.includes("transit") || s.includes("shipped") || s.includes("on way")) {
+      return 3; // On Delivery
+    }
+    if (
+      s.includes("dispatched") ||
+      s.includes("dispatch") ||
+      s.includes("picked") ||
+      s.includes("pick up") ||
+      s.includes("pickup")
+    ) {
+      if (s.includes("scheduled")) {
+        return 1; // Pickup Scheduled
+      }
+      return 2; // Product Dispatched / Picked Up
+    }
+    if (s.includes("scheduled") || s.includes("approved")) {
+      return 1; // Pickup Scheduled
+    }
+    return 0; // Order Placed
+  };
 
-  const activeIndex = currentIndex === -1 ? 0 : currentIndex;
+  const activeIndex = getActiveIndex(currentStatus);
+  console.log("DEBUG tracker status:", currentStatus, "activeIndex:", activeIndex);
 
   const activeColor = "#22C55E";
 

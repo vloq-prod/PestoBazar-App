@@ -48,13 +48,16 @@ const ReviewSection = ({ product_id }: Props) => {
   if (!reviews || reviews.length === 0) {
     return (
       <View style={styles.container}>
-        {/* <AddReviewForm product_id={product_id} /> */}
+        <AddReviewForm product_id={product_id} />
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { gap: spacing(24) }]}>
+      {/* ─── Add Review Form Component ─── */}
+      <AddReviewForm product_id={product_id} />
+
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
         <Text
@@ -83,7 +86,7 @@ const ReviewSection = ({ product_id }: Props) => {
         ))}
       </ScrollView>
 
-      {reviews.length > 6 && (
+      {reviews.length > 0 && (
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -110,13 +113,10 @@ const ReviewSection = ({ product_id }: Props) => {
               fontSize: font(13),
             }}
           >
-            View more
+            View all reviews
           </Text>
         </TouchableOpacity>
       )}
-
-      {/* ─── Add Review Form Component ─── */}
-      {/* <AddReviewForm product_id={product_id} /> */}
     </View>
   );
 };

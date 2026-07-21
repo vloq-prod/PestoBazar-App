@@ -335,6 +335,10 @@ const OrderDetails = () => {
 
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
+  console.log("DEBUG order details api response order:", JSON.stringify(orderData?.order));
+  const isReturnAvailable = (orderData?.shiprocket_orders || []).some(
+    (so: any) => so.return_available === "Yes"
+  );
 
   if (!id) {
     return (
@@ -772,15 +776,16 @@ const OrderDetails = () => {
                       color: colors.textTertiary,
                     }}
                   >
-                    Cancel this order if you've changed your mind
+                    {"Cancel this order if you've changed your mind"}
                   </Text>
                 </View>
               </TouchableOpacity>
             )}
 
-            {currentStatus === "Delivered" && (
+            {isReturnAvailable && (
               <TouchableOpacity
                 style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+                onPress={() => router.push(`/returnproducts/${id}`)}
               >
                 <View
                   style={{
@@ -856,15 +861,10 @@ const OrderDetails = () => {
       {/* ── Cancel Order Modal ── */}
       <CancelOrderModal
         visible={isCancelModalVisible}
+        orderId={id}
+        orderNumber={orderData?.order?.order_no ?? ""}
         onClose={() => setIsCancelModalVisible(false)}
-        onSubmit={(reason, comments) => {
-          // Implement your cancel API call here
-          console.log(
-            "Cancelling order with reason:",
-            reason,
-            "and comments:",
-            comments,
-          );
+        onSuccess={() => {
           setIsCancelModalVisible(false);
         }}
       />

@@ -14,6 +14,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useDeliveryStore } from "../src/store/deliveryStore";
 import { ToastProvider } from "../src/context/ToastContext";
 import { ToastContainer } from "../src/components/Toast/ToastContainer";
+import { useCartQuantitySync } from "../src/hooks/cartHooks";
 
 function RootLayoutNav() {
   // font scaling fix
@@ -91,20 +92,31 @@ function RootLayoutNav() {
 
   // 🔥 ALWAYS RENDER BOTH (NO CONDITION)
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: "slide_from_right",
-        gestureEnabled: true,
-      }}
-    >
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(stack)" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="welcome" />
-    </Stack>
+    <CartQuantitySyncProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          gestureEnabled: true,
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(stack)" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="welcome" />
+      </Stack>
+    </CartQuantitySyncProvider>
   );
 }
+
+const CartQuantitySyncProvider = ({ children }: { children: React.ReactNode }) => {
+  const { visitorId, userId } = useAppVisitorStore();
+  useCartQuantitySync({
+    visitor_id: visitorId || "",
+    user_id: String(userId ?? 0),
+  });
+  return <>{children}</>;
+};
 
 export default function RootLayout() {
   const { fontsLoaded } = useFonts();

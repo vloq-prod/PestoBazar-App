@@ -14,6 +14,10 @@ import {
   UspApiResponse,
   AppHeaderBannerApiResponse,
   AppMainBannerApiResponse,
+  SubmitRatingRequest,
+  SubmitRatingResponse,
+  GetCartQuantityParams,
+  GetCartQuantityResponse,
 } from "../types/home.types";
 
 // banner api
@@ -135,4 +139,76 @@ export const bulkEnquiryApi = async (
   );
 
   return response.data;
+};
+
+
+
+
+
+
+  
+
+
+
+export const getCartQuantity = async ({
+  visitor_id,
+  user_id,
+}: GetCartQuantityParams): Promise<GetCartQuantityResponse> => {
+  const { data } = await apiClient.get<GetCartQuantityResponse>(
+    "app-api/v1/get-cart-quantity",
+    {
+      params: {
+        visitor_id,
+        user_id,
+      },
+    },
+  );
+
+  return data;
+};
+
+
+
+export const submitRating = async (
+  payload: SubmitRatingRequest,
+): Promise<SubmitRatingResponse> => {
+  const formData = new FormData();
+
+  formData.append("visitor_id", payload.visitor_id);
+  formData.append("product_id", payload.product_id);
+  formData.append("user_id", payload.user_id);
+  formData.append("rating", payload.rating);
+  formData.append("rating_comment", payload.rating_comment);
+  formData.append("rating_full_name", payload.rating_full_name);
+  formData.append("rating_email", payload.rating_email);
+
+  // Images
+  payload.images?.forEach((image) => {
+    formData.append("images[]", {
+      uri: image.uri,
+      name: image.name,
+      type: image.type,
+    } as any);
+  });
+
+  // Video
+  if (payload.video) {
+    formData.append("video", {
+      uri: payload.video.uri,
+      name: payload.video.name,
+      type: payload.video.type,
+    } as any);
+  }
+
+  const { data } = await apiClient.post<SubmitRatingResponse>(
+    "app-api/v1/rating",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return data;
 };

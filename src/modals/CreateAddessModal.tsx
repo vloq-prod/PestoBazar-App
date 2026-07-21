@@ -60,7 +60,7 @@ export default function CreateAddressModal({ visible, onClose }: Props) {
       email: cleanData.email,
       building: cleanData.building,
       area: cleanData.area,
-      address: cleanData.address,
+      address: cleanData.address || "",
       state: "21",
       city: cleanData.city,
       pincode: cleanData.pincode,

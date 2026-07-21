@@ -1,7 +1,7 @@
 import { Text, View, TouchableOpacity } from "react-native";
 import React from "react";
 import { Image } from "expo-image";
-import { Tag } from "lucide-react-native";
+import { ArrowUpLeft } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
@@ -39,81 +39,52 @@ const SearchItem: React.FC<Props> = ({ item }) => {
           },
         })
       }
-      activeOpacity={0.88}
-      style={{ flex: 1 }}
+      activeOpacity={0.8}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        padding: spacing(12),
+        backgroundColor: colors.surface,
+      }}
     >
-      {/* IMAGE BLOCK WITH FLOATING DISCOUNT BADGE */}
+      {/* Product Image Thumbnail */}
       <View
         style={{
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderRadius: spacing(14),
+          width: spacing(40),
+          height: spacing(40),
+          borderRadius: spacing(8),
           overflow: "hidden",
-          backgroundColor: colors.surfaceElevated,
-          alignItems: "center",
+          backgroundColor: colors.inputBackground || "#F5F5F5",
+          marginRight: spacing(12),
         }}
       >
         <Image
           source={{ uri: item.image_path }}
-          style={{
-            width: "90%",
-            aspectRatio: 1,
-          }}
-          contentFit="contain"
+          style={{ width: "100%", height: "100%" }}
+          contentFit="cover"
         />
-
-        {/* Discount badge */}
-        {discount && (
-          <View
-            style={{
-              position: "absolute",
-              top: spacing(8),
-              left: spacing(8),
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: spacing(8),
-              height: spacing(22),
-              borderRadius: spacing(7),
-              backgroundColor: colors.saleRed,
-            }}
-          >
-            <Tag
-              size={spacing(10)}
-              color={colors.textInverse}
-              strokeWidth={2.2}
-            />
-            <Text
-              style={{
-                marginLeft: spacing(4),
-                fontSize: font(10),
-                color: colors.textInverse,
-                fontFamily: "Poppins_600SemiBold",
-                includeFontPadding: false,
-                textAlignVertical: "center",
-              }}
-            >
-              {discount}%
-            </Text>
-          </View>
-        )}
       </View>
 
-      {/* INFO BELOW IMAGE */}
-      <View style={{ paddingTop: spacing(3) }}>
-        {/* Price row */}
-        <View
+      {/* Product Info */}
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <Text
+          numberOfLines={1}
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing(4),
+            fontSize: font(14),
+            fontFamily: "Poppins_500Medium",
+            color: colors.text,
+            includeFontPadding: false,
           }}
         >
+          {item.product_name}
+        </Text>
+
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6), marginTop: spacing(4) }}>
           <Text
             style={{
-              fontSize: font(16),
-              color: colors.text,
-              fontFamily: "Poppins_700Bold",
+              fontSize: font(13),
+              fontFamily: "Poppins_600SemiBold",
+              color: colors.textSecondary,
               includeFontPadding: false,
             }}
           >
@@ -123,7 +94,7 @@ const SearchItem: React.FC<Props> = ({ item }) => {
           {discount && (
             <Text
               style={{
-                fontSize: font(9),
+                fontSize: font(11),
                 color: colors.textTertiary,
                 textDecorationLine: "line-through",
                 fontFamily: "Poppins_400Regular",
@@ -134,21 +105,10 @@ const SearchItem: React.FC<Props> = ({ item }) => {
             </Text>
           )}
         </View>
-
-        {/* Product name */}
-        <Text
-          numberOfLines={2}
-          style={{
-            fontSize: font(11),
-            fontFamily: "Poppins_500Medium",
-            color: colors.text,
-            marginTop: spacing(1),
-            lineHeight: font(16),
-          }}
-        >
-          {item.product_name}
-        </Text>
       </View>
+
+      {/* Arrow Icon */}
+      <ArrowUpLeft size={18} color={colors.textTertiary || colors.border} style={{ marginLeft: spacing(10) }} />
     </TouchableOpacity>
   );
 };
