@@ -134,19 +134,18 @@ export interface DealsApiResponse {
   data: DealItem[];
 }
 
-// Deals Listing Page
 export interface DealsListingBanner {
   id: number;
-  desktop_banner: string;
-  mobile_banner: string;
-  redirect: string;
-  banner_type: string;
-  sequence: number;
-  s3_image_path: string;
-  is_s3_uploaded: string | null;
-  desktop_banner_url: string;
-  mobile_banner_url: string;
-  s3_image_url: string;
+  desktop_banner?: string | null;
+  mobile_banner?: string | null;
+  redirect?: string | null;
+  banner_type?: string | null;
+  sequence?: number | null;
+  s3_image_path?: string | null;
+  is_s3_uploaded?: string | null;
+  desktop_banner_url?: string | null;
+  mobile_banner_url?: string | null;
+  s3_image_url?: string | null;
 }
 
 export interface DealsListingProductImage {
@@ -158,29 +157,29 @@ export interface DealsListingItem {
   id: number;
   product_id: number;
   url: string;
-  size: string;
-  unit: string;
+  size?: string | null;
+  unit?: string | null;
   mrp: string;
   selling_price: string;
-  discount_percentage: string;
+  discount_percentage?: string | null;
   product_name: string;
-  overview: string;
-  avg_rating: string;
-  total_reviews: number;
-  listing_type: string;
-  image_path: string;
-  product_variation_id: number;
-  enc_product_variation_id: string;
-  deal_start_date: string;
-  expiry_date: string;
-  product_all_images: DealsListingProductImage[];
+  overview?: string | null;
+  avg_rating?: string | null;
+  total_reviews?: number | null;
+  listing_type?: string | null;
+  image_path?: string | null;
+  product_variation_id?: number | null;
+  enc_product_variation_id?: string | null;
+  deal_start_date?: string | null;
+  expiry_date?: string | null;
+  product_all_images?: DealsListingProductImage[];
 }
 
 export interface DealsListingApiResponse {
   message: string;
   status: number;
   data: {
-    banner: DealsListingBanner;
+    banner: DealsListingBanner | null;
     data: DealsListingItem[];
     total_count: number;
     page_no: number;

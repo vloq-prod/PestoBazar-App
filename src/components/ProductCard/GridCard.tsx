@@ -79,15 +79,26 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.88}
-      onPress={() =>
-        router.push({
-          pathname: "(stack)/product/[id]",
-          params: {
-            id: item.id,
-            product_name: item.product_name,
-          },
-        })
-      }
+      onPress={() => {
+        if (!item.id || isNaN(Number(item.id))) {
+          router.push({
+            pathname: "(stack)/product/[id]",
+            params: {
+              id: "slug",
+              product_slug: (item as any).url || (item as any).product_url,
+              product_name: item.product_name,
+            },
+          });
+        } else {
+          router.push({
+            pathname: "(stack)/product/[id]",
+            params: {
+              id: item.id,
+              product_name: item.product_name,
+            },
+          });
+        }
+      }}
       style={{
         flex: 1,
       }}

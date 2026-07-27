@@ -317,43 +317,23 @@ export default function ShopScreen() {
                 </View>
               )}
 
-              {/* ── Products below categories (3-col grid) ── */}
+              {/* ── Products below categories (3-column grid) ── */}
               {productSuggestions.length > 0 && (
                 <View style={{ paddingTop: spacing(8) }}>
-                  {Array.from(
-                    { length: Math.ceil(productSuggestions.length / COLS) },
-                    (_, rowIdx) => {
-                      const rowItems = productSuggestions.slice(
-                        rowIdx * COLS,
-                        rowIdx * COLS + COLS,
-                      );
-                      return (
-                        <View
-                          key={rowIdx}
-                          style={{
-                            flexDirection: "row",
-                            gap: H_GAP,
-                            marginBottom: V_GAP,
-                          }}
-                        >
-                          {rowItems.map((s: any, i: number) => (
-                            <View key={i} style={{ width: CARD_WIDTH }}>
-                              <SearchItem item={s} />
-                            </View>
-                          ))}
-                          {rowItems.length < COLS &&
-                            Array.from({ length: COLS - rowItems.length }).map(
-                              (_, i) => (
-                                <View
-                                  key={`empty-${i}`}
-                                  style={{ width: CARD_WIDTH }}
-                                />
-                              ),
-                            )}
-                        </View>
-                      );
-                    },
-                  )}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      columnGap: H_GAP,
+                      rowGap: V_GAP,
+                    }}
+                  >
+                    {productSuggestions.map((s: any, i: number) => (
+                      <View key={s.id || i} style={{ width: CARD_WIDTH }}>
+                        <ListingGridCard item={s} />
+                      </View>
+                    ))}
+                  </View>
                 </View>
               )}
             </>

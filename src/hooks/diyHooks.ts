@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDiyListing } from "../api/diy.api";
 import { DiyListingRequest } from "../types/diy.types";
 
-export const useDiyListing = (params: DiyListingRequest) => {
+export const useDiyListing = (params: DiyListingRequest = {}) => {
   const query = useQuery({
     queryKey: ["diy-listing", params],
     queryFn: () => getDiyListing(params),
@@ -13,6 +13,8 @@ export const useDiyListing = (params: DiyListingRequest) => {
     products: query.data?.data?.data || [],
     banner: query.data?.data?.banner || null,
     totalCount: query.data?.data?.total_count || 0,
+    pageNo: query.data?.data?.page_no || 1,
+    pageSize: query.data?.data?.page_size || 16,
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

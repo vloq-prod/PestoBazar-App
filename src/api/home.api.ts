@@ -6,6 +6,7 @@ import {
   BulkEnquiryResponse,
   CategoryApiResponse,
   DealsApiResponse,
+  DealsListingApiResponse,
   FeaturedApiResponse,
   GetRecentlyViewedParams,
   GetRecentlyViewedResponse,
@@ -79,8 +80,8 @@ export const getDealsOfTheDay = async (): Promise<DealsApiResponse> => {
 export const getDealsListing = async (
   page_no: number = 1,
   page_size: number = 16
-): Promise<any> => {
-  const response = await apiClient.get<any>(
+): Promise<DealsListingApiResponse> => {
+  const response = await apiClient.get<DealsListingApiResponse>(
     `/app-api/v1/deals-of-the-day?page_no=${page_no}&page_size=${page_size}`
   );
   return response.data;

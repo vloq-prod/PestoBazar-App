@@ -56,7 +56,12 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
     const parsed = parseInt(val);
     if (!isNaN(parsed) && parsed > 0) {
       addToCart(
-        { user_id: userId ?? 0, visitor_id: visitorId, product_id: item.id, qty: parsed },
+        {
+          user_id: userId ?? 0,
+          visitor_id: visitorId,
+          product_id: item.id,
+          qty: parsed,
+        },
         {
           onError: () => {
             setInputVal(String(qty));
@@ -68,21 +73,36 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
 
   const handleAddToCart = (e: any) => {
     e.stopPropagation();
-    addToCart({ user_id: userId ?? 0, visitor_id: visitorId, product_id: item.id, qty: 1 });
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: 1,
+    });
     onAddToCart?.(item, 1);
   };
 
   const handleDecrement = (e: any) => {
     e.stopPropagation();
     const nextQty = qty <= 1 ? 0 : qty - 1;
-    addToCart({ user_id: userId ?? 0, visitor_id: visitorId, product_id: item.id, qty: nextQty });
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: nextQty,
+    });
     onAddToCart?.(item, nextQty);
   };
 
   const handleIncrement = (e: any) => {
     e.stopPropagation();
     const nextQty = qty + 1;
-    addToCart({ user_id: userId ?? 0, visitor_id: visitorId, product_id: item.id, qty: nextQty });
+    addToCart({
+      user_id: userId ?? 0,
+      visitor_id: visitorId,
+      product_id: item.id,
+      qty: nextQty,
+    });
     onAddToCart?.(item, nextQty);
   };
 
@@ -141,7 +161,11 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
               backgroundColor: colors.saleRed,
             }}
           >
-            <Tag size={spacing(9)} color={colors.textInverse} strokeWidth={2.2} />
+            <Tag
+              size={spacing(9)}
+              color={colors.textInverse}
+              strokeWidth={2.2}
+            />
             <Text
               style={{
                 marginLeft: spacing(3),
@@ -174,7 +198,13 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
 
         {/* Rating */}
         {showRating && (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(2) }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing(2),
+            }}
+          >
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {[1, 2, 3, 4, 5].map((i) => {
                 const type = getStarType(i, rating);
@@ -209,7 +239,13 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
         )}
 
         {/* Price row */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(4) }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: spacing(4),
+          }}
+        >
           <Text
             style={{
               fontSize: font(15),

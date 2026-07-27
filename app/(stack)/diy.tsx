@@ -1,11 +1,11 @@
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, Dimensions, TouchableOpacity, Linking } from 'react-native';
 import React from 'react';
 import { Image } from 'expo-image';
 import AppNavbar from '../../src/components/comman/AppNavbar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme';
 import { useDiyListing } from '../../src/hooks/diyHooks';
-import ItemCard from '../../src/components/comman/ItemCard';
+import ItemCard, { ItemCardSkeleton } from '../../src/components/comman/ItemCard';
 import { useResponsive } from '../../src/utils/useResponsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -18,28 +18,44 @@ const DiyScreen = () => {
   // Fetch DIY products and banner
   const { products, banner, loading } = useDiyListing({});
 
+  const handleBannerPress = () => {
+    if (banner?.redirect) {
+      Linking.openURL(banner.redirect).catch((err) =>
+        console.error("Failed to open banner redirect URL:", err)
+      );
+    }
+  };
+
   const renderHeader = () => {
     if (!banner) return null;
     
-    // Banner will take full width
     const baseUrl = "https://static-cdn.pestobazaar.com/";
-    const rawUrl = banner.mobile_banner_url || banner.mobile_banner;
+    const rawUrl =
+      banner.s3_image_url ||
+      banner.mobile_banner_url ||
+      banner.desktop_banner_url ||
+      banner.mobile_banner ||
+      banner.s3_image_path;
+
     if (!rawUrl) return null;
 
     const imageUrl = rawUrl.startsWith("http")
       ? rawUrl
       : baseUrl + (rawUrl.startsWith("/") ? rawUrl.slice(1) : rawUrl);
 
-    console.log("DIY Banner image URL: ", imageUrl);
-
     return (
-      <View style={{ width: SCREEN_WIDTH, marginBottom: spacing(16) }}>
+      <TouchableOpacity 
+        activeOpacity={banner.redirect ? 0.8 : 1}
+        onPress={handleBannerPress}
+        disabled={!banner.redirect}
+        style={{ width: SCREEN_WIDTH, marginBottom: spacing(16) }}
+      >
         <Image 
           source={{ uri: imageUrl }}
-          style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / 2.5 }} 
+          style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / 2 }} 
           contentFit="cover"
         />
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -51,8 +67,20 @@ const DiyScreen = () => {
       <AppNavbar title="Do It Yourself" showBack hideBorder />
       
       {loading && products.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <View 
+          style={{ 
+            paddingHorizontal: spacing(16), 
+            flexDirection: 'row', 
+            flexWrap: 'wrap', 
+            gap: spacing(12),
+            paddingTop: spacing(16),
+          }}
+        >
+          {[1, 2, 3, 4, 5, 6].map((key) => (
+            <View key={key} style={{ width: itemWidth, marginBottom: spacing(16) }}>
+              <ItemCardSkeleton />
+            </View>
+          ))}
         </View>
       ) : (
         <FlatList

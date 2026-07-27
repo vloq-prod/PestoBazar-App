@@ -4,6 +4,7 @@ import {
   getBanners,
   getBranches,
   getDealsOfTheDay,
+  getDealsListing,
   getFeaturedProducts,
   getHomeCategories,
   getHomeProducts,
@@ -168,7 +169,7 @@ export const useDeals = () => {
 export const useDealsListing = (page_no: number = 1, page_size: number = 16) => {
   const query = useQuery({
     queryKey: ["deals-listing", page_no, page_size],
-    queryFn: () => require("../api/home.api").getDealsListing(page_no, page_size),
+    queryFn: () => getDealsListing(page_no, page_size),
   });
 
   return {

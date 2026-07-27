@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Animated,
+  DimensionValue,
 } from "react-native";
 import { Image } from "expo-image";
 import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
@@ -394,3 +396,161 @@ export default function ItemCard({
     </TouchableOpacity>
   );
 }
+
+// ─── ItemCard Skeleton ─────────────────────────────────────────────
+export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
+  const { colors } = useTheme();
+  const { font, spacing } = useResponsive();
+  const opacityAnim = React.useRef(new Animated.Value(0.4)).current;
+
+  React.useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0.4,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [opacityAnim]);
+
+  return (
+    <Animated.View
+      style={{ width: width || "100%", flex: 1, opacity: opacityAnim }}
+    >
+      {/* ── IMAGE BLOCK SKELETON ── */}
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: spacing(14),
+          overflow: "hidden",
+          backgroundColor: colors.surfaceElevated,
+          position: "relative",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* Main image placeholder */}
+        <View
+          style={{
+            width: "90%",
+            aspectRatio: 1,
+            borderRadius: spacing(10),
+            backgroundColor: colors.backgroundSkeleton,
+          }}
+        />
+
+        {/* Discount badge skeleton — top left */}
+        <View
+          style={{
+            position: "absolute",
+            top: spacing(8),
+            left: spacing(8),
+            width: spacing(42),
+            height: spacing(22),
+            borderRadius: spacing(7),
+            backgroundColor: colors.backgroundSkeleton,
+          }}
+        />
+
+        {/* Floating cart button skeleton — bottom right */}
+        <View
+          style={{
+            position: "absolute",
+            bottom: spacing(6),
+            right: spacing(6),
+            width: spacing(42),
+            height: spacing(30),
+            borderRadius: spacing(10),
+            backgroundColor: colors.backgroundSkeleton,
+          }}
+        />
+      </View>
+
+      {/* ── CONTENT SKELETON BELOW IMAGE ── */}
+      <View style={{ paddingTop: spacing(6), gap: spacing(5) }}>
+        {/* Price row skeleton */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: spacing(6),
+          }}
+        >
+          <View
+            style={{
+              width: "45%",
+              height: font(16),
+              borderRadius: spacing(4),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
+          <View
+            style={{
+              width: "25%",
+              height: font(10),
+              borderRadius: spacing(4),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
+        </View>
+
+        {/* Product title skeleton lines */}
+        <View
+          style={{
+            width: "90%",
+            height: font(11),
+            borderRadius: spacing(4),
+            backgroundColor: colors.backgroundSkeleton,
+          }}
+        />
+        <View
+          style={{
+            width: "65%",
+            height: font(11),
+            borderRadius: spacing(4),
+            backgroundColor: colors.backgroundSkeleton,
+          }}
+        />
+
+        {/* Rating row skeleton */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: spacing(4),
+            marginTop: spacing(2),
+          }}
+        >
+          <View
+            style={{
+              width: spacing(55),
+              height: font(9),
+              borderRadius: spacing(4),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
+          <View
+            style={{
+              width: spacing(20),
+              height: font(9),
+              borderRadius: spacing(4),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
+ItemCard.Skeleton = ItemCardSkeleton;

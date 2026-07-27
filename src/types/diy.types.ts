@@ -5,49 +5,49 @@ export interface ProductImage {
 
 export interface DiyBanner {
   id: number;
-  desktop_banner: string;
-  mobile_banner: string;
-  redirect: string;
-  banner_type: string;
-  sequence: number;
-  s3_image_path: string;
-  desktop_banner_url: string;
-  mobile_banner_url: string;
-  s3_image_url: string;
+  desktop_banner?: string | null;
+  mobile_banner?: string | null;
+  redirect?: string | null;
+  banner_type?: string | null;
+  sequence?: number | null;
+  s3_image_path?: string | null;
+  desktop_banner_url?: string | null;
+  mobile_banner_url?: string | null;
+  s3_image_url?: string | null;
 }
 
 export interface DiyItem {
-  diy_id: number;
-  diy_status: string;
-  diy_created_by: number;
-  diy_created_at: string;
-  diy_updated_by: number | null;
-  diy_updated_at: string | null;
-  overview: string;
+  diy_id?: number;
+  diy_status?: string;
+  diy_created_by?: number | null;
+  diy_created_at?: string | null;
+  diy_updated_by?: number | null;
+  diy_updated_at?: string | null;
+  overview?: string | null;
   id: number;
   url: string;
   mrp: string;
   selling_price: string;
-  size: string | null;
-  unit: string | null;
+  size?: string | null;
+  unit?: string | null;
   product_name: string;
-  is_new: string;
-  is_best_selling: string;
-  product_variation_id: number;
-  product_id: number;
-  avg_rating: string;
-  total_reviews: number;
-  listing_type: string;
-  hsn_code: string;
-  tax: string;
-  keywords: string;
-  sku: string;
-  category_id: number;
-  category_name: string;
-  category_slug: string;
-  image_path: string;
-  enc_product_variation_id: string;
-  product_all_images: ProductImage[];
+  is_new?: string | null;
+  is_best_selling?: string | null;
+  product_variation_id?: number;
+  product_id?: number;
+  avg_rating?: string | null;
+  total_reviews?: number | null;
+  listing_type?: string | null;
+  hsn_code?: string | null;
+  tax?: string | null;
+  keywords?: string | null;
+  sku?: string | null;
+  category_id?: number | null;
+  category_name?: string | null;
+  category_slug?: string | null;
+  image_path?: string | null;
+  enc_product_variation_id?: string | null;
+  product_all_images?: ProductImage[];
 }
 
 export interface DiyListingData {
@@ -67,5 +67,7 @@ export interface DiyListingResponse {
 export interface DiyListingRequest {
   page_no?: number;
   page_size?: number;
+  sort_by?: string | number;
+  search?: string;
   [key: string]: any;
 }

@@ -237,6 +237,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
 
           <TouchableOpacity
             activeOpacity={0.85}
+            onPress={() => router.push("/(tabs)/profile")}
           >
             {userAvatar ? (
               <Image
