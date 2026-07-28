@@ -314,7 +314,7 @@ const CategoryCardSection = () => {
                 color: colors.text,
               }}
             >
-              {category.mainCategoryName}
+              Shop by problem 
             </Text>
             <View
               style={{

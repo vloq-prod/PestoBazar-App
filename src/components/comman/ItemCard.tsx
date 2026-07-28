@@ -9,7 +9,7 @@ import {
   DimensionValue,
 } from "react-native";
 import { Image } from "expo-image";
-import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
+import { Plus, Minus, StarIcon } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { ProductItem } from "../../types/home.types";
@@ -20,6 +20,7 @@ import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 export default function ItemCard({
   item,
   onAddToCart,
+  onPress,
 }: {
   item: ProductItem;
   onPress?: (item: any) => void;
@@ -64,13 +65,9 @@ export default function ItemCard({
     return "empty";
   };
 
-  const discount =
-    Number(item.mrp) > Number(item.selling_price)
-      ? Math.round(
-          ((Number(item.mrp) - Number(item.selling_price)) / Number(item.mrp)) *
-            100,
-        )
-      : null;
+  const mrpVal = Number(item.mrp);
+  const sellingPriceVal = Number(item.selling_price);
+  const discountAmount = mrpVal > sellingPriceVal ? Math.round(mrpVal - sellingPriceVal) : null;
 
   const rating = Number(item.avg_rating);
   const showRating = rating > 0;
@@ -114,198 +111,228 @@ export default function ItemCard({
   return (
     <TouchableOpacity
       activeOpacity={0.88}
-      onPress={() =>
-        router.push({
-          pathname: "(stack)/product/[id]",
-          params: {
-            id: item.id,
-            product_name: item.product_name,
-          },
-        })
-      }
+      onPress={() => {
+        if (onPress) {
+          onPress(item);
+        } else {
+          router.push({
+            pathname: "(stack)/product/[id]",
+            params: {
+              id: item.id,
+              product_name: item.product_name,
+            },
+          });
+        }
+      }}
       style={{
         flex: 1,
-
-        // backgroundColor: colors.error,
       }}
     >
-      {/* ── IMAGE BLOCK (with floating cart control) ── */}
+      {/* ── BORDERED CONTAINER (Image, Divider, Off & ADD button) ── */}
       <View
         style={{
           borderWidth: 1,
           borderColor: colors.border,
-          borderRadius: spacing(14),
-          overflow: "hidden",
+          borderRadius: spacing(10),
           backgroundColor: colors.surfaceElevated,
         }}
       >
-        <Image
-          source={{ uri: item.s3_image_path }}
+        {/* Image Area */}
+        <View
           style={{
-            width: "90%",
-
-            aspectRatio: 1,
+            width: "100%",
+            aspectRatio: 1.15,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#fff",
+            borderTopLeftRadius: spacing(9),
+            borderTopRightRadius: spacing(9),
+            overflow: "hidden",
           }}
-          contentFit="contain"
+        >
+          <Image
+            source={{ uri: item.s3_image_path }}
+            style={{
+              width: "85%",
+              height: "85%",
+            }}
+            contentFit="contain"
+          />
+        </View>
+
+        {/* Divider line below the image */}
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colors.border,
+            width: "100%",
+          }}
         />
 
-        {/* Discount badge — top left */}
-        {discount && (
+        {/* Bottom row inside the bordered box */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingLeft: spacing(10),
+            height: spacing(24),
+            backgroundColor: colors.surfaceElevated,
+            borderBottomLeftRadius: spacing(9),
+            borderBottomRightRadius: spacing(9),
+            position: "relative",
+          }}
+        >
+          {/* Rating (Left) - Single star and rating number */}
+          <View style={{ flex: 1 }}>
+            {showRating && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(3) }}>
+                <StarIcon
+                  size={spacing(10)}
+                  color={colors.starColor}
+                  fill={colors.starColor}
+                />
+                <Text
+                  style={{
+                    fontSize: font(10),
+                    color: colors.text,
+                    fontFamily: "Poppins_600SemiBold",
+                    includeFontPadding: false,
+                    textAlignVertical: "center",
+                  }}
+                >
+                  {rating.toFixed(1)}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* ADD / Stepper Controller (Right) */}
           <View
             style={{
               position: "absolute",
-              top: spacing(8),
-              left: spacing(8),
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: spacing(8),
-              height: spacing(22),
-              borderRadius: spacing(7),
-              backgroundColor: colors.saleRed,
+              right: -spacing(6),
+              top: -spacing(3),
+              width: spacing(58),
+              height: spacing(30),
+              zIndex: 10,
             }}
           >
-            <Tag
-              size={spacing(10)}
-              color={colors.textInverse}
-              strokeWidth={2.2}
-            />
-
-            <Text
-              style={{
-                marginLeft: spacing(4),
-                fontSize: font(10),
-                color: colors.textInverse,
-                fontFamily: "Poppins_600SemiBold",
-                includeFontPadding: false,
-                textAlignVertical: "center",
-              }}
-            >
-              {discount}%
-            </Text>
-          </View>
-        )}
-
-        {/* ── FLOATING CART CONTROL — bottom right of image ── */}
-        <View
-          style={{
-            position: "absolute",
-            bottom: spacing(6),
-            right: spacing(6),
-          }}
-        >
-          {qty === 0 ? (
-            /* Single + button */
-            <TouchableOpacity
-              activeOpacity={0.9}
-              disabled={loading}
-              onPress={handleAddToCart}
-              style={{
-                minWidth: spacing(42),
-                height: spacing(30),
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: spacing(5),
-                borderRadius: spacing(10),
-                borderWidth: 1,
-                borderColor: colors.primary,
-                backgroundColor: colors.background,
-              }}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <>
+            {qty === 0 ? (
+              /* Simple ADD button */
+              <TouchableOpacity
+                activeOpacity={0.9}
+                disabled={loading}
+                onPress={handleAddToCart}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: spacing(8),
+                  borderWidth: 1.2,
+                  borderColor: colors.primary,
+                  backgroundColor: colors.background,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 1.5,
+                  elevation: 2,
+                }}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
                   <Text
                     style={{
                       color: colors.primary,
-                      fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(10),
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(11),
                       textTransform: "uppercase",
-                      letterSpacing: 0.6,
                       includeFontPadding: false,
                     }}
                   >
-                    Add
+                    ADD
                   </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : (
-            /* Inline stepper pill */
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: colors.primary,
-                borderRadius: spacing(10),
-                height: spacing(30),
-              }}
-            >
-              {/* Decrement / Trash */}
-              <TouchableOpacity
-                disabled={loading}
-                onPress={handleDecrement}
-                style={{
-                  width: spacing(30),
-                  height: "100%",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
-              >
-                {qty === 1 ? (
-                  <Trash2 size={spacing(13)} color="#fff" />
-                ) : (
-                  <Minus size={spacing(13)} color="#fff" strokeWidth={2.5} />
                 )}
               </TouchableOpacity>
-
-              {/* Qty input */}
-              <TextInput
-                value={inputVal}
-                onChangeText={handleQtyInput}
-                keyboardType="number-pad"
-                editable={!loading}
+            ) : (
+              /* Inline stepper pill */
+              <View
                 style={{
-                  color: "#fff",
-                  textAlign: "center",
-                  fontSize: font(12),
-                  fontFamily: "Poppins_600SemiBold",
-                  minWidth: spacing(22),
-                  padding: 0,
-                  height: "100%",
-                }}
-              />
-
-              {/* Increment */}
-              <TouchableOpacity
-                disabled={loading}
-                onPress={handleIncrement}
-                style={{
-                  width: spacing(30),
-                  height: "100%",
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
+                  backgroundColor: colors.primary,
+                  borderRadius: spacing(8),
+                  width: "100%",
+                  height: "100%",
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 1.5,
+                  elevation: 2,
                 }}
-                hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
               >
-                <Plus size={spacing(13)} color="#fff" strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
-          )}
+                {/* Decrement */}
+                <TouchableOpacity
+                  disabled={loading}
+                  onPress={handleDecrement}
+                  style={{
+                    width: spacing(18),
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
+                >
+                  <Minus size={spacing(12)} color="#fff" strokeWidth={2.5} />
+                </TouchableOpacity>
+
+                {/* Qty input */}
+                <TextInput
+                  value={inputVal}
+                  onChangeText={handleQtyInput}
+                  keyboardType="number-pad"
+                  editable={!loading}
+                  style={{
+                    flex: 1,
+                    color: "#fff",
+                    textAlign: "center",
+                    fontSize: font(11),
+                    fontFamily: "Poppins_600SemiBold",
+                    padding: 0,
+                    height: "100%",
+                  }}
+                />
+
+                {/* Increment */}
+                <TouchableOpacity
+                  disabled={loading}
+                  onPress={handleIncrement}
+                  style={{
+                    width: spacing(18),
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+                >
+                  <Plus size={spacing(12)} color="#fff" strokeWidth={2.5} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
-      {/* ── CONTENT BELOW IMAGE ── */}
-      <View style={{ paddingTop: spacing(3) }}>
+      {/* ── DETAILS SECTION BELOW THE BORDERED CONTAINER ── */}
+      <View style={{ paddingTop: spacing(8), gap: spacing(1) }}>
         {/* Price row */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             gap: spacing(4),
+            marginTop: spacing(1),
           }}
         >
           <Text
@@ -319,11 +346,11 @@ export default function ItemCard({
             ₹{Number(item.selling_price)}
           </Text>
 
-          {discount && (
+          {discountAmount && (
             <Text
               style={{
                 fontSize: font(9),
-                color: colors.textTertiary,
+                color: colors.textSecondary,
                 textDecorationLine: "line-through",
                 fontFamily: "Poppins_400Regular",
                 includeFontPadding: false,
@@ -334,64 +361,32 @@ export default function ItemCard({
           )}
         </View>
 
+        {/* Off price below selling price and MRP */}
+        {discountAmount && (
+          <Text
+            style={{
+              fontSize: font(10),
+              color: "#FF5E0E",
+              fontFamily: "Poppins_700Bold",
+              includeFontPadding: false,
+            }}
+          >
+            ₹{discountAmount} OFF
+          </Text>
+        )}
+
         {/* Product name */}
         <Text
           numberOfLines={2}
           style={{
-            fontSize: font(11),
-            fontFamily: "Poppins_500Medium",
+            fontSize: font(12),
+            fontFamily: "Poppins_600SemiBold",
             color: colors.text,
-            marginTop: spacing(1),
-            lineHeight: font(16),
+            lineHeight: font(17),
           }}
         >
           {item.product_name}
         </Text>
-
-        {/* Rating */}
-        {showRating && (
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: spacing(3),
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {[1, 2, 3, 4, 5].map((i) => {
-                const type = getStarType(i, rating);
-                return (
-                  <StarIcon
-                    key={i}
-                    size={spacing(9)}
-                    color={type === "empty" ? colors.border : colors.starColor}
-                    fill={
-                      type === "full"
-                        ? colors.starColor
-                        : type === "half"
-                          ? colors.starColor
-                          : "none"
-                    }
-                    style={type === "half" ? { opacity: 0.5 } : {}}
-                  />
-                );
-              })}
-            </View>
-
-            {item.total_reviews > 0 && (
-              <Text
-                style={{
-                  fontSize: font(10),
-                  marginTop: spacing(1),
-                  color: colors.textTertiary,
-                  fontFamily: "Poppins_400Regular",
-                }}
-              >
-                {item.total_reviews}
-              </Text>
-            )}
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -426,64 +421,94 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
     <Animated.View
       style={{ width: width || "100%", flex: 1, opacity: opacityAnim }}
     >
-      {/* ── IMAGE BLOCK SKELETON ── */}
+      {/* ── BORDERED CONTAINER SKELETON ── */}
       <View
         style={{
           borderWidth: 1,
           borderColor: colors.border,
-          borderRadius: spacing(14),
-          overflow: "hidden",
+          borderRadius: spacing(10),
           backgroundColor: colors.surfaceElevated,
-          position: "relative",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
         {/* Main image placeholder */}
         <View
           style={{
-            width: "90%",
-            aspectRatio: 1,
-            borderRadius: spacing(10),
-            backgroundColor: colors.backgroundSkeleton,
+            width: "100%",
+            aspectRatio: 1.15,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#fff",
+            borderTopLeftRadius: spacing(9),
+            borderTopRightRadius: spacing(9),
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              width: "80%",
+              height: "80%",
+              borderRadius: spacing(10),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
+        </View>
+
+        {/* Divider line skeleton */}
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colors.border,
+            width: "100%",
           }}
         />
 
-        {/* Discount badge skeleton — top left */}
+        {/* Bottom row skeleton inside the box */}
         <View
           style={{
-            position: "absolute",
-            top: spacing(8),
-            left: spacing(8),
-            width: spacing(42),
-            height: spacing(22),
-            borderRadius: spacing(7),
-            backgroundColor: colors.backgroundSkeleton,
+            flexDirection: "row",
+            alignItems: "center",
+            paddingLeft: spacing(10),
+            height: spacing(24),
+            backgroundColor: colors.surfaceElevated,
+            borderBottomLeftRadius: spacing(9),
+            borderBottomRightRadius: spacing(9),
+            position: "relative",
           }}
-        />
+        >
+          {/* Rating skeleton (Left) */}
+          <View
+            style={{
+              width: spacing(30),
+              height: spacing(13),
+              borderRadius: spacing(3),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
 
-        {/* Floating cart button skeleton — bottom right */}
-        <View
-          style={{
-            position: "absolute",
-            bottom: spacing(6),
-            right: spacing(6),
-            width: spacing(42),
-            height: spacing(30),
-            borderRadius: spacing(10),
-            backgroundColor: colors.backgroundSkeleton,
-          }}
-        />
+          {/* ADD button skeleton */}
+          <View
+            style={{
+              position: "absolute",
+              right: -spacing(6),
+              top: -spacing(3),
+              width: spacing(58),
+              height: spacing(30),
+              borderRadius: spacing(8),
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          />
+        </View>
       </View>
 
       {/* ── CONTENT SKELETON BELOW IMAGE ── */}
-      <View style={{ paddingTop: spacing(6), gap: spacing(5) }}>
+      <View style={{ paddingTop: spacing(8), gap: spacing(2) }}>
         {/* Price row skeleton */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             gap: spacing(6),
+            marginTop: spacing(1),
           }}
         >
           <View
@@ -504,11 +529,21 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
           />
         </View>
 
+        {/* Off price skeleton */}
+        <View
+          style={{
+            width: spacing(40),
+            height: font(10),
+            borderRadius: spacing(3),
+            backgroundColor: colors.backgroundSkeleton,
+          }}
+        />
+
         {/* Product title skeleton lines */}
         <View
           style={{
             width: "90%",
-            height: font(11),
+            height: font(12),
             borderRadius: spacing(4),
             backgroundColor: colors.backgroundSkeleton,
           }}
@@ -516,38 +551,11 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
         <View
           style={{
             width: "65%",
-            height: font(11),
+            height: font(12),
             borderRadius: spacing(4),
             backgroundColor: colors.backgroundSkeleton,
           }}
         />
-
-        {/* Rating row skeleton */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing(4),
-            marginTop: spacing(2),
-          }}
-        >
-          <View
-            style={{
-              width: spacing(55),
-              height: font(9),
-              borderRadius: spacing(4),
-              backgroundColor: colors.backgroundSkeleton,
-            }}
-          />
-          <View
-            style={{
-              width: spacing(20),
-              height: font(9),
-              borderRadius: spacing(4),
-              backgroundColor: colors.backgroundSkeleton,
-            }}
-          />
-        </View>
       </View>
     </Animated.View>
   );

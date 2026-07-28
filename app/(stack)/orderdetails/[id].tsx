@@ -516,20 +516,11 @@ const OrderDetails = () => {
                 strokeWidth={2}
               />
               <View>
+      
                 <Text
                   style={{
                     fontFamily: "Poppins_400Regular",
-                    fontSize: font(8.5),
-                    color: colors.text,
-                    lineHeight: font(8),
-                  }}
-                >
-                  Download
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_400Regular",
-                    fontSize: font(8.5),
+                    fontSize: font(10),
                     color: colors.text,
                     lineHeight: font(8),
                   }}

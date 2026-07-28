@@ -38,11 +38,11 @@ export const useAddToCart = () => {
       },
 
       onError: (error: any) => {
-        showToast(error?.message || "Failed to add to cart", "error");
+        // showToast(error?.message || "Failed to add to cart", "error");
       },
 
       onSuccess: (data, variables) => {
-        showToast(data.message || "Product added to cart", "success");
+        // showToast(data.message || "Product added to cart", "success");
 
         queryClient.invalidateQueries({
           queryKey: [
@@ -257,7 +257,7 @@ export const useRemoveCartItem = () => {
     mutationFn: (payload: RemoveCartItemRequest) => removeCartItem(payload),
 
     onSuccess: (data) => {
-      showToast(data.message || "Item removed from cart", "success");
+      // showToast(data.message || "Item removed from cart", "success");
       queryClient.invalidateQueries({
         queryKey: ["cart"],
       });
@@ -272,7 +272,7 @@ export const useRemoveCartItem = () => {
     },
 
     onError: (error) => {
-      showToast(error.message || "Failed to remove item", "error");
+      // showToast(error.message || "Failed to remove item", "error");
     },
   });
 };

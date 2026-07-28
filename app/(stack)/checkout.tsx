@@ -52,6 +52,7 @@ import {
   useInitiateOrder,
   usePaymentSuccess,
 } from "../../src/hooks/orderHooks";
+import { useCartStore } from "../../src/store/cartStore";
 
 const SectionTitle = ({ title, colors, font, spacing, rightElement }: any) => (
   <View
@@ -137,6 +138,7 @@ export default function Checkout() {
   const { showToast } = useToast();
   const scrollRef = React.useRef<ScrollView>(null);
   const [summaryY, setSummaryY] = useState(0);
+  const clearCart = useCartStore((s) => s.clearCart);
 
   const userId = useAppVisitorStore((s) => s.userId);
   console.log("userId: ", userId);
@@ -298,6 +300,10 @@ export default function Checkout() {
                   codSuccessMutate(codPayload, {
                     onSuccess: (res) => {
                       console.log("✅ Step 4 Success: COD Confirmed", res);
+                      clearCart();
+                      queryClient.invalidateQueries({ queryKey: ["cart"] });
+                      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+                      queryClient.invalidateQueries({ queryKey: ["cart-quantity"] });
                       showToast(
                         res.message || "Order placed successfully!",
                         "success",
@@ -364,6 +370,10 @@ export default function Checkout() {
                             "✅ Step 5 Success: Backend Notified",
                             res,
                           );
+                          clearCart();
+                          queryClient.invalidateQueries({ queryKey: ["cart"] });
+                          queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+                          queryClient.invalidateQueries({ queryKey: ["cart-quantity"] });
                           router.replace({
                             pathname: "/ordersuccess",
                             params: {

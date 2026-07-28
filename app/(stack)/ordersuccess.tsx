@@ -14,8 +14,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
-import { BadgeCheck, ShoppingBag, ArrowRight, Receipt, Download } from "lucide-react-native";
+import { ShoppingBag, ArrowRight, Receipt, Download } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
+import LottieView from "lottie-react-native";
+import orderConfirmLottie from "../../assets/lottieview/order-confirm.json";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
@@ -54,7 +56,7 @@ export default function OrderSuccess() {
   // ── Animations ──────────────────────────────────────────────────────────────
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideAnim = useRef(new Animated.Value(600)).current;
 
   const queryClient = useQueryClient();
 
@@ -74,14 +76,14 @@ export default function OrderSuccess() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 900,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.timing(slideAnim, {
+      Animated.spring(slideAnim, {
         toValue: 0,
-        duration: 800,
-        easing: Easing.out(Easing.cubic),
+        tension: 25,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
@@ -108,36 +110,38 @@ export default function OrderSuccess() {
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ 
-          paddingTop: insets.top + spacing(20),
+          paddingTop: insets.top + spacing(60),
           paddingBottom: insets.bottom + spacing(40),
           paddingHorizontal: 20,
         }}
       >
-        {/* ── Header ── */}
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center' }}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '10' }]}>
-            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-              <BadgeCheck size={font(70)} color={colors.primary} strokeWidth={2} />
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], width: "100%" }}>
+          {/* ── Header ── */}
+          <View style={{ alignItems: 'center' }}>
+            <Animated.View style={{ transform: [{ scale: scaleAnim }], marginBottom: spacing(12) }}>
+              <LottieView
+                source={orderConfirmLottie}
+                autoPlay
+                loop={false}
+                style={{ width: spacing(120), height: spacing(120) }}
+              />
             </Animated.View>
+            
+            <Text style={[styles.successTitle, { color: colors.text, fontSize: font(22) }]}>Order Confirmed!</Text>
+            <Text style={[styles.successSubtitle, { color: colors.textSecondary, fontSize: font(13) }]}>
+              {payment_method === "COD"
+                ? "Your order has been placed successfully"
+                : "Your payment was successful"}
+            </Text>
           </View>
-          
-          <Text style={[styles.successTitle, { color: colors.text, fontSize: font(22) }]}>Order Confirmed!</Text>
-          <Text style={[styles.successSubtitle, { color: colors.textSecondary, fontSize: font(13) }]}>
-            {payment_method === "COD"
-              ? "Your order has been placed successfully"
-              : "Your payment was successful"}
-          </Text>
-        </Animated.View>
 
         {/* ── Detailed Breakdown Card ── */}
-        <Animated.View
+        <View
           style={[
             styles.ticketCard,
             {
               backgroundColor: colors.background,
               borderColor: colors.border,
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
               marginBottom: spacing(32),
             },
           ]}
@@ -346,18 +350,10 @@ export default function OrderSuccess() {
               </View>
             </View>
           </View>
-        </Animated.View>
+        </View>
 
         {/* ── Buttons ── */}
-        <Animated.View 
-          style={[
-            styles.buttonGroup, 
-            { 
-              opacity: fadeAnim, 
-              transform: [{ translateY: slideAnim }] 
-            }
-          ]}
-        >
+        <View style={styles.buttonGroup}>
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)")}
             activeOpacity={0.8}
@@ -381,24 +377,23 @@ export default function OrderSuccess() {
             <ShoppingBag size={18} color={colors.text} />
             <Text style={[styles.btnSecondaryText, { color: colors.text, fontSize: font(14) }]}>View Order Details</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* ── Bottom Message ── */}
-        <Animated.Text 
+        <Text 
           style={[
             styles.bottomMessage, 
             { 
               color: colors.textTertiary, 
               fontSize: font(10),
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
               marginTop: spacing(32)
             }
           ]}
         >
           Thank you for choosing Pestobazaar. Your order is being processed and will be delivered soon.
-        </Animated.Text>
-      </ScrollView>
+        </Text>
+      </Animated.View>
+    </ScrollView>
     </View>
   );
 }

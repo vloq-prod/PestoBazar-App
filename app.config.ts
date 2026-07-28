@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
 
   name: "Pestobazaar",
-  owner: "daniyalpestobazar5",
+  owner: "daniyalpesto",
   slug: "pestobazaar",
   version: "1.0.0",
   orientation: "portrait",
@@ -92,7 +92,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   extra: {
     eas: {
-      projectId: "95f230e5-bd85-4f99-a3e4-34ee870b6795",
+      projectId: "aadf1ca0-11a7-4839-be1c-9c888bab7e32",
     },
   },
 });
