@@ -27,6 +27,7 @@ import { useCartCount } from "../../src/hooks/cartHooks";
 import { Feather } from "@expo/vector-icons";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
 import HomeProduct from "../../src/components/home/HomeProduct";
+import CustomSections from "../../src/components/home/CustomSections";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
 import FeaturedProducts from "../../src/components/home/FeaturedProducts";
 import image1 from "../../assets/category/category4.png";
@@ -595,6 +596,7 @@ const CategoryList: React.FC = React.memo(() => {
 const MemoSlidingBanners = React.memo(SlidingBanners);
 const MemoCategoryCardSection = React.memo(CategoryCardSection);
 const MemoHomeProduct = React.memo(HomeProduct);
+const MemoCustomSections = React.memo(CustomSections);
 const MemoFeatureBanner = React.memo(FeatureBanner);
 const MemoDealsOfTheDay = React.memo(DealsOfTheDay);
 const MemoRecentlyViewProducts = React.memo(RecentlyViewProducts);
@@ -761,6 +763,7 @@ export default function HomeScreen() {
       { id: "sliding_banners", data: slidingbanners },
       { id: "category_card_section" },
       { id: "home_product", data: homeProducts },
+      { id: "custom_sections" },
       { id: "feature_banner_0", data: featureBanners?.[0] },
       { id: "diy" },
       { id: "deals_of_the_day", data: deals },
@@ -817,6 +820,8 @@ export default function HomeScreen() {
         return <MemoCategoryCardSection />;
       case "home_product":
         return <MemoHomeProduct />;
+      case "custom_sections":
+        return <MemoCustomSections />;
       case "feature_banner_0":
         return <MemoFeatureBanner item={item.data} />;
       case "diy":

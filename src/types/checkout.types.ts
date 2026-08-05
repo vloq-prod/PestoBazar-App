@@ -10,6 +10,13 @@ export interface CheckoutRequest {
 // CART SUMMARY
 // ======================================================
 
+export interface PromoCodeDetails {
+  promo_code_id: number;
+  promo_code: string;
+  title: string;
+  discount_amount: string | number;
+}
+
 export interface CartSummary {
   cart_id: string;
   cart_amount: string;
@@ -22,6 +29,10 @@ export interface CartSummary {
   cod_charges?: string | number;
   max_cod_amount_exceed?: string;
   cod_exceed_message?: string;
+  promo_code?: string;
+  applied_promo_code?: string;
+  promo_discount_amount?: string | number;
+  promo_code_details?: PromoCodeDetails;
 }
 
 // ======================================================

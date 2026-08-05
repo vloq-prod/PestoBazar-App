@@ -60,6 +60,7 @@ const AppNavbar = ({
         paddingVertical: spacing(8),
         borderBottomWidth: hideBorder ? 0 : 1,
         borderBottomColor: colors.border,
+        backgroundColor: colors.background
       }}
     >
       {/* LEFT */}

@@ -31,7 +31,7 @@ const CartItem = ({
   const [inputQty, setInputQty] = useState(String(item.qty));
 
   const qty = item.qty;
-  const imageSize = wp(22);
+  const imageSize = spacing(60);
 
   useEffect(() => {
     setInputQty(String(item.qty));
@@ -47,11 +47,9 @@ const CartItem = ({
     <TouchableOpacity
       activeOpacity={0.85}
       style={{
-        backgroundColor: colors.surface,
-        borderBottomWidth: 1,
-        borderColor: colors.border,
-        marginBottom: spacing(12),
-        paddingBottom: 10,
+        backgroundColor: "transparent",
+        paddingHorizontal: spacing(14),
+        paddingVertical: spacing(10),
       }}
       onPress={() =>
         router.push({
@@ -64,16 +62,19 @@ const CartItem = ({
         })
       }
     >
-      <View style={{ flexDirection: "row", gap: spacing(12) }}>
+      <View style={{ flexDirection: "row", gap: spacing(12), alignItems: "center" }}>
         {/* Image */}
         <View
           style={{
             width: imageSize,
             height: imageSize,
             borderRadius: spacing(8),
-            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.background,
             justifyContent: "center",
             alignItems: "center",
+            overflow: "hidden",
           }}
         >
           <Image
@@ -81,11 +82,10 @@ const CartItem = ({
               uri: item.s3_image_path,
             }}
             style={{
-              width: imageSize,
-              height: imageSize,
-              borderRadius: spacing(8),
+              width: imageSize - spacing(6),
+              height: imageSize - spacing(6),
             }}
-            resizeMode="cover"
+            resizeMode="contain"
           />
         </View>
 
@@ -93,98 +93,79 @@ const CartItem = ({
         <View
           style={{
             flex: 1,
-            gap: spacing(8),
-            flexDirection: "column",
-            justifyContent: "space-between",
+            gap: spacing(4),
           }}
         >
-          {/* Title + Delete */}
-          <View
+          <Text
+            numberOfLines={2}
             style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
+              fontSize: font(12),
+              fontFamily: "Poppins_500Medium",
+              color: colors.text,
+              lineHeight: font(16),
             }}
           >
+            {item.name}
+          </Text>
+          {item.size ? (
             <Text
-              numberOfLines={2}
               style={{
-                flex: 1,
-                fontSize: font(12),
-                fontFamily: "Poppins_500Medium",
-                color: colors.text,
+                fontSize: font(10.5),
+                fontFamily: "Poppins_400Regular",
+                color: colors.textSecondary,
               }}
             >
-              {item.name}
+              {item.size}
             </Text>
+          ) : null}
+        </View>
 
-            <TouchableOpacity
-              onPress={() => onRemove(item)}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+        {/* Right Action & Price Column */}
+        <View style={{ alignItems: "flex-end", gap: spacing(8) }}>
+          {/* Stepper row */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(8) }}>
+            {/* Stepper capsule */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: colors.primary,
+                borderRadius: 6,
+                backgroundColor: colors.primary + "05",
+                height: spacing(30),
+              }}
             >
-              <Trash2 size={spacing(18)} color={colors.error} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Price + Qty */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            {/* Price */}
-            <View>
-              <Text
-                style={{
-                  fontSize: font(15),
-                  fontFamily: "Poppins_600SemiBold",
-                  color: colors.text,
-                }}
-              >
-                ₹{formatPrice(item.price_per_piece)}
-              </Text>
-
-              {/* <Text
-                style={{
-                  fontSize: font(11),
-                  color: colors.textSecondary,
-                }}
-              >
-                {item.size}
-              </Text> */}
-            </View>
-
-            {/* Qty Stepper */}
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
               {/* Minus */}
               <TouchableOpacity
-                onPress={() => onDecrease(item)}
-                disabled={qty <= 1}
+                onPress={() => {
+                  if (qty > 1) {
+                    onDecrease(item);
+                  } else {
+                    onRemove(item);
+                  }
+                }}
                 style={{
-                  width: spacing(36),
-                  height: spacing(36),
-                  borderRadius: spacing(18),
+                  width: spacing(30),
+                  height: spacing(30),
                   justifyContent: "center",
                   alignItems: "center",
-                  backgroundColor:
-                    qty <= 1 ? colors.inputBackground : colors.primary,
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Minus
-                  size={spacing(16)}
-                  color={qty <= 1 ? colors.primary : colors.textInverse}
-                />
+                {qty > 1 ? (
+                  <Minus size={12} color={colors.primary} />
+                ) : (
+                  <Trash2 size={12} color={colors.error} />
+                )}
               </TouchableOpacity>
 
               {/* Count */}
               <View
                 style={{
-                  paddingHorizontal: spacing(2),
-                  minWidth: spacing(36),
+                  width: spacing(28),
                   alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <TextInput
@@ -196,19 +177,18 @@ const CartItem = ({
                   }}
                   onBlur={() => {
                     let newQty = Number(inputQty);
-
                     if (!newQty || newQty < 1) newQty = 1;
                     if (newQty > item.stock) newQty = item.stock;
-
                     setInputQty(String(newQty));
                     onChangeQty(item, newQty);
                   }}
                   style={{
-                    fontSize: font(13),
+                    fontSize: font(12),
                     fontFamily: "Poppins_600SemiBold",
-
                     textAlign: "center",
-                    minWidth: spacing(36),
+                    color: colors.text,
+                    padding: 0,
+                    margin: 0,
                   }}
                 />
               </View>
@@ -218,25 +198,31 @@ const CartItem = ({
                 onPress={() => onIncrease(item)}
                 disabled={qty >= item.stock}
                 style={{
-                  width: spacing(36),
-                  height: spacing(36),
-                  borderRadius: spacing(18),
+                  width: spacing(30),
+                  height: spacing(30),
                   justifyContent: "center",
                   alignItems: "center",
-                  backgroundColor:
-                    qty >= item.stock ? colors.inputBackground : colors.primary,
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Plus
-                  size={spacing(16)}
-                  color={
-                    qty >= item.stock ? colors.primary : colors.textInverse
-                  }
+                  size={12}
+                  color={qty >= item.stock ? colors.textSecondary : colors.primary}
                 />
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Price */}
+          <Text
+            style={{
+              fontSize: font(13.5),
+              fontFamily: "Poppins_600SemiBold",
+              color: colors.text,
+            }}
+          >
+            ₹{formatPrice(item.price_per_piece)}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>

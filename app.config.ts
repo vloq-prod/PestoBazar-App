@@ -24,18 +24,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     backgroundColor: "#ffffff",
   },
 
-  plugins: [
-    "expo-router",
-    "expo-dev-client",
+plugins: [
+  "expo-router",
+  "expo-dev-client",
+  "expo-notifications",
 
-    [
-      "expo-location",
-      {
-        locationWhenInUsePermission:
-          "Allow Pestobazaar to access your location.",
-      },
-    ],
+  [
+    "expo-location",
+    {
+      locationWhenInUsePermission:
+        "Allow Pestobazaar to access your location.",
+    },
   ],
+],
 
   ios: {
     buildNumber: "1",
@@ -56,6 +57,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "ACCESS_FINE_LOCATION",
       "ACCESS_COARSE_LOCATION"
     ],
+
+    googleServicesFile: "./google-services.json",
 
     intentFilters: [
       {
