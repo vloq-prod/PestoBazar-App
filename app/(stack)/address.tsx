@@ -194,8 +194,8 @@ export default function Address() {
             <AddressCard
               key={addr.id}
               item={addr}
-              isSelected={false} // Address screen doesn't need selection state
-              onSelect={() => { }} // No-op
+              isSelected={false}
+              showSelection={false}
               onEdit={() =>
                 router.push({
                   pathname: "/addaddress",

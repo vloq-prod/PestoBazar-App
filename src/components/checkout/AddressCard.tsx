@@ -33,8 +33,9 @@ export interface AddressItem {
 
 interface AddressCardProps {
   item: AddressItem;
-  isSelected: boolean;
-  onSelect: () => void;
+  isSelected?: boolean;
+  showSelection?: boolean;
+  onSelect?: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -55,7 +56,8 @@ const getAddressIcon = (name: string, color: string, size = 12) => {
 
 const AddressCard: React.FC<AddressCardProps> = ({
   item,
-  isSelected,
+  isSelected = false,
+  showSelection = true,
   onSelect,
   onEdit,
   onDelete,
@@ -64,32 +66,35 @@ const AddressCard: React.FC<AddressCardProps> = ({
   const { font } = useResponsive();
   const { userId } = useAppVisitorStore((state) => state);
 
-  const borderColor = isSelected ? colors.primary : colors.border;
+  const borderColor = isSelected && showSelection ? colors.primary : colors.border;
 
   // Tag Badge styling
-  const tagBg = isSelected ? colors.primary + "15" : colors.border + "50";
-  const tagTextColor = isSelected ? colors.primary : colors.textSecondary;
+  const tagBg = isSelected && showSelection ? colors.primary + "15" : colors.border + "50";
+  const tagTextColor = isSelected && showSelection ? colors.primary : colors.textSecondary;
 
   return (
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={onSelect}
+      disabled={!onSelect}
       style={[
         styles.card,
         {
           borderColor: borderColor,
           backgroundColor: colors.surface,
-          borderWidth: isSelected ? 1.5 : 1,
+          borderWidth: isSelected && showSelection ? 1.5 : 1,
         },
       ]}
     >
       {/* ── Top row: tag badge + actions + radio ── */}
       <View style={styles.topRow}>
         <View style={styles.leftTop}>
-          {isSelected ? (
-            <CheckCircle2 size={18} color={colors.primary} />
-          ) : (
-            <Circle size={18} color={colors.border} />
+          {showSelection && (
+            isSelected ? (
+              <CheckCircle2 size={18} color={colors.primary} />
+            ) : (
+              <Circle size={18} color={colors.border} />
+            )
           )}
           {/* Tag badge */}
           <View style={[styles.tagBadge, { backgroundColor: tagBg }]}>

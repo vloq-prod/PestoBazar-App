@@ -14,6 +14,7 @@ import {
   useProductDetails,
   useSaveRecentlyViewed,
 } from "../../../src/hooks/productDetailsHook";
+import { useFreeProducts } from "../../../src/hooks/offerHooks";
 import { useTheme } from "../../../src/theme";
 import {
   ChevronLeft,
@@ -23,6 +24,10 @@ import {
   ShoppingCart,
   Star,
   LucideShare2,
+  Gift,
+  Tag,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -33,7 +38,11 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { useAddToCart, useCartCount, useProductQuantity } from "../../../src/hooks/cartHooks";
+import {
+  useAddToCart,
+  useCartCount,
+  useProductQuantity,
+} from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import type { ProductVariation } from "../../../src/types/productdetails.types";
@@ -69,6 +78,7 @@ const ProductDetails = () => {
 
   const [showPincodeModal, setShowPincodeModal] = useState(false);
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);
+  const [showAllOffers, setShowAllOffers] = useState(false);
 
   const productId =
     typeof id === "string" && !isNaN(Number(id)) ? Number(id) : undefined;
@@ -108,6 +118,94 @@ const ProductDetails = () => {
   const realProductId = selectedVariation?.id;
   console.log("product details id: ", realProductId);
   const quantity = useProductQuantity(realProductId ?? productId);
+
+  // Free products API integration
+  const { data: freeProductsData } = useFreeProducts(selectedVariation?.id);
+  console.log(
+    "Free Products Data for variation ID",
+    selectedVariation?.id,
+    ":",
+    freeProductsData,
+  );
+
+  // Extract offer rules from rule groups
+  const offerRules = React.useMemo(() => {
+    if (!freeProductsData?.data) return [];
+    const allRules: any[] = [];
+    const seenIds = new Set<number>();
+
+    const addRule = (rule: any) => {
+      if (rule && rule.rule_id && !seenIds.has(rule.rule_id)) {
+        seenIds.add(rule.rule_id);
+        allRules.push(rule);
+      }
+    };
+
+    if (Array.isArray(freeProductsData.data.rules)) {
+      freeProductsData.data.rules.forEach(addRule);
+    }
+
+    const rg = freeProductsData.data.rule_groups;
+    if (rg) {
+      Object.values(rg).forEach((groupRules) => {
+        if (Array.isArray(groupRules)) {
+          groupRules.forEach(addRule);
+        }
+      });
+    }
+
+    return allRules;
+  }, [freeProductsData]);
+
+  // Helper to parse and render offer message dynamically with styled numbers/prices and green FREE text
+  const renderOfferMessage = (message: string) => {
+    if (!message) return null;
+
+    const renderMessageNumbers = (text: string, baseKey: number) => {
+      const priceRegex = /((?:₹\s*)?[0-9]+(?:,[0-9]+)*(?:\.[0-9]+)?)/g;
+      const parts = text.split(priceRegex);
+
+      return parts.map((part, index) => {
+        const isMatch = priceRegex.test(part);
+        priceRegex.lastIndex = 0;
+
+        if (isMatch) {
+          return (
+            <Text
+              key={`${baseKey}-${index}`}
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.text,
+              }}
+            >
+              {part}
+            </Text>
+          );
+        }
+        return part;
+      });
+    };
+
+    const parts = message.split(/(FREE)/i);
+
+    return parts.map((part, index) => {
+      if (part.toUpperCase() === "FREE") {
+        return (
+          <Text
+            key={index}
+            style={{
+              color: colors.textSecondary,
+              fontFamily: "Poppins_700Bold",
+            }}
+          >
+            {part}
+          </Text>
+        );
+      }
+      return renderMessageNumbers(part, index);
+    });
+  };
+
   const pricing = data?.pricing;
 
   // ─── Derived Values ─────────────────────────────────────────
@@ -152,7 +250,7 @@ const ProductDetails = () => {
     try {
       const fallbackUrl = `https://pestobazaar.com/product/${realProductId ?? productId}`;
       const message = `Check out this product on PestoBazaar: ${resolvedProductName}\n\n${fallbackUrl}`;
-      
+
       await Share.share({
         message,
         url: fallbackUrl, // url is iOS only, but good practice
@@ -532,7 +630,7 @@ const ProductDetails = () => {
         </View>
 
         {/* ── Variants ── */}
-        {!!variationmaster?.length && (
+        {!!variationmaster?.length && productInfo?.listing_type?.toLowerCase() !== "combo" && (
           <View style={{ paddingHorizontal: spacing(16), gap: spacing(12) }}>
             <View
               style={{
@@ -606,6 +704,195 @@ const ProductDetails = () => {
           </View>
         )}
 
+        {/* ── Free Gift Offers ── */}
+        {offerRules.length > 0 && (
+          <View
+            style={{
+              marginHorizontal: spacing(16),
+              marginTop: spacing(12),
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: spacing(12),
+              backgroundColor: colors.background,
+              overflow: "hidden",
+            }}
+          >
+            {/* Title Section */}
+            <View
+              style={{
+                paddingHorizontal: spacing(16),
+                paddingTop: spacing(8),
+                paddingBottom: spacing(8),
+                gap: spacing(2),
+              }}
+            >
+              {/* Row 1: Icon + Title and Limited Offer Tag */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: spacing(8),
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(8),
+                  }}
+                >
+                  <Gift size={20} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontSize: font(14),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: colors.text,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    Free Gift Offers
+                  </Text>
+                </View>
+
+                {/* Limited Offer Tag in Green */}
+                <View
+                  style={{
+                    backgroundColor: "#E6F4EA",
+                    paddingHorizontal: spacing(8),
+                    paddingVertical: spacing(4),
+                    borderRadius: spacing(6),
+                    borderWidth: 0.5,
+                    borderColor: "#A7F3D0",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: font(9),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: "#059669",
+                      textTransform: "uppercase",
+                      includeFontPadding: false,
+                    }}
+                  >
+                    Limited Offer
+                  </Text>
+                </View>
+              </View>
+
+              {/* Row 2: Description */}
+              <Text
+                style={{
+                  fontSize: font(11),
+                  fontFamily: "Poppins_400Regular",
+                  color: colors.textSecondary,
+                  includeFontPadding: false,
+                }}
+              >
+                Add product to cart to avail free gifts.
+              </Text>
+            </View>
+
+            {/* Divider Line */}
+            <View style={{ height: 1, backgroundColor: colors.border }} />
+
+            {/* Offers List */}
+            <View
+              style={{
+                paddingHorizontal: spacing(16),
+                paddingBottom: spacing(16),
+                paddingTop: spacing(12),
+                gap: spacing(8),
+              }}
+            >
+              {(showAllOffers ? offerRules : offerRules.slice(0, 2)).map((rule) => {
+                const IconComponent =
+                  rule.rule_type === "CART_VALUE" ? ShoppingCart : Tag;
+
+                return (
+                  <View
+                    key={rule.rule_id}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: "#F0FDF4", // Soft premium mint background
+                      paddingVertical: spacing(12),
+                      paddingHorizontal: spacing(14),
+                      borderRadius: spacing(10),
+                      borderWidth: 1.2,
+                      borderColor: "#86EFAC", // Emerald-300 border
+                      borderStyle: "dashed", // Dashed modern coupon styling
+                      gap: spacing(12),
+                    }}
+                  >
+                    {/* Rounded Icon Container */}
+                    <View
+                      style={{
+                        width: spacing(34),
+                        height: spacing(34),
+                        borderRadius: spacing(17),
+                        backgroundColor: "#10B981", // Vibrant green background
+                        alignItems: "center",
+                        justifyContent: "center",
+                        shadowColor: "#10B981",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 3,
+                        elevation: 2,
+                      }}
+                    >
+                      <IconComponent size={spacing(15)} color="#FFFFFF" />
+                    </View>
+
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: font(12.5),
+                        fontFamily: "Poppins_400Regular",
+                        color: colors.text, // Black text
+                        lineHeight: font(17),
+                        includeFontPadding: false,
+                      }}
+                    >
+                      {renderOfferMessage(rule.offer_message)}
+                    </Text>
+                  </View>
+                );
+              })}
+
+              {offerRules.length > 2 && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowAllOffers(!showAllOffers)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: spacing(4),
+                    paddingTop: spacing(8),
+                    marginTop: spacing(4),
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: font(12.5),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: colors.primary,
+                    }}
+                  >
+                    {showAllOffers ? "View Less" : `View More (${offerRules.length - 2} More)`}
+                  </Text>
+                  {showAllOffers ? (
+                    <ChevronUp size={16} color={colors.primary} />
+                  ) : (
+                    <ChevronDown size={16} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* ── Delivery + Docs ── */}
         <View style={{ gap: spacing(10) }}>
           <DeliveryInfoCard
@@ -628,11 +915,9 @@ const ProductDetails = () => {
           <DescriptionAccordion data={descriptionUi} />
         )}
 
-
         {/* ── USP ── */}
-        <HomeUsp /> 
+        <HomeUsp />
 
-        
         {/* ── Related + Recent ── */}
         {realProductId !== undefined && (
           <>
@@ -640,8 +925,6 @@ const ProductDetails = () => {
             <RecentlyViewProducts />
           </>
         )}
-
-
 
         {/* ── Reviews ── */}
         {realProductId !== undefined && (

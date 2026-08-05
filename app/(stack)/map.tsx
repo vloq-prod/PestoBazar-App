@@ -18,7 +18,7 @@ import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import SearchLocationModal from "../../src/modals/SearchLocationModal";
-import { MapPin, Navigation, Search, AlertCircle } from "lucide-react-native";
+import { MapPin, LocateFixed, Search, AlertCircle, ArrowLeft } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { useMapStore } from "../../src/store/mapStore";
@@ -216,354 +216,172 @@ const MapScreen = () => {
   }, [selectedAddress, selectedCoords, from, type]);
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <StatusBar backgroundColor={colors.background} />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <View
-        style={[
-          styles.headerWrap,
-          {
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <AppNavbar showBack title="Select Location" />
-      </View>
-
-      {/* ── Search Bar ─────────────────────────────────────────────────── */}
-      <View style={{ paddingHorizontal: spacing(16), paddingTop: spacing(14) }}>
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => setSearchVisible(true)}
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: colors.cardBackground ?? colors.surface,
-              borderColor: colors.border,
-              borderRadius: spacing(14),
-              height: spacing(48),
-              paddingHorizontal: spacing(16),
-              gap: spacing(10),
-            },
-          ]}
-        >
-          <Search size={16} color={colors.textTertiary} />
-          <Text
-            style={{
-              fontFamily: "Poppins_400Regular",
-              fontSize: font(14),
-              color: colors.textTertiary,
-              flex: 1,
-            }}
-          >
-            Search location...
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ── Map Area ───────────────────────────────────────────────────── */}
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            flex: 1,
-            marginTop: spacing(14),
-            borderRadius: spacing(18),
-            overflow: "hidden",
-            position: "relative",
-          }}
-        >
-          {/* Loading overlay */}
-          {isInitializing && (
-            <View
-              style={[
-                StyleSheet.absoluteFillObject,
-                {
-                  backgroundColor: colors.background + "CC",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  zIndex: 100,
-                },
-              ]}
-            >
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text
-                style={{
-                  fontFamily: "Poppins_500Medium",
-                  fontSize: font(13),
-                  color: colors.textSecondary,
-                  marginTop: spacing(10),
-                }}
-              >
-                Fetching your location...
-              </Text>
-            </View>
-          )}
-
-          {mapError ? (
-            <View
-              style={[
-                StyleSheet.absoluteFillObject,
-                {
-                  backgroundColor: colors.surface,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  zIndex: 100,
-                  padding: 24,
-                },
-              ]}
-            >
-              <AlertCircle
-                size={48}
-                color={colors.error || "#ff4d4f"}
-                style={{ marginBottom: 16 }}
-              />
-              <Text
-                style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  fontSize: font(16),
-                  color: colors.text,
-                  textAlign: "center",
-                  marginBottom: 8,
-                }}
-              >
-                Map failed to load
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: font(13),
-                  color: colors.textSecondary,
-                  textAlign: "center",
-                  lineHeight: 20,
-                }}
-              >
-                This could be due to a poor internet connection or missing API
-                configuration.
-              </Text>
-              <TouchableOpacity
-                onPress={() => setMapError(false)}
-                style={{
-                  marginTop: 20,
-                  paddingHorizontal: 20,
-                  paddingVertical: 10,
-                  borderRadius: 10,
-                  backgroundColor: colors.primary,
-                }}
-              >
-                <Text
-                  style={{ color: "#fff", fontFamily: "Poppins_600SemiBold" }}
-                >
-                  Retry
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <MapView
-              ref={mapRef}
-              provider={PROVIDER_GOOGLE}
-              style={{ width: "100%", height: "100%" }}
-              initialRegion={{
-                latitude: selectedCoords.latitude,
-                longitude: selectedCoords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              onMapReady={() => {
-                console.log("[Map] Map Ready");
-                setIsInitializing(false);
-              }}
-              onRegionChange={() => {
-                isMoving.current = true;
-              }}
-              onRegionChangeComplete={(region) => {
-                console.log(
-                  "[Map] Region changed:",
-                  region.latitude,
-                  region.longitude,
-                );
-                isMoving.current = false;
-                const { latitude, longitude } = region;
-
-                if (isMounted.current) {
-                  setSelectedCoords({ latitude, longitude });
-                }
-
-                // Debounce Reverse Geocoding
-                if (geocodeTimeout.current)
-                  clearTimeout(geocodeTimeout.current);
-
-                geocodeTimeout.current = setTimeout(() => {
-                  const dist =
-                    Math.abs(latitude - lastGeocodedCoords.current.latitude) +
-                    Math.abs(longitude - lastGeocodedCoords.current.longitude);
-
-                  if (dist > 0.0001) {
-                    reverseGeocode(latitude, longitude);
-                  }
-                }, 800); // Debounce after 800ms for stability
-              }}
-              onPress={(e) => {
-                const { latitude, longitude } = e.nativeEvent.coordinate;
-                if (isMounted.current) {
-                  setSelectedCoords({ latitude, longitude });
-                }
-                // user manually tapped, let the region change handle the geocode via debounce
-              }}
-            />
-          )}
-
-          {/* Centre pin */}
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              marginLeft: -28,
-              marginTop: -72,
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 999,
-              elevation: 20,
-            }}
-          >
-            <Image
-              source={require("../../assets/pin.png")}
-              style={{ width: 56, height: 56, resizeMode: "contain" }}
-            />
-            <View
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 11,
-                marginTop: -4,
-                backgroundColor: "rgba(255,255,255,0.95)",
-                borderWidth: 3,
-                borderColor: colors.primary,
-                shadowColor: "#000",
-                shadowOpacity: 0.16,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 3 },
-                elevation: 8,
-              }}
-            />
+      {/* ── Fullscreen Map ── */}
+      <View style={StyleSheet.absoluteFillObject}>
+        {/* Loading overlay */}
+        {isInitializing && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Fetching your location...</Text>
           </View>
+        )}
 
-          {/* ── Current Location FAB ──────────────────────────────────── */}
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleCurrentLocation}
-            style={[
-              styles.locationFab,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                shadowColor: "#000",
-                right: spacing(14),
-                bottom:
-                  spacing(14) + (insets.bottom > 0 ? insets.bottom - 10 : 0),
-              },
-            ]}
-          >
-            {isLocating ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <Navigation size={20} color={colors.primary} strokeWidth={2.2} />
-            )}
-          </TouchableOpacity>
+        {mapError ? (
+          <View style={styles.errorOverlay}>
+            <AlertCircle size={44} color="#EF4444" style={{ marginBottom: 12 }} />
+            <Text style={styles.errorTitle}>Map failed to load</Text>
+            <Text style={styles.errorSubtitle}>
+              Please check your network connection and try again.
+            </Text>
+            <TouchableOpacity
+              onPress={() => setMapError(false)}
+              style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+            >
+              <Text style={styles.retryBtnText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={StyleSheet.absoluteFillObject}
+            initialRegion={{
+              latitude: selectedCoords.latitude,
+              longitude: selectedCoords.longitude,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            }}
+            onMapReady={() => setIsInitializing(false)}
+            onRegionChange={() => {
+              isMoving.current = true;
+            }}
+            onRegionChangeComplete={(region) => {
+              isMoving.current = false;
+              const { latitude, longitude } = region;
+
+              if (isMounted.current) {
+                setSelectedCoords({ latitude, longitude });
+              }
+
+              if (geocodeTimeout.current) clearTimeout(geocodeTimeout.current);
+
+              geocodeTimeout.current = setTimeout(() => {
+                const dist =
+                  Math.abs(latitude - lastGeocodedCoords.current.latitude) +
+                  Math.abs(longitude - lastGeocodedCoords.current.longitude);
+
+                if (dist > 0.0001) {
+                  reverseGeocode(latitude, longitude);
+                }
+              }, 600);
+            }}
+          />
+        )}
+
+        {/* ── Centre Pin (Fixed at map center) ── */}
+        <View pointerEvents="none" style={styles.centerPinWrapper}>
+          <Image
+            source={require("../../assets/pin.png")}
+            style={styles.pinImage}
+          />
+          <View style={[styles.pinDot, { backgroundColor: colors.primary }]} />
         </View>
       </View>
 
-      {/* ── Bottom Card ────────────────────────────────────────────────── */}
+      {/* ── Top Floating Header (Back + Search Input Pill) ── */}
       <View
         style={[
-          styles.bottomCard,
+          styles.topFloatingHeader,
+          { paddingTop: insets.top + spacing(8) },
+        ]}
+      >
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.back()}
+          style={styles.backCircleBtn}
+        >
+          <ArrowLeft size={20} color="#111827" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => setSearchVisible(true)}
+          style={styles.floatingSearchInput}
+        >
+          <Text
+            numberOfLines={1}
+            style={styles.searchInputPlaceholder}
+          >
+            Search an area or address
+          </Text>
+          <Search size={18} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Current Location Pill (Floating above Bottom Sheet) ── */}
+      <View
+        style={[
+          styles.currentLocationPillWrapper,
+          { bottom: 200 + Math.max(insets.bottom + 24, 52) },
+        ]}
+      >
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={handleCurrentLocation}
+          style={styles.currentLocationPill}
+        >
+          {isLocating ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <LocateFixed size={18} color={colors.primary} strokeWidth={2.2} />
+          )}
+          <Text style={styles.currentLocationText}>Current location</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Bottom Delivery Location Card ── */}
+      <View
+        style={[
+          styles.bottomSheetCard,
           {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderTopLeftRadius: spacing(20),
-            borderTopRightRadius: spacing(20),
-            padding: spacing(16),
-            paddingBottom:
-              insets.bottom > 0 ? insets.bottom + spacing(10) : spacing(20),
+            bottom: Math.max(insets.bottom + 24, 52),
+            paddingBottom: spacing(16),
           },
         ]}
       >
-        {/* Address preview */}
-        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-          <View
-            style={{
-              width: 42,
-              height: 42,
-              borderRadius: 21,
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: colors.primaryLight ?? colors.primary + "18",
-              marginRight: 12,
-            }}
-          >
-            <MapPin size={18} color={colors.primary} />
-          </View>
+        <Text style={styles.pinHintHeader}>
+          Place the pin at exact delivery location
+        </Text>
 
+        <View style={styles.locationDetailRow}>
+          <View style={styles.locationRedIconWrapper}>
+            <MapPin size={20} color={colors.primary} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text
-              numberOfLines={1}
-              style={{
-                fontFamily: "Poppins_600SemiBold",
-                fontSize: font(14),
-                color: colors.text,
-              }}
-            >
+            <Text numberOfLines={1} style={styles.locationTitle}>
               {title}
             </Text>
-            <Text
-              numberOfLines={2}
-              style={{
-                marginTop: 3,
-                fontFamily: "Poppins_400Regular",
-                fontSize: font(12),
-                color: colors.textSecondary,
-                lineHeight: font(17),
-              }}
-            >
+            <Text numberOfLines={2} style={styles.locationSubtitle}>
               {subtitle}
             </Text>
           </View>
         </View>
 
-        {/* Confirm button */}
         <TouchableOpacity
-          activeOpacity={0.85}
-          style={{
-            marginTop: spacing(14),
-            height: spacing(50),
-            borderRadius: spacing(14),
-            backgroundColor: colors.primary,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
+          activeOpacity={0.9}
+          style={[styles.confirmProceedBtn, { backgroundColor: colors.primary }]}
           onPress={handleConfirm}
         >
-          <Text
-            style={{
-              fontFamily: "Poppins_700Bold",
-              color: colors.textOnPrimary ?? "#fff",
-              fontSize: font(15),
-            }}
-          >
-            Confirm Location
+          <Text style={styles.confirmProceedBtnText}>
+            Confirm & proceed
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* ── Search Modal ───────────────────────────────────────────────── */}
+      {/* ── Search Modal ── */}
       <SearchLocationModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
@@ -579,7 +397,7 @@ const MapScreen = () => {
           }
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -588,30 +406,203 @@ export default MapScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F9FAFB",
   },
-  headerWrap: {
-    borderBottomWidth: 1,
-  },
-  searchBar: {
-    borderWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  bottomCard: {
-    position: "absolute",
-    borderTopWidth: 1,
-  },
-  locationFab: {
-    position: "absolute",
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 100,
+  },
+  loadingText: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 13,
+    color: "#4B5563",
+    marginTop: 10,
+  },
+  errorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+    padding: 24,
+  },
+  errorTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 16,
+    color: "#111827",
+    marginBottom: 6,
+  },
+  errorSubtitle: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  retryBtn: {
+    backgroundColor: "#FF4500",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryBtnText: {
+    color: "#FFFFFF",
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 14,
+  },
+  centerPinWrapper: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    marginLeft: -24,
+    marginTop: -48,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 90,
+  },
+  pinImage: {
+    width: 48,
+    height: 48,
+    resizeMode: "contain",
+  },
+  pinDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#FF4500",
+    marginTop: -2,
+  },
+  topFloatingHeader: {
+    position: "absolute",
+    top: 0,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    zIndex: 99,
+  },
+  backCircleBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  floatingSearchInput: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
     borderWidth: 1,
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    borderColor: "#E5E7EB",
+  },
+  searchInputPlaceholder: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+    color: "#6B7280",
+    flex: 1,
+    marginRight: 8,
+  },
+  currentLocationPillWrapper: {
+    position: "absolute",
+    alignSelf: "center",
+    zIndex: 99,
+  },
+  currentLocationPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  currentLocationText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 13,
+    color: "#111827",
+  },
+  bottomSheetCard: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 99,
+  },
+  pinHintHeader: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    color: "#4B5563",
+    marginBottom: 12,
+  },
+  locationDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  locationRedIconWrapper: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  locationTitle: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 16,
+    color: "#111827",
+  },
+  locationSubtitle: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  confirmProceedBtn: {
+    backgroundColor: "#FF4500",
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  confirmProceedBtnText: {
+    fontFamily: "Poppins_600SemiBold",
+    fontSize: 15,
+    color: "#FFFFFF",
   },
 });

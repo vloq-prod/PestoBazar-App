@@ -9,12 +9,14 @@ export interface CartSummary {
   cart_id: string;
   cart_amount: string;
   cart_count: number;
-  shipping_charge: string;
+  shipping_charge: string | number;
   amount_to_pay: number;
   free_shipping_message: string;
   free_shipping: string;
   gst_amount?: number | string;
-  cod_charges?: string;
+  cod_charges?: string | number;
+  max_cod_amount_exceed?: string;
+  cod_exceed_message?: string;
 }
 
 // src/types/cart.types.ts
@@ -90,11 +92,41 @@ export interface RazorpayConfig {
   RAZORPAY_SECRET: string;
 }
 
+export interface FreeProductCartItem {
+  free_cart_item_id: number;
+  quantity: number;
+  original_unit_price: number;
+  free_discount_amount: number;
+  final_unit_price: number;
+  application_count: number;
+  promotion_instance_key: string;
+  free_product_rule_id: number;
+  free_product_rule_reward_id: number;
+  eligibility_snapshot: string;
+  rule_type: string;
+  rule_name: string;
+  free_product_source: string;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  product_variation_id: number;
+  size: string | null;
+  unit: string | null;
+  sku: string;
+  selling_price: number | null;
+  mrp: number | null;
+  s3_image_path: string;
+  is_combo_free_product: boolean;
+  is_rule_free_product: boolean;
+  display_price: string;
+}
+
 export interface CartData {
   cart: CartSummary;
   cart_details: CartItem[];
   cart_app: CartSummary;
   razorpay: RazorpayConfig;
+  free_products: FreeProductCartItem[];
 }
 
 export interface CartResponse {

@@ -635,6 +635,54 @@ const ReturnDetails = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ paddingHorizontal: spacing(16) }}>
+          {/* Rejection comment box (above ReturnStatusTracker) */}
+          {(returnInfo?.return_status === "Rejected" || returnInfo?.return_status === "Failed" || !!returnInfo?.return_rejected_comment) && (
+            <View style={{ marginBottom: spacing(20), alignItems: "center" }}>
+              <View
+                style={{
+                  backgroundColor: "#FEF2F2",
+                  padding: 10,
+                  borderRadius: 16,
+                  width: "100%",
+                  gap: spacing(4),
+                  borderWidth: 1,
+                  borderColor: "#FEE2E2",
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(8),
+                  }}
+                >
+                  <XCircle size={20} color="#EF4444" />
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(14),
+                      color: "#EF4444",
+                    }}
+                  >
+                    Return Rejected
+                  </Text>
+                </View>
+
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: "#B91C1C",
+                    lineHeight: font(16),
+                    textAlign: "left",
+                  }}
+                >
+                  {returnInfo?.return_rejected_comment || "Your return request has been rejected or failed. Please contact support for assistance."}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Return Status Tracker */}
           <ReturnStatusTracker
             currentStatus={returnInfo?.return_status || "Pending"}
@@ -762,21 +810,7 @@ const ReturnDetails = () => {
                 </Text>
               </View>
 
-              {!!returnInfo?.return_rejected_comment && (
-                <View style={{ marginTop: spacing(4), borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing(8), gap: spacing(4) }}>
-                  <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12), color: "#EF4444" }}>
-                    Rejection Reason
-                  </Text>
-                  <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11.5), color: colors.textSecondary }}>
-                    {returnInfo.return_rejected_comment}
-                  </Text>
-                  {!!returnInfo.return_rejected_at && (
-                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10.5), color: colors.textTertiary, marginTop: 2 }}>
-                      Rejected At: {returnInfo.return_rejected_at}
-                    </Text>
-                  )}
-                </View>
-              )}
+
             </View>
           </View>
 

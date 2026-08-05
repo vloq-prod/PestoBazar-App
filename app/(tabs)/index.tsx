@@ -669,7 +669,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setVisibleSectionsCount(14);
+      setVisibleSectionsCount(20);
     }, 300);
     return () => clearTimeout(timer);
   }, []);

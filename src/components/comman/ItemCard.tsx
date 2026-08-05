@@ -17,6 +17,12 @@ import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 
+const formatMRP = (price: string | number) => {
+  const num = Number(price);
+  if (isNaN(num)) return String(price);
+  return num % 1 === 0 ? num.toString() : num.toFixed(2);
+};
+
 export default function ItemCard({
   item,
   onAddToCart,
@@ -212,7 +218,7 @@ export default function ItemCard({
               position: "absolute",
               right: -spacing(6),
               top: -spacing(3),
-              width: spacing(58),
+              width: qty === 0 ? spacing(30) : spacing(58),
               height: spacing(30),
               zIndex: 10,
             }}
@@ -242,17 +248,7 @@ export default function ItemCard({
                 {loading ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
-                  <Text
-                    style={{
-                      color: colors.primary,
-                      fontFamily: "Poppins_700Bold",
-                      fontSize: font(11),
-                      textTransform: "uppercase",
-                      includeFontPadding: false,
-                    }}
-                  >
-                    ADD
-                  </Text>
+                  <Plus size={spacing(14)} color={colors.primary} strokeWidth={3} />
                 )}
               </TouchableOpacity>
             ) : (
@@ -331,48 +327,88 @@ export default function ItemCard({
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: spacing(4),
+            gap: spacing(8),
             marginTop: spacing(1),
           }}
         >
-          <Text
+          {/* Selling Price 3D Pill */}
+          <View
             style={{
-              fontSize: font(16),
-              color: colors.text,
-              fontFamily: "Poppins_700Bold",
-              includeFontPadding: false,
+              backgroundColor: colors.primary,
+              borderRadius: spacing(8),
+              paddingHorizontal: spacing(8),
+              paddingVertical: spacing(4),
+              borderWidth: 0, // No full border
+              borderColor: colors.primaryDark || "#1e3a8a", // Darker shade of primary
+              borderBottomWidth: 3, // 3D shadow offset only on bottom
+              borderRightWidth: 2, // 3D shadow offset only on right
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            ₹{Number(item.selling_price)}
-          </Text>
+            <Text
+              style={{
+                fontSize: font(13),
+                color: "#FFFFFF",
+                fontFamily: "Poppins_700Bold",
+                includeFontPadding: false,
+                textAlign: "center",
+                transform: [{ translateY: 0.8 }], // Offsets bottom border to center visually
+              }}
+            >
+              ₹{formatMRP(item.selling_price)}
+            </Text>
+          </View>
 
+          {/* MRP Price crossed out */}
           {discountAmount && (
             <Text
               style={{
-                fontSize: font(9),
+                fontSize: font(13.5),
                 color: colors.textSecondary,
                 textDecorationLine: "line-through",
                 fontFamily: "Poppins_400Regular",
                 includeFontPadding: false,
               }}
             >
-              ₹{item.mrp}
+              ₹{formatMRP(item.mrp)}
             </Text>
           )}
         </View>
 
         {/* Off price below selling price and MRP */}
         {discountAmount && (
-          <Text
+          <View
             style={{
-              fontSize: font(10),
-              color: "#FF5E0E",
-              fontFamily: "Poppins_700Bold",
-              includeFontPadding: false,
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: spacing(3),
+              marginBottom: spacing(2),
             }}
           >
-            ₹{discountAmount} OFF
-          </Text>
+            <Text
+              style={{
+                fontSize: font(12),
+                color: "#FF5E0E",
+                fontFamily: "Poppins_700Bold",
+                includeFontPadding: false,
+              }}
+            >
+              ₹{discountAmount} OFF
+            </Text>
+            <View
+              style={{
+                flex: 1,
+                borderStyle: "dashed",
+                borderWidth: 1.2,
+                borderColor: colors.border,
+                borderRadius: 1,
+                height: 0,
+                marginLeft: spacing(8),
+                opacity: 0.7,
+              }}
+            />
+          </View>
         )}
 
         {/* Product name */}
@@ -383,6 +419,7 @@ export default function ItemCard({
             fontFamily: "Poppins_600SemiBold",
             color: colors.text,
             lineHeight: font(17),
+            marginTop: spacing(1),
           }}
         >
           {item.product_name}

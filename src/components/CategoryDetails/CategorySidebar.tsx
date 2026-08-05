@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Image } from "expo-image";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -187,6 +188,7 @@ const CategorySidebar = ({
 }: CategorySidebarProps) => {
   const { colors } = useTheme();
   const { spacing } = useResponsive();
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<CategoryItem>>(null);
   const itemTotalHeight = ITEM_HEIGHT + ITEM_GAP;
   const listTopPadding = spacing(10);
@@ -259,6 +261,9 @@ const CategorySidebar = ({
           ref={listRef}
           data={categories}
           keyExtractor={(item) => item.slug.toString()}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + spacing(80),
+          }}
           renderItem={({ item }) => (
             <CategorySidebarItem
               item={item}

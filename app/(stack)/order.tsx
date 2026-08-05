@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 // Project Imports
@@ -36,6 +36,7 @@ const OrderScreen = () => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const { userId } = useAppVisitorStore();
+  const insets = useSafeAreaInsets();
 
   const [activeTab, setActiveTab] = useState<TabType>("orders");
 
@@ -253,6 +254,7 @@ const OrderScreen = () => {
         refreshing={currentIsRefetching}
         contentContainerStyle={[
           styles.listContent,
+          { paddingBottom: insets.bottom + spacing(24) },
           !currentIsLoading && currentData.length === 0 && styles.listEmpty,
         ]}
         showsVerticalScrollIndicator={false}

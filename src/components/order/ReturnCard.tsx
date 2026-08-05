@@ -25,8 +25,32 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; icon: any; text
     "Return Placed": { color: "#F59E0B", bg: "#FEF3C7", icon: RotateCcw, text: "Return placed" },
   };
 
-export const getReturnStatusConfig = (status: string) =>
-  STATUS_CONFIG[status] ?? { color: "#6B7280", bg: "#F3F4F6", icon: Clock, text: status || "Return update" };
+export const getReturnStatusConfig = (status: string) => {
+  const normalized = (status || "").trim();
+  const lower = normalized.toLowerCase();
+
+  const foundKey = Object.keys(STATUS_CONFIG).find(
+    (k) => k.toLowerCase() === lower
+  );
+  if (foundKey) {
+    return STATUS_CONFIG[foundKey];
+  }
+
+  if (lower.includes("reject") || lower.includes("fail") || lower.includes("cancel")) {
+    return STATUS_CONFIG["Rejected"];
+  }
+  if (lower.includes("complete") || lower.includes("deliver") || lower.includes("refund")) {
+    return STATUS_CONFIG["Completed"];
+  }
+  if (lower.includes("pending") || lower.includes("placed")) {
+    return STATUS_CONFIG["Pending"];
+  }
+  if (lower.includes("approve")) {
+    return STATUS_CONFIG["Approved"];
+  }
+
+  return { color: "#6B7280", bg: "#F3F4F6", icon: Clock, text: status || "Return update" };
+};
 
 interface ReturnCardProps {
   item: ReturnHistoryItem;
@@ -66,7 +90,12 @@ const ReturnCard = ({
             <Text
               style={[
                 styles.statusText,
-                { color: colors.text, fontSize: font(15) },
+                {
+                  color: colors.text,
+                  fontSize: font(15),
+                  includeFontPadding: false,
+                  textAlignVertical: "center",
+                },
               ]}
             >
               {cfg.text}

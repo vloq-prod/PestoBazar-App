@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from "react";
-import { Text, View, Dimensions, StyleSheet, TouchableOpacity } from "react-native";
+import { Text, View, Dimensions, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +7,7 @@ import Animated, {
   runOnJS,
   Easing,
 } from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { Gesture, GestureDetector, TouchableOpacity } from "react-native-gesture-handler";
 import {
   CheckCircle,
   XCircle,
@@ -51,16 +51,15 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
   const accentColor = ACCENT[type];
   const Icon = ICONS[type];
 
-  const translateY = useSharedValue(-150);
+  const translateY = useSharedValue(150); // Slides up from bottom
   const opacity = useSharedValue(0);
-  const progress = useSharedValue(1);
   const dismissed = useRef(false);
 
   const dismiss = useCallback(() => {
     if (dismissed.current) return;
     dismissed.current = true;
 
-    translateY.value = withTiming(-150, {
+    translateY.value = withTiming(150, { // Slides down to exit
       duration: EXIT_DURATION,
       easing: Easing.in(Easing.cubic),
     });
@@ -76,26 +75,20 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
     });
     opacity.value = withTiming(1, { duration: ENTER_DURATION });
 
-    // progress bar drains left-to-right
-    progress.value = withTiming(0, {
-      duration,
-      easing: Easing.linear,
-    });
-
     const t = setTimeout(dismiss, duration);
     return () => clearTimeout(t);
   }, []);
 
   const swipeGesture = Gesture.Pan()
     .onUpdate((e) => {
-      if (e.translationY < 0) {
+      if (e.translationY > 0) { // Swipe down to dismiss
         translateY.value = e.translationY;
-        opacity.value = 1 + e.translationY / 100;
+        opacity.value = 1 - e.translationY / 100;
       }
     })
     .onEnd((e) => {
-      // If swiped up significantly or with high velocity
-      if (e.translationY < -25 || e.velocityY < -500) {
+      // If swiped down significantly or with high velocity
+      if (e.translationY > 25 || e.velocityY > 500) {
         runOnJS(dismiss)();
       } else {
         translateY.value = withTiming(0, { duration: 160 });
@@ -106,10 +99,6 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
-  }));
-
-  const progressStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
   }));
 
   return (
@@ -136,19 +125,8 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
             style={styles.closeBtn}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <X size={15} color="#ffffff" strokeWidth={2.5} />
+            <X size={19} color="#ffffff" strokeWidth={2.5} />
           </TouchableOpacity>
-        </View>
-
-        {/* progress bar track */}
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              { backgroundColor: accentColor },
-              progressStyle,
-            ]}
-          />
         </View>
       </Animated.View>
     </GestureDetector>
@@ -163,7 +141,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderLeftWidth: 3,
     paddingHorizontal: 12,
-  paddingVertical:8,
+    paddingVertical: 12,
     overflow: "hidden",
     // shadow
     shadowColor: "#000",
@@ -184,15 +162,15 @@ const styles = StyleSheet.create({
   message: {
     flex: 1,
     color: "#ffffff",
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: "Poppins_500Medium",
-    lineHeight: 19,
+    lineHeight: 20,
     letterSpacing: 0.1,
   },
   closeBtn: {
     marginLeft: 10,
-    width: 26,
-    height: 26,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
   },

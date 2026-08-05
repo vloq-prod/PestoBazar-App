@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import { Plus, Minus, Trash2, StarIcon, Tag } from "lucide-react-native";
+import { Plus, Minus, StarIcon } from "lucide-react-native";
 import { ListingItem } from "../../types/shop.types";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -36,7 +36,7 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
 
   const price = Number(item.selling_price);
   const mrp = Number(item.mrp);
-  const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : null;
+  const discountAmount = mrp > price ? Math.round(mrp - price) : null;
   const rating = Number(item.avg_rating);
   const showRating = rating > 0;
 
@@ -121,7 +121,7 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
         flexDirection: "row",
         gap: spacing(10),
         marginBottom: spacing(10),
-        alignItems: "center",
+        alignItems: "flex-start",
       }}
     >
       {/* ── IMAGE BLOCK ── */}
@@ -144,41 +144,6 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
           style={{ width: "88%", aspectRatio: 1 }}
           contentFit="contain"
         />
-
-        {/* Discount badge */}
-        {discount && (
-          <View
-            style={{
-              position: "absolute",
-              top: spacing(5),
-              left: spacing(5),
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: spacing(6),
-              height: spacing(18),
-              borderRadius: spacing(5),
-              backgroundColor: colors.saleRed,
-            }}
-          >
-            <Tag
-              size={spacing(9)}
-              color={colors.textInverse}
-              strokeWidth={2.2}
-            />
-            <Text
-              style={{
-                marginLeft: spacing(3),
-                fontSize: font(9),
-                color: colors.textInverse,
-                fontFamily: "Poppins_600SemiBold",
-                includeFontPadding: false,
-              }}
-            >
-              {discount}%
-            </Text>
-          </View>
-        )}
       </View>
 
       {/* ── RIGHT CONTENT ── */}
@@ -233,7 +198,6 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
               }}
             >
               {rating.toFixed(1)}
-              {/* {item.  > 0 ? ` · ${item.total_reviews}` : ""} */}
             </Text>
           </View>
         )}
@@ -243,7 +207,7 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: spacing(4),
+            gap: spacing(6),
           }}
         >
           <Text
@@ -256,12 +220,12 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
           >
             ₹{formatPrice(price)}
           </Text>
-          {discount && (
+          {discountAmount && (
             <Text
               style={{
                 fontSize: font(9),
                 fontFamily: "Poppins_400Regular",
-                color: colors.textTertiary,
+                color: colors.textSecondary,
                 textDecorationLine: "line-through",
                 includeFontPadding: false,
               }}
@@ -271,8 +235,30 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
           )}
         </View>
 
-        {/* ── CART CONTROL — right aligned ── */}
-        <View style={{ alignItems: "flex-end", marginTop: spacing(2) }}>
+        {/* ── CART CONTROL & OFF PRICE ROW ── */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: spacing(2),
+          }}
+        >
+          {/* Left side: Off price */}
+          <View style={{ flex: 1 }}>
+            {discountAmount && (
+              <Text
+                style={{
+                  fontSize: font(11),
+                  color: "#FF5E0E",
+                  fontFamily: "Poppins_700Bold",
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{discountAmount} OFF
+              </Text>
+            )}
+          </View>
           {qty === 0 ? (
             /* Small ADD pill — same as grid */
             <TouchableOpacity
@@ -286,9 +272,14 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: spacing(8),
-                borderWidth: 1,
+                borderWidth: 1.2,
                 borderColor: colors.primary,
                 backgroundColor: colors.background,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 1.5,
+                elevation: 2,
               }}
             >
               {loading ? (
@@ -317,6 +308,11 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 backgroundColor: colors.primary,
                 borderRadius: spacing(8),
                 height: spacing(28),
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 1.5,
+                elevation: 2,
               }}
             >
               <TouchableOpacity
@@ -330,11 +326,7 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
               >
-                {qty === 1 ? (
-                  <Trash2 size={spacing(12)} color="#fff" />
-                ) : (
-                  <Minus size={spacing(12)} color="#fff" strokeWidth={2.5} />
-                )}
+                <Minus size={spacing(12)} color="#fff" strokeWidth={2.5} />
               </TouchableOpacity>
 
               <TextInput

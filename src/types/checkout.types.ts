@@ -17,9 +17,11 @@ export interface CartSummary {
   shipping_charge: string | number;
   amount_to_pay: number;
   free_shipping_message: string;
-  free_shipping: "Yes" | "No";
+  free_shipping: string;
   gst_amount: string | number;
-  cod_charges: string;
+  cod_charges?: string | number;
+  max_cod_amount_exceed?: string;
+  cod_exceed_message?: string;
 }
 
 // ======================================================
@@ -43,8 +45,8 @@ export interface CartItem {
 
   enc_product_id: string;
 
-  actual_price: string;
-  you_save: string;
+  actual_price: string | null;
+  you_save: string | null;
 
   variation_id: number;
   product_id: number;
@@ -79,9 +81,34 @@ export interface RazorpayConfig {
   RAZORPAY_SECRET: string;
 }
 
-// ======================================================
-// RESPONSE
-// ======================================================
+export interface FreeProductCheckoutItem {
+  free_cart_item_id: number;
+  quantity: number;
+  original_unit_price: number;
+  free_discount_amount: number;
+  final_unit_price: number;
+  application_count: number;
+  promotion_instance_key: string;
+  free_product_rule_id: number;
+  free_product_rule_reward_id: number;
+  eligibility_snapshot: string;
+  rule_type: string;
+  rule_name: string;
+  free_product_source: string;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  product_variation_id: number;
+  size: string | null;
+  unit: string | null;
+  sku: string;
+  selling_price: number | string | null;
+  mrp: number | string | null;
+  s3_image_path: string;
+  is_combo_free_product: boolean;
+  is_rule_free_product: boolean;
+  display_price: string;
+}
 
 export interface CheckoutResponse {
   message: string;
@@ -91,6 +118,7 @@ export interface CheckoutResponse {
     cart_details: CartItem[];
     cart_app: CartSummary;
     razorpay: RazorpayConfig;
+    free_products: FreeProductCheckoutItem[];
   };
 }
 // 🔹 Request Params

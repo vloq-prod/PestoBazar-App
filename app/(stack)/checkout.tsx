@@ -7,6 +7,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   useWindowDimensions,
+  Image,
+  Modal,
+  Pressable,
 } from "react-native";
 import RenderHtml from "react-native-render-html";
 import RazorpayCheckout from "react-native-razorpay";
@@ -39,6 +42,7 @@ import {
   Banknote,
   ChevronDown,
   ChevronUp,
+  X,
 } from "lucide-react-native";
 import AddressCard from "../../src/components/checkout/AddressCard";
 import { fmt, formatINR } from "../../src/utils/productHelpers";
@@ -131,7 +135,7 @@ const PriceRow = ({
 export default function Checkout() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { font, spacing } = useResponsive();
+  const { font, spacing, wp } = useResponsive();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const queryClient = useQueryClient();
@@ -176,6 +180,8 @@ export default function Checkout() {
   // ── Delete Modal state ──
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null);
+  const [billingSheetVisible, setBillingSheetVisible] = useState(false);
+  const [deliverySheetVisible, setDeliverySheetVisible] = useState(false);
 
   const { mutate: removeAddress, isPending: isRemoving } = useRemoveAddress();
 
@@ -447,6 +453,7 @@ export default function Checkout() {
   // ── All derived data ─────────────────────────────────────────────────────
   const cart = data?.data?.cart_app;
   const items: any[] = data?.data?.cart_details || [];
+  const freeProducts: any[] = data?.data?.free_products || [];
   const cartId = data?.data?.cart_app?.cart_id;
   const razorpayKey = data?.data?.razorpay?.RAZORPAY_KEY;
 
@@ -457,6 +464,9 @@ export default function Checkout() {
     ? (billingList.find((a) => a.id === selectedBillingId)?.address_id ?? null)
     : (deliveryList.find((a) => a.id === selectedDeliveryId)?.address_id ??
       null);
+
+  const selectedBillingAddr = billingList.find((a) => a.id === selectedBillingId);
+  const selectedDeliveryAddr = deliveryList.find((a) => a.id === selectedDeliveryId);
 
   const shippingCart = shippingData?.data?.cart;
   const isFreeShipping =
@@ -636,27 +646,45 @@ export default function Checkout() {
             font={font}
             spacing={spacing}
             rightElement={
-              <TouchableOpacity
-                onPress={() =>
-                  router.push({
-                    pathname: "/map",
-                    params: { from: "checkout", type: "billing" },
-                  })
-                }
-                activeOpacity={0.7}
-                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-              >
-                <Plus size={14} color={colors.primary} />
-                <Text
-                  style={{
-                    fontSize: font(11),
-                    color: colors.primary,
-                    fontFamily: "Poppins_500Medium",
-                  }}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(12) }}>
+                {billingList.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setBillingSheetVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={{
+                        fontSize: font(11.5),
+                        color: colors.primary,
+                        fontFamily: "Poppins_600SemiBold",
+                      }}
+                    >
+                      Change
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/map",
+                      params: { from: "checkout", type: "billing" },
+                    })
+                  }
+                  activeOpacity={0.7}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                 >
-                  Add New
-                </Text>
-              </TouchableOpacity>
+                  <Plus size={14} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontSize: font(11.5),
+                      color: colors.primary,
+                      fontFamily: "Poppins_500Medium",
+                    }}
+                  >
+                    Add New
+                  </Text>
+                </TouchableOpacity>
+              </View>
             }
           />
           {billingList.length === 0 ? (
@@ -697,24 +725,23 @@ export default function Checkout() {
             </TouchableOpacity>
           ) : (
             <View style={[styles.addrList, { gap: spacing(10) }]}>
-              {billingList.map((addr) => (
+              {selectedBillingAddr && (
                 <AddressCard
-                  key={addr.id}
-                  item={addr}
-                  isSelected={selectedBillingId === addr.id}
-                  onSelect={() => setSelectedBillingId(addr.id)}
+                  item={selectedBillingAddr}
+                  isSelected={true}
+                  onSelect={() => setBillingSheetVisible(true)}
                   onEdit={() =>
                     router.push({
                       pathname: "/addaddress",
-                      params: { type: "billing", id: addr.id },
+                      params: { type: "billing", id: selectedBillingAddr.id },
                     })
                   }
                   onDelete={() => {
-                    setAddressToDelete(addr.id);
+                    setAddressToDelete(selectedBillingAddr.id);
                     setDeleteModalVisible(true);
                   }}
                 />
-              ))}
+              )}
             </View>
           )}
         </View>
@@ -758,27 +785,45 @@ export default function Checkout() {
               font={font}
               spacing={spacing}
               rightElement={
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: "/map",
-                      params: { from: "checkout", type: "delivery" },
-                    })
-                  }
-                  activeOpacity={0.7}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-                >
-                  <Plus size={14} color={colors.primary} />
-                  <Text
-                    style={{
-                      fontSize: font(11),
-                      color: colors.primary,
-                      fontFamily: "Poppins_500Medium",
-                    }}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(12) }}>
+                  {deliveryList.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => setDeliverySheetVisible(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={{
+                          fontSize: font(11.5),
+                          color: colors.primary,
+                          fontFamily: "Poppins_600SemiBold",
+                        }}
+                      >
+                        Change
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: "/map",
+                        params: { from: "checkout", type: "delivery" },
+                      })
+                    }
+                    activeOpacity={0.7}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                   >
-                    Add New
-                  </Text>
-                </TouchableOpacity>
+                    <Plus size={14} color={colors.primary} />
+                    <Text
+                      style={{
+                        fontSize: font(11.5),
+                        color: colors.primary,
+                        fontFamily: "Poppins_500Medium",
+                      }}
+                    >
+                      Add New
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               }
             />
             {deliveryList.length === 0 ? (
@@ -822,24 +867,23 @@ export default function Checkout() {
               </TouchableOpacity>
             ) : (
               <View style={[styles.addrList, { gap: spacing(10) }]}>
-                {deliveryList.map((addr) => (
+                {selectedDeliveryAddr && (
                   <AddressCard
-                    key={addr.id}
-                    item={addr}
-                    isSelected={selectedDeliveryId === addr.id}
-                    onSelect={() => setSelectedDeliveryId(addr.id)}
+                    item={selectedDeliveryAddr}
+                    isSelected={true}
+                    onSelect={() => setDeliverySheetVisible(true)}
                     onEdit={() =>
                       router.push({
                         pathname: "/addaddress",
-                        params: { type: "delivery", id: addr.id },
+                        params: { type: "delivery", id: selectedDeliveryAddr.id },
                       })
                     }
                     onDelete={() => {
-                      setAddressToDelete(addr.id);
+                      setAddressToDelete(selectedDeliveryAddr.id);
                       setDeleteModalVisible(true);
                     }}
                   />
-                ))}
+                )}
               </View>
             )}
           </View>
@@ -1137,9 +1181,127 @@ export default function Checkout() {
 
           {isItemsExpanded && (
             <View style={{ marginBottom: spacing(4) }}>
-              {items.map((item) => (
-                <CheckoutItem key={item.id} item={item} />
+              {items.map((item, index) => (
+                <CheckoutItem 
+                  key={item.id} 
+                  item={item} 
+                  isLast={index === items.length - 1 && (!freeProducts || freeProducts.length === 0)}
+                />
               ))}
+
+              {freeProducts && freeProducts.map((item, index) => {
+                const imageUri = item.s3_image_path?.startsWith("http")
+                  ? item.s3_image_path
+                  : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+
+                const isLastFreeProduct = index === freeProducts.length - 1;
+
+                return (
+                  <React.Fragment key={item.free_cart_item_id}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: spacing(12),
+                        paddingBottom: spacing(10),
+                      }}
+                    >
+                      {/* Image */}
+                      <View
+                        style={{
+                          width: wp(22),
+                          height: wp(22),
+                          borderRadius: spacing(8),
+                          backgroundColor: colors.inputBackground,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Image
+                          source={{ uri: imageUri }}
+                          style={{ width: wp(22), height: wp(22) }}
+                          resizeMode="cover"
+                        />
+                      </View>
+
+                      {/* Content */}
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          gap: spacing(8),
+                        }}
+                      >
+                        {/* Title */}
+                        <Text
+                          numberOfLines={2}
+                          style={{
+                            fontSize: font(13),
+                            fontFamily: "Poppins_500Medium",
+                            color: colors.text,
+                          }}
+                        >
+                          {item.product_name}
+                        </Text>
+
+                        {/* Details */}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          {/* Details */}
+                          <Text
+                            style={{
+                              fontSize: font(12),
+                              fontFamily: "Poppins_400Regular",
+                              color: colors.textSecondary,
+                            }}
+                          >
+                            Qty: {item.quantity}
+                            {item.mrp && Number(item.mrp) > 0 ? (
+                              <>
+                                <Text style={{ color: colors.textSecondary }}>{"  ·  "}</Text>
+                                <Text
+                                  style={{
+                                    textDecorationLine: "line-through",
+                                    color: colors.textSecondary,
+                                  }}
+                                >
+                                  ₹{fmt(item.mrp)}
+                                </Text>
+                              </>
+                            ) : null}
+                          </Text>
+
+                          {/* Price */}
+                          <View style={{ alignItems: "flex-end" }}>
+                            <Text
+                              style={{
+                                fontSize: font(15),
+                                fontFamily: "Poppins_600SemiBold",
+                                color: "#10B981", // Green for FREE
+                              }}
+                            >
+                              {item.display_price || "FREE"}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Divider at the bottom of the card */}
+                    <View
+                      style={{
+                        height: 1,
+                        backgroundColor: colors.border,
+                        marginBottom: spacing(10),
+                      }}
+                    />
+                  </React.Fragment>
+                );
+              })}
             </View>
           )}
 
@@ -1383,6 +1545,256 @@ export default function Checkout() {
             : "Processing Order..."
         }
       />
+
+      {/* ── Billing Address Bottom Sheet ── */}
+      <Modal
+        visible={billingSheetVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setBillingSheetVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Pressable style={{ flex: 1 }} onPress={() => setBillingSheetVisible(false)} />
+          <View
+            style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: insets.bottom + spacing(16),
+              maxHeight: "75%",
+            }}
+          >
+            {/* Header / Handle */}
+            <View style={{ alignItems: "center", paddingVertical: spacing(10) }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 5,
+                  borderRadius: 2.5,
+                  backgroundColor: colors.border,
+                }}
+              />
+            </View>
+
+            {/* Title & Actions */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingHorizontal: spacing(16),
+                paddingBottom: spacing(12),
+                borderBottomWidth: 0.5,
+                borderBottomColor: colors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(15),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                }}
+              >
+                Select Billing Address
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(14) }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setBillingSheetVisible(false);
+                    router.push({
+                      pathname: "/map",
+                      params: { from: "checkout", type: "billing" },
+                    });
+                  }}
+                  activeOpacity={0.7}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                >
+                  <Plus size={14} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontSize: font(12),
+                      color: colors.primary,
+                      fontFamily: "Poppins_600SemiBold",
+                    }}
+                  >
+                    Add New
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setBillingSheetVisible(false)}
+                  activeOpacity={0.7}
+                  style={{ padding: spacing(2) }}
+                >
+                  <X size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Address List */}
+            <ScrollView
+              contentContainerStyle={{
+                padding: spacing(16),
+                gap: spacing(12),
+              }}
+            >
+              {billingList.map((addr) => (
+                <AddressCard
+                  key={addr.id}
+                  item={addr}
+                  isSelected={selectedBillingId === addr.id}
+                  onSelect={() => {
+                    setSelectedBillingId(addr.id);
+                    setBillingSheetVisible(false);
+                  }}
+                  onEdit={() => {
+                    setBillingSheetVisible(false);
+                    router.push({
+                      pathname: "/addaddress",
+                      params: { type: "billing", id: addr.id },
+                    });
+                  }}
+                  onDelete={() => {
+                    setBillingSheetVisible(false);
+                    setAddressToDelete(addr.id);
+                    setDeleteModalVisible(true);
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Delivery Address Bottom Sheet ── */}
+      <Modal
+        visible={deliverySheetVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setDeliverySheetVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Pressable style={{ flex: 1 }} onPress={() => setDeliverySheetVisible(false)} />
+          <View
+            style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingBottom: insets.bottom + spacing(16),
+              maxHeight: "75%",
+            }}
+          >
+            {/* Header / Handle */}
+            <View style={{ alignItems: "center", paddingVertical: spacing(10) }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 5,
+                  borderRadius: 2.5,
+                  backgroundColor: colors.border,
+                }}
+              />
+            </View>
+
+            {/* Title & Actions */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                paddingHorizontal: spacing(16),
+                paddingBottom: spacing(12),
+                borderBottomWidth: 0.5,
+                borderBottomColor: colors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(15),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                }}
+              >
+                Select Delivery Address
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(14) }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setDeliverySheetVisible(false);
+                    router.push({
+                      pathname: "/map",
+                      params: { from: "checkout", type: "delivery" },
+                    });
+                  }}
+                  activeOpacity={0.7}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                >
+                  <Plus size={14} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontSize: font(12),
+                      color: colors.primary,
+                      fontFamily: "Poppins_600SemiBold",
+                    }}
+                  >
+                    Add New
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setDeliverySheetVisible(false)}
+                  activeOpacity={0.7}
+                  style={{ padding: spacing(2) }}
+                >
+                  <X size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Address List */}
+            <ScrollView
+              contentContainerStyle={{
+                padding: spacing(16),
+                gap: spacing(12),
+              }}
+            >
+              {deliveryList.map((addr) => (
+                <AddressCard
+                  key={addr.id}
+                  item={addr}
+                  isSelected={selectedDeliveryId === addr.id}
+                  onSelect={() => {
+                    setSelectedDeliveryId(addr.id);
+                    setDeliverySheetVisible(false);
+                  }}
+                  onEdit={() => {
+                    setDeliverySheetVisible(false);
+                    router.push({
+                      pathname: "/addaddress",
+                      params: { type: "delivery", id: addr.id },
+                    });
+                  }}
+                  onDelete={() => {
+                    setDeliverySheetVisible(false);
+                    setAddressToDelete(addr.id);
+                    setDeleteModalVisible(true);
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

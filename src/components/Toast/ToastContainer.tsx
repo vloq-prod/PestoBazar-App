@@ -14,7 +14,7 @@ export const ToastContainer = () => {
 
   return (
     <View
-      style={[styles.wrapper, { top: insets.top + 8 }]}
+      style={[styles.wrapper, { bottom: insets.bottom + 110 }]}
       pointerEvents="box-none"
     >
       {toasts.map((toast) => (

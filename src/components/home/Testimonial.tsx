@@ -184,6 +184,11 @@ const Testimonial = () => {
         autoPlayInterval={3000}
         scrollAnimationDuration={700}
         style={{ width }}
+        onConfigurePanGesture={gesture => {
+          gesture
+            .activeOffsetX([-10, 10])
+            .failOffsetY([-5, 5]);
+        }}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: 16 }}>
             <TestimonialCard item={item} colors={colors} />

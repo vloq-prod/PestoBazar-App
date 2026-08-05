@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from "react-native";
 import {
   SafeAreaView,
@@ -25,10 +26,11 @@ import { useAppVisitorStore } from "../../src/store/auth";
 import CartItem from "../../src/components/cart/CartItem";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
-import { Info, MoveRight } from "lucide-react-native";
+import { Info, MoveRight, Gift, Tag, ChevronRight } from "lucide-react-native";
 import LottieView from "lottie-react-native";
 import { useRouter } from "expo-router";
 import CartItemSkeleton from "../../src/skeleton/CartItemSkeleton";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function CartScreen() {
   const { visitorId, userId } = useAppVisitorStore((state) => state);
@@ -64,6 +66,7 @@ export default function CartScreen() {
 
   // const cart = cartData?.data.cart;
   const items = cartData?.data?.cart_details;
+  const freeProducts = cartData?.data?.free_products;
 
   const cartId = cartData?.data?.cart_app?.cart_id;
   console.log("cartId: ", cartId);
@@ -181,7 +184,7 @@ export default function CartScreen() {
             paddingTop: spacing(20),
             paddingBottom: insets.bottom + 170,
             flexGrow: 1,
-          }}
+          }} 
           showsVerticalScrollIndicator={false}
         >
           <View className="px-4">
@@ -196,16 +199,235 @@ export default function CartScreen() {
                 <Text>Error loading cart data</Text>
               </View>
             ) : (
-              items?.map((item) => (
-                <CartItem
-                  key={item.id}
-                  item={item}
-                  onDecrease={handleDecrease}
-                  onIncrease={handleIncrease}
-                  onRemove={handleRemove}
-                  onChangeQty={handleChangeQty}
-                />
-              ))
+              <>
+                {items?.map((item) => (
+                  <CartItem
+                    key={item.id}
+                    item={item}
+                    onDecrease={handleDecrease}
+                    onIncrease={handleIncrease}
+                    onRemove={handleRemove}
+                    onChangeQty={handleChangeQty}
+                  />
+                ))}
+
+                {/* Coupons & Offers Box */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    router.push("/(stack)/coupons");
+                  }}
+                  style={{
+                    marginTop: spacing(16),
+                    backgroundColor: colors.surface,
+                    borderRadius: spacing(12),
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    paddingHorizontal: spacing(14),
+                    paddingVertical: spacing(14),
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing(12),
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: spacing(36),
+                        height: spacing(36),
+                        borderRadius: spacing(18),
+                        backgroundColor: colors.primary + "15",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Tag size={18} color={colors.primary} />
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: font(13.5),
+                          fontFamily: "Poppins_600SemiBold",
+                          color: colors.text,
+                        }}
+                      >
+                        Coupons & Offers
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: font(11),
+                          fontFamily: "Poppins_400Regular",
+                          color: colors.textSecondary,
+                          marginTop: spacing(1),
+                        }}
+                      >
+                        Save more with promo codes
+                      </Text>
+                    </View>
+                  </View>
+
+                  <ChevronRight size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
+
+                {/* Free Products */}
+                {freeProducts && freeProducts.length > 0 && (
+                  <View
+                    style={{
+                      marginTop: spacing(16),
+                      borderWidth: 1.2,
+                      borderColor: "#A7F3D0", // Soft light green border
+                      borderRadius: spacing(12),
+                      backgroundColor: "transparent",
+                      overflow: "hidden", // Clips header's background to rounded corners
+                    }}
+                  >
+                    {/* Section Header */}
+                    <LinearGradient
+                      colors={["#E8FDF0", "#C8F7DC"]} // Premium soft green gradient
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing(8),
+                        paddingVertical: spacing(10),
+                        paddingHorizontal: spacing(14),
+                        borderBottomWidth: 1.2,
+                        borderBottomColor: "#A7F3D0", // Divider line connecting sides
+                      }}
+                    >
+                      <Gift size={20} color="#059669" />
+                      <Text
+                        style={{
+                          fontSize: font(13.5),
+                          fontFamily: "Poppins_600SemiBold",
+                          color: colors.text, // Black text
+                        }}
+                      >
+                        Free items added to your order
+                      </Text>
+                    </LinearGradient>
+
+                    {/* Free Products Cards */}
+                    <View style={{ padding: spacing(14), gap: spacing(12) }}>
+                      {freeProducts.map((item) => {
+                        // Resolve image path
+                        const imageUri = item.s3_image_path?.startsWith("http")
+                          ? item.s3_image_path
+                          : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+
+                        return (
+                          <View
+                            key={item.free_cart_item_id}
+                            style={{
+                              flexDirection: "row",
+                              backgroundColor: "transparent",
+                              gap: spacing(12),
+                            }}
+                          >
+                            {/* Image */}
+                            <View
+                              style={{
+                                width: spacing(80),
+                                height: spacing(80),
+                                borderRadius: spacing(8),
+                                backgroundColor: colors.inputBackground,
+                                overflow: "hidden",
+                              }}
+                            >
+                              <Image
+                                source={{ uri: imageUri }}
+                                style={{
+                                  width: spacing(80),
+                                  height: spacing(80),
+                                }}
+                                resizeMode="cover"
+                              />
+                            </View>
+
+                            {/* Content */}
+                            <View
+                              style={{
+                                flex: 1,
+                                gap: spacing(6),
+                                flexDirection: "column",
+                                justifyContent: "center",
+                              }}
+                            >
+                              {/* Title / Info */}
+                              <View>
+                                <Text
+                                  numberOfLines={2}
+                                  style={{
+                                    fontSize: font(12),
+                                    fontFamily: "Poppins_500Medium",
+                                    color: colors.text,
+                                  }}
+                                >
+                                  {item.product_name}
+                                </Text>
+
+                                <Text
+                                  style={{
+                                    fontSize: font(10.5),
+                                    fontFamily: "Poppins_400Regular",
+                                    color: colors.textSecondary,
+                                    marginTop: spacing(2),
+                                  }}
+                                >
+                                  {item.size ? `${item.size}` : ""}
+                                  {item.size && item.rule_name ? ". " : ""}
+                                  {item.rule_name ? `${item.rule_name}` : ""}
+                                </Text>
+                              </View>
+
+                              {/* Price Row */}
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
+                              >
+                                {item.mrp && item.mrp > 0 ? (
+                                  <Text
+                                    style={{
+                                      fontSize: font(13.5),
+                                      fontFamily: "Poppins_400Regular",
+                                      color: colors.textSecondary,
+                                      textDecorationLine: "line-through",
+                                    }}
+                                  >
+                                    ₹{item.mrp}
+                                  </Text>
+                                ) : (
+                                  <View />
+                                )}
+
+                                <Text
+                                  style={{
+                                    fontSize: font(14),
+                                    fontFamily: "Poppins_600SemiBold",
+                                    color: "#10B981", // Green for FREE
+                                  }}
+                                >
+                                  {item.display_price || "FREE"}
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+              </>
             )}
           </View>
         </ScrollView>
@@ -302,7 +524,9 @@ export default function CartScreen() {
               >
                 {formatINR(cartTotal?.amount_to_pay || 0)}
               </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+              >
                 <Text style={{ fontSize: 14, color: "#888", marginBottom: 2 }}>
                   Grand Total
                 </Text>

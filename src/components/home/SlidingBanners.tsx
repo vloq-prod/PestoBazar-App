@@ -79,6 +79,11 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
         autoPlayInterval={3500}
         scrollAnimationDuration={500}
         onSnapToItem={setActiveIndex}
+        onConfigurePanGesture={gesture => {
+          gesture
+            .activeOffsetX([-10, 10])
+            .failOffsetY([-5, 5]);
+        }}
         renderItem={({ item }) => (
           // paddingHorizontal yahan — image chhota, scroll full width
           <View style={{ paddingHorizontal: SIDE_PADDING }}>

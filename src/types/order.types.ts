@@ -250,6 +250,35 @@ export type ReturnReasonResponse = ApiResponse<ReturnReasonData>;
 // FINAL DATA
 // ======================================================
 
+export interface FreeProductOrderItem {
+  free_product_order_item_id: number;
+  rule_code: string;
+  rule_name: string;
+  rule_type: string;
+  rule_priority: number;
+  rule_start_date: string;
+  rule_end_date: string;
+  product_id: number;
+  product_variation_id: number;
+  free_product_name: string;
+  variation_size: string | null;
+  variation_unit: string | null;
+  sku: string | null;
+  quantity: number;
+  original_unit_price: string;
+  free_discount_amount: string;
+  final_unit_price: string;
+  application_count: number;
+  mrp: string | null;
+  selling_price: string;
+  promotion_instance_key: string;
+  status: string;
+  returned_quantity: number;
+  cancelled_reason: string | null;
+  product_url: string;
+  s3_image_path: string | null;
+}
+
 export interface ViewOrderData {
   order_id: string;
 
@@ -268,6 +297,8 @@ export interface ViewOrderData {
   cancel_reason: CancelReason[];
 
   order_combo_detail: any[];
+
+  free_product?: FreeProductOrderItem[];
 }
 
 // ======================================================

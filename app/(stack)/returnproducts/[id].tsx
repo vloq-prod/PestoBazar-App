@@ -612,9 +612,7 @@ const ReturnProductsScreen = () => {
             const hasDetails = !!productReturns[item.id]?.reasonId;
             const imageUri = item.main_image?.startsWith("http")
               ? item.main_image
-              : IMAGE_BASE + item.main_image;
-
-            return (
+              : IMAGE_BASE + item.main_image;            return (
               <TouchableOpacity
                 key={item.id}
                 activeOpacity={0.7}
@@ -630,184 +628,188 @@ const ReturnProductsScreen = () => {
                   }
                 }}
                 style={[
-                  styles.productCard,
                   {
+                    borderBottomWidth: 1,
                     borderBottomColor: colors.border,
                     paddingVertical: spacing(16),
+                    gap: spacing(12),
                   },
                 ]}
               >
-                {/* Checkbox Icon */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    setCheckedProducts(prev => ({ ...prev, [item.id]: !prev[item.id] }));
-                  }}
-                  style={{ marginRight: 2, justifyContent: "center" }}
-                >
-                  {isChecked ? (
-                    <CheckSquare size={22} color={colors.primary} />
-                  ) : (
-                    <Square size={22} color={colors.textTertiary} />
-                  )}
-                </TouchableOpacity>
-
-                {/* Left Column: Image - exactly like OrderItemCard */}
-                <View
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: 12,
-                    backgroundColor: colors.background,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    overflow: "hidden",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={{ width: 72, height: 72 }}
-                    contentFit="contain"
-                  />
-                </View>
-
-                {/* Right Column: Content */}
-                <View style={{ flex: 1, gap: spacing(8) }}>
-                  {/* Row 1: Product Name */}
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_500Medium",
-                      fontSize: font(12),
-                      color: colors.text,
-                      lineHeight: font(18),
+                {/* Top Row: Checkbox + Image + Core Details */}
+                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
+                  {/* Checkbox Icon */}
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setCheckedProducts(prev => ({ ...prev, [item.id]: !prev[item.id] }));
                     }}
-                    numberOfLines={2}
+                    style={{ marginRight: 2, height: 80, justifyContent: "center" }}
                   >
-                    {item.product_name}
-                  </Text>
+                    {isChecked ? (
+                      <CheckSquare size={22} color={colors.primary} />
+                    ) : (
+                      <Square size={22} color={colors.textTertiary} />
+                    )}
+                  </TouchableOpacity>
 
-                  {/* Row 2: Size, Qty (Left) & Price (Right) */}
+                  {/* Left Column: Image - exactly like OrderItemCard */}
                   <View
                     style={{
-                      flexDirection: "row",
+                      width: 80,
+                      height: 80,
+                      borderRadius: 12,
+                      backgroundColor: colors.background,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      overflow: "hidden",
                       alignItems: "center",
-                      justifyContent: "space-between",
+                      justifyContent: "center",
                     }}
                   >
+                    <Image
+                      source={{ uri: imageUri }}
+                      style={{ width: 72, height: 72 }}
+                      contentFit="contain"
+                    />
+                  </View>
+
+                  {/* Right Column: Content */}
+                  <View style={{ flex: 1, gap: spacing(8) }}>
+                    {/* Row 1: Product Name */}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(12),
+                        color: colors.text,
+                        lineHeight: font(18),
+                      }}
+                      numberOfLines={2}
+                    >
+                      {item.product_name}
+                    </Text>
+
+                    {/* Row 2: Size, Qty (Left) & Price (Right) */}
                     <View
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        gap: spacing(8),
+                        justifyContent: "space-between",
                       }}
                     >
-                      {item.size && (
-                        <>
-                          <Text
-                            style={{
-                              fontFamily: "Poppins_400Regular",
-                              fontSize: font(11),
-                              color: colors.textSecondary,
-                            }}
-                          >
-                            Size:{" "}
-                            <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
-                              {item.size}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: spacing(8),
+                        }}
+                      >
+                        {item.size && (
+                          <>
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_400Regular",
+                                fontSize: font(11),
+                                color: colors.textSecondary,
+                              }}
+                            >
+                              Size:{" "}
+                              <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
+                                {item.size}
+                              </Text>
                             </Text>
+                            <View
+                              style={{
+                                width: 1,
+                                height: spacing(10),
+                                backgroundColor: colors.border,
+                              }}
+                            />
+                          </>
+                        )}
+
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_400Regular",
+                            fontSize: font(11),
+                            color: colors.textSecondary,
+                          }}
+                        >
+                          Qty:{" "}
+                          <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
+                            {item.qty}
                           </Text>
-                          <View
-                            style={{
-                              width: 1,
-                              height: spacing(10),
-                              backgroundColor: colors.border,
-                            }}
-                          />
-                        </>
-                      )}
+                        </Text>
+                      </View>
 
                       <Text
                         style={{
-                          fontFamily: "Poppins_400Regular",
-                          fontSize: font(11),
-                          color: colors.textSecondary,
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(14),
+                          color: colors.text,
                         }}
                       >
-                        Qty:{" "}
-                        <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
-                          {item.qty}
-                        </Text>
+                        ₹{formatPrice(item.price_per_piece)}
                       </Text>
                     </View>
-
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_600SemiBold",
-                        fontSize: font(14),
-                        color: colors.text,
-                      }}
-                    >
-                      ₹{formatPrice(item.price_per_piece)}
-                    </Text>
                   </View>
-
-                  {/* Row 3: Status Indicator for Return Details */}
-                  {isChecked && (
-                    <View
-                      style={{
-                        marginTop: spacing(4),
-                        paddingTop: spacing(8),
-                        borderTopWidth: 1,
-                        borderTopColor: colors.border,
-                        gap: spacing(4),
-                      }}
-                    >
-                      {hasDetails ? (
-                        <View style={{ gap: 2 }}>
-                          <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(10.5), color: "#10B981" }}>
-                            ✓ Return details added
-                          </Text>
-                          {/* Show Main Reason in main text color */}
-                          {!!productReturns[item.id]?.reasonText && (
-                            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11.5), color: colors.text, marginTop: 2 }}>
-                              Reason: <Text style={{ fontFamily: "Poppins_400Regular" }}>{productReturns[item.id].reasonText}</Text>
-                            </Text>
-                          )}
-                          {/* Show Sub Reason in secondary color */}
-                          {!!productReturns[item.id]?.subReasonText && (
-                            <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(10.5), color: colors.textSecondary }}>
-                              Sub-reason: <Text style={{ fontFamily: "Poppins_400Regular" }}>{productReturns[item.id].subReasonText}</Text>
-                            </Text>
-                          )}
-                          {/* Show Comments in italicized secondary color */}
-                          {!!productReturns[item.id]?.comments && (
-                            <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10.5), color: colors.textSecondary, fontStyle: "italic" }}>
-                              Comment: {"\""}{productReturns[item.id].comments}{"\""}
-                            </Text>
-                          )}
-                          {/* Show uploaded product images */}
-                          {productReturns[item.id]?.images && productReturns[item.id].images.length > 0 && (
-                            <View style={{ flexDirection: "row", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
-                              {productReturns[item.id].images.map((imgUri: string, idx: number) => (
-                                <Image
-                                  key={idx}
-                                  source={{ uri: imgUri }}
-                                  style={{ width: 45, height: 45, borderRadius: 6, borderWidth: 1, borderColor: colors.border }}
-                                  contentFit="cover"
-                                />
-                              ))}
-                            </View>
-                          )}
-                        </View>
-                      ) : (
-                        <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(10), color: "#EF4444" }}>
-                          * Details required (Tap to add)
-                        </Text>
-                      )}
-                    </View>
-                  )}
                 </View>
+
+                {/* Bottom Row: Status Indicator for Return Details */}
+                {isChecked && (
+                  <View
+                    style={{
+                      paddingTop: spacing(8),
+                      borderTopWidth: 1,
+                      borderTopColor: colors.border,
+                      gap: spacing(4),
+                      marginLeft: 36, // aligned cleanly under the product image Container
+                    }}
+                  >
+                    {hasDetails ? (
+                      <View style={{ gap: 2 }}>
+                        <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(10.5), color: "#10B981" }}>
+                          ✓ Return details added
+                        </Text>
+                        {/* Show Main Reason in main text color */}
+                        {!!productReturns[item.id]?.reasonText && (
+                          <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(11.5), color: colors.text, marginTop: 2 }}>
+                            Reason: <Text style={{ fontFamily: "Poppins_400Regular" }}>{productReturns[item.id].reasonText}</Text>
+                          </Text>
+                        )}
+                        {/* Show Sub Reason in secondary color */}
+                        {!!productReturns[item.id]?.subReasonText && (
+                          <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(10.5), color: colors.textSecondary }}>
+                            Sub-reason: <Text style={{ fontFamily: "Poppins_400Regular" }}>{productReturns[item.id].subReasonText}</Text>
+                          </Text>
+                        )}
+                        {/* Show Comments in italicized secondary color */}
+                        {!!productReturns[item.id]?.comments && (
+                          <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(10.5), color: colors.textSecondary, fontStyle: "italic" }}>
+                            Comment: {"\""}{productReturns[item.id].comments}{"\""}
+                          </Text>
+                        )}
+                        {/* Show uploaded product images */}
+                        {productReturns[item.id]?.images && productReturns[item.id].images.length > 0 && (
+                          <View style={{ flexDirection: "row", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                            {productReturns[item.id].images.map((imgUri: string, idx: number) => (
+                              <Image
+                                key={idx}
+                                source={{ uri: imgUri }}
+                                style={{ width: 45, height: 45, borderRadius: 6, borderWidth: 1, borderColor: colors.border }}
+                                contentFit="cover"
+                              />
+                            ))}
+                          </View>
+                        )}
+                      </View>
+                    ) : (
+                      <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(10), color: "#EF4444" }}>
+                        * Return details required (Tap to add)
+                      </Text>
+                    )}
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}

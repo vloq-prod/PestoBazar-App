@@ -260,10 +260,7 @@ const HomeProduct = () => {
             ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
             renderItem={({ item }) => (
               <View style={{ width: ITEM_WIDTH }}>
-                <ItemCard
-                  item={item as any}
-                  onPress={(p: any) => console.log("press", p.slug)}
-                />
+                <ItemCard item={item as any} />
               </View>
             )}
             initialNumToRender={4}

@@ -336,9 +336,14 @@ const OrderDetails = () => {
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
   console.log("DEBUG order details api response order:", JSON.stringify(orderData?.order));
-  const isReturnAvailable = (orderData?.shiprocket_orders || []).some(
-    (so: any) => so.return_available === "Yes"
-  );
+  const isReturnAvailable =
+    (orderData?.shiprocket_orders || []).some(
+      (so: any) => so.return_available === "Yes"
+    ) &&
+    (orderData?.order_return || []).length === 0 &&
+    (orderData?.shiprocket_orders || []).every(
+      (so: any) => so.return_initiated !== "Yes"
+    );
 
   if (!id) {
     return (
@@ -427,8 +432,8 @@ const OrderDetails = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingVertical: spacing(20),
-            paddingBottom: 0,
+            paddingTop: spacing(20),
+            paddingBottom: insets.bottom + spacing(24),
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -710,6 +715,147 @@ const OrderDetails = () => {
           ))}
         </View>
 
+        {/* ── Free Gift Items ───────────────────────────── */}
+        {orderData?.free_product && orderData.free_product.length > 0 && (
+          <View style={{ marginTop: spacing(24) }}>
+            <SectionLabel
+              title="Free Gift Items"
+              colors={colors}
+              font={font}
+              spacing={spacing}
+            />
+            
+            <View
+              style={{
+                borderWidth: 1.2,
+                borderColor: "#A7F3D0", // Soft light green border
+                borderRadius: spacing(12),
+                backgroundColor: colors.surface,
+                overflow: "hidden",
+              }}
+            >
+              {/* Header inside the box */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing(8),
+                  backgroundColor: "#ECFDF5", // Soft light green background
+                  paddingVertical: spacing(10),
+                  paddingHorizontal: spacing(14),
+                  borderBottomWidth: 1.2,
+                  borderBottomColor: "#A7F3D0",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(12.5),
+                    fontFamily: "Poppins_600SemiBold",
+                    color: "#065F46", // Dark green text matching premium theme
+                  }}
+                >
+                  Unlocks with your order
+                </Text>
+              </View>
+
+              <View style={{ paddingHorizontal: spacing(14), paddingVertical: spacing(8) }}>
+                {orderData.free_product?.map((item: any, idx: number) => {
+                  const imageUri = item.s3_image_path?.startsWith("http")
+                    ? item.s3_image_path
+                    : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                  const isLastFreeItem = idx === (orderData.free_product?.length ?? 0) - 1;
+
+                  return (
+                    <View
+                      key={item.free_product_order_item_id}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing(14),
+                        paddingVertical: spacing(12),
+                        borderBottomWidth: isLastFreeItem ? 0 : 1,
+                        borderBottomColor: colors.border,
+                      }}
+                    >
+                      {/* Image */}
+                      <View
+                        style={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: 8,
+                          backgroundColor: colors.background,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          overflow: "hidden",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Image
+                          source={{ uri: imageUri }}
+                          style={{ width: 56, height: 56 }}
+                          contentFit="contain"
+                        />
+                      </View>
+
+                      {/* Content */}
+                      <View style={{ flex: 1, gap: spacing(4) }}>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_500Medium",
+                            fontSize: font(12),
+                            color: colors.text,
+                            lineHeight: font(17),
+                          }}
+                          numberOfLines={2}
+                        >
+                          {item.free_product_name}
+                        </Text>
+                        
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_400Regular",
+                              fontSize: font(11),
+                              color: colors.textSecondary,
+                            }}
+                          >
+                            Size:{" "}
+                            <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
+                              {item.variation_size || "35 g"}
+                            </Text>
+                            {"  |  "}
+                            Qty:{" "}
+                            <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
+                              {item.quantity}
+                            </Text>
+                          </Text>
+
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_600SemiBold",
+                              fontSize: font(13),
+                              color: "#10B981", // Green FREE text
+                            }}
+                          >
+                            FREE
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* ── 5. Support & Actions ────────────────────────── */}
         <View
           style={{
@@ -846,7 +992,7 @@ const OrderDetails = () => {
           </View>
         </View>
         </View>
-        <Footer />
+        {/* <Footer /> */}
       </ScrollView>
 
       {/* ── Cancel Order Modal ── */}
