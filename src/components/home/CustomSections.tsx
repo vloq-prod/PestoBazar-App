@@ -204,11 +204,12 @@ const CustomSections = () => {
 
         // Map section products to ProductItem format expected by ItemCard
         const mappedProducts = section.products.map((p) => {
-          const productId = Number(p.product_id || p.product_variation_id || p.id);
+          const productId = Number(p.product_variation_id || p.id || p.product_id);
           const slug = (p.url ? p.url.split("/").pop() : "") || "";
           return {
             id: productId,
             product_id: productId,
+            product_variation_id: Number(p.product_variation_id || p.id),
             product_name: p.product_name,
             mrp: String(p.mrp),
             selling_price: String(p.selling_price),

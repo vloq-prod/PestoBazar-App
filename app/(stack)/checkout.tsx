@@ -43,11 +43,41 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Receipt,
+  ShieldCheck,
+  CheckCircle2,
+  Zap,
 } from "lucide-react-native";
+import Svg, { Path } from "react-native-svg";
 import AddressCard from "../../src/components/checkout/AddressCard";
 import { fmt, formatINR } from "../../src/utils/productHelpers";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { useRouter } from "expo-router";
+
+const cleanPrice = (val: any) => {
+  if (val === undefined || val === null || val === "") return "₹0";
+  const str = String(val).replace(/[^0-9.]/g, "");
+  const num = parseFloat(str);
+  if (isNaN(num)) return "₹0";
+  return `₹${num % 1 === 0 ? num.toFixed(0) : num.toFixed(2)}`;
+};
+
+const WavyDivider = ({ color, spacing }: { color: string; spacing: any }) => {
+  return (
+    <View
+      style={{ height: 10, overflow: "hidden", marginVertical: spacing(8) }}
+    >
+      <Svg height="10" width="1000">
+        <Path
+          d="M0 5 Q 3 1, 6 5 T 12 5 T 18 5 T 24 5 T 30 5 T 36 5 T 42 5 T 48 5 T 54 5 T 60 5 T 66 5 T 72 5 T 78 5 T 84 5 T 90 5 T 96 5 T 102 5 T 108 5 T 114 5 T 120 5 T 126 5 T 132 5 T 138 5 T 144 5 T 150 5 T 156 5 T 162 5 T 168 5 T 174 5 T 180 5 T 186 5 T 192 5 T 198 5 T 204 5 T 210 5 T 216 5 T 222 5 T 228 5 T 234 5 T 240 5 T 246 5 T 252 5 T 258 5 T 264 5 T 270 5 T 276 5 T 282 5 T 288 5 T 294 5 T 300 5 T 306 5 T 312 5 T 318 5 T 324 5 T 330 5 T 336 5 T 342 5 T 348 5 T 354 5 T 360 5 T 366 5 T 372 5 T 378 5 T 384 5 T 390 5 T 396 5 T 402 5 T 408 5 T 414 5 T 420 5 T 426 5 T 432 5 T 438 5 T 444 5 T 450 5 T 456 5 T 462 5 T 468 5 T 474 5 T 480 5 T 486 5 T 492 5 T 498 5"
+          fill="none"
+          stroke={color}
+          strokeWidth="1.5"
+        />
+      </Svg>
+    </View>
+  );
+};
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../src/context/ToastContext";
 import LoadingOverlay from "../../src/components/comman/LoadingOverlay";
@@ -64,17 +94,15 @@ const SectionTitle = ({ title, colors, font, spacing, rightElement }: any) => (
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: spacing(12),
+      marginBottom: spacing(8),
     }}
   >
     <Text
-      style={[
-        styles.sectionTitle,
-        {
-          fontSize: font(11),
-          color: colors.text,
-        },
-      ]}
+      style={{
+        fontFamily: "Poppins_700Bold",
+        fontSize: font(13.5),
+        color: colors.text,
+      }}
     >
       {title}
     </Text>
@@ -626,6 +654,7 @@ export default function Checkout() {
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        style={{ flex: 1, backgroundColor: colors.backgroundgray }}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -764,6 +793,7 @@ export default function Checkout() {
               style={[
                 styles.sameAsBillingTitle,
                 {
+                   fontFamily: "Poppins_700Bold",
                   fontSize: font(13),
                   color: colors.text,
                 },
@@ -889,268 +919,314 @@ export default function Checkout() {
           </View>
         )}
 
-        <View>
+        {/* ── Payment Method Section ── */}
+        <View style={{ marginTop: spacing(10) }}>
           <SectionTitle
-            title="Payment Method"
+            title="Payment methods"
             colors={colors}
             font={font}
             spacing={spacing}
           />
-          <View style={{ gap: spacing(10) }}>
+
+          {/* Single Container Box for Both Payment Methods */}
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderRadius: spacing(14),
+              borderWidth: 1,
+              borderColor: colors.border,
+              overflow: "hidden",
+            }}
+          >
             {/* ── Online Payment Option ── */}
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => setPaymentMethod("online")}
-              style={[
-                styles.paymentOption,
-                {
-                  backgroundColor:
-                    paymentMethod === "online"
-                      ? colors.primary + "08"
-                      : colors.surface,
-                  borderColor:
-                    paymentMethod === "online" ? colors.primary : colors.border,
-                  borderWidth: 1.5,
-                  padding: spacing(16),
-                  alignItems: "flex-start", // Top alignment for cleaner multi-line look
-                },
-              ]}
+              style={{
+                padding: spacing(14),
+                backgroundColor: paymentMethod === "online" ? colors.primary + "06" : "transparent",
+              }}
             >
-              <View
-                style={[
-                  styles.iconBox,
-                  { backgroundColor: colors.background, marginTop: 2 },
-                ]}
-              >
-                <CreditCard
-                  size={22}
-                  color={
-                    paymentMethod === "online"
-                      ? colors.primary
-                      : colors.textSecondary
-                  }
-                />
-              </View>
-
-              <View style={{ flex: 1, marginLeft: spacing(12) }}>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing(12) }}>
+                {/* Icon Box */}
                 <View
                   style={{
-                    flexDirection: "row",
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
+                    backgroundColor: paymentMethod === "online" ? colors.primary + "12" : colors.backgroundgray,
+                    justifyContent: "center",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 4,
+                    borderWidth: 1,
+                    borderColor: paymentMethod === "online" ? colors.primary + "30" : colors.border,
                   }}
                 >
+                  <CreditCard
+                    size={22}
+                    color={paymentMethod === "online" ? colors.primary : colors.textSecondary}
+                  />
+                </View>
+
+                {/* Content */}
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(13.5),
+                          color: colors.text,
+                        }}
+                      >
+                        Online Payment
+                      </Text>
+                      <View
+                        style={{
+                          backgroundColor: "#22C55E18",
+                          paddingHorizontal: 7,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                          borderWidth: 1,
+                          borderColor: "#22C55E30",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#16A34A",
+                            fontSize: font(9.5),
+                            fontFamily: "Poppins_600SemiBold",
+                          }}
+                        >
+                          RECOMMENDED
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Selection Checkbox */}
+                    {paymentMethod === "online" ? (
+                      <CheckCircle2 size={20} color={colors.primary} />
+                    ) : (
+                      <Circle size={20} color={colors.textTertiary} />
+                    )}
+                  </View>
+
                   <Text
-                    style={[
-                      styles.paymentOptionTitle,
-                      { color: colors.text, fontSize: font(13.5) },
-                    ]}
+                    style={{
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(11),
+                      color: colors.textSecondary,
+                      marginTop: 2,
+                    }}
                   >
-                    Pay Online
+                    UPI, Debit / Credit Card, Net Banking & more
                   </Text>
+
+                  {/* Payment Badges Pills */}
                   <View
                     style={{
-                      backgroundColor: "#22C55E15",
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                      borderRadius: 6,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                      marginTop: spacing(8),
+                      flexWrap: "wrap",
                     }}
                   >
-                    <Text
-                      style={{
-                        color: "#22C55E",
-                        fontSize: font(10),
-                        fontFamily: "Poppins_600SemiBold",
-                      }}
-                    >
-                      RECOMMENDED
-                    </Text>
+                    {["UPI", "GPay", "Cards", "NetBanking"].map((tag) => (
+                      <View
+                        key={tag}
+                        style={{
+                          backgroundColor: colors.backgroundgray,
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 4,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_500Medium",
+                            fontSize: font(9.5),
+                            color: colors.textSecondary,
+                          }}
+                        >
+                          {tag}
+                        </Text>
+                      </View>
+                    ))}
                   </View>
                 </View>
-
-                <Text
-                  style={[
-                    styles.paymentOptionDesc,
-                    {
-                      color: colors.textSecondary,
-                      fontSize: font(11),
-                      lineHeight: font(16),
-                    },
-                  ]}
-                >
-                  UPI, Cards, Wallets, NetBanking
-                </Text>
-
-                <View
-                  style={{
-                    marginTop: spacing(8),
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#22C55E",
-                      fontSize: font(10.5),
-                      fontFamily: "Poppins_500Medium",
-                    }}
-                  >
-                    No extra charges applied
-                  </Text>
-                </View>
-              </View>
-
-              <View style={{ marginLeft: spacing(12), marginTop: 4 }}>
-                {paymentMethod === "online" ? (
-                  <CircleDot size={20} color={colors.primary} />
-                ) : (
-                  <Circle size={20} color={colors.textTertiary} />
-                )}
               </View>
             </TouchableOpacity>
 
-            {/* ── COD Payment Option ── */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setPaymentMethod("cod")}
-              style={[
-                styles.paymentOption,
-                {
-                  backgroundColor:
-                    paymentMethod === "cod"
-                      ? colors.error + "05"
-                      : colors.surface,
-                  borderColor:
-                    paymentMethod === "cod" ? colors.primary : colors.border,
-                  borderWidth: 1.5,
-                  padding: spacing(16),
-                  alignItems: "flex-start",
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.iconBox,
-                  { backgroundColor: colors.background, marginTop: 2 },
-                ]}
-              >
-                <Banknote
-                  size={22}
-                  color={
-                    paymentMethod === "cod"
-                      ? colors.primary
-                      : colors.textSecondary
-                  }
-                />
-              </View>
+            {/* ── Separator Line ── */}
+            <View style={{ height: 1, backgroundColor: colors.border }} />
 
-              <View style={{ flex: 1, marginLeft: spacing(12) }}>
+            {/* ── Cash on Delivery Option ── */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setPaymentMethod("cod")}
+              style={{
+                padding: spacing(14),
+                backgroundColor: paymentMethod === "cod" ? colors.primary + "06" : "transparent",
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing(12) }}>
+                {/* Icon Box */}
                 <View
                   style={{
-                    flexDirection: "row",
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
+                    backgroundColor: paymentMethod === "cod" ? colors.primary + "12" : colors.backgroundgray,
+                    justifyContent: "center",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 4,
+                    borderWidth: 1,
+                    borderColor: paymentMethod === "cod" ? colors.primary + "30" : colors.border,
                   }}
                 >
-                  <Text
-                    style={[
-                      styles.paymentOptionTitle,
-                      { color: colors.text, fontSize: font(13.5) },
-                    ]}
-                  >
-                    Cash on Delivery
-                  </Text>
-                  {codCharge > 0 && (
-                    <Text
-                      style={{
-                        color: "#EF4444",
-                        fontSize: font(11),
-                        fontFamily: "Poppins_600SemiBold",
-                      }}
-                    >
-                      {fmt(codCharge)} extra
-                    </Text>
-                  )}
+                  <Banknote
+                    size={22}
+                    color={paymentMethod === "cod" ? colors.primary : colors.textSecondary}
+                  />
                 </View>
 
-                <Text
-                  style={[
-                    styles.paymentOptionDesc,
-                    {
-                      color: colors.textSecondary,
-                      fontSize: font(11),
-                      lineHeight: font(16),
-                    },
-                  ]}
-                >
-                  Pay when you receive the order
-                </Text>
+                {/* Content */}
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(13.5),
+                          color: colors.text,
+                        }}
+                      >
+                        Cash on Delivery
+                      </Text>
+                      {codCharge > 0 && (
+                        <View
+                          style={{
+                            backgroundColor: "#EF444415",
+                            paddingHorizontal: 7,
+                            paddingVertical: 2,
+                            borderRadius: 6,
+                            borderWidth: 1,
+                            borderColor: "#EF444430",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#EF4444",
+                              fontSize: font(9.5),
+                              fontFamily: "Poppins_600SemiBold",
+                            }}
+                          >
+                            +{cleanPrice(codCharge)} Fee
+                          </Text>
+                        </View>
+                      )}
+                    </View>
 
-                {codCharge > 0 && (
-                  <View
+                    {/* Selection Checkbox */}
+                    {paymentMethod === "cod" ? (
+                      <CheckCircle2 size={20} color={colors.primary} />
+                    ) : (
+                      <Circle size={20} color={colors.textTertiary} />
+                    )}
+                  </View>
+
+                  <Text
                     style={{
-                      marginTop: spacing(8),
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 4,
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(11),
+                      color: colors.textSecondary,
+                      marginTop: 2,
                     }}
                   >
-                    <Text
+                    Pay cash when your order is delivered
+                  </Text>
+
+                  {codCharge > 0 && (
+                    <View
                       style={{
-                        color: "#EF4444",
-                        fontSize: font(10.5),
-                        fontFamily: "Poppins_500Medium",
+                        backgroundColor: "#FEF2F2",
+                        borderRadius: spacing(6),
+                        paddingHorizontal: spacing(8),
+                        paddingVertical: spacing(4),
+                        marginTop: spacing(8),
+                        borderWidth: 1,
+                        borderColor: "#FCA5A5",
                       }}
                     >
-                      {fmt(codCharge)} COD handling charges applied
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={{ marginLeft: spacing(12), marginTop: 4 }}>
-                {paymentMethod === "cod" ? (
-                  <CircleDot size={20} color={colors.primary} />
-                ) : (
-                  <Circle size={20} color={colors.textTertiary} />
-                )}
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_500Medium",
+                          fontSize: font(10.5),
+                          color: "#B91C1C",
+                        }}
+                      >
+                        ⚠️ Extra {cleanPrice(codCharge)} COD fee applies. Pay online to save!
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* ── Bill Summary Ticket Card ── */}
         <View
           onLayout={(e) => setSummaryY(e.nativeEvent.layout.y)}
           style={[
-            styles.summaryCard,
+            styles.ticketCard,
             {
               backgroundColor: colors.surface,
-              borderRadius: spacing(16),
+              borderColor: colors.border,
+              marginTop: spacing(10),
             },
           ]}
         >
+          {/* Internal Header */}
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: spacing(12),
+              paddingHorizontal: 12,
+              paddingTop: 10,
+              paddingBottom: 10,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+              marginBottom: isItemsExpanded ? 0 : 12,
             }}
           >
-            <Text
-              style={[
-                styles.sectionTitle,
-                {
-                  fontSize: font(11),
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: 6,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundgray,
+                }}
+              >
+                <Receipt size={16} color={colors.textSecondary} />
+              </View>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(14),
                   color: colors.text,
-                },
-              ]}
-            >
-              {`Order Summary (${cart.cart_count} item${cart.cart_count > 1 ? "s" : ""})`}
-            </Text>
+                }}
+              >
+                Bill Summary
+              </Text>
+            </View>
 
             <TouchableOpacity
               onPress={() => setIsItemsExpanded(!isItemsExpanded)}
@@ -1164,7 +1240,7 @@ export default function Checkout() {
             >
               <Text
                 style={{
-                  fontSize: font(11),
+                  fontSize: font(11.5),
                   color: colors.primary,
                   fontFamily: "Poppins_500Medium",
                 }}
@@ -1179,8 +1255,9 @@ export default function Checkout() {
             </TouchableOpacity>
           </View>
 
+          {/* Expanded Items List */}
           {isItemsExpanded && (
-            <View style={{ marginBottom: spacing(4) }}>
+            <View style={{ paddingHorizontal: 12, marginBottom: spacing(12) }}>
               {items.map((item, index) => (
                 <CheckoutItem 
                   key={item.id} 
@@ -1194,48 +1271,49 @@ export default function Checkout() {
                   ? item.s3_image_path
                   : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
 
-                const isLastFreeProduct = index === freeProducts.length - 1;
-
                 return (
                   <React.Fragment key={item.free_cart_item_id}>
                     <View
                       style={{
                         flexDirection: "row",
-                        gap: spacing(12),
-                        paddingBottom: spacing(10),
+                        gap: spacing(10),
+                        paddingTop: spacing(8),
+                        paddingBottom: spacing(8),
+                        alignItems: "center",
                       }}
                     >
-                      {/* Image */}
                       <View
                         style={{
-                          width: wp(22),
-                          height: wp(22),
+                          width: spacing(52),
+                          height: spacing(52),
                           borderRadius: spacing(8),
-                          backgroundColor: colors.inputBackground,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          backgroundColor: colors.surfaceElevated,
+                          justifyContent: "center",
+                          alignItems: "center",
                           overflow: "hidden",
                         }}
                       >
                         <Image
                           source={{ uri: imageUri }}
-                          style={{ width: wp(22), height: wp(22) }}
-                          resizeMode="cover"
+                          style={{ width: spacing(48), height: spacing(48) }}
+                          resizeMode="contain"
                         />
                       </View>
 
-                      {/* Content */}
                       <View
                         style={{
                           flex: 1,
                           flexDirection: "column",
-                          justifyContent: "space-between",
-                          gap: spacing(8),
+                          justifyContent: "center",
+                          gap: spacing(3),
                         }}
                       >
-                        {/* Title */}
                         <Text
-                          numberOfLines={2}
+                          numberOfLines={1}
                           style={{
-                            fontSize: font(13),
+                            fontSize: font(12.5),
                             fontFamily: "Poppins_500Medium",
                             color: colors.text,
                           }}
@@ -1243,7 +1321,6 @@ export default function Checkout() {
                           {item.product_name}
                         </Text>
 
-                        {/* Details */}
                         <View
                           style={{
                             flexDirection: "row",
@@ -1251,10 +1328,9 @@ export default function Checkout() {
                             alignItems: "center",
                           }}
                         >
-                          {/* Details */}
                           <Text
                             style={{
-                              fontSize: font(12),
+                              fontSize: font(11.5),
                               fontFamily: "Poppins_400Regular",
                               color: colors.textSecondary,
                             }}
@@ -1275,13 +1351,12 @@ export default function Checkout() {
                             ) : null}
                           </Text>
 
-                          {/* Price */}
                           <View style={{ alignItems: "flex-end" }}>
                             <Text
                               style={{
-                                fontSize: font(15),
+                                fontSize: font(13.5),
                                 fontFamily: "Poppins_600SemiBold",
-                                color: "#10B981", // Green for FREE
+                                color: "#10B981",
                               }}
                             >
                               {item.display_price || "FREE"}
@@ -1291,12 +1366,11 @@ export default function Checkout() {
                       </View>
                     </View>
 
-                    {/* Divider at the bottom of the card */}
                     <View
                       style={{
                         height: 1,
                         backgroundColor: colors.border,
-                        marginBottom: spacing(10),
+                        marginHorizontal: -12,
                       }}
                     />
                   </React.Fragment>
@@ -1305,50 +1379,145 @@ export default function Checkout() {
             </View>
           )}
 
-          <PriceRow
-            label={`Subtotal (${cart.cart_count} item${cart.cart_count > 1 ? "s" : ""})`}
-            value={cart.cart_amount}
-            colors={colors}
-            font={font}
-            spacing={spacing}
-          />
+          <View style={styles.cardContent}>
+            {/* Item Total */}
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12.5),
+                  color: colors.textSecondary,
+                }}
+              >
+                Item Total
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(12.5),
+                  color: colors.text,
+                }}
+              >
+                {cleanPrice(cart?.cart_amount)}
+              </Text>
+            </View>
 
-          <PriceRow
-            label="Shipping"
-            value={shippingCharge === 0 ? "FREE" : fmt(shippingCharge)}
-            isGreen={shippingCharge === 0}
-            colors={colors}
-            font={font}
-            spacing={spacing}
-          />
+            {/* Promo Discount Row */}
+            {parseFloat(String(cart?.promo_discount_amount || 0)) > 0 && (
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.textSecondary,
+                  }}
+                >
+                  Promo Discount
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12.5),
+                    color: "#10B981",
+                  }}
+                >
+                  - {cleanPrice(cart?.promo_discount_amount)}
+                </Text>
+              </View>
+            )}
 
-          {!!gstAmount && (
-            <PriceRow
-              label="GST"
-              value={gstAmount}
-              colors={colors}
-              font={font}
-              spacing={spacing}
-            />
-          )}
+            {/* Shipping Row */}
+            <View style={styles.summaryRow}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12.5),
+                  color: colors.textSecondary,
+                }}
+              >
+                Shipping
+              </Text>
+              {shippingCharge === 0 || isFreeShipping ? (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12.5),
+                    color: "#10B981",
+                  }}
+                >
+                  FREE
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  + {cleanPrice(shippingCharge)}
+                </Text>
+              )}
+            </View>
 
+            {/* COD Charges Row */}
+            {isCod && codCharge > 0 && (
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.textSecondary,
+                  }}
+                >
+                  COD Charges
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12.5),
+                    color: "#EF4444",
+                  }}
+                >
+                  + {cleanPrice(codCharge)}
+                </Text>
+              </View>
+            )}
+
+            {/* GST Row */}
+            {!!gstAmount && (
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.textSecondary,
+                  }}
+                >
+                  GST (Govt. Taxes)
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  + {cleanPrice(gstAmount)}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Avoid COD Alert Banner if applicable */}
           {isCod && codCharge > 0 && (
-            <>
-              <PriceRow
-                label="COD Charges"
-                value={fmt(codCharge)}
-                isRed
-                colors={colors}
-                font={font}
-                spacing={spacing}
-              />
+            <View style={{ paddingHorizontal: 12, marginTop: spacing(8) }}>
               <View
                 style={{
                   backgroundColor: "#FEF2F2",
                   borderRadius: spacing(8),
                   paddingHorizontal: spacing(10),
                   paddingVertical: spacing(6),
-                  marginTop: spacing(2),
                 }}
               >
                 <Text
@@ -1363,32 +1532,47 @@ export default function Checkout() {
                   <Text
                     style={{ fontFamily: "Poppins_700Bold", color: "#EF4444" }}
                   >
-                    {fmt(codCharge)}
+                    {cleanPrice(codCharge)}
                   </Text>{" "}
                   on this order
                 </Text>
               </View>
-            </>
+            </View>
           )}
+
+          <WavyDivider color={colors.border} spacing={spacing} />
 
           <View
             style={[
-              styles.divider,
-              {
-                backgroundColor: colors.border,
-                marginVertical: spacing(8),
-              },
+              styles.cardContent,
+              { marginTop: 0, marginBottom: spacing(4), paddingBottom: 12 },
             ]}
-          />
-
-          <PriceRow
-            label="Grand Total"
-            value={fmt(amountToPay)}
-            isTotal
-            colors={colors}
-            font={font}
-            spacing={spacing}
-          />
+          >
+            <View style={styles.summaryRow}>
+              <View>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(14),
+                    color: colors.text,
+                  }}
+                >
+                  Grand Total
+                </Text>
+              </View>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(20),
+                    color: colors.text,
+                  }}
+                >
+                  {cleanPrice(amountToPay)}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
@@ -1941,5 +2125,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     fontFamily: "Poppins_500Medium",
+  },
+  ticketCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 0,
+  },
+  cardContent: {
+    gap: 10,
+    paddingHorizontal: 12,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 });

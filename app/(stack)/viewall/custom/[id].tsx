@@ -35,8 +35,9 @@ type GridMode = "grid" | "list";
 const mapCustomProductToListingItem = (
   item: CustomSectionProduct,
 ): ListingItem => {
+  const variationId = Number(item.product_variation_id || item.id || item.product_id);
   return {
-    id: item.product_id || item.id,
+    id: variationId,
     url: item.url,
     mrp: String(item.mrp),
     selling_price: String(item.selling_price),
@@ -48,8 +49,8 @@ const mapCustomProductToListingItem = (
     is_new: item.is_new,
     is_best_selling: item.is_best_selling,
     avg_rating: String(item.avg_rating || 0),
-    product_variation_id: item.product_variation_id || item.id,
-    enc_product_variation_id: item.enc_product_variation_id || String(item.id),
+    product_variation_id: variationId,
+    enc_product_variation_id: item.enc_product_variation_id || String(variationId),
   };
 };
 
@@ -235,9 +236,11 @@ const CustomSectionAllProducts = () => {
         setAllProducts(res.data.products);
       } else {
         setAllProducts((prev) => {
-          const existingIds = new Set(prev.map((p) => p.id));
+          const getVarId = (p: CustomSectionProduct) =>
+            Number(p.product_variation_id || p.id || p.product_id);
+          const existingIds = new Set(prev.map(getVarId));
           const newProducts = res.data.products.filter(
-            (p) => !existingIds.has(p.id),
+            (p) => !existingIds.has(getVarId(p)),
           );
           return [...prev, ...newProducts];
         });

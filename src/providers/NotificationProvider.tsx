@@ -1,30 +1,13 @@
-/**
- * NotificationProvider.tsx
- *
- * WHY THIS FILE EXISTS:
- *   Expo's notification APIs must be called from inside a React tree, after
- *   the app has fully mounted. Putting this logic in a Provider ensures:
- *     - It runs exactly once on app startup (useEffect with empty deps)
- *     - It integrates cleanly with Expo Router's layout system
- *     - It doesn't block rendering (async, fire-and-forget on mount)
- *
- * WHY A PROVIDER PATTERN (not just useEffect in _layout.tsx):
- *   Keeping notification bootstrap out of _layout.tsx avoids polluting the
- *   root layout with unrelated logic. The Provider is self-contained and can
- *   be added/removed without touching the rest of the layout tree.
- *
- * WHAT HAPPENS IF THIS FILE IS REMOVED:
- *   registerForPushNotifications() is never called → FCM token is never
- *   generated → no push notifications can be received.
- */
+
 
 import React, { useEffect } from "react";
-import { Alert, Platform } from "react-native";
+import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import { registerForPushNotifications, getOrCreateDeviceId } from "../services/notification.service";
 import { useRegisterDeviceToken } from "../hooks/homeHooks";
 import { useAppVisitorStore } from "../store/auth";
 import { AppConfigUtil } from "../utils/appConfig";
+import { useRouter } from "expo-router";
 
 interface NotificationProviderProps {
   children: React.ReactNode;
@@ -35,13 +18,76 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 }) => {
   const { visitorId } = useAppVisitorStore();
   const { mutate: registerToken } = useRegisterDeviceToken();
+  const router = useRouter();
+
+  // ── Helper to handle screen navigation when user clicks notification ──
+  const handleNotificationNavigation = (data: Record<string, any>) => {
+    if (!data) return;
+
+    console.log("[Notification DeepLink] Handling data payload:", data);
+
+    // 1. Explicit route provided (e.g. data.route = "/(stack)/orders")
+    if (data.route) {
+      router.push(data.route);
+      return;
+    }
+
+    // 2. Handle based on redirect_type or type sent from backend
+    const redirectType = data.type || data.redirect_type || data.app_redirect_key;
+
+    switch (redirectType) {
+      case "product":
+      case "products":
+        if (data.product_slug || data.slug || data.id) {
+          router.push({
+            pathname: "/(stack)/product/[id]",
+            params: {
+              id: data.id ? String(data.id) : "slug",
+              product_slug: data.product_slug || data.slug || "",
+              product_name: data.title || data.product_name || "",
+            },
+          });
+        }
+        break;
+
+      case "order":
+      case "order_details":
+        if (data.order_id || data.id) {
+          router.push({
+            pathname: "/(stack)/orderdetails/[id]",
+            params: { id: String(data.order_id || data.id) },
+          });
+        }
+        break;
+
+      case "category":
+      case "categories":
+        if (data.category_slug || data.slug) {
+          router.push({
+            pathname: "/(stack)/shop",
+            params: { category_slug: data.category_slug || data.slug },
+          });
+        }
+        break;
+
+      case "custom_section":
+        if (data.section_id || data.id) {
+          router.push({
+            pathname: "/(stack)/viewall/custom/[id]",
+            params: {
+              id: Number(data.section_id || data.id),
+              title: data.title || "Products",
+            },
+          });
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
 
   useEffect(() => {
-    /**
-     * WHY async IIFE here:
-     *   useEffect callback cannot be async directly. We wrap in an immediately-
-     *   invoked async function so we can await the service cleanly.
-     */
     (async () => {
       const result = await registerForPushNotifications();
       
@@ -71,11 +117,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       const { title, body, data } = response.notification.request.content;
       console.log("[Notification Clicked] Title:", title, "Data:", data);
-      
-      Alert.alert(
-        "Notification Clicked! 🚀",
-        `Title: ${title}\nBody: ${body}\nData: ${JSON.stringify(data)}`
-      );
+      handleNotificationNavigation(data);
     });
 
     // 2. Listen for when a notification is received while the app is in the foreground
@@ -87,7 +129,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       responseSubscription.remove();
       receivedSubscription.remove();
     };
-    // Re-run whenever visitorId changes so we register once the visitor/user logs in.
   }, [visitorId]);
 
   // This provider is purely behavioral — it renders children as-is.

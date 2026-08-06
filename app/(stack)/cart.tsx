@@ -108,13 +108,13 @@ export default function CartScreen() {
   const items = cartData?.data?.cart_details;
   const freeProducts = cartData?.data?.free_products;
 
-  const cartId = cartData?.data?.cart_app?.cart_id;
+  const cartId = cartData?.data?.cart_app?.cart_id || cartData?.data?.cart?.cart_id;
   console.log("cartId: ", cartId);
 
-  const cartTotal = cartData?.data?.cart_app;
-  const isFreeShipping = cartData?.data?.cart_app?.free_shipping;
+  const cartTotal = cartData?.data?.cart_app || cartData?.data?.cart;
+  const isFreeShipping = cartTotal?.free_shipping;
   const cartCount = cartCountData?.data;
-  const appliedPromo = cartTotal?.promo_code_details || cartData?.data?.cart?.promo_code_details;
+  const appliedPromo = cartTotal?.promo_code_details;
 
   const handleRemovePromo = () => {
     if (!cartId) return;
@@ -759,7 +759,7 @@ export default function CartScreen() {
                     paddingBottom: 12,
                     borderBottomWidth: 1,
                     borderBottomColor: colors.border,
-                    marginBottom: 16,
+                    marginBottom: 12,
                   }}
                 >
                   <View

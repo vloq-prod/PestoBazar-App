@@ -28,17 +28,18 @@ const fmt = (value: string | number) => {
 
 const CheckoutItem = ({ item, isLast }: CheckoutItemProps) => {
   const { colors } = useTheme();
-  const { spacing, font, wp } = useResponsive();
-  const imageSize = wp(22);
+  const { spacing, font } = useResponsive();
+  const imageSize = spacing(52);
 
   return (
     <>
       <View
         style={{
           flexDirection: "row",
-          gap: spacing(12),
-          paddingBottom: spacing(10),
-
+          gap: spacing(10),
+          paddingTop: spacing(8),
+          paddingBottom: spacing(8),
+          alignItems: "center",
         }}
       >
         {/* ── Image ── */}
@@ -47,14 +48,18 @@ const CheckoutItem = ({ item, isLast }: CheckoutItemProps) => {
             width: imageSize,
             height: imageSize,
             borderRadius: spacing(8),
-            backgroundColor: colors.inputBackground,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surfaceElevated,
+            justifyContent: "center",
+            alignItems: "center",
             overflow: "hidden",
           }}
         >
           <Image
             source={{ uri: item.s3_image_path ? BASE_URL + item.s3_image_path : undefined }}
-            style={{ width: imageSize, height: imageSize }}
-            resizeMode="cover"
+            style={{ width: imageSize - spacing(4), height: imageSize - spacing(4) }}
+            resizeMode="contain"
           />
         </View>
 
@@ -63,15 +68,15 @@ const CheckoutItem = ({ item, isLast }: CheckoutItemProps) => {
           style={{
             flex: 1,
             flexDirection: "column",
-            justifyContent: "space-between",
-            gap: spacing(8),
+            justifyContent: "center",
+            gap: spacing(3),
           }}
         >
           {/* Name */}
           <Text
-            numberOfLines={2}
+            numberOfLines={1}
             style={{
-              fontSize: font(13),
+              fontSize: font(12.5),
               fontFamily: "Poppins_500Medium",
               color: colors.text,
             }}
@@ -90,13 +95,12 @@ const CheckoutItem = ({ item, isLast }: CheckoutItemProps) => {
             {/* Size + Qty */}
             <Text
               style={{
-                fontSize: font(12),
+                fontSize: font(11.5),
                 fontFamily: "Poppins_400Regular",
                 color: colors.textSecondary,
               }}
             >
-              {item.size}{"  "}
-              <Text style={{ color: colors.textTertiary }}>·</Text>{"  "}
+              {item.size ? `${item.size}  ·  ` : ""}
               <Text
                 style={{
                   fontFamily: "Poppins_500Medium",
@@ -111,29 +115,26 @@ const CheckoutItem = ({ item, isLast }: CheckoutItemProps) => {
             <View style={{ alignItems: "flex-end" }}>
               <Text
                 style={{
-                  fontSize: font(15),
+                  fontSize: font(13.5),
                   fontFamily: "Poppins_600SemiBold",
                   color: colors.text,
                 }}
               >
                 ₹{fmt(item.total_price)}
               </Text>
-
             </View>
           </View>
         </View>
       </View>
 
-      {/* Divider */}
-      {!isLast && (
-        <View
-          style={{
-            height: 1,
-            backgroundColor: colors.border,
-            marginBottom: spacing(10),
-          }}
-        />
-      )}
+      {/* Edge-to-Edge Divider */}
+      <View
+        style={{
+          height: 1,
+          backgroundColor: colors.border,
+          marginHorizontal: -12,
+        }}
+      />
     </>
   );
 };

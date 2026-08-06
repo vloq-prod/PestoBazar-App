@@ -47,6 +47,10 @@ export const useAddToCart = () => {
     onSuccess: (data, variables) => {
       // showToast(data.message || "Product added to cart", "success");
 
+      if (variables.product_id !== undefined && variables.qty !== undefined) {
+        useCartStore.getState().updateQuantity(variables.product_id, variables.qty);
+      }
+
       queryClient.invalidateQueries({
         queryKey: ["cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
       });
@@ -109,6 +113,7 @@ export const useCartCount = (params: GetCartCountParams) => {
 
       return response;
     },
+    enabled: !!params.visitor_id || !!params.user_id,
   });
 };
 
@@ -116,6 +121,7 @@ export const useQuickCart = (params: GetQuickCartParams) => {
   return useQuery<QuickCartResponse>({
     queryKey: ["quick-cart", params.user_id, params.visitor_id],
     queryFn: () => getQuickCart(params),
+    enabled: !!params.visitor_id || !!params.user_id,
   });
 };
 
@@ -291,7 +297,7 @@ export const useCartQuantity = ({
       }
       return response;
     },
-    enabled: !!visitor_id && !!user_id,
+    enabled: Boolean(visitor_id || user_id),
   });
 };
 
