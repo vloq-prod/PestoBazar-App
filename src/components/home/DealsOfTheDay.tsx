@@ -42,7 +42,7 @@ const DealsOfTheDay: React.FC = () => {
         cardWidth={CARD_WIDTH}
         onPress={() =>
           router.push({
-            pathname: "(stack)/product/[id]",
+            pathname: "/(stack)/product/[id]",
             params: {
               id: item.id,
               product_name: item.product_name,

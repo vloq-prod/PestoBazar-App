@@ -387,3 +387,28 @@ export interface SubmitRatingResponse {
   status: number;
   message: string;
 }
+
+
+
+export interface RegisterDeviceTokenRequest {
+  token: string;
+  visitor_id: string;
+  device_id: string;
+  platform: "android" | "ios";
+  app_version: string;
+}
+
+export interface DeviceTokenData {
+  id: number;
+  visitor_id: string | null;
+  user_id: string | null;
+  device_id: string;
+  platform: string;
+  app_version: string;
+}
+
+export interface RegisterDeviceTokenResponse {
+  status: boolean;
+  message: string;
+  data: DeviceTokenData;
+}

@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -19,6 +19,7 @@ import {
   Tag,
   Check,
   Sparkles,
+  AlertCircle,
 } from "lucide-react-native";
 import CouponCard from "../../src/components/cart/CouponCard";
 import { useAppVisitorStore } from "../../src/store/auth";
@@ -35,6 +36,7 @@ export default function CouponsScreen() {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const router = useRouter();
+  const { cartId: routeCartId } = useLocalSearchParams<{ cartId?: string }>();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -43,11 +45,11 @@ export default function CouponsScreen() {
   const [loadingCode, setLoadingCode] = useState<string | null>(null);
 
   const { visitorId, userId } = useAppVisitorStore((state) => state);
-  const { data: cartData } = useCart({
+  const { data: cartData, isLoading: isCartLoading } = useCart({
     user_id: userId ?? 0,
     visitor_id: visitorId!,
   });
-  const cartId = cartData?.data?.cart_app?.cart_id;
+  const cartId = routeCartId || cartData?.data?.cart_app?.cart_id;
 
   const { data: applicablePromoCodesRes, isLoading: isCouponsLoading } =
     useApplicablePromoCodes({
@@ -56,8 +58,13 @@ export default function CouponsScreen() {
       visitor_id: visitorId || "",
     });
 
+  const isInitialLoading =
+    (isCouponsLoading || (!cartId && isCartLoading)) && !applicablePromoCodesRes;
+
   const { mutate: applyPromo, isPending: isApplying } = useApplyPromoCode();
   const { mutate: removePromo, isPending: isRemoving } = useRemovePromoCode();
+
+  const isActionLoading = isApplying || isRemoving || !!loadingCode;
 
   const appliedCouponCode =
     cartData?.data?.cart_app?.promo_code_details?.promo_code ||
@@ -121,6 +128,7 @@ export default function CouponsScreen() {
     console.log("🎟️ handleRemove called for code:", code);
     if (!cartId) return;
 
+    setErrorMsg(null);
     setLoadingCode(code);
 
     removePromo(
@@ -143,13 +151,13 @@ export default function CouponsScreen() {
               queryKey: ["applicable-promo-codes"],
             });
           } else {
-            showToast(res.message || "Failed to remove promo code", "error");
+            setErrorMsg(res.message || "Failed to remove promo code");
           }
         },
         onError: (err: any) => {
           console.error("🎟️ removePromo error response:", err);
           setLoadingCode(null);
-          showToast(err?.message || "Failed to remove promo code", "error");
+          setErrorMsg(err?.message || "Failed to remove promo code");
         },
       },
     );
@@ -215,7 +223,7 @@ export default function CouponsScreen() {
               autoCapitalize="characters"
             />
             <TouchableOpacity
-              disabled={isApplying}
+              disabled={isActionLoading}
               onPress={() => {
                 if (!inputCode.trim()) {
                   setErrorMsg("Please enter a coupon code");
@@ -225,41 +233,22 @@ export default function CouponsScreen() {
               }}
               style={styles.applyInputBtn}
             >
-              {isApplying ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text
-                  style={[
-                    styles.applyInputBtnText,
-                    {
-                      fontSize: font(12.5),
-                      color: inputCode.trim() ? colors.primary : colors.textSecondary,
-                    },
-                  ]}
-                >
-                  APPLY
-                </Text>
-              )}
+              <Text
+                style={[
+                  styles.applyInputBtnText,
+                  {
+                    fontSize: font(12.5),
+                    color: inputCode.trim() ? colors.primary : colors.textSecondary,
+                  },
+                ]}
+              >
+                APPLY
+              </Text>
             </TouchableOpacity>
           </View>
-          {errorMsg ? (
-            <Text
-              style={[
-                styles.errorText,
-                {
-                  color: colors.error,
-                  fontSize: font(11.5),
-                  marginTop: spacing(4),
-                  marginLeft: spacing(4),
-                },
-              ]}
-            >
-              {errorMsg}
-            </Text>
-          ) : null}
         </View>
 
-        {isCouponsLoading ? (
+        {isInitialLoading ? (
           <View
             style={{
               paddingVertical: spacing(40),
@@ -293,8 +282,8 @@ export default function CouponsScreen() {
                       key={item.promo_code_id}
                       item={item}
                       isApplied={isApplied}
-                      isApplyingOrRemoving={loadingCode === item.code}
-                      disabled={!!loadingCode || isApplying || isRemoving}
+                      isApplyingOrRemoving={false}
+                      disabled={isActionLoading}
                       onToggle={handleToggleCoupon}
                     />
                   );
@@ -372,6 +361,143 @@ export default function CouponsScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* ── Centered Full Screen Loading Overlay ── */}
+      {isActionLoading && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              backgroundColor: "rgba(0, 0, 0, 0.35)",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            },
+          ]}
+        >
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              paddingVertical: spacing(22),
+              paddingHorizontal: spacing(28),
+              borderRadius: spacing(14),
+              alignItems: "center",
+              justifyContent: "center",
+              gap: spacing(12),
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: 10,
+              elevation: 8,
+            }}
+          >
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(13),
+                color: colors.text,
+              }}
+            >
+              Applying coupon...
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* ── Centered Error Popup Overlay ── */}
+      {!!errorMsg && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              backgroundColor: "rgba(0, 0, 0, 0.45)",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 10000,
+              paddingHorizontal: spacing(24),
+            },
+          ]}
+        >
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              width: "100%",
+              maxWidth: 330,
+              padding: spacing(20),
+              borderRadius: spacing(16),
+              alignItems: "center",
+              justifyContent: "center",
+              gap: spacing(10),
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 10,
+              elevation: 10,
+            }}
+          >
+            <View
+              style={{
+                width: spacing(46),
+                height: spacing(46),
+                borderRadius: spacing(23),
+                backgroundColor: colors.error + "15",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: spacing(2),
+              }}
+            >
+              <AlertCircle size={spacing(26)} color={colors.error} />
+            </View>
+
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(15),
+                color: colors.text,
+                textAlign: "center",
+              }}
+            >
+              Coupon Error
+            </Text>
+
+            <Text
+              style={{
+                fontFamily: "Poppins_400Regular",
+                fontSize: font(12.5),
+                color: colors.textSecondary,
+                textAlign: "center",
+                lineHeight: font(18),
+              }}
+            >
+              {errorMsg}
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setErrorMsg(null)}
+              style={{
+                marginTop: spacing(6),
+                backgroundColor: colors.primary,
+                paddingVertical: spacing(10),
+                borderRadius: spacing(10),
+                width: "100%",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(13),
+                  color: "#FFFFFF",
+                }}
+              >
+                OK
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

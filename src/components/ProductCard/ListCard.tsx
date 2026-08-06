@@ -17,10 +17,11 @@ import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 
 interface Props {
   item: ListingItem;
+  onPress?: (item: ListingItem) => void;
   onAddToCart?: (item: ListingItem, qty: number) => void;
 }
 
-const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
+const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const router = useRouter();
@@ -111,12 +112,21 @@ const ListCard: React.FC<Props> = ({ item, onAddToCart }) => {
   return (
     <TouchableOpacity
       activeOpacity={0.88}
-      onPress={() =>
+      onPress={() => {
+        if (onPress) {
+          onPress(item);
+          return;
+        }
+        const productSlug = (item as any).url || (item as any).product_url || "";
         router.push({
-          pathname: "(stack)/product/[id]",
-          params: { id: item.id, product_name: item.product_name },
-        })
-      }
+          pathname: "/(stack)/product/[id]",
+          params: {
+            id: item.id ? String(item.id) : "slug",
+            product_slug: productSlug,
+            product_name: item.product_name || "",
+          },
+        });
+      }}
       style={{
         flexDirection: "row",
         gap: spacing(10),

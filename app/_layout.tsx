@@ -15,6 +15,7 @@ import { useDeliveryStore } from "../src/store/deliveryStore";
 import { ToastProvider } from "../src/context/ToastContext";
 import { ToastContainer } from "../src/components/Toast/ToastContainer";
 import { useCartQuantitySync } from "../src/hooks/cartHooks";
+import { NotificationProvider } from "../src/providers/NotificationProvider";
 
 function RootLayoutNav() {
   // font scaling fix
@@ -130,7 +131,10 @@ export default function RootLayout() {
         <ToastProvider>
           <ThemeProvider>
             <BottomSheetModalProvider>
-              <RootLayoutNav />
+              {/* NotificationProvider runs FCM token registration once on mount */}
+              <NotificationProvider>
+                <RootLayoutNav />
+              </NotificationProvider>
             </BottomSheetModalProvider>
           </ThemeProvider>
           <ToastContainer />

@@ -32,7 +32,7 @@ const SearchItem: React.FC<Props> = ({ item }) => {
     <TouchableOpacity
       onPress={() =>
         router.push({
-          pathname: "(stack)/product/[id]",
+          pathname: "/(stack)/product/[id]",
           params: {
             id: "slug",
             product_slug: item.product_url,

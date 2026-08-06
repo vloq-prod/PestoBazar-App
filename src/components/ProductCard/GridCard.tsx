@@ -17,17 +17,27 @@ import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 
 interface Props {
   item: ListingItem;
-
+  onPress?: (item: ListingItem) => void;
   onAddToCart?: (item: ListingItem, qty: number) => void;
 }
 
-const formatMRP = (price: string | number) => {
+const formatPrice = (price: string | number) => {
   const num = Number(price);
   if (isNaN(num)) return String(price);
   return num % 1 === 0 ? num.toString() : num.toFixed(2);
 };
 
-const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
+const formatMRP = (price: string | number) => {
+  const num = Number(price);
+  if (isNaN(num)) return String(price);
+  if (num >= 20000) {
+    const kVal = num / 1000;
+    return (kVal % 1 === 0 ? kVal.toString() : kVal.toFixed(1)) + "k";
+  }
+  return num % 1 === 0 ? num.toString() : num.toFixed(2);
+};
+
+const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const router = useRouter();
@@ -80,21 +90,27 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={() => {
+        if (onPress) {
+          onPress(item);
+          return;
+        }
+        const productSlug = (item as any).url || (item as any).product_url || "";
         if (!item.id || isNaN(Number(item.id))) {
           router.push({
-            pathname: "(stack)/product/[id]",
+            pathname: "/(stack)/product/[id]",
             params: {
               id: "slug",
-              product_slug: (item as any).url || (item as any).product_url,
-              product_name: item.product_name,
+              product_slug: productSlug,
+              product_name: item.product_name || "",
             },
           });
         } else {
           router.push({
-            pathname: "(stack)/product/[id]",
+            pathname: "/(stack)/product/[id]",
             params: {
               id: item.id,
-              product_name: item.product_name,
+              product_slug: productSlug,
+              product_name: item.product_name || "",
             },
           });
         }
@@ -354,7 +370,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onAddToCart }) => {
                 transform: [{ translateY: 0.8 }], // Offsets bottom border to center visually
               }}
             >
-              ₹{formatMRP(item.selling_price)}
+              ₹{formatPrice(item.selling_price)}
             </Text>
           </View>
 

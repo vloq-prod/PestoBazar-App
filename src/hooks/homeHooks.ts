@@ -14,11 +14,13 @@ import {
   getAppHeaderBanner,
   getAppMainBanner,
   submitRating,
+  registerDeviceToken,
 } from "../api/home.api";
 import {
   BulkEnquiryRequest,
   BulkEnquiryResponse,
   CategoryWithSubcategories,
+  RegisterDeviceTokenRequest,
   SubmitRatingRequest,
   SubmitRatingResponse,
 } from "../types/home.types";
@@ -166,7 +168,10 @@ export const useDeals = () => {
 };
 
 // useDealsListing hook
-export const useDealsListing = (page_no: number = 1, page_size: number = 16) => {
+export const useDealsListing = (
+  page_no: number = 1,
+  page_size: number = 16,
+) => {
   const query = useQuery({
     queryKey: ["deals-listing", page_no, page_size],
     queryFn: () => getDealsListing(page_no, page_size),
@@ -272,13 +277,15 @@ export const useBulkEnquiry = () => {
   });
 };
 
-
 export const useSubmitRating = () => {
-  return useMutation<
-    SubmitRatingResponse,
-    Error,
-    SubmitRatingRequest
-  >({
+  return useMutation<SubmitRatingResponse, Error, SubmitRatingRequest>({
     mutationFn: submitRating,
+  });
+};
+
+export const useRegisterDeviceToken = () => {
+  return useMutation({
+    mutationFn: (payload: RegisterDeviceTokenRequest) =>
+      registerDeviceToken(payload),
   });
 };

@@ -18,58 +18,57 @@ import {
 } from "../types/cart.types";
 import { useToast } from "../context/ToastContext";
 import { getCartQuantity } from "../api/home.api";
-import { GetCartQuantityParams, GetCartQuantityResponse } from "../types/home.types";
+import {
+  GetCartQuantityParams,
+  GetCartQuantityResponse,
+} from "../types/home.types";
 import { useCartStore } from "../store/cartStore";
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-    const mutation = useMutation({
-      mutationFn: async (payload: AddToCartRequest) => {
-        // ✅ Payload logging
-        console.log("🛒 AddToCart Payload:", payload);
+  const mutation = useMutation({
+    mutationFn: async (payload: AddToCartRequest) => {
+      // ✅ Payload logging
+      console.log("🛒 AddToCart Payload:", payload);
 
-        const data = await addToCart(payload);
-        if (data.status === 0) {
-          throw new Error(data.message || "Failed to update cart");
-        }
-        return data;
-      },
+      const data = await addToCart(payload);
+      if (data.status === 0) {
+        throw new Error(data.message || "Failed to update cart");
+      }
+      return data;
+    },
 
-      onError: (error: any) => {
-        // showToast(error?.message || "Failed to add to cart", "error");
-      },
+    onError: (error: any) => {
+      // showToast(error?.message || "Failed to add to cart", "error");
+    },
 
-      onSuccess: (data, variables) => {
-        // showToast(data.message || "Product added to cart", "success");
+    onSuccess: (data, variables) => {
+      // showToast(data.message || "Product added to cart", "success");
 
-        queryClient.invalidateQueries({
-          queryKey: [
-            "cart",
-            variables.user_id ?? 0,
-            variables.visitor_id ?? "",
-          ],
-        });
-        queryClient.invalidateQueries({
-          queryKey: [
-            "cart-count",
-            variables.user_id ?? 0,
-            variables.visitor_id ?? "",
-          ],
-        });
-        queryClient.invalidateQueries({
-          queryKey: [
-            "quick-cart",
-            variables.user_id ?? 0,
-            variables.visitor_id ?? "",
-          ],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["cart-quantity"],
-        });
-      },
-    });
+      queryClient.invalidateQueries({
+        queryKey: ["cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          "cart-count",
+          variables.user_id ?? 0,
+          variables.visitor_id ?? "",
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          "quick-cart",
+          variables.user_id ?? 0,
+          variables.visitor_id ?? "",
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["cart-quantity"],
+      });
+    },
+  });
 
   return {
     addToCart: mutation.mutate,
@@ -111,7 +110,7 @@ export const useCartCount = (params: GetCartCountParams) => {
       return response;
     },
   });
-};;
+};
 
 export const useQuickCart = (params: GetQuickCartParams) => {
   return useQuery<QuickCartResponse>({
@@ -311,5 +310,7 @@ export const useCartQuantitySync = ({
 };
 
 export const useProductQuantity = (productId: number | undefined) => {
-  return useCartStore((state) => (productId ? state.items[productId] ?? 0 : 0));
+  return useCartStore((state) =>
+    productId ? (state.items[productId] ?? 0) : 0,
+  );
 };

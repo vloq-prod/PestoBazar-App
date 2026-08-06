@@ -26,7 +26,7 @@ import { useAppVisitorStore } from "../../src/store/auth";
 import CartItem from "../../src/components/cart/CartItem";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
-import { Info, MoveRight, Gift, Tag, ChevronRight, Receipt, BadgePercent, Clock } from "lucide-react-native";
+import { Info, MoveRight, Gift, Tag, ChevronRight, Receipt, BadgePercent, Clock, CreditCard } from "lucide-react-native";
 import LottieView from "lottie-react-native";
 import { useRouter } from "expo-router";
 import CartItemSkeleton from "../../src/skeleton/CartItemSkeleton";
@@ -325,174 +325,166 @@ export default function CartScreen() {
                     flex: 1,
                   }}
                 >
-                  Apply coupons + payment offers & save more
+                  Apply coupons offers & save more
                 </Text>
               </View>
 
               {/* Main Body */}
-              <View style={{ padding: spacing(14), gap: spacing(12) }}>
+              <View style={{ padding: spacing(12), gap: spacing(8) }}>
                 <Text
                   style={{
                     fontFamily: "Poppins_700Bold",
-                    fontSize: font(14),
+                    fontSize: font(13.5),
                     color: colors.text,
                   }}
                 >
                   Coupons & offers
                 </Text>
 
-                {appliedPromo?.promo_code ? (
+                {/* Section 1: Applied Coupon Row (Only shown when a coupon is applied) */}
+                {appliedPromo?.promo_code && (
+                  <>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: spacing(10),
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: "#E5E7EB",
+                          backgroundColor: "#FFFFFF",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <BadgePercent size={20} color="#16A34A" />
+                      </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/(stack)/coupons",
+                            params: { cartId: String(cartId || "") },
+                          })
+                        }
+                        style={{ flex: 1, gap: 1 }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_600SemiBold",
+                            fontSize: font(12),
+                            color: colors.text,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {parseFloat(String(appliedPromo.discount_amount || 0)) > 0
+                            ? `Saved ${cleanPrice(appliedPromo.discount_amount)} with ${appliedPromo.promo_code}`
+                            : `${appliedPromo.title || "Coupon"} with ${appliedPromo.promo_code}`}
+                        </Text>
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_500Medium",
+                              fontSize: font(10.5),
+                              color: colors.textSecondary,
+                            }}
+                          >
+                            View all coupons
+                          </Text>
+                          <ChevronRight size={11} color={colors.textSecondary} style={{ marginTop: 1 }} />
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Remove Button */}
+                      <TouchableOpacity
+                        disabled={isRemovingPromo}
+                        onPress={handleRemovePromo}
+                        style={{
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          borderRadius: 8,
+                          paddingHorizontal: 12,
+                          paddingVertical: 5,
+                          backgroundColor: colors.background,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: font(11),
+                            fontFamily: "Poppins_600SemiBold",
+                            color: colors.text,
+                          }}
+                        >
+                          {isRemovingPromo ? "..." : "Remove"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Full Width Edge-to-Edge Dashed Divider Line */}
+                    <View
+                      style={{
+                        borderBottomWidth: 1,
+                        borderColor: "#E5E7EB",
+                        borderStyle: "dashed",
+                        marginHorizontal: -spacing(12),
+                        marginVertical: spacing(4),
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* Section 2: View Payment Offers Row */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(stack)/coupons",
+                      params: { cartId: String(cartId || "") },
+                    })
+                  }
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: spacing(10),
+                  }}
+                >
                   <View
                     style={{
-                      flexDirection: "row",
+                      width: 38,
+                      height: 38,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: "#E5E7EB",
+                      backgroundColor: "#FFFFFF",
+                      justifyContent: "center",
                       alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: spacing(10),
                     }}
                   >
-                    <View
-                      style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: "#10B981",
-                        backgroundColor: colors.background,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <BadgePercent size={25} color="#10B981" />
-                    </View>
-
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => router.push("/(stack)/coupons")}
-                      style={{ flex: 1, gap: 1 }}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: "Poppins_600SemiBold",
-                          fontSize: font(12.5),
-                          color: colors.text,
-                        }}
-                        numberOfLines={2}
-                      >
-                        {parseFloat(String(appliedPromo.discount_amount || 0)) > 0
-                          ? `Saved ${cleanPrice(appliedPromo.discount_amount)} with ${appliedPromo.promo_code}`
-                          : `${appliedPromo.title || "Coupon"} with ${appliedPromo.promo_code}`}
-                      </Text>
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text
-                          style={{
-                            fontFamily: "Poppins_500Medium",
-                            fontSize: font(11),
-                            color: colors.textSecondary,
-                          }}
-                        >
-                          View all coupons
-                        </Text>
-                        <ChevronRight size={12} color={colors.textSecondary} style={{ marginTop: 1 }} />
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Remove button */}
-                    <TouchableOpacity
-                      disabled={isRemovingPromo}
-                      onPress={handleRemovePromo}
-                      style={{
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        borderRadius: 8,
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        backgroundColor: colors.background,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: font(11.5),
-                          fontFamily: "Poppins_600SemiBold",
-                          color: colors.text,
-                        }}
-                      >
-                        Remove
-                      </Text>
-                    </TouchableOpacity>
+                    <CreditCard size={20} color="#006FEE" />
                   </View>
-                ) : (
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => router.push("/(stack)/coupons")}
+
+                  <Text
                     style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: spacing(10),
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                      flex: 1,
                     }}
                   >
-                    <View
-                      style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: colors.border,
-                        backgroundColor: colors.backgroundgray,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <BadgePercent size={25} color={colors.textSecondary} />
-                    </View>
+                    View payment offers
+                  </Text>
 
-                    <View style={{ flex: 1, gap: 1 }}>
-                      <Text
-                        style={{
-                          fontFamily: "Poppins_600SemiBold",
-                          fontSize: font(12.5),
-                          color: colors.text,
-                        }}
-                      >
-                        Apply coupons & save more
-                      </Text>
-                      <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text
-                          style={{
-                            fontFamily: "Poppins_500Medium",
-                            fontSize: font(11),
-                            color: colors.textSecondary,
-                          }}
-                        >
-                          View all coupons
-                        </Text>
-                        <ChevronRight size={12} color={colors.textSecondary} style={{ marginTop: 1 }} />
-                      </View>
-                    </View>
-
-                    {/* Apply text button */}
-                    <View
-                      style={{
-                        borderWidth: 1,
-                        borderColor: colors.primary,
-                        borderRadius: 8,
-                        paddingHorizontal: 14,
-                        paddingVertical: 6,
-                        backgroundColor: "transparent",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: font(11.5),
-                          fontFamily: "Poppins_600SemiBold",
-                          color: colors.primary,
-                        }}
-                      >
-                        Apply
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
+                  <ChevronRight size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
               </View>
             </View>
 

@@ -19,6 +19,8 @@ import {
   SubmitRatingResponse,
   GetCartQuantityParams,
   GetCartQuantityResponse,
+  RegisterDeviceTokenRequest,
+  RegisterDeviceTokenResponse,
 } from "../types/home.types";
 
 // banner api
@@ -210,6 +212,19 @@ export const submitRating = async (
       },
     },
   );
+
+  return data;
+};
+
+
+export const registerDeviceToken = async (
+  payload: RegisterDeviceTokenRequest,
+) => {
+  const { data } =
+    await apiClient.post<RegisterDeviceTokenResponse>(
+      "/app-api/v1/device-token",
+      payload,
+    );
 
   return data;
 };

@@ -55,7 +55,7 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
 
     if (app_redirect_key === "products") {
       router.push({
-        pathname: "(stack)/product/[id]",
+        pathname: "/(stack)/product/[id]",
         params: { id: "slug", product_slug: app_redirect_value },
       });
     }

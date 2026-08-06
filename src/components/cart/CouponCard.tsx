@@ -90,8 +90,6 @@ const CouponCard: React.FC<CouponCardProps> = ({
                 </Text>
               )}
               <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
                 style={[
                   styles.subtitle,
                   {
@@ -135,8 +133,6 @@ const CouponCard: React.FC<CouponCardProps> = ({
         {/* Bottom Row: Description/Terms & Action (Apply/Applied/Locked) */}
         <View style={styles.bottomRow}>
           <Text
-            numberOfLines={1}
-            ellipsizeMode="tail"
             style={[
               {
                 fontFamily: "Poppins_400Regular",
@@ -144,6 +140,7 @@ const CouponCard: React.FC<CouponCardProps> = ({
                 color: colors.textSecondary,
                 flex: 1,
                 marginRight: spacing(8),
+                lineHeight: font(17),
               },
             ]}
           >
@@ -289,7 +286,7 @@ const styles = StyleSheet.create({
   },
   bottomRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
   },
   title: {

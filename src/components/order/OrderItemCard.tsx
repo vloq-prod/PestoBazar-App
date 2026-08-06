@@ -195,7 +195,7 @@ const OrderItemCard = ({
   const handlePress = () => {
     if (item.product_slug) {
       router.push({
-        pathname: "(stack)/product/[id]",
+        pathname: "/(stack)/product/[id]",
         params: { id: "slug", product_slug: item.product_slug },
       });
     }

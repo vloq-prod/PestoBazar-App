@@ -53,7 +53,7 @@ const CartItem = ({
       }}
       onPress={() =>
         router.push({
-          pathname: "(stack)/product/[id]",
+          pathname: "/(stack)/product/[id]",
           params: {
             id: item.variation_id,
             product_name: item.name,

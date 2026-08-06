@@ -23,7 +23,6 @@ import { ListingItem } from "../../../../src/types/shop.types";
 import ProductCard from "../../../../src/components/ProductCard";
 import { useResponsive } from "../../../../src/utils/useResponsive";
 
-
 const { width } = Dimensions.get("window");
 
 const GAP = 10;
@@ -195,7 +194,6 @@ const CustomSectionAllProducts = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-
   const { id, title: rawTitle } = useLocalSearchParams();
   const sectionId = Number(id);
 
@@ -215,7 +213,9 @@ const CustomSectionAllProducts = () => {
 
   // Pagination states
   const [page, setPage] = React.useState(1);
-  const [allProducts, setAllProducts] = React.useState<CustomSectionProduct[]>([]);
+  const [allProducts, setAllProducts] = React.useState<CustomSectionProduct[]>(
+    [],
+  );
   // Track whether we have ever received a response (to distinguish "loading" vs "empty")
   const [hasFetched, setHasFetched] = React.useState(false);
 

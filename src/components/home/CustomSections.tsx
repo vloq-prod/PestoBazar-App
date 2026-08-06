@@ -18,45 +18,45 @@ import { useRouter } from "expo-router";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const H_PADDING = 16 * 2;
-const GAP = 10;
-const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.7;
+const PADDING = 16;
+const GAP = 8;
+const ITEM_WIDTH = (SCREEN_WIDTH - PADDING * 2 - GAP * 2) / 3;
 
 // Skeleton Card (matches real UI)
 const SkeletonCard = () => {
   const { colors } = useTheme();
 
   return (
-    <View style={{ width: ITEM_WIDTH, gap: 8 }}>
+    <View style={{ width: ITEM_WIDTH, gap: 6 }}>
       <View
         style={{
           width: "100%",
           aspectRatio: 1,
-          borderRadius: 14,
+          borderRadius: 12,
           backgroundColor: colors.backgroundSkeleton,
-        }}
-      />
-      <View
-        style={{
-          height: 12,
-          width: "80%",
-          backgroundColor: colors.backgroundSkeleton,
-          borderRadius: 6,
         }}
       />
       <View
         style={{
           height: 10,
-          width: "55%",
+          width: "80%",
           backgroundColor: colors.backgroundSkeleton,
-          borderRadius: 6,
+          borderRadius: 4,
         }}
       />
       <View
         style={{
-          height: 36,
+          height: 8,
+          width: "55%",
           backgroundColor: colors.backgroundSkeleton,
-          borderRadius: 8,
+          borderRadius: 4,
+        }}
+      />
+      <View
+        style={{
+          height: 32,
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 6,
         }}
       />
     </View>
@@ -71,7 +71,7 @@ const SkeletonSection = () => {
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
-          paddingHorizontal: 16,
+          paddingHorizontal: PADDING,
         }}
       >
         <View
@@ -92,15 +92,19 @@ const SkeletonSection = () => {
         />
       </View>
 
-      <FlatList
-        horizontal
-        data={[1, 2, 3]}
-        keyExtractor={(i) => String(i)}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-        ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-        renderItem={() => <SkeletonCard />}
-      />
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: PADDING,
+          columnGap: GAP,
+          rowGap: 12,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </View>
     </View>
   );
 };
@@ -112,7 +116,7 @@ const SectionHeader = ({ title, onViewAll, description }: any) => {
   return (
     <View
       style={{
-        paddingHorizontal: 16,
+        paddingHorizontal: PADDING,
       }}
     >
       <View
@@ -199,17 +203,27 @@ const CustomSections = () => {
         if (!section.products || section.products.length === 0) return null;
 
         // Map section products to ProductItem format expected by ItemCard
-        const mappedProducts = section.products.map((p) => ({
-          id: p.product_id || p.id,
-          product_name: p.product_name,
-          mrp: String(p.mrp),
-          selling_price: String(p.selling_price),
-          s3_image_path: p.s3_image_path,
-          avg_rating: String(p.avg_rating || 0),
-          slug: p.url ? p.url.split("/").pop() || "" : "",
-          overview: p.overview || "",
-          total_reviews: 0,
-        }));
+        const mappedProducts = section.products.map((p) => {
+          const productId = Number(p.product_id || p.product_variation_id || p.id);
+          const slug = (p.url ? p.url.split("/").pop() : "") || "";
+          return {
+            id: productId,
+            product_id: productId,
+            product_name: p.product_name,
+            mrp: String(p.mrp),
+            selling_price: String(p.selling_price),
+            s3_image_path: p.s3_image_path,
+            avg_rating: String(p.avg_rating || 0),
+            slug: slug,
+            product_slug: slug || p.url,
+            overview: p.overview || "",
+            url: p.url,
+            total_reviews: 0,
+          };
+        });
+
+        // Slice maximum 6 products per section (3 columns x 2 rows)
+        const displayProducts = mappedProducts.slice(0, 6);
 
         return (
           <View key={section.section_id} style={{ gap: 12 }}>
@@ -218,7 +232,7 @@ const CustomSections = () => {
               description={section.section_description}
               onViewAll={() =>
                 router.push({
-                  pathname: "(stack)/viewall/custom/[id]",
+                  pathname: "/(stack)/viewall/custom/[id]",
                   params: {
                     id: section.section_id,
                     title: section.section_title,
@@ -226,23 +240,21 @@ const CustomSections = () => {
                 })
               }
             />
-            <FlatList
-              horizontal
-              data={mappedProducts}
-              keyExtractor={(item) => String(item.id)}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-              ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
-              renderItem={({ item }) => (
-                <View style={{ width: ITEM_WIDTH }}>
-                  <ItemCard item={item as any} />
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                paddingHorizontal: PADDING,
+                columnGap: GAP,
+                rowGap: 12,
+              }}
+            >
+              {displayProducts.map((product) => (
+                <View key={product.id} style={{ width: ITEM_WIDTH }}>
+                  <ItemCard item={product as any} />
                 </View>
-              )}
-              initialNumToRender={4}
-              maxToRenderPerBatch={5}
-              windowSize={5}
-              removeClippedSubviews
-            />
+              ))}
+            </View>
           </View>
         );
       })}

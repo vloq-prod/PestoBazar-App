@@ -17,9 +17,19 @@ import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 
+const formatPrice = (price: string | number) => {
+  const num = Number(price);
+  if (isNaN(num)) return String(price);
+  return num % 1 === 0 ? num.toString() : num.toFixed(2);
+};
+
 const formatMRP = (price: string | number) => {
   const num = Number(price);
   if (isNaN(num)) return String(price);
+  if (num >= 20000) {
+    const kVal = num / 1000;
+    return (kVal % 1 === 0 ? kVal.toString() : kVal.toFixed(1)) + "k";
+  }
   return num % 1 === 0 ? num.toString() : num.toFixed(2);
 };
 
@@ -121,11 +131,13 @@ export default function ItemCard({
         if (onPress) {
           onPress(item);
         } else {
+          const productSlug = (item as any).slug || (item as any).product_slug || (item as any).url || "";
           router.push({
-            pathname: "(stack)/product/[id]",
+            pathname: "/(stack)/product/[id]",
             params: {
-              id: item.id,
-              product_name: item.product_name,
+              id: item.id ? String(item.id) : "slug",
+              product_slug: productSlug,
+              product_name: item.product_name || "",
             },
           });
         }
@@ -356,7 +368,7 @@ export default function ItemCard({
                 transform: [{ translateY: 0.8 }], // Offsets bottom border to center visually
               }}
             >
-              ₹{formatMRP(item.selling_price)}
+              ₹{formatPrice(item.selling_price)}
             </Text>
           </View>
 
