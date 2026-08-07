@@ -66,11 +66,14 @@ const AddressCard: React.FC<AddressCardProps> = ({
   const { font } = useResponsive();
   const { userId } = useAppVisitorStore((state) => state);
 
-  const borderColor = isSelected && showSelection ? colors.primary : colors.border;
+  const borderColor =
+    isSelected && showSelection ? colors.primary : colors.border;
 
   // Tag Badge styling
-  const tagBg = isSelected && showSelection ? colors.primary + "15" : colors.border + "50";
-  const tagTextColor = isSelected && showSelection ? colors.primary : colors.textSecondary;
+  const tagBg =
+    isSelected && showSelection ? colors.primary + "15" : colors.border + "50";
+  const tagTextColor =
+    isSelected && showSelection ? colors.primary : colors.textSecondary;
 
   return (
     <TouchableOpacity
@@ -89,13 +92,12 @@ const AddressCard: React.FC<AddressCardProps> = ({
       {/* ── Top row: tag badge + actions + radio ── */}
       <View style={styles.topRow}>
         <View style={styles.leftTop}>
-          {showSelection && (
-            isSelected ? (
+          {showSelection &&
+            (isSelected ? (
               <CheckCircle2 size={18} color={colors.primary} />
             ) : (
               <Circle size={18} color={colors.border} />
-            )
-          )}
+            ))}
           {/* Tag badge */}
           <View style={[styles.tagBadge, { backgroundColor: tagBg }]}>
             {getAddressIcon(item.address_name, tagTextColor)}

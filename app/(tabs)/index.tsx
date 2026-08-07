@@ -134,8 +134,6 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
       <View className="flex-row justify-between items-center px-4 ">
         {/* LEFT */}
         <View className="flex-row items-center gap-3">
-
-
           <View>
             {!userId ? (
               <View>
@@ -191,7 +189,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
         {/* RIGHT */}
         <View className="flex-row items-center">
           <IconButton
-            onPress={() => { }}
+            onPress={() => {}}
             icon={<Bell size={ICON_SIZE} color={textColor} />}
           />
           {/* <TouchableOpacity
@@ -234,7 +232,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
 
 
             </View>
-          </TouchableOpacity> */}  
+          </TouchableOpacity> */}
 
           <TouchableOpacity
             activeOpacity={0.85}
@@ -623,13 +621,13 @@ export default function HomeScreen() {
       scrollY.value,
       [0, 40],
       [0, 0.25],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
     const elevation = interpolate(
       scrollY.value,
       [0, 40],
       [0, 8],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
 
     return {
@@ -700,7 +698,7 @@ export default function HomeScreen() {
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       const currentY = event.contentOffset.y;
-      scrollY.value = currentY; 
+      scrollY.value = currentY;
 
       // Hide promo banner as soon as user scrolls
       if (currentY > 5 && promoHeight.value > 0) {
@@ -746,7 +744,7 @@ export default function HomeScreen() {
 
   const promoAnimatedStyle = useAnimatedStyle(() => {
     return {
-      position: 'relative', // Now sits inside header naturally at top
+      position: "relative", // Now sits inside header naturally at top
       height: promoHeight.value,
       overflow: "hidden",
       justifyContent: "flex-end", // Aligns content to bottom so the wave slides down first
@@ -759,7 +757,7 @@ export default function HomeScreen() {
   // ─────────────────────────────────────────────
 
   const sections = useMemo(
-    () => [    
+    () => [
       { id: "sliding_banners", data: slidingbanners },
       { id: "category_card_section" },
       { id: "home_product", data: homeProducts },
@@ -808,7 +806,7 @@ export default function HomeScreen() {
           <View>
             <Image
               source={heroBottom}
-              style={{ width: '100%', height: 140, marginTop: -1 }} // Increased height
+              style={{ width: "100%", height: 140, marginTop: -1 }} // Increased height
               contentFit="fill"
             />
             <View style={{ marginTop: 15 }}>
@@ -870,13 +868,19 @@ export default function HomeScreen() {
         {/* Full Header Background Image */}
         <Image
           source={heroImage}
-          style={{ position: "absolute", width: '100%', height: '100%', top: 0, left: 0 }}
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            top: 0,
+            left: 0,
+          }}
           contentFit="cover"
           pointerEvents="none"
           transition={0}
           cachePolicy="memory-disk"
         />
-        
+
         {/* Seamless Promo Banner Top Section */}
         <Animated.View style={promoAnimatedStyle}>
           <PromoBanner />

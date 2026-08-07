@@ -8,6 +8,7 @@ import {
   Share,
   type LayoutChangeEvent,
 } from "react-native";
+import { DeepLinkURLBuilder } from "../../../src/deep-linking";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -248,8 +249,14 @@ const ProductDetails = () => {
 
   const handleShare = useCallback(async () => {
     try {
-      const fallbackUrl = `https://pestobazaar.com/product/${realProductId ?? productId}`;
-      const message = `Check out this product on PestoBazaar: ${resolvedProductName}\n\n${fallbackUrl}`;
+      const fallbackUrl = DeepLinkURLBuilder.product(
+        realProductId ?? productId ?? 0,
+        productSlug,
+      );
+      const message = DeepLinkURLBuilder.createShareMessage(
+        resolvedProductName,
+        fallbackUrl,
+      );
 
       await Share.share({
         message,
@@ -259,7 +266,7 @@ const ProductDetails = () => {
     } catch (error) {
       console.error("Error sharing product:", error);
     }
-  }, [realProductId, productId, resolvedProductName]);
+  }, [realProductId, productId, productSlug, resolvedProductName]);
 
   // ─── Helpers ────────────────────────────────────────────────
   const formatPrice = (value: number) => {

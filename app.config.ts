@@ -42,9 +42,10 @@ plugins: [
     buildNumber: "1",
     bundleIdentifier: "com.pestobazaar.app",
 
-    // iOS Universal Links
+    // iOS Universal Links — all deep-linkable paths
     associatedDomains: [
-      "applinks:pestobazaar.com"
+      "applinks:pestobazaar.com",
+      "applinks:www.pestobazaar.com",
     ],
   },
 
@@ -60,24 +61,36 @@ plugins: [
 
     googleServicesFile: "./google-services.json",
 
+    // Android App Links — covers all deep-linkable routes.
+    // autoVerify: true enables instant link verification via .well-known/assetlinks.json
     intentFilters: [
       {
         action: "VIEW",
         autoVerify: true,
-
         data: [
-          {
-            scheme: "https",
-            host: "pestobazaar.com",
-            pathPrefix: "/product"
-          }
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/product" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/category" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/shop" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/search" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/cart" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/checkout" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/orders" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/orderdetails" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/deals" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/coupons" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/profile" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/about" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/terms" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/privacy" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/shipping" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/section" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/reviews" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/diy" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/bulkorder" },
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/home" },
         ],
-
-        category: [
-          "BROWSABLE",
-          "DEFAULT"
-        ]
-      }
+        category: ["BROWSABLE", "DEFAULT"],
+      },
     ],
 
     adaptiveIcon: {

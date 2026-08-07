@@ -16,6 +16,7 @@ import { ToastProvider } from "../src/context/ToastContext";
 import { ToastContainer } from "../src/components/Toast/ToastContainer";
 import { useCartQuantitySync } from "../src/hooks/cartHooks";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
+import { useDeepLinking, usePendingNavigation } from "../src/deep-linking";
 
 function RootLayoutNav() {
   // font scaling fix
@@ -52,6 +53,12 @@ function RootLayoutNav() {
 
     initApp();
   }, []);
+
+  // 🔗 DEEP LINKING — handles cold start URLs, warm start URLs, and router registration
+  useDeepLinking({ isReady: isReady && splashDone });
+
+  // 🔗 PENDING NAVIGATION — resumes auth-gated deep links after login completes
+  usePendingNavigation();
 
   // 🔥 NAVIGATION CONTROL (ONLY THIS)
   useEffect(() => {
