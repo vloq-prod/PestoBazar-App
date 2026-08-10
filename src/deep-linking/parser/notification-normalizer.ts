@@ -104,6 +104,7 @@ export function normalizeNotificationData(
 
   // ── Priority 2: Type-based routing ────────────────────────────────────────
   const redirectType = coalesce(data, [
+    "action_type",
     "type",
     "redirect_type",
     "app_redirect_key",
@@ -120,7 +121,7 @@ export function normalizeNotificationData(
 
   // Look up the route in the registry
   const routeConfig = findRouteByPathPattern(normalizedType);
-  const routeName = routeConfig?.name || "unknown";
+  const routeName = normalizedType === "url" ? "url" : (routeConfig?.name || "unknown");
 
   // ── Extract IDs and slugs based on type ───────────────────────────────────
   const { id, slug, queryParams } = extractParamsForType(normalizedType, data);
@@ -153,7 +154,20 @@ function normalizeRedirectType(type: string): string {
     products: "product",
     categories: "category",
     order_details: "orderdetails",
+    order_detail: "orderdetails",
     custom_section: "section",
+    category_detail: "category",
+    best_selling: "viewall",
+    new_arrival: "viewall",
+    top_rated: "viewall",
+    trending: "viewall",
+    do_if_yourself: "diy",
+    coupon: "coupons",
+    return: "returndetails",
+    whishlist: "wishlist",
+    wishlist: "wishlist",
+    notifications: "notifications",
+    notification: "notifications",
   };
 
   const lower = type.toLowerCase().trim();
@@ -184,10 +198,12 @@ function extractParamsForType(
 } {
   switch (type) {
     case "product": {
-      const id = safePositiveInt(data as Record<string, unknown>, "id");
+      const id = safePositiveInt(data as Record<string, unknown>, "id") ??
+                 safePositiveInt(data as Record<string, unknown>, "action_value");
       const slug = coalesce(data as Record<string, unknown>, [
         "product_slug",
         "slug",
+        "action_value",
       ]);
       const productName =
         safeString(data as Record<string, unknown>, "title") ||
@@ -206,7 +222,8 @@ function extractParamsForType(
     case "order": {
       const orderId =
         safePositiveInt(data as Record<string, unknown>, "order_id") ??
-        safePositiveInt(data as Record<string, unknown>, "id");
+        safePositiveInt(data as Record<string, unknown>, "id") ??
+        safePositiveInt(data as Record<string, unknown>, "action_value");
       return { id: orderId };
     }
 
@@ -214,6 +231,7 @@ function extractParamsForType(
       const slug = coalesce(data as Record<string, unknown>, [
         "category_slug",
         "slug",
+        "action_value",
       ]);
       return { slug: slug || undefined };
     }
@@ -221,7 +239,8 @@ function extractParamsForType(
     case "section": {
       const id =
         safePositiveInt(data as Record<string, unknown>, "section_id") ??
-        safePositiveInt(data as Record<string, unknown>, "id");
+        safePositiveInt(data as Record<string, unknown>, "id") ??
+        safePositiveInt(data as Record<string, unknown>, "action_value");
       const title = safeString(data as Record<string, unknown>, "title");
       return {
         id,
@@ -231,10 +250,38 @@ function extractParamsForType(
       };
     }
 
+    case "returndetails":
+    case "return": {
+      const returnId =
+        safePositiveInt(data as Record<string, unknown>, "return_id") ??
+        safePositiveInt(data as Record<string, unknown>, "id") ??
+        safePositiveInt(data as Record<string, unknown>, "action_value");
+      return { id: returnId };
+    }
+
+    case "viewall": {
+      const slug = coalesce(data as Record<string, unknown>, ["slug", "action_value"]);
+      let title = "Products";
+      const rawActionType = safeString(data as Record<string, unknown>, "action_type");
+      if (rawActionType === "best_selling") title = "Best Sellers";
+      else if (rawActionType === "new_arrival") title = "New Arrivals";
+      else if (rawActionType === "top_rated") title = "Top Rated";
+      else if (rawActionType === "trending") title = "Trending";
+      return {
+        slug: slug || undefined,
+        queryParams: { title }
+      };
+    }
+
+    case "url": {
+      const url = safeString(data as Record<string, unknown>, "action_value");
+      return { slug: url };
+    }
+
     default: {
-      // Generic extraction — try common field names
-      const id = safePositiveInt(data as Record<string, unknown>, "id");
-      const slug = safeString(data as Record<string, unknown>, "slug");
+      const id = safePositiveInt(data as Record<string, unknown>, "id") ??
+                 safePositiveInt(data as Record<string, unknown>, "action_value");
+      const slug = coalesce(data as Record<string, unknown>, ["slug", "action_value"]);
       return {
         id,
         slug: slug || undefined,

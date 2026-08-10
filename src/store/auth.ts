@@ -18,8 +18,18 @@ interface AppState {
   hydrateVisitor: () => Promise<void>;
 
   // User actions
-  setUser: (userId: string, userName: string, email?: string, avatar?: string) => Promise<void>;
-  setGoogleUser: (userId: string, userName: string, email: string, avatar: string) => Promise<void>;
+  setUser: (
+    userId: string,
+    userName: string,
+    email?: string,
+    avatar?: string,
+  ) => Promise<void>;
+  setGoogleUser: (
+    userId: string,
+    userName: string,
+    email: string,
+    avatar: string,
+  ) => Promise<void>;
   clearUser: () => Promise<void>;
   hydrateUser: () => Promise<void>;
 

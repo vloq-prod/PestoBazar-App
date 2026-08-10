@@ -65,6 +65,8 @@ export const DEEP_LINK_ROUTE_NAMES = {
   SHIPPING: "shipping",
   NO_INTERNET: "nointernet",
   ORDER_SUCCESS: "ordersuccess",
+  WISHLIST: "wishlist",
+  NOTIFICATIONS: "notifications",
 } as const;
 
 export type DeepLinkRouteName = (typeof DEEP_LINK_ROUTE_NAMES)[keyof typeof DEEP_LINK_ROUTE_NAMES];
@@ -296,6 +298,22 @@ export const ROUTE_REGISTRY: readonly RouteConfig[] = [
     expoPath: "/(stack)/ordersuccess",
     requiresAuth: true,
     pathPatterns: ["ordersuccess", "order-success"],
+    requiredParams: [],
+    optionalParams: [],
+  },
+  {
+    name: DEEP_LINK_ROUTE_NAMES.WISHLIST,
+    expoPath: "/(stack)/wishlist",
+    requiresAuth: true,
+    pathPatterns: ["wishlist", "whishlist"],
+    requiredParams: [],
+    optionalParams: [],
+  },
+  {
+    name: DEEP_LINK_ROUTE_NAMES.NOTIFICATIONS,
+    expoPath: "/(stack)/notifications",
+    requiresAuth: true,
+    pathPatterns: ["notifications", "notification"],
     requiredParams: [],
     optionalParams: [],
   },

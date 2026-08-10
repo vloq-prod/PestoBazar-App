@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  Modal,
 } from "react-native";
 import {
   SafeAreaView,
@@ -28,7 +29,7 @@ import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { Info, MoveRight, Gift, Tag, ChevronRight, Receipt, BadgePercent, Clock, CreditCard } from "lucide-react-native";
 import LottieView from "lottie-react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import CartItemSkeleton from "../../src/skeleton/CartItemSkeleton";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -89,6 +90,19 @@ export default function CartScreen() {
 
   const [removeModalVisible, setRemoveModalVisible] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<CartItemTypes | null>(null);
+
+  const params = useLocalSearchParams<{ couponApplied?: string; couponCode?: string }>();
+  const [showCouponSuccessModal, setShowCouponSuccessModal] = useState(false);
+  const [successCouponCode, setSuccessCouponCode] = useState("");
+
+  React.useEffect(() => {
+    if (params.couponApplied === "true" && params.couponCode) {
+      setShowCouponSuccessModal(true);
+      setSuccessCouponCode(params.couponCode);
+      // Clear navigation params from the route so it doesn't pop up again
+      router.setParams({ couponApplied: undefined, couponCode: undefined });
+    }
+  }, [params.couponApplied, params.couponCode]);
 
   const {
     data: cartData,
@@ -1099,6 +1113,54 @@ export default function CartScreen() {
         confirmText="Remove"
         isLoading={isRemoving}
       />
+
+      {/* ── Coupon Success Celebration Modal ── */}
+      <Modal
+        visible={showCouponSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCouponSuccessModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.couponModalContainer, { backgroundColor: colors.background }]}>
+            {/* Lottie Animation Wrapper */}
+            <View style={styles.lottieWrapper}>
+              <LottieView
+                source={require("../../Coupons.json")}
+                autoPlay
+                loop={true}
+                style={styles.successLottie}
+              />
+            </View>
+
+            {/* Title / Coupon Benefit details */}
+            <Text style={[styles.couponSuccessTitle, { color: colors.text, fontSize: font(18) }]}>
+              {appliedPromo?.promo_code?.toUpperCase() === successCouponCode.toUpperCase() && appliedPromo.title
+                ? appliedPromo.title
+                : `Get Upto ${cleanPrice(appliedPromo?.discount_amount || cartTotal?.promo_discount_amount || 50)} Cashback on your order`}
+            </Text>
+
+            {/* Subtitle / Code applied indicator */}
+            <Text style={[styles.couponAppliedText, { color: colors.textSecondary, fontSize: font(12.5) }]}>
+              {`"${successCouponCode.toUpperCase()} APPLIED"`}
+            </Text>
+
+            {/* Got It Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setShowCouponSuccessModal(false)}
+              style={[
+                styles.gotItButton,
+                { borderColor: colors.primary || "#5f16e9" }
+              ]}
+            >
+              <Text style={[styles.gotItButtonText, { color: colors.primary || "#5f16e9", fontSize: font(14) }]}>
+                Got it
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1154,5 +1216,59 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  couponModalContainer: {
+    width: "100%",
+    maxWidth: 340,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    alignItems: "center",
+  },
+  lottieWrapper: {
+    width: 250,
+    height: 250,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: -115,
+    marginBottom: 16,
+  },
+  successLottie: {
+    width: 320,
+    height: 300,
+
+  },
+  couponSuccessTitle: {
+    fontFamily: "Poppins_700Bold",
+    textAlign: "center",
+    lineHeight: 24,
+    marginTop: -50,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+  },
+  couponAppliedText: {
+    fontFamily: "Poppins_600SemiBold",
+    textAlign: "center",
+    letterSpacing: 0.5,
+    marginBottom: 24,
+  },
+  gotItButton: {
+    width: "100%",
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  gotItButtonText: {
+    fontFamily: "Poppins_600SemiBold",
   },
 });

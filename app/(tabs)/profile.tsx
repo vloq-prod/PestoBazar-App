@@ -60,7 +60,7 @@ const MENU_SECTIONS = [
         label: "Wishlist",
         sub: "Your saved items",
         icon: Heart,
-        // route: "/ordersuccess"
+        route: "/wishlist",
       },
       {
         id: "cart",

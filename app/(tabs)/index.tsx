@@ -189,7 +189,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
         {/* RIGHT */}
         <View className="flex-row items-center">
           <IconButton
-            onPress={() => {}}
+            onPress={() => router.push("/(stack)/notifications")}
             icon={<Bell size={ICON_SIZE} color={textColor} />}
           />
           {/* <TouchableOpacity

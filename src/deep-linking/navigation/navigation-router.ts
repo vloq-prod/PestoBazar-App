@@ -71,13 +71,36 @@ function executeNavigation(instruction: NavigationInstruction): void {
     try {
       console.log("[NavigationRouter] Navigating to:", instruction.pathname, instruction.params);
 
-      if (Object.keys(instruction.params).length > 0) {
-        _router!.push({
-          pathname: instruction.pathname as any,
-          params: instruction.params,
-        });
+      const canGoBack = _router!.canGoBack();
+      const isStackScreen = instruction.pathname.startsWith("/(stack)");
+
+      if (!canGoBack && isStackScreen) {
+        console.log("[NavigationRouter] No history stack detected. Seeding with home tab first.");
+        _router!.replace("/(tabs)/");
+        
+        setTimeout(() => {
+          try {
+            if (Object.keys(instruction.params).length > 0) {
+              _router!.push({
+                pathname: instruction.pathname as any,
+                params: instruction.params,
+              });
+            } else {
+              _router!.push(instruction.pathname as any);
+            }
+          } catch (innerError) {
+            console.error("[NavigationRouter] Delayed navigation failed:", innerError);
+          }
+        }, 100);
       } else {
-        _router!.push(instruction.pathname as any);
+        if (Object.keys(instruction.params).length > 0) {
+          _router!.push({
+            pathname: instruction.pathname as any,
+            params: instruction.params,
+          });
+        } else {
+          _router!.push(instruction.pathname as any);
+        }
       }
     } catch (error) {
       console.error("[NavigationRouter] Navigation failed:", error);

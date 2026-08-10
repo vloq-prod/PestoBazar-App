@@ -126,6 +126,8 @@ const CartQuantitySyncProvider = ({ children }: { children: React.ReactNode }) =
   return <>{children}</>;
 };
 
+
+
 export default function RootLayout() {
   const { fontsLoaded } = useFonts();
   const [queryClient] = useState(() => new QueryClient());

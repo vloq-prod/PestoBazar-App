@@ -2,6 +2,7 @@
 
 import type { DeepLinkPayload, NotificationData } from "../types/deep-link.types";
 import { parseDeepLinkUrl } from "../parser/url-parser";
+import { Linking } from "react-native";
 import { normalizeNotificationData } from "../parser/notification-normalizer";
 import { validateDeepLink } from "../validator/url-validator";
 import { runGuardPipeline } from "../guards/guard-pipeline";
@@ -121,6 +122,17 @@ export async function resolvePayload(payload: DeepLinkPayload): Promise<void> {
  *   4. TRACK → fire analytics event
  */
 async function processPipeline(payload: DeepLinkPayload): Promise<void> {
+  // If the routeName is "url", open it in external browser!
+  if (payload.routeName === "url" && payload.slug) {
+    console.log("[DeepLinkResolver] Opening external URL:", payload.slug);
+    try {
+      await Linking.openURL(payload.slug);
+    } catch (e) {
+      console.error("[DeepLinkResolver] Failed to open external URL:", e);
+    }
+    return;
+  }
+
   const { userId } = useAppVisitorStore.getState();
   const isAuthenticated = !!userId;
 

@@ -105,12 +105,11 @@ export default function CouponsScreen() {
               queryKey: ["applicable-promo-codes"],
             });
             setInputCode("");
-            // Immediately navigate back to Cart screen
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/(stack)/cart");
-            }
+            // Immediately navigate back to Cart screen with success parameters
+            router.replace({
+              pathname: "/(stack)/cart",
+              params: { couponApplied: "true", couponCode: code },
+            });
           } else {
             setErrorMsg(res.message || "Failed to apply promo code");
           }
