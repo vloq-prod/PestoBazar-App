@@ -195,15 +195,8 @@ const CustomSectionAllProducts = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { id, title: rawTitle } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
   const sectionId = Number(id);
-
-  const title =
-    typeof rawTitle === "string"
-      ? rawTitle
-      : Array.isArray(rawTitle)
-        ? rawTitle[0]
-        : "Products";
 
   const [gridMode, setGridMode] = React.useState<GridMode>("grid");
   const isGrid = gridMode === "grid";
@@ -228,6 +221,8 @@ const CustomSectionAllProducts = () => {
     sectionId,
     page,
   });
+
+  const title = res?.data?.section?.section_title || "Products";
 
   React.useEffect(() => {
     if (res?.data?.products) {

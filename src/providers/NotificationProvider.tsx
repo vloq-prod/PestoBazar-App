@@ -1,29 +1,4 @@
 
-/**
- * NotificationProvider.tsx
- *
- * WHY THIS FILE EXISTS:
- *   Manages Firebase Cloud Messaging (FCM) push notification lifecycle:
- *   - Registers the device token with the backend on mount
- *   - Listens for notification taps (response listener)
- *   - Listens for foreground notifications (received listener)
- *
- * WHAT CHANGED (Deep Linking Integration):
- *   The inline `handleNotificationNavigation()` switch statement has been
- *   REPLACED with a single call to `resolveNotification()` from the
- *   deep-linking module. This eliminates duplicate navigation logic and
- *   ensures ALL notification-driven navigations go through the same
- *   pipeline (parse → validate → guard → navigate → track).
- *
- * DEPENDENCIES:
- *   - notification.service.ts (FCM token registration)
- *   - deep-linking module (resolveNotification)
- *   - auth store (visitorId for token registration)
- *
- * WHAT HAPPENS IF THIS FILE IS REMOVED:
- *   - FCM token is never registered → no push notifications received
- *   - Notification taps are not handled → deep links from notifications don't work
- */
 
 import React, { useEffect } from "react";
 import { Platform } from "react-native";
@@ -76,14 +51,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     // go through the same pipeline as URL-based deep links (validation,
     // auth guards, pending navigation, analytics tracking).
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const { title, body, data } = response.notification.request.content;
+      const { title, body,  data } = response.notification.request.content;
       console.log("[Notification Clicked] Full Content:", JSON.stringify(response.notification.request.content, null, 2));
       resolveNotification(data);
     });
 
     // 2. Listen for when a notification is received while the app is in the foreground
     const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
-      console.log("[Notification Received in Foreground] Full Content:", JSON.stringify(notification.request.content, null, 2));
+      console.log("[Notification Received in Foreground] Full Object:", JSON.stringify(notification, null, 2));
     });
 
     return () => {

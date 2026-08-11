@@ -1,4 +1,4 @@
-// src/utils/appConfig.ts
+ // src/utils/appConfig.ts
 
 import { Platform } from "react-native";
 import Constants from "expo-constants";

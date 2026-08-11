@@ -10,6 +10,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
+  Linking,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import GradientDivider from "../../src/components/common/GradientDivider";

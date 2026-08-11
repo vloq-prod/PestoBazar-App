@@ -4,6 +4,7 @@ import { GetNotificationsParams, GetUnreadNotificationCountParams, MarkAllNotifi
 export const getNotifications = async (
   params: GetNotificationsParams,
 ): Promise<NotificationResponse> => {
+  console.log("[getNotifications] Request parameters:", params);
   const response = await apiClient.get<NotificationResponse>(
     "/app-api/v1/notifications",
     {

@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
 
   name: "Pestobazaar",
-  owner: "daniyalpesto",
+  owner: "vloq",
   slug: "pestobazaar",
   version: "1.0.0",
   orientation: "portrait",
@@ -14,7 +14,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: "automatic",
 
 
-  scheme: "pestobazaar",
+  scheme: [
+    "pestobazaar",
+    "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh",
+  ],
+
+  notification: {
+    icon: "./assets/Pestobazaarlogosmall.png",
+    color: "#6C63FF",
+  },
 
   icon: "./assets/icon.png",
 
@@ -128,7 +136,7 @@ plugins: [
 
   extra: {
     eas: {
-      projectId: "aadf1ca0-11a7-4839-be1c-9c888bab7e32",
+      projectId: "2ea7e59d-1026-4072-9292-9d1b8acf2fab",
     },
   },
 });

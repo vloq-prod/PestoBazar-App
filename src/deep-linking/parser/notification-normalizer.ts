@@ -229,8 +229,10 @@ function extractParamsForType(
 
     case "category": {
       const slug = coalesce(data as Record<string, unknown>, [
+        "category_id",
         "category_slug",
         "slug",
+        "id",
         "action_value",
       ]);
       return { slug: slug || undefined };
@@ -260,10 +262,16 @@ function extractParamsForType(
     }
 
     case "viewall": {
-      const slug = coalesce(data as Record<string, unknown>, ["slug", "action_value"]);
-      let title = "Products";
+      let slug = coalesce(data as Record<string, unknown>, ["slug", "action_value"]);
       const rawActionType = safeString(data as Record<string, unknown>, "action_type");
-      if (rawActionType === "best_selling") title = "Best Sellers";
+
+      // If slug is empty or "0" (default empty value), use action_type as the slug
+      if (!slug || slug === "0") {
+        slug = rawActionType;
+      }
+
+      let title = "Products";
+      if (rawActionType === "best_selling") title = "Best Selling";
       else if (rawActionType === "new_arrival") title = "New Arrivals";
       else if (rawActionType === "top_rated") title = "Top Rated";
       else if (rawActionType === "trending") title = "Trending";

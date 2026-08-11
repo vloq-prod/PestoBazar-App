@@ -135,9 +135,9 @@ export const ROUTE_REGISTRY: readonly RouteConfig[] = [
     name: DEEP_LINK_ROUTE_NAMES.CATEGORY,
     expoPath: "/(stack)/category/[slug]",
     requiresAuth: false,
-    pathPatterns: ["category", "categories", "cat"],
-    requiredParams: ["slug"],
-    optionalParams: ["name", "image", "selectedSubCategoryId"],
+    pathPatterns: ["category", "categories", "cat", "category_detail"],
+    requiredParams: [],
+    optionalParams: ["slug", "name", "image", "selectedSubCategoryId"],
   },
   {
     name: DEEP_LINK_ROUTE_NAMES.SHOP,

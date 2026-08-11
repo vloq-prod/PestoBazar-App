@@ -18,6 +18,15 @@ export function mapPayloadToNavigation(payload: DeepLinkPayload): NavigationInst
 
   const params = buildRouteParams(payload);
 
+  // If the category route is requested but no valid slug/id is provided (or it is "0"),
+  // navigate to the Category Tab in bottom navigation instead.
+  if (payload.routeName === DEEP_LINK_ROUTE_NAMES.CATEGORY && (!params.slug || params.slug === "0")) {
+    return {
+      pathname: "/(tabs)/category",
+      params: {},
+    };
+  }
+
   return {
     pathname: routeConfig.expoPath,
     params,
@@ -115,6 +124,7 @@ function buildRouteParams(payload: DeepLinkPayload): Record<string, string | num
       const params: Record<string, string | number> = {};
       if (slug) params.all = slug;
       if (id) params.all = id;
+      if (queryParams.title) params.title = queryParams.title;
       return params;
     }
 

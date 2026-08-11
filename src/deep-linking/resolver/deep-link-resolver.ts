@@ -31,6 +31,14 @@ function isExpoDevelopmentUrl(url: string): boolean {
   );
 }
 
+function isGoogleOAuthRedirect(url: string): boolean {
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.startsWith("com.googleusercontent.apps.") &&
+    lowerUrl.includes("/oauth2redirect")
+  );
+}
+
 
 let _lastResolvedInput = "";
 let _lastResolvedTime = 0;
@@ -41,6 +49,12 @@ const DEDUP_WINDOW_MS = 2000; // 2 seconds
 export async function resolveUrl(rawUrl: string): Promise<void> {
   if (!rawUrl || typeof rawUrl !== "string") {
     console.warn("[DeepLinkResolver] Empty URL received, ignoring");
+    return;
+  }
+
+  // Step 0: Bypass route validation for Google OAuth redirect callbacks
+  if (isGoogleOAuthRedirect(rawUrl)) {
+    console.log("[DeepLinkResolver] Bypassing Google OAuth redirect URL:", rawUrl);
     return;
   }
 

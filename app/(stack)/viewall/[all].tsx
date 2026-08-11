@@ -5,6 +5,7 @@ import {
   FlatList,
   Dimensions,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import React from "react";
 
@@ -50,7 +51,7 @@ const mapProductToListingItem = (item: ProductItem): ListingItem => {
 
 const AllProducts = () => {
   const { colors } = useTheme();
-  const { sections } = useHomeProduct();
+  const { sections, loading } = useHomeProduct();
   const insets = useSafeAreaInsets();
 
   const [gridMode, setGridMode] = React.useState<GridMode>("grid");
@@ -60,14 +61,38 @@ const AllProducts = () => {
     setGridMode((prev) => (prev === "grid" ? "list" : "grid"));
   };
 
-  const rawTitle = useLocalSearchParams().title;
+  const { all, title: rawTitle } = useLocalSearchParams();
 
-  const title =
-    typeof rawTitle === "string"
-      ? rawTitle
-      : Array.isArray(rawTitle)
-      ? rawTitle[0]
-      : "Products";
+  const getSectionTitle = () => {
+    if (rawTitle) {
+      return typeof rawTitle === "string" ? rawTitle : rawTitle[0];
+    }
+
+    const slug = typeof all === "string" ? all.toLowerCase().replace(/_/g, "") : "";
+    if (slug.includes("bestselling") || slug.includes("bestseller")) {
+      return "Best Selling";
+    }
+    if (slug.includes("newarrival")) {
+      return "New Arrivals";
+    }
+    if (slug.includes("toprated")) {
+      return "Top Rated";
+    }
+    if (slug.includes("trending")) {
+      return "Trending";
+    }
+    return "Products";
+  };
+
+  const title = getSectionTitle();
+
+  if (loading) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   const selectedSection = sections.find((sec) => sec.title === title);
   const products = selectedSection?.products || [];

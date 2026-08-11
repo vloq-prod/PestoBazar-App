@@ -43,7 +43,6 @@ export async function getOrCreateDeviceId(): Promise<string> {
 // Configure foreground notifications to display alerts and play sounds
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
     shouldShowBanner: true,
@@ -75,6 +74,15 @@ async function ensureAndroidChannel(): Promise<void> {
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: "#6C63FF", // matches app primary color
+    enableVibrate: true,
+    showBadge: true,
+  });
+
+  await Notifications.setNotificationChannelAsync("pestobazaar_general", {
+    name: "General",
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: "#6C63FF",
     enableVibrate: true,
     showBadge: true,
   });

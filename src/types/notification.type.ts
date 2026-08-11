@@ -46,7 +46,7 @@ export interface NotificationResponse {
 }
 
 export interface GetNotificationsParams {
-  user_id?: number;
+  user_id?: string;
   visitor_id?: string;
   page?: number;
 }
@@ -55,7 +55,7 @@ export interface GetNotificationsParams {
 
 export interface MarkNotificationReadParams {
   notificationId: number;
-  user_id?: number;
+  user_id?: string;
   visitor_id?: string;
 }
 
@@ -74,14 +74,14 @@ export interface UnreadNotificationCountResponse {
 }
 
 export interface GetUnreadNotificationCountParams {
-  user_id?: number;
+  user_id?: string;
   visitor_id?: string;
   page?: number;
 }
 
 
 export interface MarkAllNotificationsReadParams {
-  user_id?: number;
+  user_id?: string;
   visitor_id?: string;
 }
 

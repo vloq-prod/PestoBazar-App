@@ -24,6 +24,12 @@ import {
   Check,
   ChevronRight,
   Sparkles,
+  Truck,
+  Heart,
+  Percent,
+  Megaphone,
+  BookOpen,
+  Ticket,
 } from 'lucide-react-native';
 import { useAppVisitorStore } from '../../src/store/auth';
 import {
@@ -45,7 +51,7 @@ const NotificationsScreen = () => {
   const queryClient = useQueryClient();
 
   const { visitorId, userId } = useAppVisitorStore((state) => state);
-  const numericUserId = userId ? Number(userId) : undefined;
+
 
   const [page, setPage] = useState(1);
   const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
@@ -53,14 +59,14 @@ const NotificationsScreen = () => {
 
   // Fetch notifications hookc
   const { data: notificationsData, isLoading, isFetching } = useNotifications({
-    user_id: numericUserId,
+    user_id: userId || undefined,
     visitor_id: visitorId || undefined,
     page,
   });
 
   // Unread count hook
   const { data: unreadCountData } = useUnreadNotificationCount({
-    user_id: numericUserId,
+    user_id: userId || undefined,
     visitor_id: visitorId || undefined,
   });
 
@@ -72,7 +78,7 @@ const NotificationsScreen = () => {
 
   // Sync data to local state
   useEffect(() => {
-    if (notificationsData?.data?.notifications) {
+    if (notificationsData?.data?.notifications && notificationsData.data.notifications.length > 0) {
       if (page === 1) {
         setNotificationsList(notificationsData.data.notifications);
       } else {
@@ -85,8 +91,11 @@ const NotificationsScreen = () => {
           return [...prev, ...newNotifications];
         });
       }
+    } else if (!isLoading && page === 1) {
+      // Load local dummy notifications for UI design & deep-linking test when DB has 0 notifications
+      setNotificationsList(DUMMY_TEST_NOTIFICATIONS);
     }
-  }, [notificationsData, page]);
+  }, [notificationsData, page, isLoading]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -113,7 +122,7 @@ const NotificationsScreen = () => {
       markAsRead(
         {
           notificationId: notification.id,
-          user_id: numericUserId,
+          user_id: userId || undefined,
           visitor_id: visitorId || undefined,
         },
         {
@@ -153,7 +162,7 @@ const NotificationsScreen = () => {
 
     markAllAsRead(
       {
-        user_id: numericUserId,
+        user_id: userId || undefined,
         visitor_id: visitorId || undefined,
       },
       {
@@ -173,36 +182,49 @@ const NotificationsScreen = () => {
   };
 
   const getNotificationIcon = (type: string) => {
-    const size = 22;
-    switch (type?.toLowerCase()) {
-      case 'order':
-      case 'order_status':
-        return {
-          icon: <ShoppingBag size={size} color={colors.primary} />,
-          bgColor: colors.primary + '15',
-        };
-      case 'offer':
-      case 'promo':
-        return {
-          icon: <Gift size={size} color="#EAB308" />,
-          bgColor: '#EAB30815',
-        };
-      case 'alert':
-      case 'warning':
-        return {
-          icon: <AlertTriangle size={size} color={colors.error} />,
-          bgColor: colors.error + '15',
-        };
-      default:
-        return {
-          icon: <Info size={size} color="#3B82F6" />,
-          bgColor: '#3B82F615',
-        };
+    const size = 16;
+    const lowerType = type?.toLowerCase() || '';
+
+    // Match icons according to the screen type but use primary color for all
+    if (lowerType.includes('order')) {
+      return {
+        icon: <Truck size={size} color={colors.primary} />,
+      };
     }
+    if (lowerType.includes('offer') || lowerType.includes('promo') || lowerType.includes('coupon')) {
+      return {
+        icon: <Ticket size={size} color={colors.primary} />,
+      };
+    }
+    if (lowerType.includes('gift') || lowerType.includes('reward')) {
+      return {
+        icon: <Gift size={size} color={colors.primary} />,
+      };
+    }
+    if (lowerType.includes('cart') || lowerType.includes('wishlist') || lowerType.includes('whishlist')) {
+      return {
+        icon: <Heart size={size} color={colors.primary} />,
+      };
+    }
+    if (lowerType.includes('edu') || lowerType.includes('diy') || lowerType.includes('info')) {
+      return {
+        icon: <BookOpen size={size} color={colors.primary} />,
+      };
+    }
+    if (lowerType.includes('announcement') || lowerType.includes('alert') || lowerType.includes('warning')) {
+      return {
+        icon: <Megaphone size={size} color={colors.primary} />,
+      };
+    }
+    
+    // Default / General
+    return {
+      icon: <Bell size={size} color={colors.primary} />,
+    };
   };
 
   const renderNotificationItem = ({ item }: { item: Notification }) => {
-    const { icon, bgColor } = getNotificationIcon(item.notification_type);
+    const { icon } = getNotificationIcon(item.notification_type || item.action_type);
     
     // Support multiple field names from backend API variations
     const imageUrl = item.image_url || (item as any).image || item.data?.image_url || item.data?.image;
@@ -214,8 +236,8 @@ const NotificationsScreen = () => {
         style={[
           styles.notificationCard,
           {
-            backgroundColor: item.is_read ? colors.surface : colors.primary + '05',
-            borderColor: colors.border,
+            backgroundColor: item.is_read ? colors.surface : colors.primary + '0D',
+            borderBottomColor: colors.border,
           },
         ]}
       >
@@ -226,7 +248,7 @@ const NotificationsScreen = () => {
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
+          <View style={[styles.iconContainer, { backgroundColor: '#FFFFFF', borderColor: colors.primary, borderWidth: 1.5 }]}>
             {icon}
           </View>
         )}
@@ -238,7 +260,7 @@ const NotificationsScreen = () => {
                 styles.itemTitle,
                 {
                   color: colors.text,
-                  fontSize: font(14),
+                  fontSize: font(13.5),
                   fontFamily: item.is_read ? 'Poppins_500Medium' : 'Poppins_600SemiBold',
                 },
               ]}
@@ -246,9 +268,19 @@ const NotificationsScreen = () => {
             >
               {item.title}
             </Text>
-            {!item.is_read && (
-              <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
-            )}
+            
+            <Text
+              style={[
+                styles.timeText,
+                {
+                  color: colors.textSecondary,
+                  fontSize: font(11),
+                  fontFamily: 'Poppins_400Regular',
+                },
+              ]}
+            >
+              {item.created_at_human}
+            </Text>
           </View>
 
           <Text
@@ -257,27 +289,14 @@ const NotificationsScreen = () => {
               {
                 color: colors.textSecondary,
                 fontSize: font(12.5),
+                lineHeight: 18,
               },
             ]}
             numberOfLines={2}
           >
             {item.description}
           </Text>
-
-          <Text
-            style={[
-              styles.timeText,
-              {
-                color: colors.textSecondary,
-                fontSize: font(11),
-              },
-            ]}
-          >
-            {item.created_at_human}
-          </Text>
         </View>
-
-        <ChevronRight size={16} color={colors.textSecondary} style={{ opacity: 0.5 }} />
       </TouchableOpacity>
     );
   };
@@ -359,7 +378,6 @@ const NotificationsScreen = () => {
           ListEmptyComponent={renderEmptyState}
           contentContainerStyle={{
             paddingBottom: insets.bottom + spacing(20),
-            paddingHorizontal: spacing(16),
             flexGrow: 1,
           }}
           refreshControl={
@@ -419,6 +437,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
+    paddingHorizontal: 16,
     marginBottom: 6,
   },
   listHeaderTitle: {
@@ -437,33 +456,26 @@ const styles = StyleSheet.create({
   notificationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
   },
   notificationImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     marginRight: 12,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 26,
   },
   contentContainer: {
     flex: 1,
-    marginRight: 8,
   },
   titleRow: {
     flexDirection: 'row',
@@ -475,10 +487,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   unreadDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    marginLeft: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 8,
   },
   itemDescription: {
     fontFamily: 'Poppins_400Regular',
@@ -509,4 +521,169 @@ const styles = StyleSheet.create({
     opacity: 0.12,
   },
 });
+
+const DUMMY_TEST_NOTIFICATIONS: Notification[] = [
+  {
+    id: 101,
+    source_type: "system",
+    source_entity_type: "product",
+    source_entity_id: 12,
+    event_key: "product_deal",
+    notification_type: "promo",
+    title: "Hot Deal: Termite Control Spray! 🐜",
+    description: "Get 20% off on this top-rated Termite spray. Tap to buy now.",
+    image_url: "https://pestobazaar.confidevtech.com/storage/test-notifications/fZJaBGWbHBSh04cN0or5SKpvV1dfOVt6zH4BP5Ig.png",
+    action_type: "product",
+    action_value: "12",
+    data: { id: "12", product_id: "12" },
+    is_read: false,
+    read_at: null,
+    created_at: new Date().toISOString(),
+    created_at_human: "Just now",
+  },
+  {
+    id: 102,
+    source_type: "system",
+    source_entity_type: "category",
+    source_entity_id: 1,
+    event_key: "category_promo",
+    notification_type: "promo",
+    title: "Explore Herbal Pest Control 🌿",
+    description: "Safe for kids and pets. Browse our organic selections.",
+    image_url: null,
+    action_type: "category",
+    action_value: "pest-control",
+    data: { slug: "pest-control", category_slug: "pest-control" },
+    is_read: false,
+    read_at: null,
+    created_at: new Date().toISOString(),
+    created_at_human: "5 mins ago",
+  },
+  {
+    id: 103,
+    source_type: "system",
+    source_entity_type: "shop",
+    source_entity_id: 1,
+    event_key: "shop_listings",
+    notification_type: "info",
+    title: "Complete Product Catalog 🛒",
+    description: "Checkout our complete catalog for chemical & herbal controls.",
+    image_url: null,
+    action_type: "shop",
+    action_value: "",
+    data: {},
+    is_read: false,
+    read_at: null,
+    created_at: new Date().toISOString(),
+    created_at_human: "1 hour ago",
+  },
+  {
+    id: 104,
+    source_type: "system",
+    source_entity_type: "cart",
+    source_entity_id: 1,
+    event_key: "cart_reminder",
+    notification_type: "info",
+    title: "Items waiting in your cart! 🛍️",
+    description: "Don't let them sell out. Complete your order today.",
+    image_url: null,
+    action_type: "cart",
+    action_value: "",
+    data: {},
+    is_read: false,
+    read_at: null,
+    created_at: new Date().toISOString(),
+    created_at_human: "3 hours ago",
+  },
+  {
+    id: 105,
+    source_type: "system",
+    source_entity_type: "checkout",
+    source_entity_id: 1,
+    event_key: "checkout_resume",
+    notification_type: "alert",
+    title: "Complete your booking now!",
+    description: "Proceed to checkout to finalize your pest control service.",
+    image_url: null,
+    action_type: "checkout",
+    action_value: "",
+    data: {},
+    is_read: false,
+    read_at: null,
+    created_at: new Date().toISOString(),
+    created_at_human: "1 day ago",
+  },
+  {
+    id: 106,
+    source_type: "system",
+    source_entity_type: "order",
+    source_entity_id: 456,
+    event_key: "order_details",
+    notification_type: "order",
+    title: "Technician Dispatched 🚚",
+    description: "Your service technician is on the way for Order #456.",
+    image_url: null,
+    action_type: "order_details",
+    action_value: "456",
+    data: { id: "456", order_id: "456" },
+    is_read: true,
+    read_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    created_at_human: "2 days ago",
+  },
+  {
+    id: 107,
+    source_type: "system",
+    source_entity_type: "coupons",
+    source_entity_id: 1,
+    event_key: "coupons_offers",
+    notification_type: "promo",
+    title: "Flat 50% Coupon Code Inside! 🏷️",
+    description: "Tap to unlock exclusive promo codes on your first order.",
+    image_url: null,
+    action_type: "coupons",
+    action_value: "",
+    data: {},
+    is_read: true,
+    read_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    created_at_human: "3 days ago",
+  },
+  {
+    id: 108,
+    source_type: "system",
+    source_entity_type: "diy",
+    source_entity_id: 1,
+    event_key: "diy_guides",
+    notification_type: "info",
+    title: "DIY Pest Control at Home 🛠️",
+    description: "Simple guides and tricks to keep bugs away naturally.",
+    image_url: null,
+    action_type: "diy",
+    action_value: "",
+    data: {},
+    is_read: true,
+    read_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    created_at_human: "4 days ago",
+  },
+  {
+    id: 109,
+    source_type: "system",
+    source_entity_type: "bulk",
+    source_entity_id: 1,
+    event_key: "bulk_orders",
+    notification_type: "info",
+    title: "Commercial Pest Services",
+    description: "Need bulk orders for your office/store? Fill out our form.",
+    image_url: null,
+    action_type: "bulkorder",
+    action_value: "",
+    data: {},
+    is_read: true,
+    read_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    created_at_human: "5 days ago",
+  },
+];
 

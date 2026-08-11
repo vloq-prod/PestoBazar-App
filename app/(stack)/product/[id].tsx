@@ -97,10 +97,10 @@ const ProductDetails = () => {
 
   // ─── API Calls ──────────────────────────────────────────────
   const { data, isLoading, error } = useProductDetails(
-    productSlug
-      ? { product_slug: productSlug }
-      : productId
-        ? { product_id: productId }
+    productId
+      ? { product_id: productId }
+      : productSlug
+        ? { product_slug: productSlug }
         : {},
   );
   const { addToCart, loading: isCartLoading } = useAddToCart();

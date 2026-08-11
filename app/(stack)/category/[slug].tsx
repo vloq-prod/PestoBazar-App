@@ -25,7 +25,7 @@ const CategoryDetails = () => {
   const mainCategoryId = Number(slug);
   const initialSelectedSubCategoryId = Number(selectedSubCategoryId);
   const { colors } = useTheme();
-  const { categories, loading: catLoading } = useCategory(mainCategoryId);
+  const { categories, mainCategory, loading: catLoading } = useCategory(mainCategoryId);
   const hasAppliedInitialSelectionRef = useRef(false);
   const [productCount, setProductCount] = useState(0);
   const cartPreviewVisible = useSharedValue(1);
@@ -91,6 +91,17 @@ const CategoryDetails = () => {
     return String(selectedCategory.id);
   }, [selectedCategory, hasSidebar, mainCategoryId]);
 
+  console.log("category id: ", categoryId)
+
+  const apiCategoryName = mainCategory?.[0]?.category_name;
+  const categoryTitle =
+    apiCategoryName ||
+    (typeof name === "string"
+      ? name
+      : Array.isArray(name)
+        ? name[0]
+        : "Category");
+
   const handleSelect = useCallback((item: CategoryItem) => {
     setSelectedCategory(item);
   }, []);
@@ -111,7 +122,7 @@ const CategoryDetails = () => {
       />
 
       <AppNavbar 
-        title={String(name)} 
+        title={String(categoryTitle)} 
         showBack 
         count={productCount} 
         rightComponent={

@@ -24,6 +24,7 @@ import heroImage from "../../assets/hero-image.png";
 import heroBottom from "../../assets/hero-bottom.png";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useCartCount } from "../../src/hooks/cartHooks";
+import { useUnreadNotificationCount } from "../../src/hooks/useNotifications";
 import { Feather } from "@expo/vector-icons";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
 import HomeProduct from "../../src/components/home/HomeProduct";
@@ -85,9 +86,10 @@ const AnimatedExpoImage = Animated.createAnimatedComponent(Image);
 type IconButtonProps = {
   icon: React.ReactNode;
   onPress?: () => void;
+  badgeCount?: number;
 };
 
-const IconButton = ({ icon, onPress }: IconButtonProps) => {
+const IconButton = ({ icon, onPress, badgeCount }: IconButtonProps) => {
   const { spacing } = useResponsive();
 
   return (
@@ -100,7 +102,36 @@ const IconButton = ({ icon, onPress }: IconButtonProps) => {
         justifyContent: "center",
       }}
     >
-      {icon}
+      <View>
+        {icon}
+        {badgeCount !== undefined && badgeCount > 0 && (
+          <View
+            style={{
+              position: "absolute",
+              right: -spacing(4),
+              top: -spacing(4),
+              backgroundColor: "#FF3B30", // Bright red
+              borderRadius: 8,
+              minWidth: spacing(14),
+              height: spacing(14),
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 2,
+            }}
+          >
+            <Text
+              style={{
+                color: "#FFFFFF",
+                fontSize: 8,
+                fontWeight: "700",
+                textAlign: "center",
+              }}
+            >
+              {badgeCount}
+            </Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
@@ -120,7 +151,13 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
       visitor_id: visitorId || "",
     });
 
+    const { data: unreadCountData } = useUnreadNotificationCount({
+      user_id: userId || undefined,
+      visitor_id: visitorId || undefined,
+    });
+
     const cartCount = cartCountData?.data || 0;
+    const unreadCount = unreadCountData?.data?.unread_count ?? 0;
 
     const ICON_SIZE = spacing(24);
     const textColor = isLight ? colors.text : colors.textInverse;
@@ -191,6 +228,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
           <IconButton
             onPress={() => router.push("/(stack)/notifications")}
             icon={<Bell size={ICON_SIZE} color={textColor} />}
+            badgeCount={unreadCount}
           />
           {/* <TouchableOpacity
             onPress={handleMoveToCart}

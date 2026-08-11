@@ -79,6 +79,7 @@ export const useCategory = (id: number) => {
 
   return {
     categories: query.data?.data?.category_master || [],
+    mainCategory: (query.data?.data as any)?.main_category || [],
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

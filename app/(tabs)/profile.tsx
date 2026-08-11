@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Alert,
+  Share,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
@@ -223,6 +224,17 @@ export default function ProfileScreen() {
     setLogoutModalVisible(false);
     router.replace("/login");
   };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message:
+          "Check out Pestobazaar! Order premium pest control products and services instantly: https://pestobazaar.com",
+      });
+    } catch (error) {
+      console.error("[ProfileScreen] Share failed:", error);
+    }
+  };
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View
@@ -352,6 +364,8 @@ export default function ProfileScreen() {
 
                   if (item.id === "logout") {
                     onPressOverride = handleLogout;
+                  } else if (item.id === "share") {
+                    onPressOverride = handleShare;
                   } else if (
                     !userId &&
                     ["orders", "wishlist", "address"].includes(item.id)
