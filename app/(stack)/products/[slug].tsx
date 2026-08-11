@@ -68,7 +68,7 @@ const FOOTER_HEIGHT = 112;
 const BASE_URL = "https://static-cdn.pestobazaar.com";
 
 const ProductDetails = () => {
-  const { id, product_name, product_slug } = useLocalSearchParams();
+  const { id, product_name, product_slug, slug } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -84,9 +84,10 @@ const ProductDetails = () => {
   const productId =
     typeof id === "string" && !isNaN(Number(id)) ? Number(id) : undefined;
 
+  const rawSlug = slug || product_slug;
   const productSlug =
-    typeof product_slug === "string" && product_slug.trim().length > 0
-      ? product_slug
+    typeof rawSlug === "string" && rawSlug.trim().length > 0
+      ? rawSlug
       : undefined;
 
   // console.log("product slug: ", productSlug);
@@ -97,10 +98,10 @@ const ProductDetails = () => {
 
   // ─── API Calls ──────────────────────────────────────────────
   const { data, isLoading, error } = useProductDetails(
-    productId
-      ? { product_id: productId }
-      : productSlug
-        ? { product_slug: productSlug }
+    productSlug
+      ? { product_slug: productSlug }
+      : productId
+        ? { product_id: productId }
         : {},
   );
   const { addToCart, loading: isCartLoading } = useAddToCart();
@@ -250,8 +251,8 @@ const ProductDetails = () => {
   const handleShare = useCallback(async () => {
     try {
       const fallbackUrl = DeepLinkURLBuilder.product(
+        productSlug || "unknown-product",
         realProductId ?? productId ?? 0,
-        productSlug,
       );
       const message = DeepLinkURLBuilder.createShareMessage(
         resolvedProductName,
@@ -674,8 +675,9 @@ const ProductDetails = () => {
                     onPress={() => {
                       if (item.id === productId) return;
                       router.replace({
-                        pathname: "(stack)/product/[id]",
+                        pathname: "/(stack)/products/[slug]",
                         params: {
+                          slug: productSlug, // Try to retain slug or it will re-fetch
                           id: item.id,
                           product_name: resolvedProductName,
                         },

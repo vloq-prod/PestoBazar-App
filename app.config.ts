@@ -76,6 +76,8 @@ plugins: [
         action: "VIEW",
         autoVerify: true,
         data: [
+          { scheme: "https", host: "pestobazaar.com", pathPrefix: "/products" },
+          { scheme: "https", host: "www.pestobazaar.com", pathPrefix: "/products" },
           { scheme: "https", host: "pestobazaar.com", pathPrefix: "/product" },
           { scheme: "https", host: "www.pestobazaar.com", pathPrefix: "/product" },
           { scheme: "https", host: "pestobazaar.com", pathPrefix: "/category" },

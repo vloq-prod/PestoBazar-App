@@ -56,10 +56,10 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
 
     if (app_redirect_key === "products") {
       router.push({
-        pathname: "/(stack)/product/[id]",
+        pathname: "/(stack)/products/[slug]",
         params: {
-          id: "slug", // required
-          product_slug: app_redirect_value,
+          slug: app_redirect_value,
+          id: "slug", // required fallback
         },
       });
       return;

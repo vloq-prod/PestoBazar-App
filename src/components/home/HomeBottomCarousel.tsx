@@ -21,13 +21,13 @@ export default function HomeBottomBanner({ item }: Props) {
 
 
     if (app_redirect_key === "products") {
-      // router.push({
-      //   pathname: "(stack)/product/[id]",
-      //   params: {
-      //     id: "slug",
-      //     product_slug: app_redirect_value,
-      //   },
-      // });
+      router.push({
+        pathname: "/(stack)/products/[slug]",
+        params: {
+          slug: app_redirect_value,
+          id: "slug",
+        },
+      });
       return;
     }
 

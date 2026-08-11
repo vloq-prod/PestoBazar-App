@@ -125,11 +125,11 @@ export const ROUTE_REGISTRY: readonly RouteConfig[] = [
   // ── Product & Catalog (Public) ────────────────────────────────────────────
   {
     name: DEEP_LINK_ROUTE_NAMES.PRODUCT,
-    expoPath: "/(stack)/product/[id]",
+    expoPath: "/(stack)/products/[slug]",
     requiresAuth: false,
-    pathPatterns: ["product", "products", "p"],
-    requiredParams: ["id"],
-    optionalParams: ["product_slug", "product_name"],
+    pathPatterns: ["products", "product", "p"],
+    requiredParams: ["slug"],
+    optionalParams: ["id", "product_name", "product_slug"],
   },
   {
     name: DEEP_LINK_ROUTE_NAMES.CATEGORY,

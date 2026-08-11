@@ -55,23 +55,23 @@ export const DeepLinkURLBuilder = {
   /**
    * Generates a product deep link URL.
    *
-   * @param productId - The product ID
-   * @param slug - Optional product slug for SEO
+   * @param slug - The product slug
+   * @param productId - Optional product ID for fallback
    * @param tracking - Optional UTM/referral params
-   * @returns Full URL: https://pestobazaar.com/product/123?slug=product-name
+   * @returns Full URL: https://pestobazaar.com/products/organic-fertilizer
    *
    * EXAMPLE:
-   *   product(123, "organic-fertilizer")
-   *   → "https://pestobazaar.com/product/123?slug=organic-fertilizer"
+   *   product("organic-fertilizer", 123)
+   *   → "https://pestobazaar.com/products/organic-fertilizer?id=123"
    */
   product(
-    productId: number,
-    slug?: string,
+    slug: string,
+    productId?: number,
     tracking?: TrackingOptions,
   ): string {
     const params = new URLSearchParams();
-    if (slug) params.set("slug", slug);
-    return buildUrl(`/product/${productId}`, params, tracking);
+    if (productId) params.set("id", productId.toString());
+    return buildUrl(`/products/${slug}`, params, tracking);
   },
 
   /**

@@ -133,10 +133,10 @@ export default function ItemCard({
         } else {
           const productSlug = (item as any).slug || (item as any).product_slug || (item as any).url || "";
           router.push({
-            pathname: "/(stack)/product/[id]",
+            pathname: "/(stack)/products/[slug]",
             params: {
+              slug: productSlug,
               id: item.id ? String(item.id) : "slug",
-              product_slug: productSlug,
               product_name: item.product_name || "",
             },
           });

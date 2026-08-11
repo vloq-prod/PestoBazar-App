@@ -97,19 +97,19 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
         const productSlug = (item as any).url || (item as any).product_url || "";
         if (!item.id || isNaN(Number(item.id))) {
           router.push({
-            pathname: "/(stack)/product/[id]",
+            pathname: "/(stack)/products/[slug]",
             params: {
+              slug: productSlug,
               id: "slug",
-              product_slug: productSlug,
               product_name: item.product_name || "",
             },
           });
         } else {
           router.push({
-            pathname: "/(stack)/product/[id]",
+            pathname: "/(stack)/products/[slug]",
             params: {
+              slug: productSlug,
               id: item.id,
-              product_slug: productSlug,
               product_name: item.product_name || "",
             },
           });

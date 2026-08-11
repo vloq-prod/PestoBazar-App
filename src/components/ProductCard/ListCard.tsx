@@ -119,10 +119,10 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
         }
         const productSlug = (item as any).url || (item as any).product_url || "";
         router.push({
-          pathname: "/(stack)/product/[id]",
+          pathname: "/(stack)/products/[slug]",
           params: {
+            slug: productSlug,
             id: item.id ? String(item.id) : "slug",
-            product_slug: productSlug,
             product_name: item.product_name || "",
           },
         });
