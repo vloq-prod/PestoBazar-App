@@ -36,6 +36,7 @@ import Svg, { Path } from "react-native-svg";
 import { useRemovePromoCode } from "../../src/hooks/prompoCouponHooks";
 import { useToast } from "../../src/context/ToastContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCartStore } from "../../src/store/cartStore";
 
 const WavyDivider = ({ color, spacing }: { color: string; spacing: any }) => {
   return (
@@ -94,6 +95,10 @@ export default function CartScreen() {
   const params = useLocalSearchParams<{ couponApplied?: string; couponCode?: string }>();
   const [showCouponSuccessModal, setShowCouponSuccessModal] = useState(false);
   const [successCouponCode, setSuccessCouponCode] = useState("");
+  const couponSuccessCode = useCartStore((state) => state.couponSuccessCode);
+  const clearCouponSuccessCode = useCartStore(
+    (state) => state.clearCouponSuccessCode,
+  );
 
   React.useEffect(() => {
     if (params.couponApplied === "true" && params.couponCode) {
@@ -102,11 +107,20 @@ export default function CartScreen() {
       // Clear navigation params from the route so it doesn't pop up again
       router.setParams({ couponApplied: undefined, couponCode: undefined });
     }
-  }, [params.couponApplied, params.couponCode]);
+  }, [params.couponApplied, params.couponCode, router]);
+
+  React.useEffect(() => {
+    if (couponSuccessCode) {
+      setSuccessCouponCode(couponSuccessCode);
+      setShowCouponSuccessModal(true);
+      clearCouponSuccessCode();
+    }
+  }, [clearCouponSuccessCode, couponSuccessCode]);
 
   const {
     data: cartData,
     isLoading,
+    isFetching: isCartFetching,
     error,
   } = useCart({
     user_id: userId ?? 0,
@@ -129,7 +143,26 @@ export default function CartScreen() {
   const isFreeShipping = cartTotal?.free_shipping;
   const cartCount = cartCountData?.data;
   const appliedPromo = cartTotal?.promo_code_details;
+  const isCouponSuccessLoading =
+    showCouponSuccessModal &&
+    (isCartFetching ||
+      !appliedPromo?.promo_code ||
+      appliedPromo.promo_code.toUpperCase() !== successCouponCode.toUpperCase());
 
+  const handleCouponsPress = () => {
+    if (!userId) {
+      router.push({
+        pathname: "/login",
+        params: { redirectTo: "/(stack)/coupons" },
+      });
+      return;
+    }
+
+    router.push({
+      pathname: "/(stack)/coupons",
+      params: { cartId: String(cartId || ""), returnToCart: "true" },
+    });
+  };
   const handleRemovePromo = () => {
     if (!cartId) return;
 
@@ -383,12 +416,7 @@ export default function CartScreen() {
 
                       <TouchableOpacity
                         activeOpacity={0.7}
-                        onPress={() =>
-                          router.push({
-                            pathname: "/(stack)/coupons",
-                            params: { cartId: String(cartId || "") },
-                          })
-                        }
+                        onPress={handleCouponsPress}
                         style={{ flex: 1, gap: 1 }}
                       >
                         <Text
@@ -458,12 +486,7 @@ export default function CartScreen() {
                 {/* Section 2: View Payment Offers Row */}
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(stack)/coupons",
-                      params: { cartId: String(cartId || "") },
-                    })
-                  }
+                  onPress={handleCouponsPress}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
@@ -1133,17 +1156,22 @@ export default function CartScreen() {
               />
             </View>
 
-            {/* Title / Coupon Benefit details */}
-            <Text style={[styles.couponSuccessTitle, { color: colors.text, fontSize: font(18) }]}>
-              {appliedPromo?.promo_code?.toUpperCase() === successCouponCode.toUpperCase() && appliedPromo.title
-                ? appliedPromo.title
-                : `Get Upto ${cleanPrice(appliedPromo?.discount_amount || cartTotal?.promo_discount_amount || 50)} Cashback on your order`}
-            </Text>
-
-            {/* Subtitle / Code applied indicator */}
-            <Text style={[styles.couponAppliedText, { color: colors.textSecondary, fontSize: font(12.5) }]}>
-              {`"${successCouponCode.toUpperCase()} APPLIED"`}
-            </Text>
+            {/* Keep the text area stable while the refreshed cart resolves the applied coupon. */}
+            {isCouponSuccessLoading ? (
+              <View style={styles.couponTextSkeleton}>
+                <View style={[styles.skeletonLine, { width: "88%", backgroundColor: colors.backgroundSkeleton }]} />
+                <View style={[styles.skeletonLine, { width: "52%", backgroundColor: colors.backgroundSkeleton }]} />
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.couponSuccessTitle, { color: colors.text, fontSize: font(18) }]}>
+                  {appliedPromo?.title || `Get Upto ${cleanPrice(appliedPromo?.discount_amount || cartTotal?.promo_discount_amount || 50)} Cashback on your order`}
+                </Text>
+                <Text style={[styles.couponAppliedText, { color: colors.textSecondary, fontSize: font(12.5) }]}>
+                  {`"${successCouponCode.toUpperCase()} APPLIED"`}
+                </Text>
+              </>
+            )}
 
             {/* Got It Button */}
             <TouchableOpacity
@@ -1258,6 +1286,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 0.5,
     marginBottom: 24,
+  },
+  couponTextSkeleton: {
+    alignItems: "center",
+    gap: 12,
+    marginTop: -42,
+    marginBottom: 24,
+  },
+  skeletonLine: {
+    height: 16,
+    borderRadius: 8,
+    opacity: 0.55,
   },
   gotItButton: {
     width: "100%",

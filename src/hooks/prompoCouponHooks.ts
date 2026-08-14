@@ -8,7 +8,12 @@ export const useApplicablePromoCodes = (
   return useQuery({
     queryKey: ["applicable-promo-codes", payload.cart_id],
     queryFn: () => getApplicablePromoCodes(payload),
-    enabled: !!payload.cart_id && payload.cart_id !== "0" && payload.cart_id !== "undefined",
+    enabled:
+      !!payload.user_id &&
+      payload.user_id !== "0" &&
+      !!payload.cart_id &&
+      payload.cart_id !== "0" &&
+      payload.cart_id !== "undefined",
     staleTime: 1000 * 60 * 5, // 5 minutes fresh cache
   });
 };

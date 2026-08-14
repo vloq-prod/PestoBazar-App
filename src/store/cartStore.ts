@@ -4,6 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface CartState {
   items: Record<number, number>; // product_id -> qty
+  /** Ephemeral signal used when returning from Coupons to the existing Cart route. */
+  couponSuccessCode: string | null;
   setCart: (items: { product_id: number; qty: number }[]) => void;
   updateQuantity: (productId: number, qty: number) => void;
   increaseQuantity: (productId: number) => void;
@@ -11,12 +13,15 @@ interface CartState {
   removeItem: (productId: number) => void;
   clearCart: () => void;
   getQuantity: (productId: number) => number;
+  setCouponSuccessCode: (code: string) => void;
+  clearCouponSuccessCode: () => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: {},
+      couponSuccessCode: null,
 
       setCart: (items) => {
         const mapped: Record<number, number> = {};
@@ -78,10 +83,14 @@ export const useCartStore = create<CartState>()(
       getQuantity: (productId) => {
         return get().items[productId] ?? 0;
       },
+      setCouponSuccessCode: (code) => set({ couponSuccessCode: code }),
+      clearCouponSuccessCode: () => set({ couponSuccessCode: null }),
     }),
     {
       name: "cart-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // The success signal must not survive an app restart.
+      partialize: (state) => ({ items: state.items }),
     }
   )
 );

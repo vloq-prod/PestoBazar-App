@@ -66,6 +66,7 @@ export const ALLOWED_SCHEMES: readonly string[] = [
 export const ALLOWED_HOSTS: readonly string[] = [
   UNIVERSAL_LINK_DOMAIN,                 // pestobazaar.com
   `www.${UNIVERSAL_LINK_DOMAIN}`,        // www.pestobazaar.com
+  "pestobazaar.confidevtech.com",        // pestobazaar.confidevtech.com
 ] as const;
 
 // ─── URL Building ──────────────────────────────────────────────────────────────

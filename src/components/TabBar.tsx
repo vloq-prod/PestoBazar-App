@@ -118,7 +118,15 @@ function AndroidTabItem({
       onPress={onPress}
       onLongPress={onLongPress}
       android_ripple={null}
-      className="flex-1 items-center justify-center pt-2.5 pb-1.5 gap-1"
+      style={{
+        flex: 1,
+        minWidth: 0,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingTop: 10,
+        paddingBottom: 6,
+        gap: 4,
+      }}
     >
       {/* Top indicator bar */}
       <Animated.View
@@ -131,9 +139,11 @@ function AndroidTabItem({
       <cfg.Icon size={22} color={isFocused ? activeColor : inactiveColor} />
       <Animated.Text
         numberOfLines={1}
-        className="text-[10px] text-center leading-[14px]"
         style={{
           fontFamily: "Poppins_500Medium",
+          fontSize: 10,
+          lineHeight: 14,
+          textAlign: "center",
           color: isFocused ? activeColor : inactiveColor,
         }}
       >

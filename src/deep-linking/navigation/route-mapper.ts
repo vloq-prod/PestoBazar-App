@@ -1,18 +1,22 @@
-
-
-import type { DeepLinkPayload, NavigationInstruction } from "../types/deep-link.types";
+import type {
+  DeepLinkPayload,
+  NavigationInstruction,
+} from "../types/deep-link.types";
 import {
   findRouteByName,
   FALLBACK_ROUTE,
   DEEP_LINK_ROUTE_NAMES,
 } from "../constants/routes";
 
-
-export function mapPayloadToNavigation(payload: DeepLinkPayload): NavigationInstruction {
+export function mapPayloadToNavigation(
+  payload: DeepLinkPayload,
+): NavigationInstruction {
   const routeConfig = findRouteByName(payload.routeName);
 
   if (!routeConfig) {
-    console.warn(`[RouteMapper] No route config for "${payload.routeName}". Falling back to home.`);
+    console.warn(
+      `[RouteMapper] No route config for "${payload.routeName}". Falling back to home.`,
+    );
     return { pathname: FALLBACK_ROUTE, params: {} };
   }
 
@@ -20,7 +24,10 @@ export function mapPayloadToNavigation(payload: DeepLinkPayload): NavigationInst
 
   // If the category route is requested but no valid slug/id is provided (or it is "0"),
   // navigate to the Category Tab in bottom navigation instead.
-  if (payload.routeName === DEEP_LINK_ROUTE_NAMES.CATEGORY && (!params.slug || params.slug === "0")) {
+  if (
+    payload.routeName === DEEP_LINK_ROUTE_NAMES.CATEGORY &&
+    (!params.slug || params.slug === "0")
+  ) {
     return {
       pathname: "/(tabs)/category",
       params: {},
@@ -33,7 +40,9 @@ export function mapPayloadToNavigation(payload: DeepLinkPayload): NavigationInst
   };
 }
 
-function buildRouteParams(payload: DeepLinkPayload): Record<string, string | number> {
+function buildRouteParams(
+  payload: DeepLinkPayload,
+): Record<string, string | number> {
   const { routeName, id, slug, queryParams } = payload;
 
   switch (routeName) {
@@ -42,8 +51,10 @@ function buildRouteParams(payload: DeepLinkPayload): Record<string, string | num
       const params: Record<string, string | number> = {};
       if (id) params.id = id;
       if (slug) params.product_slug = slug;
-      if (queryParams.product_slug) params.product_slug = queryParams.product_slug;
-      if (queryParams.product_name) params.product_name = queryParams.product_name;
+      if (queryParams.product_slug)
+        params.product_slug = queryParams.product_slug;
+      if (queryParams.product_name)
+        params.product_name = queryParams.product_name;
       // If we only have slug but no ID, pass slug as product_slug
       // and set id to "slug" (the product page checks both)
       if (!id && slug) {

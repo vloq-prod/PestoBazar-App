@@ -82,7 +82,10 @@ export function normalizeNotificationData(
     return null;
   }
 
-  console.log("[DeepLink Normalizer] Received Raw Notification Data:", JSON.stringify(data, null, 2));
+  console.log(
+    "[DeepLink Normalizer] Received Raw Notification Data:",
+    JSON.stringify(data, null, 2),
+  );
 
   const rawInput = JSON.stringify(data);
   const receivedAt = Date.now();
@@ -121,7 +124,8 @@ export function normalizeNotificationData(
 
   // Look up the route in the registry
   const routeConfig = findRouteByPathPattern(normalizedType);
-  const routeName = normalizedType === "url" ? "url" : (routeConfig?.name || "unknown");
+  const routeName =
+    normalizedType === "url" ? "url" : routeConfig?.name || "unknown";
 
   // ── Extract IDs and slugs based on type ───────────────────────────────────
   const { id, slug, queryParams } = extractParamsForType(normalizedType, data);
@@ -198,8 +202,9 @@ function extractParamsForType(
 } {
   switch (type) {
     case "product": {
-      const id = safePositiveInt(data as Record<string, unknown>, "id") ??
-                 safePositiveInt(data as Record<string, unknown>, "action_value");
+      const id =
+        safePositiveInt(data as Record<string, unknown>, "id") ??
+        safePositiveInt(data as Record<string, unknown>, "action_value");
       const slug = coalesce(data as Record<string, unknown>, [
         "product_slug",
         "slug",
@@ -262,8 +267,14 @@ function extractParamsForType(
     }
 
     case "viewall": {
-      let slug = coalesce(data as Record<string, unknown>, ["slug", "action_value"]);
-      const rawActionType = safeString(data as Record<string, unknown>, "action_type");
+      let slug = coalesce(data as Record<string, unknown>, [
+        "slug",
+        "action_value",
+      ]);
+      const rawActionType = safeString(
+        data as Record<string, unknown>,
+        "action_type",
+      );
 
       // If slug is empty or "0" (default empty value), use action_type as the slug
       if (!slug || slug === "0") {
@@ -277,7 +288,7 @@ function extractParamsForType(
       else if (rawActionType === "trending") title = "Trending";
       return {
         slug: slug || undefined,
-        queryParams: { title }
+        queryParams: { title },
       };
     }
 
@@ -287,9 +298,13 @@ function extractParamsForType(
     }
 
     default: {
-      const id = safePositiveInt(data as Record<string, unknown>, "id") ??
-                 safePositiveInt(data as Record<string, unknown>, "action_value");
-      const slug = coalesce(data as Record<string, unknown>, ["slug", "action_value"]);
+      const id =
+        safePositiveInt(data as Record<string, unknown>, "id") ??
+        safePositiveInt(data as Record<string, unknown>, "action_value");
+      const slug = coalesce(data as Record<string, unknown>, [
+        "slug",
+        "action_value",
+      ]);
       return {
         id,
         slug: slug || undefined,

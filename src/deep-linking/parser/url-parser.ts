@@ -36,7 +36,10 @@
 
 import type { DeepLinkPayload, DeepLinkSource } from "../types/deep-link.types";
 import { CUSTOM_SCHEME, ALLOWED_HOSTS } from "../constants/schemes";
-import { findRouteByPathPattern, DEEP_LINK_ROUTE_NAMES } from "../constants/routes";
+import {
+  findRouteByPathPattern,
+  DEEP_LINK_ROUTE_NAMES,
+} from "../constants/routes";
 import {
   parseQueryString,
   extractUTMParams,
@@ -113,11 +116,15 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkPayload | null {
     // Step 5: Extract ID or slug from second segment
     const secondSegment = segments[1] || "";
     const idFromPath = parseIdFromSegment(secondSegment);
-    const slugFromPath = idFromPath === undefined ? secondSegment || undefined : undefined;
+    const slugFromPath =
+      idFromPath === undefined ? secondSegment || undefined : undefined;
 
     // Step 6: Also check query params for ID/slug (notification links often use these)
     const idFromQuery = parseIdFromSegment(
-      queryParams["id"] || queryParams["product_id"] || queryParams["order_id"] || "",
+      queryParams["id"] ||
+        queryParams["product_id"] ||
+        queryParams["order_id"] ||
+        "",
     );
 
     const slugFromQuery =
@@ -205,7 +212,8 @@ function extractUrlParts(url: string): {
       // If URL constructor fails, fall back to manual parsing
       const withoutScheme = url.replace(/^https?:\/\//, "");
       const slashIndex = withoutScheme.indexOf("/");
-      const pathAndQuery = slashIndex >= 0 ? withoutScheme.substring(slashIndex) : "";
+      const pathAndQuery =
+        slashIndex >= 0 ? withoutScheme.substring(slashIndex) : "";
       const [pathString, queryString] = splitPathAndQuery(pathAndQuery);
 
       return {
@@ -233,7 +241,10 @@ function extractUrlParts(url: string): {
 function splitPathAndQuery(pathAndQuery: string): [string, string] {
   const qIndex = pathAndQuery.indexOf("?");
   if (qIndex === -1) return [pathAndQuery, ""];
-  return [pathAndQuery.substring(0, qIndex), pathAndQuery.substring(qIndex + 1)];
+  return [
+    pathAndQuery.substring(0, qIndex),
+    pathAndQuery.substring(qIndex + 1),
+  ];
 }
 
 /**

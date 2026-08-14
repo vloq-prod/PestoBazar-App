@@ -175,7 +175,9 @@ export default function ShopScreen() {
   const H_PAD = spacing(12) * 2;
   const H_GAP = spacing(10); // horizontal gap between cards
   const V_GAP = spacing(20); // vertical gap between rows
-  const CARD_WIDTH = (width - H_PAD - H_GAP * (COLS - 1)) / COLS;
+  // Use Math.floor and subtract a small buffer to prevent subpixel layout rounding 
+  // on some Android devices which causes the 3rd item to be clipped/overflow
+  const CARD_WIDTH = Math.floor((width - H_PAD - H_GAP * (COLS - 1)) / COLS) - 1;
 
   // ── Section list (suggestions + results) ───────────────
   type Section =
@@ -394,7 +396,7 @@ export default function ShopScreen() {
 
     if (item.type === "product_row") {
       return (
-        <View style={{ flexDirection: "row", gap: H_GAP, marginBottom: V_GAP }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: V_GAP }}>
           {(item as any).items.map((product: ListingItem) => (
             <View key={product.id} style={{ width: CARD_WIDTH }}>
               <ListingGridCard item={product} />

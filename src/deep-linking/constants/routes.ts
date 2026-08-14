@@ -69,7 +69,8 @@ export const DEEP_LINK_ROUTE_NAMES = {
   NOTIFICATIONS: "notifications",
 } as const;
 
-export type DeepLinkRouteName = (typeof DEEP_LINK_ROUTE_NAMES)[keyof typeof DEEP_LINK_ROUTE_NAMES];
+export type DeepLinkRouteName =
+  (typeof DEEP_LINK_ROUTE_NAMES)[keyof typeof DEEP_LINK_ROUTE_NAMES];
 
 // ─── Fallback Route ────────────────────────────────────────────────────────────
 
@@ -390,7 +391,9 @@ for (const route of ROUTE_REGISTRY) {
  *   - Case-insensitive matching (URLs are case-insensitive by convention)
  *   - Returns undefined for truly unknown routes (caller decides fallback)
  */
-export function findRouteByPathPattern(pathSegment: string): RouteConfig | undefined {
+export function findRouteByPathPattern(
+  pathSegment: string,
+): RouteConfig | undefined {
   return _pathPatternMap.get(pathSegment.toLowerCase());
 }
 

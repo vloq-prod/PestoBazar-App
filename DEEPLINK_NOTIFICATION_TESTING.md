@@ -17,9 +17,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ## ─── Payload Templates for All Routes ───
 
 ### 1. Home
+
 - **Action Type**: `home`
 - **Description**: Navigates the user to the Main Home Tab.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "home_promo",
@@ -32,9 +34,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 2. Product Details
+
 - **Action Type**: `product`
 - **Description**: Opens a specific product page using its numeric ID.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "product_deal",
@@ -48,9 +52,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 3. Category / Category Detail
+
 - **Action Type**: `category` or `category_detail`
 - **Description**: Navigates to a specific category page via slug or ID.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "category_promo",
@@ -65,9 +71,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 4. Cart
+
 - **Action Type**: `cart`
 - **Description**: Takes the user directly to the Cart page.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "cart_reminder",
@@ -79,9 +87,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 5. Order Details
+
 - **Action Type**: `order_detail`
 - **Description**: Opens the details screen for a specific Order ID.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "order_dispatch",
@@ -95,9 +105,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 6. Profile
+
 - **Action Type**: `profile`
 - **Description**: Takes the user to the Profile/Account settings tab.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "profile_update",
@@ -109,9 +121,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 7. Return Details
+
 - **Action Type**: `return`
 - **Description**: Opens status details for a specific return request ID.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "return_status",
@@ -125,9 +139,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 8. Coupon
+
 - **Action Type**: `coupon`
 - **Description**: Navigates to the Available Coupons/Promo codes screen.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "coupons_page",
@@ -139,9 +155,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 9. Deals
+
 - **Action Type**: `deals`
 - **Description**: Opens the Deals / Offers screen.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "deals_sale",
@@ -153,9 +171,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 10. External URL
+
 - **Action Type**: `url`
 - **Description**: Opens an external link in the device's native browser.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "blog_redirect",
@@ -168,9 +188,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 11. Wishlist
+
 - **Action Type**: `whishlist`
 - **Description**: Takes the user to their saved Wishlist items.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "wishlist_sale",
@@ -182,9 +204,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 12. Do It Yourself (DIY)
+
 - **Action Type**: `do_if_yourself`
 - **Description**: Opens the DIY Pest Control guides section.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "diy_guides",
@@ -196,9 +220,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 13. Best Selling
+
 - **Action Type**: `best_selling`
 - **Description**: Opens a list of Best Selling items.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "best_selling_redirect",
@@ -210,9 +236,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 14. New Arrival
+
 - **Action Type**: `new_arrival`
 - **Description**: Opens the New Arrival product feed.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "new_arrival_redirect",
@@ -224,9 +252,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 15. Top Rated
+
 - **Action Type**: `top_rated`
 - **Description**: Opens highly rated products list.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "top_rated_redirect",
@@ -238,9 +268,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 16. Trending
+
 - **Action Type**: `trending`
 - **Description**: Opens the trending products feed.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "trending_redirect",
@@ -252,9 +284,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 17. Custom Section
+
 - **Action Type**: `custom_section`
 - **Description**: Navigates to a specific curated custom homepage section by its ID.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "custom_section_monsoon",
@@ -268,9 +302,11 @@ For notifications to render with images and trigger correct navigation in Javasc
 ---
 
 ### 18. Category Detail (Alternative)
+
 - **Action Type**: `category_detail`
 - **Description**: Opens the list of items for a specific category ID.
 - **Data payload**:
+
 ```json
 "data": {
     "notification_id": "category_detail_redirect",

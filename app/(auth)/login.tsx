@@ -19,8 +19,7 @@ import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Constants from "expo-constants";
-import { useState, useCallback } from "react";
-import { Phone } from "lucide-react-native";
+import { useState, useCallback, useRef } from "react";
 import Carousel from "react-native-reanimated-carousel";
 import Animated, {
   useSharedValue,
@@ -57,7 +56,7 @@ const phoneSchema = z.object({
 });
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const INPUT_HEIGHT = 52;
+const INPUT_HEIGHT =  45;
 
 const carouselData = [
   {
@@ -94,7 +93,7 @@ const PillDot = ({
     const current = Math.round(progress.value) % total;
     const isActive = current === index;
     return {
-      width: withTiming(isActive ? 20 : 6, { duration: 300 }),
+      width: withTiming(38, { duration: 300 }),
       opacity: withTiming(isActive ? 1 : 0.45, { duration: 300 }),
     };
   });
@@ -123,6 +122,7 @@ export default function Login() {
   const { colors } = useTheme();
   const { font, spacing, hp } = useResponsive();
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     RNOtpVerify.getHash()
@@ -308,12 +308,15 @@ export default function Login() {
       {/* ── Bottom Form Section ── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
           showsVerticalScrollIndicator={false}
           bounces={false}
           alwaysBounceVertical={false}
@@ -324,7 +327,7 @@ export default function Login() {
             style={[
               styles.topSection,
               {
-                height: hp(44),
+                height: hp(48),
                 backgroundColor: colors.primary,
                 paddingTop: insets.top + spacing(8),
               },
@@ -412,7 +415,7 @@ export default function Login() {
                 flexDirection: "row",
                 justifyContent: "center",
                 alignItems: "center",
-                gap: 5,
+                gap: 9,
                 marginTop: spacing(15),
                 paddingBottom: spacing(40),
               }}
@@ -432,9 +435,9 @@ export default function Login() {
             style={[
               styles.bottomSection,
               {
-                marginTop: -spacing(15),
+                marginTop: -spacing(22),
                 padding: spacing(20),
-                paddingTop: spacing(15),
+                paddingTop: spacing(12),
                 paddingBottom:
                   Platform.OS === "ios"
                     ? insets.bottom + spacing(10)
@@ -449,8 +452,8 @@ export default function Login() {
             <Text
               style={{
                 textAlign: "center",
-                fontSize: font(22),
-                marginTop: spacing(6),
+                fontSize: font(20),
+                marginTop: 0,
                 color: colors.text,
                 fontFamily: "Poppins_600SemiBold",
               }}
@@ -458,22 +461,8 @@ export default function Login() {
               Login or Signup
             </Text>
 
-            <Text
-              style={{
-                textAlign: "center",
-                fontSize: font(13),
-                marginTop: spacing(5),
-                color: colors.textTertiary,
-                paddingHorizontal: spacing(10),
-                fontFamily: "Poppins_400Regular",
-                lineHeight: font(19),
-              }}
-            >
-              Access trusted pest control services near you in just a few steps
-            </Text>
-
             {/* ── Phone Input ── */}
-            <View style={{ marginTop: spacing(24), gap: 6 }}>
+            <View style={{ marginTop: spacing(18), gap: 6 }}>
               {/* Label */}
               <Text
                 style={{
@@ -491,71 +480,82 @@ export default function Login() {
               </Text>
 
               {/* Input Row */}
-              <View
-                style={[
-                  styles.inputBox,
-                  {
-                    height: INPUT_HEIGHT,
-                    backgroundColor: colors.inputBackground ?? colors.surface,
-                    borderColor: borderColor,
-                    borderWidth: error || focused ? 1.8 : 1.2,
-                  },
-                ]}
-              >
-                {/* Phone Icon */}
-                <Phone
-                  size={16}
-                  color={colors.textSecondary}
-                  strokeWidth={1.8}
-                />
-
-                {/* Divider + Prefix */}
+              <View style={styles.phoneRow}>
                 <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingRight: 10,
-                    borderRightWidth: 1.2,
-                    borderRightColor: borderColor,
-                    height: 22,
-                    gap: 0,
-                  }}
+                  style={[
+                    styles.inputBox,
+                    {
+                      flex: 1,
+                      height: INPUT_HEIGHT,
+                      backgroundColor: colors.inputBackground ?? colors.surface,
+                      borderColor: borderColor,
+                      borderWidth: error || focused ? 1.8 : 1.2,
+                    },
+                  ]}
                 >
                   <Text
                     style={{
                       fontSize: font(14),
                       fontFamily: "Poppins_600SemiBold",
-                      color: colors.text,
+                      color: colors.textSecondary,
                       includeFontPadding: false,
                     }}
                   >
                     +91
                   </Text>
+
+                  <TextInput
+                    value={phone}
+                    onChangeText={(v) => {
+                      setPhone(v.replace(/[^0-9]/g, "").slice(0, 10));
+                      if (error) setError("");
+                    }}
+                    placeholder="Enter mobile number"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="phone-pad"
+                    onFocus={() => {
+                      setFocused(true);
+                      setTimeout(() => {
+                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                      }, 250);
+                    }}
+                    onBlur={() => setFocused(false)}
+                    maxLength={10}
+                    style={[
+                      styles.textInput,
+                      {
+                        color: colors.text,
+                        fontSize: font(14),
+                        height: INPUT_HEIGHT,
+                        textAlignVertical: "center",
+                      },
+                    ]}
+                  />
                 </View>
 
-                {/* Text Input */}
-                <TextInput
-                  value={phone}
-                  onChangeText={(v) => {
-                    setPhone(v.replace(/[^0-9]/g, "").slice(0, 10));
-                    if (error) setError("");
-                  }}
-                  placeholder="Enter mobile number"
-                  placeholderTextColor={colors.textTertiary}
-                  keyboardType="phone-pad"
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  maxLength={10}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={handleGetOtp}
+                  disabled={isLoading}
                   style={[
-                    styles.textInput,
+                    styles.inlineOtpBtn,
                     {
-                      color: colors.text,
-                      fontSize: font(14),
-                      height: INPUT_HEIGHT,
-                      textAlignVertical: "center",
+                      backgroundColor: colors.primary,
+                      borderColor: isLoading ? colors.inputBackground : colors.surface,
+                      opacity: isLoading ? 0.6 : 1,
                     },
                   ]}
-                />
+                >
+                  <Text
+                    style={{
+                      fontSize: font(13),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: colors.textInverse,
+                    }}
+                  >
+                    {isLoading ? "Sending..." : "Get OTP"}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* Error Text */}
@@ -573,41 +573,6 @@ export default function Login() {
                 </Text>
               )}
 
-              {/* Get OTP Button */}
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleGetOtp}
-                disabled={isLoading}
-                style={[
-                  styles.otpBtn,
-                  {
-                    marginTop: spacing(14),
-                    height: INPUT_HEIGHT,
-                    backgroundColor: isLoading
-                      ? colors.primary + "80"
-                      : colors.primary,
-                    shadowColor: colors.primary,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isLoading ? 0 : 0.28,
-                    shadowRadius: 10,
-                    elevation: isLoading ? 0 : 6,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    fontSize: font(15),
-                    fontFamily: "Poppins_600SemiBold",
-                    color: "#fff",
-                  }}
-                >
-                  {isVerifyPending
-                    ? "Checking..."
-                    : isSendOtpPending
-                      ? "Sending OTP..."
-                      : "Get OTP"}
-                </Text>
-              </TouchableOpacity>
             </View>
 
             {/* Gradient Divider */}
@@ -713,9 +678,15 @@ const styles = StyleSheet.create({
   inputBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8, // ✅ icon aur +91 ke beech tight gap
-    paddingHorizontal: 14,
+    gap:2,
+    paddingLeft: 10,
+    paddingRight: 12,
     borderRadius: 12,
+  },
+  phoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   textInput: {
     flex: 1,
@@ -723,9 +694,11 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     ...Platform.select({ android: { includeFontPadding: false }, ios: {} }),
   },
-  otpBtn: {
-    width: "100%",
-    borderRadius: 999,
+  inlineOtpBtn: {
+    minWidth: 90,
+    height: INPUT_HEIGHT,
+    borderRadius: 12,
+    borderWidth: 1.2,
     alignItems: "center",
     justifyContent: "center",
   },

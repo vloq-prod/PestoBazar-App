@@ -156,9 +156,7 @@ export default function CategoryScreen() {
         <AppNavbar
           title="Category"
           showBack
-          showSearch
-          showCart
-          showNotification
+       
         />
 
         <View
@@ -180,9 +178,7 @@ export default function CategoryScreen() {
         <AppNavbar
           title="Category"
           showBack
-          showSearch
-          showCart
-          showNotification
+       
         />
 
         <View
@@ -216,9 +212,7 @@ export default function CategoryScreen() {
       <AppNavbar
         title="Category"
         showBack
-        showSearch
-        showCart
-        showNotification
+     
       />
 
       <FlatList

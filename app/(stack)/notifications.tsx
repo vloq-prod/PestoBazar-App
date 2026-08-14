@@ -30,6 +30,7 @@ import {
   Megaphone,
   BookOpen,
   Ticket,
+  MoreVertical,
 } from 'lucide-react-native';
 import { useAppVisitorStore } from '../../src/store/auth';
 import {
@@ -56,6 +57,7 @@ const NotificationsScreen = () => {
   const [page, setPage] = useState(1);
   const [notificationsList, setNotificationsList] = useState<Notification[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   // Fetch notifications hookc
   const { data: notificationsData, isLoading, isFetching } = useNotifications({
@@ -154,8 +156,11 @@ const NotificationsScreen = () => {
     }
   };
 
+  const hasUnreadLocally = notificationsList.some(n => !n.is_read);
+  const canMarkAllAsRead = unreadCount > 0 || hasUnreadLocally;
+
   const handleMarkAllAsRead = () => {
-    if (unreadCount === 0 || isMarkingAllPending) return;
+    if (!canMarkAllAsRead || isMarkingAllPending) return;
 
     // Optimistic UI Update
     setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
@@ -179,6 +184,7 @@ const NotificationsScreen = () => {
         },
       }
     );
+    setIsMenuVisible(false);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -365,7 +371,41 @@ const NotificationsScreen = () => {
   return (
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: colors.background }}>
       <StatusBar barStyle="dark-content" />
-      <AppNavbar title="Notifications" showBack hideBorder />
+      <AppNavbar
+        title="Notifications"
+        showBack
+        hideBorder
+        rightComponent={
+          <View style={styles.menuContainer}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Notification options"
+              onPress={() => setIsMenuVisible((visible) => !visible)}
+              style={styles.moreButton}
+            >
+              <MoreVertical size={22} color={colors.text} />
+            </TouchableOpacity>
+            {isMenuVisible && (
+              <View style={[styles.menu, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  disabled={!canMarkAllAsRead || isMarkingAllPending}
+                  onPress={handleMarkAllAsRead}
+                  style={styles.menuAction}
+                >
+                  <CheckCheck
+                    size={17}
+                    color={!canMarkAllAsRead ? colors.textSecondary : colors.primary}
+                  />
+                  <Text style={[styles.menuActionText, { color: !canMarkAllAsRead ? colors.textSecondary : colors.text }]}>
+                    {isMarkingAllPending ? 'Marking as read…' : 'Mark all as read'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        }
+      />
 
       {isLoading && page === 1 ? (
         renderSkeletonLoader()
@@ -452,6 +492,40 @@ const styles = StyleSheet.create({
   },
   markAllText: {
     fontFamily: 'Poppins_600SemiBold',
+  },
+  menuContainer: {
+    position: 'relative',
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menu: {
+    position: 'absolute',
+    top: 42,
+    right: 0,
+    minWidth: 190,
+    borderWidth: 1,
+    borderRadius: 10,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    zIndex: 10,
+  },
+  menuAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  menuActionText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 13,
   },
   notificationCard: {
     flexDirection: 'row',
@@ -686,4 +760,3 @@ const DUMMY_TEST_NOTIFICATIONS: Notification[] = [
     created_at_human: "5 days ago",
   },
 ];
-

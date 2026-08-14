@@ -31,12 +31,16 @@ import {
 } from "../../src/hooks/prompoCouponHooks";
 import { useToast } from "../../src/context/ToastContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCartStore } from "../../src/store/cartStore";
 
 export default function CouponsScreen() {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const router = useRouter();
-  const { cartId: routeCartId } = useLocalSearchParams<{ cartId?: string }>();
+  const { cartId: routeCartId, returnToCart } = useLocalSearchParams<{
+    cartId?: string;
+    returnToCart?: string;
+  }>();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -45,9 +49,20 @@ export default function CouponsScreen() {
   const [loadingCode, setLoadingCode] = useState<string | null>(null);
 
   const { visitorId, userId } = useAppVisitorStore((state) => state);
+
+  // Coupons are account-only. Cart intentionally remains usable for a guest.
+  React.useEffect(() => {
+    if (!userId) {
+      router.replace({
+        pathname: "/login",
+        params: { redirectTo: "/(stack)/coupons" },
+      });
+    }
+  }, [router, userId]);
+
   const { data: cartData, isLoading: isCartLoading } = useCart({
     user_id: userId ?? 0,
-    visitor_id: visitorId!,
+    visitor_id: userId ? visitorId! : "",
   });
   const cartId = routeCartId || cartData?.data?.cart_app?.cart_id;
 
@@ -73,6 +88,10 @@ export default function CouponsScreen() {
     cartData?.data?.cart?.promo_code ||
     cartData?.data?.cart_app?.applied_promo_code ||
     cartData?.data?.cart?.applied_promo_code;
+
+  if (!userId) {
+    return null;
+  }
 
   const handleApply = (code: string) => {
     console.log("🎟️ handleApply called with code:", code, "cartId:", cartId);
@@ -105,11 +124,18 @@ export default function CouponsScreen() {
               queryKey: ["applicable-promo-codes"],
             });
             setInputCode("");
-            // Immediately navigate back to Cart screen with success parameters
-            router.replace({
-              pathname: "/(stack)/cart",
-              params: { couponApplied: "true", couponCode: code },
-            });
+            useCartStore.getState().setCouponSuccessCode(code);
+
+            // Cart opened this screen, so pop Coupons and reveal that exact
+            // Cart instance. This guarantees cart → coupons → cart stays one
+            // cart entry instead of growing the navigation stack.
+            if (returnToCart === "true" && router.canGoBack()) {
+              router.back();
+            } else {
+              // Coupon can also be opened directly after login/deep link.
+              // There is no cart route to return to in that case.
+              router.replace("/(stack)/cart");
+            }
           } else {
             setErrorMsg(res.message || "Failed to apply promo code");
           }
