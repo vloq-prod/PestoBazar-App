@@ -149,18 +149,35 @@ const ReviewCard = ({ item }: { item: ReviewItem }) => {
   const [lightboxVisible, setLightboxVisible] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
+  const reviewInfo = {
+    full_name: item.full_name,
+    rating: item.rating,
+    review: item.review,
+    created_at: item.created_at,
+    admin_comments: item.admin_comments,
+  };
+
   // Build lightbox data from media
-  const lightboxData: LightboxMedia[] = [];
+  const lightboxData: any[] = [];
   if (item.media.video)
     lightboxData.push({
       type: "video",
       video: item.media.video,
       image: item.media.first_image,
+      reviewInfo,
     });
   if (item.media.first_image)
-    lightboxData.push({ type: "image", image: item.media.first_image });
+    lightboxData.push({
+      type: "image",
+      image: item.media.first_image,
+      reviewInfo,
+    });
   item.media.other_images.forEach((img) =>
-    lightboxData.push({ type: "image", image: img }),
+    lightboxData.push({
+      type: "image",
+      image: img,
+      reviewInfo,
+    }),
   );
 
   const hasMedia = lightboxData.length > 0;

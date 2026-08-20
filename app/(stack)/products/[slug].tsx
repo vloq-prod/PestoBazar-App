@@ -6,17 +6,21 @@ import {
   TouchableOpacity,
   View,
   Share,
+  Clipboard,
   type LayoutChangeEvent,
 } from "react-native";
 import { DeepLinkURLBuilder } from "../../../src/deep-linking";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image } from "expo-image";
+import Svg, { Path, Defs, Pattern, Rect } from "react-native-svg";
 import {
   useProductDetails,
   useSaveRecentlyViewed,
 } from "../../../src/hooks/productDetailsHook";
 import { useFreeProducts } from "../../../src/hooks/offerHooks";
 import { useTheme } from "../../../src/theme";
+import { useToast } from "../../../src/context/ToastContext";
 import {
   ChevronLeft,
   Search,
@@ -29,6 +33,9 @@ import {
   Tag,
   ChevronDown,
   ChevronUp,
+  BadgePercent,
+  Copy,
+  Check,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -47,6 +54,11 @@ import {
 import { useAppVisitorStore } from "../../../src/store/auth";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import type { ProductVariation } from "../../../src/types/productdetails.types";
+import type {
+  ActiveCoupon,
+  FreeRewardProduct,
+  OfferRule,
+} from "../../../src/types/offer.types";
 
 import ImageVideoCarousel from "../../../src/components/comman/ImageVideoCarousel";
 import HomeUsp from "../../../src/components/home/HomeUsp";
@@ -56,7 +68,6 @@ import ReviewSection from "../../../src/components/productDetails/ReviewSection"
 import ProductDescription from "../../../src/components/productDetails/ProductDescription";
 import DeliveryInfoCard from "../../../src/components/productDetails/DeliveryInfoCard";
 import CustomerAlsoBoughtProduct from "../../../src/components/productDetails/CustomerAlsoBoughtProduct";
-import DocumentButtons from "../../../src/components/productDetails/DocumentButtons";
 
 import ProductDescriptionSheet from "../../../src/modals/shop/CommonBottomSheet";
 import PincodeModal from "../../../src/modals/PincodeSheet";
@@ -66,6 +77,240 @@ import Branches from "../../../src/components/home/Branches";
 // ─── Constants ────────────────────────────────────────────────
 const FOOTER_HEIGHT = 112;
 const BASE_URL = "https://static-cdn.pestobazaar.com";
+
+// ─── Helper Components ────────────────────────────────────────
+const FilledWavyDivider = ({
+  color = "#E8FDF0",
+  height = 6,
+}: {
+  color?: string;
+  height?: number;
+}) => {
+  const patternId = `wave-divider-${color.replace(/[^a-zA-Z0-9]/g, "")}`;
+  return (
+    <View style={{ height, width: "100%", marginTop: -0 }}>
+      <Svg width="100%" height="100%">
+        <Defs>
+          <Pattern
+            id={patternId}
+            x="0"
+            y="0"
+            width="20"
+            height={height + 20}
+            patternUnits="userSpaceOnUse"
+          >
+            <Path
+              d={`M 0,${height / 2} Q 5,${height * 1.5} 10,${height / 2} T 20,${height / 2} L 20,0 L 0,0 Z`}
+              fill={color}
+            />
+          </Pattern>
+        </Defs>
+        <Rect
+          x="0"
+          y="0"
+          width="100%"
+          height="100%"
+          fill={`url(#${patternId})`}
+        />
+      </Svg>
+    </View>
+  );
+};
+
+const ProductCouponCard: React.FC<{
+  item: ActiveCoupon;
+  onCopy: (code: string) => void;
+  isCopied: boolean;
+}> = ({ item, onCopy, isCopied }) => {
+  const { colors } = useTheme();
+  const { font, spacing } = useResponsive();
+
+  const discountTitle =
+    item.discount_amount && item.discount_amount > 0
+      ? `You save ₹${item.discount_amount}`
+      : item.discount_type === "percentage"
+        ? `Get ${item.discount_value}% OFF`
+        : `Flat ₹${item.discount_value} OFF`;
+
+  return (
+    <View
+      style={{
+        borderRadius: 10,
+        backgroundColor: "#FBFBFE",
+        borderColor: isCopied ? "#10B981" : colors.primary + "35",
+        borderWidth: isCopied ? 1.5 : 1,
+        borderStyle: "dashed",
+      }}
+    >
+      <View style={{ padding: spacing(12) }}>
+        {/* Top Row: Icon + Savings Message & Code Badge */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              flex: 1,
+              marginRight: spacing(10),
+            }}
+          >
+            <View
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: "#FFFFFF",
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: spacing(10),
+              }}
+            >
+              <BadgePercent size={20} color="#15803D" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: font(13.5),
+                  fontFamily: "Poppins_700Bold",
+                  color: "#15803D",
+                }}
+              >
+                {discountTitle}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: font(12),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  marginTop: 1,
+                }}
+              >
+                {item.title}
+              </Text>
+            </View>
+          </View>
+
+          <View
+            style={{
+              paddingHorizontal: spacing(10),
+              paddingVertical: spacing(6),
+              borderRadius: 6,
+              borderWidth: 1,
+              backgroundColor: colors.backgroundgray,
+              borderColor: colors.border,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: font(12),
+                fontFamily: "Poppins_700Bold",
+                color: colors.text,
+                letterSpacing: 0.5,
+              }}
+            >
+              {item.code}
+            </Text>
+          </View>
+        </View>
+
+        {/* Middle Divider */}
+        <View
+          style={{
+            borderStyle: "dashed",
+            borderWidth: 1,
+            borderColor: colors.border,
+            height: 0,
+            width: "100%",
+            marginVertical: spacing(10),
+          }}
+        />
+
+        {/* Bottom Row: Description/Terms & Copy Action */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Text
+            numberOfLines={2}
+            style={{
+              fontFamily: "Poppins_400Regular",
+              fontSize: font(12),
+              color: colors.textSecondary,
+              flex: 1,
+              marginRight: spacing(8),
+              lineHeight: font(17),
+            }}
+          >
+            {item.description ||
+              item.message ||
+              "Coupon available for this cart."}
+          </Text>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => onCopy(item.code)}
+            style={{
+              paddingHorizontal: spacing(14),
+              paddingVertical: spacing(6),
+              borderRadius: 6,
+              borderWidth: 1,
+              borderColor: isCopied ? "#10B981" : colors.primary,
+              backgroundColor: isCopied ? "#10B98115" : "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+              minWidth: 70,
+            }}
+          >
+            {isCopied ? (
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
+                <Check size={13} color="#10B981" strokeWidth={3} />
+                <Text
+                  style={{
+                    fontSize: font(12),
+                    fontFamily: "Poppins_700Bold",
+                    color: "#10B981",
+                  }}
+                >
+                  Copied
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
+                <Copy size={13} color={colors.primary} />
+                <Text
+                  style={{
+                    fontSize: font(12),
+                    fontFamily: "Poppins_700Bold",
+                    color: colors.primary,
+                  }}
+                >
+                  COPY
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const ProductDetails = () => {
   const { id, product_name, product_slug, slug } = useLocalSearchParams();
@@ -77,9 +322,25 @@ const ProductDetails = () => {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const reviewSectionY = useRef(0);
 
+  const { showToast } = useToast();
   const [showPincodeModal, setShowPincodeModal] = useState(false);
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);
   const [showAllOffers, setShowAllOffers] = useState(false);
+  const [showAllFreeProducts, setShowAllFreeProducts] = useState(false);
+  const [showAllCoupons, setShowAllCoupons] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const handleCopyCoupon = useCallback(
+    (code: string) => {
+      Clipboard.setString(code);
+      setCopiedCode(code);
+      showToast(`Coupon code "${code}" copied!`, "success");
+      setTimeout(() => {
+        setCopiedCode(null);
+      }, 2500);
+    },
+    [showToast],
+  );
 
   const productId =
     typeof id === "string" && !isNaN(Number(id)) ? Number(id) : undefined;
@@ -123,25 +384,95 @@ const ProductDetails = () => {
 
   // Free products API integration
   const { data: freeProductsData } = useFreeProducts(selectedVariation?.id);
-  console.log(
-    "Free Products Data for variation ID",
-    selectedVariation?.id,
-    ":",
-    freeProductsData,
-  );
 
-  // Extract offer rules from rule groups
+  useEffect(() => {
+    if (freeProductsData?.data) {
+      console.log(
+        "=== active_coupons ===",
+        JSON.stringify(freeProductsData.data.active_coupons, null, 2),
+      );
+      console.log(
+        "=== free_products ===",
+        JSON.stringify(
+          freeProductsData.data.primary_offer?.free_products,
+          null,
+          2,
+        ),
+      );
+    }
+  }, [freeProductsData]);
+
+  // Extract free products list across all rules and rule groups
+  const freeProducts = React.useMemo(() => {
+    if (!freeProductsData?.data) return [];
+
+    const list: FreeRewardProduct[] = [];
+    const seenIds = new Set<string | number>();
+
+    const addFreeProducts = (products?: FreeRewardProduct[]) => {
+      if (!Array.isArray(products)) return;
+      products.forEach((p) => {
+        const key = `${p.product_id}-${p.variation_id || p.reward_id || p.sku}`;
+        if (p && !seenIds.has(key)) {
+          seenIds.add(key);
+          list.push(p);
+        }
+      });
+    };
+
+    // 1. Primary offer
+    if (freeProductsData.data.primary_offer?.free_products) {
+      addFreeProducts(freeProductsData.data.primary_offer.free_products);
+    }
+
+    // 2. Rules list
+    if (Array.isArray(freeProductsData.data.rules)) {
+      freeProductsData.data.rules.forEach((rule) => {
+        addFreeProducts(rule.free_products);
+      });
+    }
+
+    // 3. Rule groups
+    const rg = freeProductsData.data.rule_groups;
+    if (rg) {
+      Object.values(rg).forEach((groupRules) => {
+        if (Array.isArray(groupRules)) {
+          groupRules.forEach((rule) => {
+            addFreeProducts(rule.free_products);
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [freeProductsData]);
+
+  // Extract active coupons list
+  const activeCoupons = React.useMemo(() => {
+    return freeProductsData?.data?.active_coupons ?? [];
+  }, [freeProductsData]);
+
+  // Extract offer rules with their free products across primary_offer, rules, and rule_groups
   const offerRules = React.useMemo(() => {
     if (!freeProductsData?.data) return [];
-    const allRules: any[] = [];
-    const seenIds = new Set<number>();
+    const list: OfferRule[] = [];
+    const seenIds = new Set<string | number>();
 
-    const addRule = (rule: any) => {
-      if (rule && rule.rule_id && !seenIds.has(rule.rule_id)) {
-        seenIds.add(rule.rule_id);
-        allRules.push(rule);
+    const addRule = (rule?: OfferRule | null) => {
+      if (!rule) return;
+      const id = rule.rule_id || rule.rule_code || rule.offer_message;
+      if (
+        !seenIds.has(id) &&
+        (rule.offer_message || (rule.free_products && rule.free_products.length > 0))
+      ) {
+        seenIds.add(id);
+        list.push(rule);
       }
     };
+
+    if (freeProductsData.data.primary_offer) {
+      addRule(freeProductsData.data.primary_offer);
+    }
 
     if (Array.isArray(freeProductsData.data.rules)) {
       freeProductsData.data.rules.forEach(addRule);
@@ -156,7 +487,7 @@ const ProductDetails = () => {
       });
     }
 
-    return allRules;
+    return list;
   }, [freeProductsData]);
 
   // Helper to parse and render offer message dynamically with styled numbers/prices and green FREE text
@@ -638,260 +969,434 @@ const ProductDetails = () => {
         </View>
 
         {/* ── Variants ── */}
-        {!!variationmaster?.length && productInfo?.listing_type?.toLowerCase() !== "combo" && (
-          <View style={{ paddingHorizontal: spacing(16), gap: spacing(12) }}>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: font(14),
-                  fontFamily: "Poppins_600SemiBold",
-                  color: colors.text,
-                  includeFontPadding: false,
-                }}
-              >
-                Select Variant
-              </Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: spacing(8),
-              }}
-            >
-              {variationmaster.map((item) => {
-                const isSelected = item.id === selectedComboId;
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    activeOpacity={0.75}
-                    onPress={() => {
-                      if (item.id === productId) return;
-                      router.replace({
-                        pathname: "/(stack)/products/[slug]",
-                        params: {
-                          slug: productSlug, // Try to retain slug or it will re-fetch
-                          id: item.id,
-                          product_name: resolvedProductName,
-                        },
-                      });
-                    }}
-                    style={{
-                      paddingVertical: spacing(8),
-                      paddingHorizontal: spacing(20),
-                      borderRadius: spacing(8),
-                      borderWidth: isSelected ? 1.5 : 0.5,
-                      borderColor: isSelected ? colors.text : colors.border,
-                      backgroundColor: isSelected
-                        ? colors.background
-                        : colors.backgroundgray,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: font(13),
-                        fontFamily: isSelected
-                          ? "Poppins_600SemiBold"
-                          : "Poppins_400Regular",
-                        color: isSelected ? colors.text : colors.textSecondary,
-                        includeFontPadding: false,
-                      }}
-                    >
-                      {getComboLabel(item)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* ── Free Gift Offers ── */}
-        {offerRules.length > 0 && (
-          <View
-            style={{
-              marginHorizontal: spacing(16),
-              marginTop: spacing(12),
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: spacing(12),
-              backgroundColor: colors.background,
-              overflow: "hidden",
-            }}
-          >
-            {/* Title Section */}
-            <View
-              style={{
-                paddingHorizontal: spacing(16),
-                paddingTop: spacing(8),
-                paddingBottom: spacing(8),
-                gap: spacing(2),
-              }}
-            >
-              {/* Row 1: Icon + Title and Limited Offer Tag */}
+        {!!variationmaster?.length &&
+          productInfo?.listing_type?.toLowerCase() !== "combo" && (
+            <View style={{ paddingHorizontal: spacing(16), gap: spacing(12) }}>
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(14),
+                    fontFamily: "Poppins_600SemiBold",
+                    color: colors.text,
+                    includeFontPadding: false,
+                  }}
+                >
+                  Select Variant
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
                   gap: spacing(8),
                 }}
               >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: spacing(8),
-                  }}
-                >
-                  <Gift size={20} color={colors.primary} />
-                  <Text
-                    style={{
-                      fontSize: font(14),
-                      fontFamily: "Poppins_600SemiBold",
-                      color: colors.text,
-                      includeFontPadding: false,
-                    }}
-                  >
-                    Free Gift Offers
-                  </Text>
-                </View>
-
-                {/* Limited Offer Tag in Green */}
-                <View
-                  style={{
-                    backgroundColor: "#E6F4EA",
-                    paddingHorizontal: spacing(8),
-                    paddingVertical: spacing(4),
-                    borderRadius: spacing(6),
-                    borderWidth: 0.5,
-                    borderColor: "#A7F3D0",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: font(9),
-                      fontFamily: "Poppins_600SemiBold",
-                      color: "#059669",
-                      textTransform: "uppercase",
-                      includeFontPadding: false,
-                    }}
-                  >
-                    Limited Offer
-                  </Text>
-                </View>
+                {variationmaster.map((item) => {
+                  const isSelected = item.id === selectedComboId;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      activeOpacity={0.75}
+                      onPress={() => {
+                        if (item.id === productId) return;
+                        router.replace({
+                          pathname: "/(stack)/products/[slug]",
+                          params: {
+                            slug: productSlug, // Try to retain slug or it will re-fetch
+                            id: item.id,
+                            product_name: resolvedProductName,
+                          },
+                        });
+                      }}
+                      style={{
+                        paddingVertical: spacing(8),
+                        paddingHorizontal: spacing(20),
+                        borderRadius: spacing(8),
+                        borderWidth: isSelected ? 1.5 : 0.5,
+                        borderColor: isSelected ? colors.text : colors.border,
+                        backgroundColor: isSelected
+                          ? colors.background
+                          : colors.backgroundgray,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: font(13),
+                          fontFamily: isSelected
+                            ? "Poppins_600SemiBold"
+                            : "Poppins_400Regular",
+                          color: isSelected
+                            ? colors.text
+                            : colors.textSecondary,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        {getComboLabel(item)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
+            </View>
+          )}
 
-              {/* Row 2: Description */}
-              <Text
+        {/* ── Free Gift UI Section ── */}
+        {!isLoading && !error && offerRules && offerRules.length > 0 && (
+          <View
+            style={{
+              marginHorizontal: spacing(16),
+              marginTop: spacing(12),
+              borderWidth: 1.2,
+              borderColor: "#A7F3D0", // Soft light green border
+              borderRadius: spacing(12),
+              backgroundColor: colors.surface,
+              overflow: "hidden", // Clips header's background to rounded corners
+            }}
+          >
+            {/* Section Header */}
+            <View
+              style={{
+                backgroundColor: "#E8FDF0", // Soft success green
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: spacing(11),
+                paddingHorizontal: spacing(14),
+                gap: spacing(10),
+              }}
+            >
+              <View
                 style={{
-                  fontSize: font(11),
-                  fontFamily: "Poppins_400Regular",
-                  color: colors.textSecondary,
-                  includeFontPadding: false,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  backgroundColor: "#10B981",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                Add product to cart to avail free gifts.
+                <Gift size={15} color="#FFFFFF" />
+              </View>
+              <Text
+                style={{
+                  fontSize: font(13),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: "#06563F",
+                  flex: 1,
+                }}
+              >
+                Free Gift Offers ({offerRules.length})
               </Text>
             </View>
 
-            {/* Divider Line */}
-            <View style={{ height: 1, backgroundColor: colors.border }} />
+            {/* Divider Line connecting sides */}
+            <FilledWavyDivider color="#E8FDF0" />
 
-            {/* Offers List */}
-            <View
-              style={{
-                paddingHorizontal: spacing(16),
-                paddingBottom: spacing(16),
-                paddingTop: spacing(12),
-                gap: spacing(8),
-              }}
-            >
-              {(showAllOffers ? offerRules : offerRules.slice(0, 2)).map((rule) => {
+            {/* Rules & Products List */}
+            <View style={{ padding: spacing(14), gap: spacing(18) }}>
+              {(showAllFreeProducts
+                ? offerRules
+                : offerRules.slice(0, 1)
+              ).map((rule, ruleIdx) => {
                 const IconComponent =
                   rule.rule_type === "CART_VALUE" ? ShoppingCart : Tag;
+                const ruleProducts =
+                  rule.free_products && rule.free_products.length > 0
+                    ? rule.free_products
+                    : ruleIdx === 0
+                    ? freeProducts
+                    : [];
+
+                const isNotLast =
+                  ruleIdx <
+                  (showAllFreeProducts ? offerRules.length : 1) - 1;
 
                 return (
-                  <View
-                    key={rule.rule_id}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      backgroundColor: "#F0FDF4", // Soft premium mint background
-                      paddingVertical: spacing(12),
-                      paddingHorizontal: spacing(14),
-                      borderRadius: spacing(10),
-                      borderWidth: 1.2,
-                      borderColor: "#86EFAC", // Emerald-300 border
-                      borderStyle: "dashed", // Dashed modern coupon styling
-                      gap: spacing(12),
-                    }}
+                  <React.Fragment
+                    key={rule.rule_id || rule.rule_code || ruleIdx}
                   >
-                    {/* Rounded Icon Container */}
-                    <View
-                      style={{
-                        width: spacing(34),
-                        height: spacing(34),
-                        borderRadius: spacing(17),
-                        backgroundColor: "#10B981", // Vibrant green background
-                        alignItems: "center",
-                        justifyContent: "center",
-                        shadowColor: "#10B981",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 3,
-                        elevation: 2,
-                      }}
-                    >
-                      <IconComponent size={spacing(15)} color="#FFFFFF" />
+                    <View style={{ gap: spacing(12) }}>
+                      {/* Offer Message Header */}
+                      {rule.offer_message ? (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: spacing(6),
+                          }}
+                        >
+                          <Tag size={14} color={colors.primary} />
+                          <Text
+                            style={{
+                              flex: 1,
+                              fontSize: font(12),
+                              fontFamily: "Poppins_600SemiBold",
+                              color: colors.text,
+                              lineHeight: font(17),
+                            }}
+                          >
+                            {renderOfferMessage(rule.offer_message)}
+                          </Text>
+                        </View>
+                      ) : null}
+
+                      {/* Free Products under this Rule */}
+                      {ruleProducts.length > 0 && (
+                        <View
+                          style={{ gap: spacing(12), paddingLeft: spacing(2) }}
+                        >
+                          {ruleProducts.map((item, itemIdx) => {
+                            const imageUri = item.s3_image_path?.startsWith(
+                              "http",
+                            )
+                              ? item.s3_image_path
+                              : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+
+                            return (
+                              <View
+                                key={
+                                  item.reward_id || item.product_id || itemIdx
+                                }
+                                style={{
+                                  flexDirection: "row",
+                                  backgroundColor: "transparent",
+                                  gap: spacing(12),
+                                  alignItems: "center",
+                                }}
+                              >
+                                {/* Image */}
+                                <View
+                                  style={{
+                                    width: spacing(65),
+                                    height: spacing(65),
+                                    borderRadius: spacing(8),
+                                    borderWidth: 1,
+                                    borderColor: colors.border,
+                                    backgroundColor: colors.background,
+                                    overflow: "hidden",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  <Image
+                                    source={{ uri: imageUri }}
+                                    style={{
+                                      width: spacing(55),
+                                      height: spacing(55),
+                                    }}
+                                    contentFit="contain"
+                                  />
+                                </View>
+
+                                {/* Content */}
+                                <View
+                                  style={{
+                                    flex: 1,
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <Text
+                                    numberOfLines={2}
+                                    style={{
+                                      fontSize: font(12),
+                                      fontFamily: "Poppins_600SemiBold",
+                                      color: colors.text,
+                                      lineHeight: font(16),
+                                    }}
+                                  >
+                                    {item.product_name}
+                                  </Text>
+
+                                  <Text
+                                    style={{
+                                      fontSize: font(10.5),
+                                      fontFamily: "Poppins_400Regular",
+                                      color: colors.textSecondary,
+                                      marginTop: spacing(2),
+                                    }}
+                                  >
+                                    {item.size
+                                      ? `${item.size} • `
+                                      : item.variation
+                                        ? `${item.variation} • `
+                                        : ""}
+                                    {item.free_quantity
+                                      ? `${item.free_quantity} unit`
+                                      : "1 unit"}
+                                  </Text>
+                                </View>
+
+                                {/* Green FREE badge tag */}
+                                <View
+                                  style={{
+                                    borderWidth: 1,
+                                    borderColor: "#10B981",
+                                    borderRadius: 6,
+                                    paddingHorizontal: spacing(10),
+                                    paddingVertical: spacing(4),
+                                    backgroundColor: "#10B98110",
+                                  }}
+                                >
+                                  <Text
+                                    style={{
+                                      fontSize: font(11),
+                                      fontFamily: "Poppins_700Bold",
+                                      color: "#10B981",
+                                      textTransform: "uppercase",
+                                    }}
+                                  >
+                                    Free
+                                  </Text>
+                                </View>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      )}
                     </View>
 
-                    <Text
-                      style={{
-                        flex: 1,
-                        fontSize: font(12.5),
-                        fontFamily: "Poppins_400Regular",
-                        color: colors.text, // Black text
-                        lineHeight: font(17),
-                        includeFontPadding: false,
-                      }}
-                    >
-                      {renderOfferMessage(rule.offer_message)}
-                    </Text>
-                  </View>
+                    {/* Full-width Divider Line touching left and right card edges */}
+                    {isNotLast && (
+                      <View
+                        style={{
+                          height: 1,
+                          backgroundColor: colors.border,
+                          marginHorizontal: -spacing(14),
+                          marginVertical: spacing(14),
+                        }}
+                      />
+                    )}
+                  </React.Fragment>
                 );
               })}
 
-              {offerRules.length > 2 && (
+              {/* View All / View Less Toggle */}
+              {offerRules.length > 1 && (
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => setShowAllOffers(!showAllOffers)}
+                  onPress={() => setShowAllFreeProducts(!showAllFreeProducts)}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent: "center",
-                    gap: spacing(4),
-                    paddingTop: spacing(8),
+                    justifyContent: "space-between",
                     marginTop: spacing(4),
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: font(12.5),
+                      fontSize: font(12),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: "#10B981",
+                    }}
+                  >
+                    {showAllFreeProducts
+                      ? "View Less"
+                      : `View All (${offerRules.length} Offers)`}
+                  </Text>
+                  {showAllFreeProducts ? (
+                    <ChevronUp size={16} color="#10B981" />
+                  ) : (
+                    <ChevronDown size={16} color="#10B981" />
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* ── Active Coupons Section ── */}
+        {!isLoading && !error && activeCoupons && activeCoupons.length > 0 && (
+          <View
+            style={{
+              marginHorizontal: spacing(16),
+              marginTop: spacing(12),
+              borderWidth: 1.2,
+              borderColor: colors.primary + "50", // Primary themed border
+              borderRadius: spacing(12),
+              backgroundColor: colors.surface,
+              overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <View
+              style={{
+                backgroundColor: colors.primary + "15", // Light primary background
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: spacing(11),
+                paddingHorizontal: spacing(14),
+                gap: spacing(10),
+              }}
+            >
+              <View
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Tag size={15} color="#FFFFFF" />
+              </View>
+              <Text
+                style={{
+                  fontSize: font(13),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.primary,
+                  flex: 1,
+                }}
+              >
+                Available Coupons ({activeCoupons.length})
+              </Text>
+            </View>
+
+            {/* Wavy Divider Line */}
+            <FilledWavyDivider color={colors.primary + "15"} />
+
+            {/* Coupons Body */}
+            <View style={{ padding: spacing(14), gap: spacing(12) }}>
+              {(showAllCoupons ? activeCoupons : activeCoupons.slice(0, 1)).map(
+                (coupon) => (
+                  <ProductCouponCard
+                    key={coupon.promo_code_id || coupon.code}
+                    item={coupon}
+                    onCopy={handleCopyCoupon}
+                    isCopied={copiedCode === coupon.code}
+                  />
+                ),
+              )}
+
+              {activeCoupons.length > 1 && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowAllCoupons(!showAllCoupons)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginTop: spacing(6),
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: font(12),
                       fontFamily: "Poppins_600SemiBold",
                       color: colors.primary,
                     }}
                   >
-                    {showAllOffers ? "View Less" : `View More (${offerRules.length - 2} More)`}
+                    {showAllCoupons
+                      ? "View Less"
+                      : `View All (${activeCoupons.length} Coupons)`}
                   </Text>
-                  {showAllOffers ? (
+                  {showAllCoupons ? (
                     <ChevronUp size={16} color={colors.primary} />
                   ) : (
                     <ChevronDown size={16} color={colors.primary} />
@@ -902,13 +1407,12 @@ const ProductDetails = () => {
           </View>
         )}
 
-        {/* ── Delivery + Docs ── */}
+        {/* ── Delivery ── */}
         <View style={{ gap: spacing(10) }}>
           <DeliveryInfoCard
             variationId={realProductId ?? 0}
             onOpenPincode={openPincodeModal}
           />
-          <DocumentButtons />
         </View>
 
         {/* ── Description ── */}

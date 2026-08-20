@@ -14,6 +14,5 @@ export const AppConfigUtil = {
   appName: Platform.OS,
   appVersion: extra?.app_version || "1.0.0",
   appCode: extra?.app_code || 1,
-
   fullVersion: `${extra?.app_version || "1.0.0"} (${extra?.app_code || 1})`,
 };

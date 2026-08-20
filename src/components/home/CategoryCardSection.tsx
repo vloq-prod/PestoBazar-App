@@ -5,7 +5,7 @@ import {
   FlatList,
   useWindowDimensions,
 } from "react-native";
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useCategoryWithSubcategories } from "../../hooks/homeHooks";
 import { useTheme } from "../../theme";
 import { Image } from "expo-image";
@@ -52,6 +52,7 @@ const LOCAL_ASSETS: Record<string, any> = {
   Snakes: require("../../../assets/HouseHold/Snake.png"),
   Rat: require("../../../assets/HouseHold/rat.png"),
   Rats: require("../../../assets/HouseHold/rat.png"),
+  Rat2: require("../../../assets/HouseHold/rat2.png"),
 };
 
 const getLocalImage = (name: string) => {
@@ -79,6 +80,127 @@ const getVisibleSubcategories = (subcategories: CategoryItem[]) =>
   subcategories
     .filter((item) => !/snake/i.test(item.category_name || ""))
     .slice(0, 8);
+
+// ─── Sub-category Card Item ──────────────────────────────────
+interface SubCategoryCardProps {
+  item: CategoryItem;
+  index: number;
+  mainCategoryId: number;
+  mainCategoryName: string;
+  mainCategoryDisplayImage?: string;
+  cardSize: number;
+}
+
+const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
+  item,
+  index,
+  mainCategoryId,
+  mainCategoryName,
+  mainCategoryDisplayImage,
+  cardSize,
+}) => {
+  const { colors } = useTheme();
+  const { spacing, font } = useResponsive();
+  const router = useRouter();
+  const [isRatClicked, setIsRatClicked] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const getDynamicLightColor = (idx: number, id: number) => {
+    const hue = ((idx + id) * 137.5) % 360;
+    return `hsl(${hue}, 75%, 96%)`;
+  };
+
+  const bgColor = getDynamicLightColor(index, item.id);
+  const isRat = /rat/i.test(item.category_name || "");
+
+  const handlePress = () => {
+    if (isRat) {
+      if (isRatClicked) return;
+      setIsRatClicked(true);
+
+      timeoutRef.current = setTimeout(() => {
+        router.push({
+          pathname: "/(stack)/category/[slug]",
+          params: {
+            slug: String(mainCategoryId),
+            name: mainCategoryName,
+            image:
+              getLocalImage(mainCategoryName) ?? mainCategoryDisplayImage ?? "",
+            selectedSubCategoryId: String(item.id),
+          },
+        });
+
+        // Reset image back to original state after navigation delay
+        timeoutRef.current = setTimeout(() => {
+          setIsRatClicked(false);
+        }, 800);
+      }, 1500);
+    } else {
+      router.push({
+        pathname: "/(stack)/category/[slug]",
+        params: {
+          slug: String(mainCategoryId),
+          name: mainCategoryName,
+          image:
+            getLocalImage(mainCategoryName) ?? mainCategoryDisplayImage ?? "",
+          selectedSubCategoryId: String(item.id),
+        },
+      });
+    }
+  };
+
+  let imageSource =
+    getLocalImage(item.category_name) ?? { uri: item.s3_image_path };
+
+  if (isRat && isRatClicked) {
+    imageSource = LOCAL_ASSETS["Rat2"];
+  }
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={{ flex: 1, alignItems: "center", marginBottom: GAP }}
+      onPress={handlePress}
+    >
+      <View
+        style={{
+          width: cardSize,
+          height: cardSize,
+          backgroundColor: bgColor,
+          borderRadius: spacing(12),
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Image
+          source={imageSource}
+          style={{ width: cardSize * 0.9, height: cardSize * 0.72 }}
+          contentFit="contain"
+        />
+      </View>
+
+      <Text
+        numberOfLines={2}
+        style={{
+          marginTop: spacing(6),
+          fontSize: font(10),
+          color: colors.text,
+          textAlign: "center",
+          width: "90%",
+          fontFamily: "Poppins_500Medium",
+        }}
+      >
+        {item.category_name}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 // ─── Skeleton Item ────────────────────────────────────────────
 const SkeletonItem = ({
@@ -190,72 +312,22 @@ const CategoryCardSection = () => {
     (cat) => getVisibleSubcategories(cat.subcategories).length >= 8,
   );
 
-  // ── Sub-category card ──────────────────────────────────────
+  // ── Sub-category card renderer ─────────────────────────────
   const createSubCategoryRenderer = (
     mainCategoryId: number,
     mainCategoryName: string,
-    mainCategoryImage?: string,
+    mainCategoryDisplayImage?: string,
   ) => {
-    const getDynamicLightColor = (index: number, id: number) => {
-      const hue = ((index + id) * 137.5) % 360;
-      return `hsl(${hue}, 75%, 96%)`;
-    };
-
-    return ({ item, index }: { item: CategoryItem; index: number }) => {
-      const bgColor = getDynamicLightColor(index, item.id);
-
-      return (
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={{ flex: 1, alignItems: "center", marginBottom: GAP }}
-          onPress={() =>
-            router.push({
-              pathname: "/(stack)/category/[slug]",
-              params: {
-                slug: String(mainCategoryId),
-                name: mainCategoryName,
-                image:
-                  getLocalImage(mainCategoryName) ?? mainCategoryImage ?? "",
-                selectedSubCategoryId: String(item.id),
-              },
-            })
-          }
-        >
-          <View
-            style={{
-              width: cardSize,
-              height: cardSize,
-              backgroundColor: bgColor,
-              borderRadius: spacing(12),
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Image
-              source={
-                getLocalImage(item.category_name) ?? { uri: item.s3_image_path }
-              }
-              style={{ width: cardSize * 0.9, height: cardSize * 0.72 }}
-              contentFit="contain"
-            />
-          </View>
-
-          <Text
-            numberOfLines={2}
-            style={{
-              marginTop: spacing(6),
-              fontSize: font(10),
-              color: colors.text,
-              textAlign: "center",
-              width: "90%",
-              fontFamily: "Poppins_500Medium",
-            }}
-          >
-            {item.category_name}
-          </Text>
-        </TouchableOpacity>
-      );
-    };
+    return ({ item, index }: { item: CategoryItem; index: number }) => (
+      <SubCategoryCard
+        item={item}
+        index={index}
+        mainCategoryId={mainCategoryId}
+        mainCategoryName={mainCategoryName}
+        mainCategoryDisplayImage={mainCategoryDisplayImage}
+        cardSize={cardSize}
+      />
+    );
   };
 
   // ── Loading ───────────────────────────────────────────────

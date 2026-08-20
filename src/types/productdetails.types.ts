@@ -170,7 +170,7 @@ export interface ReviewMedia {
   other_images: string[];
 }
 
-export type ReviewItem = {
+export interface ReviewItem {
   id: number;
   rating: number;
   review: string;
@@ -179,23 +179,75 @@ export type ReviewItem = {
   admin_comments: string | null;
   created_at: string;
   media: ReviewMedia;
-};
+}
 
-export type ReviewsResponse = {
+export interface RatingCountMap {
+  "1": number;
+  "2": number;
+  "3": number;
+  "4": number;
+  "5": number;
+  [key: string]: number;
+}
+
+export interface RatingPercentageMap {
+  "1": number;
+  "2": number;
+  "3": number;
+  "4": number;
+  "5": number;
+  [key: string]: number;
+}
+
+export interface RatingSummary {
+  average_rating: number;
+  total_reviews: number;
+  counts: RatingCountMap;
+  percentages: RatingPercentageMap;
+}
+
+export interface MediaGalleryItemMedia {
+  type: "image" | "video" | string;
+  url: string;
+  filename: string;
+}
+
+export interface MediaGalleryItem {
+  review_id: number;
+  product_id: number;
+  rating: number;
+  review: string;
+  full_name: string;
+  admin_comments: string | null;
+  created_at: string;
+  media: MediaGalleryItemMedia;
+}
+
+export interface MediaGallery {
+  total: number;
+  items: MediaGalleryItem[];
+}
+
+export interface ReviewPagination {
+  current_page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+  has_more: boolean;
+}
+
+export interface ReviewsResponseData {
+  grouped_reviews: ReviewItem[];
+  rating_summary: RatingSummary;
+  media_gallery: MediaGallery;
+  pagination: ReviewPagination;
+}
+
+export interface ReviewsResponse {
   message: string;
   status: number;
-  data: {
-    grouped_reviews: ReviewItem[];
-    pagination: {
-      current_page: number;
-      per_page: number;
-      total: number;
-      total_pages: number;
-      has_more: boolean;
-    };
-  };
-};
-
+  data: ReviewsResponseData;
+}
 
 export type ReviewsParams = {
   product_id: number;

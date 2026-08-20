@@ -91,8 +91,16 @@ export const useProductReviews = ({ product_id }: Params) => {
   const reviews =
     query.data?.pages.flatMap((page) => page.data.grouped_reviews) ?? [];
 
+  const mediaGallery =
+    query.data?.pages[0]?.data?.media_gallery?.items ?? [];
+
+  const ratingSummary =
+    query.data?.pages[0]?.data?.rating_summary ?? null;
+
   return {
     reviews,
+    mediaGallery,
+    ratingSummary,
     loading: query.isLoading,
     fetchingMore: query.isFetchingNextPage,
     error: query.error,

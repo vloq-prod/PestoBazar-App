@@ -15,6 +15,8 @@ import { ChevronRight } from "lucide-react-native";
 import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 
+import SeeAllProductsButton from "../comman/SeeAllProductsButton";
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const H_PADDING = 16 * 2;
@@ -118,7 +120,7 @@ const sectionDescriptions: Record<string, string> = {
 // ─────────────────────────────────────────────
 // Section Header
 // ─────────────────────────────────────────────
-const SectionHeader = ({ title, onViewAll, description }: any) => {
+const SectionHeader = ({ title, description }: any) => {
   const { colors } = useTheme();
 
   return (
@@ -127,48 +129,21 @@ const SectionHeader = ({ title, onViewAll, description }: any) => {
         paddingHorizontal: 16,
       }}
     >
-      <View
+      <Text
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
+          fontSize: 16,
+          fontFamily: "Poppins_600SemiBold",
+          lineHeight: 26,
+          color: colors.text,
+          includeFontPadding: false,
         }}
       >
-        <Text
-          style={{
-            fontSize: 16,
-            fontFamily: "Poppins_600SemiBold",
-            lineHeight: 26,
-            color: colors.text,
-            includeFontPadding: false,
-          }}
-        >
-          {title}
-        </Text>
-
-        <TouchableOpacity
-          style={{ flexDirection: "row", alignItems: "center" }}
-          onPress={onViewAll}
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              color: colors.primary,
-              fontFamily: "Poppins_600SemiBold",
-              includeFontPadding: false,
-            }}
-          >
-            View All
-          </Text>
-
-          <ChevronRight size={14} color={colors.primary} strokeWidth={2.4} />
-        </TouchableOpacity>
-      </View>
+        {title}
+      </Text>
       {/* Description */}
       {!!description && (
         <Text
           style={{
-          
             fontSize: 11,
             lineHeight: 18,
             color: colors.textSecondary,
@@ -242,14 +217,6 @@ const HomeProduct = () => {
           <SectionHeader
             title={section.title}
             description={sectionDescriptions[section.title]}
-            onViewAll={() =>
-              router.push({
-                pathname: "(stack)/viewall/[all]",
-                params: {
-                  title: section.title,
-                },
-              })
-            }
           />
           <FlatList
             horizontal
@@ -267,6 +234,18 @@ const HomeProduct = () => {
             maxToRenderPerBatch={5}
             windowSize={5}
             removeClippedSubviews
+          />
+          <SeeAllProductsButton
+            products={section.products}
+            onPress={() =>
+              router.push({
+                pathname: "(stack)/viewall/[all]",
+                params: {
+                  title: section.title,
+                },
+              })
+            }
+            style={{ marginTop: 4 }}
           />
         </View>
       ))}

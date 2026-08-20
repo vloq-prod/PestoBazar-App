@@ -16,6 +16,8 @@ import { ChevronRight } from "lucide-react-native";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 
+import SeeAllProductsButton from "../comman/SeeAllProductsButton";
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const PADDING = 16;
@@ -110,7 +112,7 @@ const SkeletonSection = () => {
 };
 
 // Section Header
-const SectionHeader = ({ title, onViewAll, description }: any) => {
+const SectionHeader = ({ title, description }: any) => {
   const { colors } = useTheme();
 
   return (
@@ -119,43 +121,17 @@ const SectionHeader = ({ title, onViewAll, description }: any) => {
         paddingHorizontal: PADDING,
       }}
     >
-      <View
+      <Text
         style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
+          fontSize: 16,
+          fontFamily: "Poppins_600SemiBold",
+          lineHeight: 26,
+          color: colors.text,
+          includeFontPadding: false,
         }}
       >
-        <Text
-          style={{
-            fontSize: 16,
-            fontFamily: "Poppins_600SemiBold",
-            lineHeight: 26,
-            color: colors.text,
-            includeFontPadding: false,
-          }}
-        >
-          {title}
-        </Text>
-
-        <TouchableOpacity
-          style={{ flexDirection: "row", alignItems: "center" }}
-          onPress={onViewAll}
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              color: colors.primary,
-              fontFamily: "Poppins_600SemiBold",
-              includeFontPadding: false,
-            }}
-          >
-            View All
-          </Text>
-
-          <ChevronRight size={14} color={colors.primary} strokeWidth={2.4} />
-        </TouchableOpacity>
-      </View>
+        {title}
+      </Text>
       {/* Description */}
       {!!description && (
         <Text
@@ -226,20 +202,21 @@ const CustomSections = () => {
         // Slice maximum 6 products per section (3 columns x 2 rows)
         const displayProducts = mappedProducts.slice(0, 6);
 
+        const handleViewAll = () => {
+          router.push({
+            pathname: "/(stack)/viewall/custom/[id]",
+            params: {
+              id: section.section_id,
+              title: section.section_title,
+            },
+          });
+        };
+
         return (
           <View key={section.section_id} style={{ gap: 12 }}>
             <SectionHeader
               title={section.section_title}
               description={section.section_description}
-              onViewAll={() =>
-                router.push({
-                  pathname: "/(stack)/viewall/custom/[id]",
-                  params: {
-                    id: section.section_id,
-                    title: section.section_title,
-                  },
-                })
-              }
             />
             <View
               style={{
@@ -256,6 +233,13 @@ const CustomSections = () => {
                 </View>
               ))}
             </View>
+
+            {/* Zepto style "See all products ▶" button with 3 product avatars */}
+            <SeeAllProductsButton
+              products={section.products}
+              onPress={handleViewAll}
+              style={{ marginTop: 4 }}
+            />
           </View>
         );
       })}

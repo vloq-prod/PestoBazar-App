@@ -1,6 +1,8 @@
 import { apiClient } from "../lib/apiClient";
 import { FreeProductResponse } from "../types/offer.types";
 
+export * from "../types/offer.types";
+
 export const getFreeProducts = async (
   variationId: number,
 ): Promise<FreeProductResponse> => {
