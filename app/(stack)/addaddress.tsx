@@ -222,6 +222,11 @@ const StatePicker = ({
   const [search, setSearch] = useState("");
   const insets = useSafeAreaInsets();
 
+  const handleClose = () => {
+    setModalVisible(false);
+    setSearch("");
+  };
+
   const filtered = useMemo(
     () =>
       search.trim()
@@ -305,160 +310,201 @@ const StatePicker = ({
       )}
 
       {/* Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            justifyContent: "flex-end",
-          }}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        statusBarTranslucent
+        onRequestClose={handleClose}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View
             style={{
-              backgroundColor: colors.background,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              paddingBottom: insets.bottom + spacing(16),
-              maxHeight: "80%",
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.45)",
+              justifyContent: "flex-end",
             }}
           >
-            {/* Header */}
+            {/* Backdrop Dismiss */}
+            <TouchableOpacity
+              activeOpacity={1}
+              style={{ flex: 1 }}
+              onPress={handleClose}
+            />
+
+            {/* Bottom Sheet Content */}
             <View
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingHorizontal: spacing(16),
-                paddingTop: spacing(20),
-                paddingBottom: spacing(12),
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
+                height: "75%",
+                backgroundColor: colors.background,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingBottom: Math.max(insets.bottom, spacing(16)),
+                overflow: "hidden",
               }}
             >
-              <Text
+              {/* Header */}
+              <View
                 style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  fontSize: font(16),
-                  color: colors.text,
-                }}
-              >
-                Select State
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  setSearch("");
-                }}
-                style={{
-                  width: spacing(32),
-                  height: spacing(32),
-                  borderRadius: spacing(16),
-                  backgroundColor: colors.inputBackground,
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
+                  paddingHorizontal: spacing(16),
+                  paddingTop: spacing(20),
+                  paddingBottom: spacing(12),
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.border,
                 }}
               >
-                <X size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Search */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: spacing(10),
-                marginHorizontal: spacing(16),
-                marginVertical: spacing(12),
-                height: INPUT_HEIGHT,
-                borderWidth: 1.2,
-                borderColor: colors.border,
-                borderRadius: 12,
-                backgroundColor: colors.inputBackground ?? colors.surface,
-                paddingHorizontal: spacing(12),
-              }}
-            >
-              <Search size={16} color={colors.textTertiary} />
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Search state..."
-                placeholderTextColor={colors.textTertiary}
-                style={{
-                  flex: 1,
-                  fontFamily: "Poppins_400Regular",
-                  fontSize: font(13),
-                  color: colors.text,
-                  paddingVertical: 0,
-                  ...Platform.select({
-                    android: { includeFontPadding: false },
-                    ios: {},
-                  }),
-                }}
-              />
-              {!!search && (
-                <TouchableOpacity onPress={() => setSearch("")}>
-                  <X size={14} color={colors.textTertiary} />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(16),
+                    color: colors.text,
+                  }}
+                >
+                  Select State
+                </Text>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={{
+                    width: spacing(32),
+                    height: spacing(32),
+                    borderRadius: spacing(16),
+                    backgroundColor: colors.inputBackground ?? colors.surface,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <X size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
-              )}
-            </View>
+              </View>
 
-            {/* List */}
-            <FlatList
-              data={filtered}
-              keyExtractor={(item) => String(item.id)}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => {
-                const isSelected = selected?.id === item.id;
-                return (
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      onSelect(item);
-                      setModalVisible(false);
-                      setSearch("");
-                    }}
+              {/* Search */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing(10),
+                  marginHorizontal: spacing(16),
+                  marginVertical: spacing(12),
+                  height: INPUT_HEIGHT,
+                  borderWidth: 1.2,
+                  borderColor: colors.border,
+                  borderRadius: 12,
+                  backgroundColor: colors.inputBackground ?? colors.surface,
+                  paddingHorizontal: spacing(12),
+                }}
+              >
+                <Search size={16} color={colors.textTertiary} />
+                <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Search state..."
+                  placeholderTextColor={colors.textTertiary}
+                  style={{
+                    flex: 1,
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(13),
+                    color: colors.text,
+                    paddingVertical: 0,
+                    ...Platform.select({
+                      android: { includeFontPadding: false },
+                      ios: {},
+                    }),
+                  }}
+                />
+                {!!search && (
+                  <TouchableOpacity onPress={() => setSearch("")}>
+                    <X size={14} color={colors.textTertiary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* List */}
+              <FlatList
+                data={filtered}
+                keyExtractor={(item) => String(item.id)}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                  paddingBottom: spacing(16),
+                  flexGrow: filtered.length === 0 ? 1 : undefined,
+                }}
+                ListEmptyComponent={
+                  <View
                     style={{
-                      flexDirection: "row",
+                      flex: 1,
                       alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingHorizontal: spacing(16),
-                      paddingVertical: spacing(13),
-                      backgroundColor: isSelected
-                        ? colors.primary + "08"
-                        : "transparent",
+                      justifyContent: "center",
+                      paddingVertical: spacing(30),
                     }}
                   >
                     <Text
                       style={{
-                        fontFamily: isSelected
-                          ? "Poppins_600SemiBold"
-                          : "Poppins_400Regular",
-                        fontSize: font(14),
-                        color: isSelected ? colors.primary : colors.text,
-                        flex: 1,
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(13),
+                        color: colors.textTertiary,
                       }}
                     >
-                      {item.name}
+                      No states found
                     </Text>
-                    {isSelected && <Check size={16} color={colors.primary} />}
-                  </TouchableOpacity>
-                );
-              }}
-              ItemSeparatorComponent={() => (
-                <View
-                  style={{
-                    height: 1,
-                    backgroundColor: colors.border,
-                    opacity: 0.4,
-                    marginHorizontal: spacing(16),
-                  }}
-                />
-              )}
-            />
+                  </View>
+                }
+                renderItem={({ item }) => {
+                  const isSelected = selected?.id === item.id;
+                  return (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        onSelect(item);
+                        handleClose();
+                      }}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingHorizontal: spacing(16),
+                        paddingVertical: spacing(13),
+                        backgroundColor: isSelected
+                          ? colors.primary + "08"
+                          : "transparent",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: isSelected
+                            ? "Poppins_600SemiBold"
+                            : "Poppins_400Regular",
+                          fontSize: font(14),
+                          color: isSelected ? colors.primary : colors.text,
+                          flex: 1,
+                        }}
+                      >
+                        {item.name}
+                      </Text>
+                      {isSelected && <Check size={16} color={colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                }}
+                ItemSeparatorComponent={() => (
+                  <View
+                    style={{
+                      height: 1,
+                      backgroundColor: colors.border,
+                      opacity: 0.4,
+                      marginHorizontal: spacing(16),
+                    }}
+                  />
+                )}
+              />
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

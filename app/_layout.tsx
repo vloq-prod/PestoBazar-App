@@ -38,12 +38,12 @@ function RootLayoutNav() {
   const router = useRouter();
   const segments = useSegments();
 
-  // 🔥 INIT (Hydration)
+  // 🔥 INIT (Hydration & Auto Visitor Generation)
   useEffect(() => {
     const initApp = async () => {
       const store = useAppVisitorStore.getState();
 
-      await store.hydrateVisitor(); // ✅ IMPORTANT
+      await store.ensureVisitor(); // ✅ Auto-creates visitor ID on load if missing
       await store.hydrateUser(); // optional but safe
 
       hydratePincode();
@@ -64,28 +64,15 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isReady) return;
 
-    const inTabs = segments[0] === "(tabs)";
     const inWelcome = segments[0] === "welcome";
     const inAuth = segments[0] === "(auth)";
-    const inStack = segments[0] === "(stack)";
 
-    // ❌ No visitor → go welcome (unless already in welcome or auth)
-    if (!visitorId || !token) {
-      if (!inWelcome && !inAuth) {
-        console.log("🚨 Redirect → welcome");
-        router.replace("/welcome");
-      }
-      return;
+    // 🚀 Bypass welcome screen → redirect to tabs
+    if (inWelcome) {
+      console.log("🚀 Redirecting from welcome → tabs");
+      router.replace("/(tabs)");
     }
-
-    // ✅ Visitor exists → only redirect if in welcome or auth
-    if (visitorId && token) {
-      if (inWelcome || inAuth) {
-        console.log("🚀 Redirect → tabs");
-        router.replace("/(tabs)");
-      }
-    }
-  }, [visitorId, token, isReady]);
+  }, [visitorId, token, isReady, segments]);
 
   // ⏳ Splash handling
   if (!isReady) {

@@ -4,6 +4,7 @@
 node_modules/
 note.txt
 ../lib/apiClient
+
 # Expo
 .expo/
 dist/
@@ -18,6 +19,7 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+credentials/
 
 # Metro
 .metro-health-check*
@@ -32,6 +34,8 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
 .env*.local
 
 # typescript
@@ -40,6 +44,3 @@ yarn-error.*
 # generated native folders
 /ios
 /android
-
-.env
-.env.*

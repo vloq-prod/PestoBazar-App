@@ -16,7 +16,7 @@ export const useNotifications = (params: GetNotificationsParams) => {
   return useQuery({
     queryKey: ["notifications", params],
     queryFn: () => getNotifications(params),
-    staleTime: 30 * 1000,
+    staleTime: 0,
   });
 };
 
@@ -33,7 +33,7 @@ export const useUnreadNotificationCount = (
   return useQuery({
     queryKey: ["notifications", "unread-count", params],
     queryFn: () => getUnreadNotificationCount(params),
-    staleTime: 30 * 1000,
+    staleTime: 0,
   });
 };
 

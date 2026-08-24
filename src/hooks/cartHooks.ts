@@ -41,11 +41,17 @@ export const useAddToCart = () => {
     },
 
     onError: (error: any) => {
-      // showToast(error?.message || "Failed to add to cart", "error");
+      console.log("❌ AddToCart Error:", error);
+      showToast(error?.message || "Failed to update cart", "error");
     },
 
     onSuccess: (data, variables) => {
-      // showToast(data.message || "Product added to cart", "success");
+      const toastMsg =
+        data?.message ||
+        (variables.qty > 0
+          ? "Item updated in cart"
+          : "Item removed from cart");
+      showToast(toastMsg, "success");
 
       if (variables.product_id !== undefined && variables.qty !== undefined) {
         useCartStore.getState().updateQuantity(variables.product_id, variables.qty);
@@ -262,7 +268,7 @@ export const useRemoveCartItem = () => {
     mutationFn: (payload: RemoveCartItemRequest) => removeCartItem(payload),
 
     onSuccess: (data) => {
-      // showToast(data.message || "Item removed from cart", "success");
+      showToast(data.message || "Item removed from cart", "success");
       queryClient.invalidateQueries({
         queryKey: ["cart"],
       });
@@ -277,7 +283,7 @@ export const useRemoveCartItem = () => {
     },
 
     onError: (error) => {
-      // showToast(error.message || "Failed to remove item", "error");
+      showToast(error?.message || "Failed to remove item", "error");
     },
   });
 };

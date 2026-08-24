@@ -21,7 +21,6 @@ import { useAddress, useRemoveAddress } from "../../src/hooks/CheckoutHooks";
 import AddressCard from "../../src/components/checkout/AddressCard";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { MapPin, Plus, Trash2 } from "lucide-react-native";
-import { useQueryClient } from "@tanstack/react-query";
 
 // ── Helpers ──
 const SectionTitle = ({ title, colors, font, spacing, onAddPress }: any) => (
@@ -68,7 +67,6 @@ export default function Address() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
-  const queryClient = useQueryClient();
 
   const userId = useAppVisitorStore((s) => s.userId);
 
@@ -81,42 +79,30 @@ export default function Address() {
   } = useAddress({ user_id: userId! });
 
   // When the screen comes into focus, trigger a background refetch
-  // This solves the issue of stale data when returning from addaddress.tsx
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, [refetch]),
+      if (userId) {
+        refetch();
+      }
+    }, [userId, refetch]),
   );
+
   const { mutate: removeAddress, isPending: isRemoving } = useRemoveAddress();
-  console.log("addressData", addressData?.data?.delivery_address);
 
   // Delete Modal state
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<number | null>(null);
 
-  console.log("user id: ", userId)
-
-  const billingList = React.useMemo(
-    () => [...(addressData?.data?.billing_address ?? [])],
-    [addressData],
-  );
-
-  const deliveryList = React.useMemo(
-    () => [...(addressData?.data?.delivery_address ?? [])],
-    [addressData],
-  );
+  const billingList = addressData?.data?.billing_address ?? [];
+  const deliveryList = addressData?.data?.delivery_address ?? [];
 
   const handleDeleteConfirm = () => {
     if (!addressToDelete || !userId) return;
-    removeAddress(
-      { user_id: userId, address_id: addressToDelete },
-      {
-        onSuccess: () => {
-          setDeleteModalVisible(false);
-          setAddressToDelete(null);
-        },
-      },
-    );
+    const targetId = addressToDelete;
+    // Close modal immediately so UI response feels instant
+    setDeleteModalVisible(false);
+    setAddressToDelete(null);
+    removeAddress({ user_id: userId, address_id: targetId });
   };
 
   const openDeleteModal = (id: number) => {

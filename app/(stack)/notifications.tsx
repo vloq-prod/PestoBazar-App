@@ -80,24 +80,31 @@ const NotificationsScreen = () => {
 
   // Sync data to local state
   useEffect(() => {
-    if (notificationsData?.data?.notifications && notificationsData.data.notifications.length > 0) {
+    console.log("[NotificationsScreen] Query params state:", {
+      user_id: userId || undefined,
+      visitor_id: visitorId || undefined,
+      page,
+      isLoading,
+      isFetching,
+    });
+
+    if (notificationsData?.data?.notifications) {
+      const fetchedList = notificationsData.data.notifications;
+      console.log(`[NotificationsScreen] Fetched ${fetchedList.length} notification(s) from API.`);
       if (page === 1) {
-        setNotificationsList(notificationsData.data.notifications);
+        setNotificationsList(fetchedList);
       } else {
         setNotificationsList((prev) => {
           // Prevent duplicates
           const existingIds = new Set(prev.map((n) => n.id));
-          const newNotifications = notificationsData.data.notifications.filter(
+          const newNotifications = fetchedList.filter(
             (n) => !existingIds.has(n.id)
           );
           return [...prev, ...newNotifications];
         });
       }
-    } else if (!isLoading && page === 1) {
-      // Load local dummy notifications for UI design & deep-linking test when DB has 0 notifications
-      setNotificationsList(DUMMY_TEST_NOTIFICATIONS);
     }
-  }, [notificationsData, page, isLoading]);
+  }, [notificationsData, page, isLoading, isFetching, userId, visitorId]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -121,23 +128,23 @@ const NotificationsScreen = () => {
         prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n))
       );
 
+      const markAsReadPayload = {
+        notificationId: notification.id,
+        user_id: userId || undefined,
+        visitor_id: visitorId || undefined,
+      };
+      console.log(`[handleMarkAsRead] Triggering API for notification ${notification.id} with payload:`, markAsReadPayload);
+
       markAsRead(
-        {
-          notificationId: notification.id,
-          user_id: userId || undefined,
-          visitor_id: visitorId || undefined,
-        },
+        markAsReadPayload,
         {
           onSuccess: (res) => {
-            if (res.status) {
-              queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
-            }
+            console.log("[Notifications] markAsRead response:", res);
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
           },
-          onError: () => {
-            // Revert optimistic update
-            setNotificationsList((prev) =>
-              prev.map((n) => (n.id === notification.id ? { ...n, is_read: false } : n))
-            );
+          onError: (err) => {
+            console.warn("[Notifications] markAsRead API error:", err);
+            // Retain local read status so UI remains marked as read
           },
         }
       );
@@ -165,19 +172,24 @@ const NotificationsScreen = () => {
     // Optimistic UI Update
     setNotificationsList((prev) => prev.map((n) => ({ ...n, is_read: true })));
 
+    const markAllPayload = {
+      user_id: userId || undefined,
+      visitor_id: visitorId || undefined,
+    };
+    console.log("[handleMarkAllAsRead] Triggering markAllAsRead API with payload:", markAllPayload);
+
     markAllAsRead(
-      {
-        user_id: userId || undefined,
-        visitor_id: visitorId || undefined,
-      },
+      markAllPayload,
       {
         onSuccess: (res) => {
+          console.log("[handleMarkAllAsRead] Response:", res);
           if (res.status) {
             showToast(res.message || 'All notifications marked as read', 'success');
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
           }
         },
         onError: (err: any) => {
+          console.warn("[handleMarkAllAsRead] Error:", err);
           showToast(err?.message || 'Failed to mark all as read', 'error');
           // Invalidate to fetch correct status
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -595,168 +607,3 @@ const styles = StyleSheet.create({
     opacity: 0.12,
   },
 });
-
-const DUMMY_TEST_NOTIFICATIONS: Notification[] = [
-  {
-    id: 101,
-    source_type: "system",
-    source_entity_type: "product",
-    source_entity_id: 12,
-    event_key: "product_deal",
-    notification_type: "promo",
-    title: "Hot Deal: Termite Control Spray! 🐜",
-    description: "Get 20% off on this top-rated Termite spray. Tap to buy now.",
-    image_url: "https://pestobazaar.confidevtech.com/storage/test-notifications/fZJaBGWbHBSh04cN0or5SKpvV1dfOVt6zH4BP5Ig.png",
-    action_type: "product",
-    action_value: "12",
-    data: { id: "12", product_id: "12" },
-    is_read: false,
-    read_at: null,
-    created_at: new Date().toISOString(),
-    created_at_human: "Just now",
-  },
-  {
-    id: 102,
-    source_type: "system",
-    source_entity_type: "category",
-    source_entity_id: 1,
-    event_key: "category_promo",
-    notification_type: "promo",
-    title: "Explore Herbal Pest Control 🌿",
-    description: "Safe for kids and pets. Browse our organic selections.",
-    image_url: null,
-    action_type: "category",
-    action_value: "pest-control",
-    data: { slug: "pest-control", category_slug: "pest-control" },
-    is_read: false,
-    read_at: null,
-    created_at: new Date().toISOString(),
-    created_at_human: "5 mins ago",
-  },
-  {
-    id: 103,
-    source_type: "system",
-    source_entity_type: "shop",
-    source_entity_id: 1,
-    event_key: "shop_listings",
-    notification_type: "info",
-    title: "Complete Product Catalog 🛒",
-    description: "Checkout our complete catalog for chemical & herbal controls.",
-    image_url: null,
-    action_type: "shop",
-    action_value: "",
-    data: {},
-    is_read: false,
-    read_at: null,
-    created_at: new Date().toISOString(),
-    created_at_human: "1 hour ago",
-  },
-  {
-    id: 104,
-    source_type: "system",
-    source_entity_type: "cart",
-    source_entity_id: 1,
-    event_key: "cart_reminder",
-    notification_type: "info",
-    title: "Items waiting in your cart! 🛍️",
-    description: "Don't let them sell out. Complete your order today.",
-    image_url: null,
-    action_type: "cart",
-    action_value: "",
-    data: {},
-    is_read: false,
-    read_at: null,
-    created_at: new Date().toISOString(),
-    created_at_human: "3 hours ago",
-  },
-  {
-    id: 105,
-    source_type: "system",
-    source_entity_type: "checkout",
-    source_entity_id: 1,
-    event_key: "checkout_resume",
-    notification_type: "alert",
-    title: "Complete your booking now!",
-    description: "Proceed to checkout to finalize your pest control service.",
-    image_url: null,
-    action_type: "checkout",
-    action_value: "",
-    data: {},
-    is_read: false,
-    read_at: null,
-    created_at: new Date().toISOString(),
-    created_at_human: "1 day ago",
-  },
-  {
-    id: 106,
-    source_type: "system",
-    source_entity_type: "order",
-    source_entity_id: 456,
-    event_key: "order_details",
-    notification_type: "order",
-    title: "Technician Dispatched 🚚",
-    description: "Your service technician is on the way for Order #456.",
-    image_url: null,
-    action_type: "order_details",
-    action_value: "456",
-    data: { id: "456", order_id: "456" },
-    is_read: true,
-    read_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    created_at_human: "2 days ago",
-  },
-  {
-    id: 107,
-    source_type: "system",
-    source_entity_type: "coupons",
-    source_entity_id: 1,
-    event_key: "coupons_offers",
-    notification_type: "promo",
-    title: "Flat 50% Coupon Code Inside! 🏷️",
-    description: "Tap to unlock exclusive promo codes on your first order.",
-    image_url: null,
-    action_type: "coupons",
-    action_value: "",
-    data: {},
-    is_read: true,
-    read_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    created_at_human: "3 days ago",
-  },
-  {
-    id: 108,
-    source_type: "system",
-    source_entity_type: "diy",
-    source_entity_id: 1,
-    event_key: "diy_guides",
-    notification_type: "info",
-    title: "DIY Pest Control at Home 🛠️",
-    description: "Simple guides and tricks to keep bugs away naturally.",
-    image_url: null,
-    action_type: "diy",
-    action_value: "",
-    data: {},
-    is_read: true,
-    read_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    created_at_human: "4 days ago",
-  },
-  {
-    id: 109,
-    source_type: "system",
-    source_entity_type: "bulk",
-    source_entity_id: 1,
-    event_key: "bulk_orders",
-    notification_type: "info",
-    title: "Commercial Pest Services",
-    description: "Need bulk orders for your office/store? Fill out our form.",
-    image_url: null,
-    action_type: "bulkorder",
-    action_value: "",
-    data: {},
-    is_read: true,
-    read_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    created_at_human: "5 days ago",
-  },
-];

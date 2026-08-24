@@ -18,6 +18,7 @@ import { useResponsive } from "../../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCancelReason, useCancelOrder } from "../../hooks/orderHooks";
 import { useAppVisitorStore } from "../../store/auth";
+import { useToast } from "../../context/ToastContext";
 import { ActivityIndicator } from "react-native";
 
 interface CancelOrderModalProps {
@@ -27,8 +28,6 @@ interface CancelOrderModalProps {
   onSuccess?: () => void;
   orderNumber: string;
 }
-
-
 
 const INPUT_HEIGHT = 48;
 
@@ -43,6 +42,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
   const userId = useAppVisitorStore((state) => state.userId);
+  const { showToast } = useToast();
 
   // Fetch cancel reasons
   const { data: cancelReasonsData, isLoading: isLoadingReasons } = useCancelReason();
@@ -67,6 +67,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
         missingOrderId: !orderId,
         missingUserId: !userId
       });
+      showToast("Please select a cancellation reason", "error");
       return;
     }
 
@@ -78,13 +79,21 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
         cancel_reason: comments,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
           console.log("Cancel Order Success Response:", data);
+          showToast(
+            data?.message || `Order #${orderNumber || orderId} cancelled successfully`,
+            "success"
+          );
           if (onSuccess) onSuccess();
           handleClose();
         },
-        onError: (error) => {
+        onError: (error: any) => {
           console.log("Cancel Order Error:", error);
+          showToast(
+            error?.response?.data?.message || error?.message || "Failed to cancel order",
+            "error"
+          );
         }
       }
     );

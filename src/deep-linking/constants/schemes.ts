@@ -36,7 +36,7 @@ export const CUSTOM_SCHEME = "pestobazaar" as const;
  * The production domain for universal links / app links.
  * Used for deep links like: https://pestobazaar.com/product/123
  */
-export const UNIVERSAL_LINK_DOMAIN = "pestobazaar.com" as const;
+export const UNIVERSAL_LINK_DOMAIN = "pestobazaar.confidevtech.com" as const;
 
 // ─── Allowed Schemes ───────────────────────────────────────────────────────────
 

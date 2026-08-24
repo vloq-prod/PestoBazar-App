@@ -193,10 +193,38 @@ const OrderItemCard = ({
   const isCombo = item.listing_type === "Combo";
   
   const handlePress = () => {
-    if (item.product_slug) {
+    const slugStr = item.product_slug || item.slug;
+    const prodId = item.product_id || item.productId;
+    const varId = item.variation_id || item.variant_id;
+    const targetId = varId || prodId;
+    if (slugStr || targetId) {
       router.push({
         pathname: "/(stack)/products/[slug]",
-        params: { slug: item.product_slug, id: item.id },
+        params: {
+          slug: slugStr || "product",
+          ...(targetId ? { id: targetId } : {}),
+          ...(varId ? { variation_id: varId } : {}),
+          product_name: item.product_name || item.name || "",
+        },
+      });
+    }
+  };
+
+  const handleReviewPress = () => {
+    const slugStr = item.product_slug || item.slug;
+    const prodId = item.product_id || item.productId;
+    const varId = item.variation_id || item.variant_id;
+    const targetId = varId || prodId;
+    if (slugStr || targetId) {
+      router.push({
+        pathname: "/(stack)/products/[slug]",
+        params: {
+          slug: slugStr || "product",
+          ...(targetId ? { id: targetId } : {}),
+          ...(varId ? { variation_id: varId } : {}),
+          product_name: item.product_name || item.name || "",
+          scrollToReview: "true",
+        },
       });
     }
   };
@@ -239,6 +267,7 @@ const OrderItemCard = ({
           {/* Review Button */}
           <TouchableOpacity
             activeOpacity={0.7}
+            onPress={handleReviewPress}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -264,6 +293,7 @@ const OrderItemCard = ({
           {/* Reorder Button */}
           <TouchableOpacity
             activeOpacity={0.7}
+            onPress={handlePress}
             style={{
               flexDirection: "row",
               alignItems: "center",

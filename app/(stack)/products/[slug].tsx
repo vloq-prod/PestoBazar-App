@@ -20,7 +20,6 @@ import {
 } from "../../../src/hooks/productDetailsHook";
 import { useFreeProducts } from "../../../src/hooks/offerHooks";
 import { useTheme } from "../../../src/theme";
-import { useToast } from "../../../src/context/ToastContext";
 import {
   ChevronLeft,
   Search,
@@ -63,11 +62,16 @@ import type {
 import ImageVideoCarousel from "../../../src/components/comman/ImageVideoCarousel";
 import HomeUsp from "../../../src/components/home/HomeUsp";
 import ProductDetailsSkeleton from "../../../src/skeleton/ProductDetails";
+import {
+  FreeGiftOffersSkeleton,
+  AvailableCouponsSkeleton,
+} from "../../../src/skeleton/OffersAndCouponsSkeleton";
 import DescriptionAccordion from "../../../src/components/productDetails/DescriptionAccordion";
 import ReviewSection from "../../../src/components/productDetails/ReviewSection";
 import ProductDescription from "../../../src/components/productDetails/ProductDescription";
 import DeliveryInfoCard from "../../../src/components/productDetails/DeliveryInfoCard";
 import CustomerAlsoBoughtProduct from "../../../src/components/productDetails/CustomerAlsoBoughtProduct";
+import ProductCouponCard from "../../../src/components/productDetails/ProductCouponCard";
 
 import ProductDescriptionSheet from "../../../src/modals/shop/CommonBottomSheet";
 import PincodeModal from "../../../src/modals/PincodeSheet";
@@ -117,203 +121,16 @@ const FilledWavyDivider = ({
   );
 };
 
-const ProductCouponCard: React.FC<{
-  item: ActiveCoupon;
-  onCopy: (code: string) => void;
-  isCopied: boolean;
-}> = ({ item, onCopy, isCopied }) => {
-  const { colors } = useTheme();
-  const { font, spacing } = useResponsive();
-
-  const discountTitle =
-    item.discount_amount && item.discount_amount > 0
-      ? `You save ₹${item.discount_amount}`
-      : item.discount_type === "percentage"
-        ? `Get ${item.discount_value}% OFF`
-        : `Flat ₹${item.discount_value} OFF`;
-
-  return (
-    <View
-      style={{
-        borderRadius: 10,
-        backgroundColor: "#FBFBFE",
-        borderColor: isCopied ? "#10B981" : colors.primary + "35",
-        borderWidth: isCopied ? 1.5 : 1,
-        borderStyle: "dashed",
-      }}
-    >
-      <View style={{ padding: spacing(12) }}>
-        {/* Top Row: Icon + Savings Message & Code Badge */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              flex: 1,
-              marginRight: spacing(10),
-            }}
-          >
-            <View
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: "#FFFFFF",
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: spacing(10),
-              }}
-            >
-              <BadgePercent size={20} color="#15803D" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: font(13.5),
-                  fontFamily: "Poppins_700Bold",
-                  color: "#15803D",
-                }}
-              >
-                {discountTitle}
-              </Text>
-              <Text
-                numberOfLines={1}
-                style={{
-                  fontSize: font(12),
-                  fontFamily: "Poppins_600SemiBold",
-                  color: colors.text,
-                  marginTop: 1,
-                }}
-              >
-                {item.title}
-              </Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              paddingHorizontal: spacing(10),
-              paddingVertical: spacing(6),
-              borderRadius: 6,
-              borderWidth: 1,
-              backgroundColor: colors.backgroundgray,
-              borderColor: colors.border,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: font(12),
-                fontFamily: "Poppins_700Bold",
-                color: colors.text,
-                letterSpacing: 0.5,
-              }}
-            >
-              {item.code}
-            </Text>
-          </View>
-        </View>
-
-        {/* Middle Divider */}
-        <View
-          style={{
-            borderStyle: "dashed",
-            borderWidth: 1,
-            borderColor: colors.border,
-            height: 0,
-            width: "100%",
-            marginVertical: spacing(10),
-          }}
-        />
-
-        {/* Bottom Row: Description/Terms & Copy Action */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text
-            numberOfLines={2}
-            style={{
-              fontFamily: "Poppins_400Regular",
-              fontSize: font(12),
-              color: colors.textSecondary,
-              flex: 1,
-              marginRight: spacing(8),
-              lineHeight: font(17),
-            }}
-          >
-            {item.description ||
-              item.message ||
-              "Coupon available for this cart."}
-          </Text>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => onCopy(item.code)}
-            style={{
-              paddingHorizontal: spacing(14),
-              paddingVertical: spacing(6),
-              borderRadius: 6,
-              borderWidth: 1,
-              borderColor: isCopied ? "#10B981" : colors.primary,
-              backgroundColor: isCopied ? "#10B98115" : "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: 70,
-            }}
-          >
-            {isCopied ? (
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-              >
-                <Check size={13} color="#10B981" strokeWidth={3} />
-                <Text
-                  style={{
-                    fontSize: font(12),
-                    fontFamily: "Poppins_700Bold",
-                    color: "#10B981",
-                  }}
-                >
-                  Copied
-                </Text>
-              </View>
-            ) : (
-              <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-              >
-                <Copy size={13} color={colors.primary} />
-                <Text
-                  style={{
-                    fontSize: font(12),
-                    fontFamily: "Poppins_700Bold",
-                    color: colors.primary,
-                  }}
-                >
-                  COPY
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-};
-
 const ProductDetails = () => {
-  const { id, product_name, product_slug, slug } = useLocalSearchParams();
+  const {
+    id,
+    product_name,
+    product_slug,
+    slug,
+    variation_id,
+    scrollToReview,
+    section,
+  } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -322,7 +139,6 @@ const ProductDetails = () => {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const reviewSectionY = useRef(0);
 
-  const { showToast } = useToast();
   const [showPincodeModal, setShowPincodeModal] = useState(false);
   const [isDescriptionVisible, setIsDescriptionVisible] = useState(false);
   const [showAllOffers, setShowAllOffers] = useState(false);
@@ -330,41 +146,55 @@ const ProductDetails = () => {
   const [showAllCoupons, setShowAllCoupons] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const handleCopyCoupon = useCallback(
-    (code: string) => {
-      Clipboard.setString(code);
-      setCopiedCode(code);
-      showToast(`Coupon code "${code}" copied!`, "success");
-      setTimeout(() => {
-        setCopiedCode(null);
-      }, 2500);
-    },
-    [showToast],
-  );
+  const handleCopyCoupon = useCallback((code: string) => {
+    Clipboard.setString(code);
+    setCopiedCode(code);
+    setTimeout(() => {
+      setCopiedCode(null);
+    }, 2500);
+  }, []);
 
-  const productId =
-    typeof id === "string" && !isNaN(Number(id)) ? Number(id) : undefined;
+  const rawId =
+    typeof id === "number"
+      ? id
+      : typeof id === "string" && !isNaN(Number(id))
+        ? Number(id)
+        : undefined;
+  const productId = rawId && rawId > 0 ? rawId : undefined;
 
-  const rawSlug = slug || product_slug;
-  const productSlug =
-    typeof rawSlug === "string" && rawSlug.trim().length > 0
-      ? rawSlug
+  const rawVarId =
+    typeof variation_id === "number"
+      ? variation_id
+      : typeof variation_id === "string" && !isNaN(Number(variation_id))
+        ? Number(variation_id)
+        : rawId && rawId > 0
+          ? rawId
+          : undefined;
+  const variationId = rawVarId && rawVarId > 0 ? rawVarId : undefined;
+
+  const getValidSlug = (val: unknown): string | undefined =>
+    typeof val === "string" &&
+    val.trim().length > 0 &&
+    val !== "slug" &&
+    val !== "undefined" &&
+    isNaN(Number(val))
+      ? val
       : undefined;
 
+  const productSlug = getValidSlug(slug) || getValidSlug(product_slug);
+
   // console.log("product slug: ", productSlug);
-  console.log("product product id: ", productId);
+  console.log("product product id: ", productId, "variation_id: ", variationId);
 
   // ─── Animation Values ───────────────────────────────────────
   const scrollY = useSharedValue(0);
 
   // ─── API Calls ──────────────────────────────────────────────
-  const { data, isLoading, error } = useProductDetails(
-    productSlug
-      ? { product_slug: productSlug }
-      : productId
-        ? { product_id: productId }
-        : {},
-  );
+  const { data, isLoading, error } = useProductDetails({
+    ...(productId ? { product_id: productId } : {}),
+    ...(variationId ? { variation_id: variationId } : {}),
+    ...(productSlug ? { product_slug: productSlug } : {}),
+  });
   const { addToCart, loading: isCartLoading } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
   const { data: cartCountData } = useCartCount({
@@ -383,7 +213,9 @@ const ProductDetails = () => {
   const quantity = useProductQuantity(realProductId ?? productId);
 
   // Free products API integration
-  const { data: freeProductsData } = useFreeProducts(selectedVariation?.id);
+  const { data: freeProductsData, isLoading: isOffersLoading } = useFreeProducts(
+    selectedVariation?.id,
+  );
 
   useEffect(() => {
     if (freeProductsData?.data) {
@@ -581,10 +413,13 @@ const ProductDetails = () => {
 
   const handleShare = useCallback(async () => {
     try {
-      const fallbackUrl = DeepLinkURLBuilder.product(
-        productSlug || "unknown-product",
-        realProductId ?? productId ?? 0,
-      );
+      const activeSlug =
+        productSlug ||
+        getValidSlug(productInfo?.slug) ||
+        getValidSlug(productInfo?.product_slug) ||
+        (typeof slug === "string" ? slug : "product");
+
+      const fallbackUrl = DeepLinkURLBuilder.product(activeSlug);
       const message = DeepLinkURLBuilder.createShareMessage(
         resolvedProductName,
         fallbackUrl,
@@ -598,7 +433,7 @@ const ProductDetails = () => {
     } catch (error) {
       console.error("Error sharing product:", error);
     }
-  }, [realProductId, productId, productSlug, resolvedProductName]);
+  }, [productSlug, productInfo, slug, resolvedProductName]);
 
   // ─── Helpers ────────────────────────────────────────────────
   const formatPrice = (value: number) => {
@@ -694,22 +529,52 @@ const ProductDetails = () => {
   const openPincodeModal = useCallback(() => setShowPincodeModal(true), []);
   const closePincodeModal = useCallback(() => setShowPincodeModal(false), []);
 
-  const handleReviewSectionLayout = useCallback((event: LayoutChangeEvent) => {
-    reviewSectionY.current = event.nativeEvent.layout.y;
-  }, []);
+  const shouldScrollToReview =
+    scrollToReview === "true" ||
+    scrollToReview === "1" ||
+    section === "reviews";
 
   const scrollToReviews = useCallback(() => {
+    if (reviewSectionY.current <= 0) return;
     scrollViewRef.current?.scrollTo({
       y: Math.max(reviewSectionY.current - insets.top - 56, 0),
       animated: true,
     });
   }, [insets.top]);
 
+  const handleReviewSectionLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const yPos = event.nativeEvent.layout.y;
+      if (yPos > 0) {
+        reviewSectionY.current = yPos;
+        if (shouldScrollToReview) {
+          setTimeout(() => {
+            scrollViewRef.current?.scrollTo({
+              y: Math.max(yPos - insets.top - 56, 0),
+              animated: true,
+            });
+          }, 200);
+        }
+      }
+    },
+    [shouldScrollToReview, insets.top],
+  );
+
   // ─── Effects ────────────────────────────────────────────────
   useEffect(() => {
     if (!realProductId || !visitorId) return;
     saveRecentlyViewed({ product_id: realProductId, visitor_id: visitorId });
   }, [realProductId, visitorId]);
+
+  useEffect(() => {
+    if (!shouldScrollToReview || isLoading || !realProductId) return;
+    const timer = setTimeout(() => {
+      if (reviewSectionY.current > 0) {
+        scrollToReviews();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [shouldScrollToReview, isLoading, realProductId, scrollToReviews]);
 
   const HEADER_HEIGHT = insets.top;
   // ─── Guards ─────────────────────────────────────────────────
@@ -1048,8 +913,11 @@ const ProductDetails = () => {
           )}
 
         {/* ── Free Gift UI Section ── */}
-        {!isLoading && !error && offerRules && offerRules.length > 0 && (
-          <View
+        {!isLoading && !error && (
+          isOffersLoading ? (
+            <FreeGiftOffersSkeleton />
+          ) : offerRules && offerRules.length > 0 ? (
+            <View
             style={{
               marginHorizontal: spacing(16),
               marginTop: spacing(12),
@@ -1099,7 +967,7 @@ const ProductDetails = () => {
             <FilledWavyDivider color="#E8FDF0" />
 
             {/* Rules & Products List */}
-            <View style={{ padding: spacing(14), gap: spacing(18) }}>
+            <View style={{ padding: spacing(14), gap: spacing(12) }}>
               {(showAllFreeProducts
                 ? offerRules
                 : offerRules.slice(0, 1)
@@ -1113,166 +981,154 @@ const ProductDetails = () => {
                     ? freeProducts
                     : [];
 
-                const isNotLast =
-                  ruleIdx <
-                  (showAllFreeProducts ? offerRules.length : 1) - 1;
-
                 return (
-                  <React.Fragment
+                  <View
                     key={rule.rule_id || rule.rule_code || ruleIdx}
+                    style={{
+                      backgroundColor: "#F9FAFB",
+                      borderRadius: spacing(12),
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      padding: spacing(12),
+                      gap: spacing(12),
+                    }}
                   >
-                    <View style={{ gap: spacing(12) }}>
-                      {/* Offer Message Header */}
-                      {rule.offer_message ? (
-                        <View
+                    {/* Offer Message Header */}
+                    {rule.offer_message ? (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: spacing(6),
+                        }}
+                      >
+                        <Tag size={14} color={colors.primary} />
+                        <Text
                           style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: spacing(6),
+                            flex: 1,
+                            fontSize: font(12),
+                            fontFamily: "Poppins_600SemiBold",
+                            color: colors.text,
+                            lineHeight: font(17),
                           }}
                         >
-                          <Tag size={14} color={colors.primary} />
-                          <Text
-                            style={{
-                              flex: 1,
-                              fontSize: font(12),
-                              fontFamily: "Poppins_600SemiBold",
-                              color: colors.text,
-                              lineHeight: font(17),
-                            }}
-                          >
-                            {renderOfferMessage(rule.offer_message)}
-                          </Text>
-                        </View>
-                      ) : null}
+                          {renderOfferMessage(rule.offer_message)}
+                        </Text>
+                      </View>
+                    ) : null}
 
-                      {/* Free Products under this Rule */}
-                      {ruleProducts.length > 0 && (
-                        <View
-                          style={{ gap: spacing(12), paddingLeft: spacing(2) }}
-                        >
-                          {ruleProducts.map((item, itemIdx) => {
-                            const imageUri = item.s3_image_path?.startsWith(
-                              "http",
-                            )
-                              ? item.s3_image_path
-                              : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                    {/* Free Products under this Rule */}
+                    {ruleProducts.length > 0 && (
+                      <View style={{ gap: spacing(12) }}>
+                        {ruleProducts.map((item, itemIdx) => {
+                          const imageUri = item.s3_image_path?.startsWith(
+                            "http",
+                          )
+                            ? item.s3_image_path
+                            : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
 
-                            return (
+                          return (
+                            <View
+                              key={
+                                item.reward_id || item.product_id || itemIdx
+                              }
+                              style={{
+                                flexDirection: "row",
+                                backgroundColor: "transparent",
+                                gap: spacing(12),
+                                alignItems: "center",
+                              }}
+                            >
+                              {/* Image */}
                               <View
-                                key={
-                                  item.reward_id || item.product_id || itemIdx
-                                }
                                 style={{
-                                  flexDirection: "row",
-                                  backgroundColor: "transparent",
-                                  gap: spacing(12),
+                                  width: spacing(60),
+                                  height: spacing(60),
+                                  borderRadius: spacing(8),
+                                  borderWidth: 1,
+                                  borderColor: colors.border,
+                                  backgroundColor: colors.background,
+                                  overflow: "hidden",
+                                  justifyContent: "center",
                                   alignItems: "center",
                                 }}
                               >
-                                {/* Image */}
-                                <View
+                                <Image
+                                  source={{ uri: imageUri }}
                                   style={{
-                                    width: spacing(65),
-                                    height: spacing(65),
-                                    borderRadius: spacing(8),
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                    backgroundColor: colors.background,
-                                    overflow: "hidden",
-                                    justifyContent: "center",
-                                    alignItems: "center",
+                                    width: spacing(50),
+                                    height: spacing(50),
                                   }}
-                                >
-                                  <Image
-                                    source={{ uri: imageUri }}
-                                    style={{
-                                      width: spacing(55),
-                                      height: spacing(55),
-                                    }}
-                                    contentFit="contain"
-                                  />
-                                </View>
-
-                                {/* Content */}
-                                <View
-                                  style={{
-                                    flex: 1,
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  <Text
-                                    numberOfLines={2}
-                                    style={{
-                                      fontSize: font(12),
-                                      fontFamily: "Poppins_600SemiBold",
-                                      color: colors.text,
-                                      lineHeight: font(16),
-                                    }}
-                                  >
-                                    {item.product_name}
-                                  </Text>
-
-                                  <Text
-                                    style={{
-                                      fontSize: font(10.5),
-                                      fontFamily: "Poppins_400Regular",
-                                      color: colors.textSecondary,
-                                      marginTop: spacing(2),
-                                    }}
-                                  >
-                                    {item.size
-                                      ? `${item.size} • `
-                                      : item.variation
-                                        ? `${item.variation} • `
-                                        : ""}
-                                    {item.free_quantity
-                                      ? `${item.free_quantity} unit`
-                                      : "1 unit"}
-                                  </Text>
-                                </View>
-
-                                {/* Green FREE badge tag */}
-                                <View
-                                  style={{
-                                    borderWidth: 1,
-                                    borderColor: "#10B981",
-                                    borderRadius: 6,
-                                    paddingHorizontal: spacing(10),
-                                    paddingVertical: spacing(4),
-                                    backgroundColor: "#10B98110",
-                                  }}
-                                >
-                                  <Text
-                                    style={{
-                                      fontSize: font(11),
-                                      fontFamily: "Poppins_700Bold",
-                                      color: "#10B981",
-                                      textTransform: "uppercase",
-                                    }}
-                                  >
-                                    Free
-                                  </Text>
-                                </View>
+                                  contentFit="contain"
+                                />
                               </View>
-                            );
-                          })}
-                        </View>
-                      )}
-                    </View>
 
-                    {/* Full-width Divider Line touching left and right card edges */}
-                    {isNotLast && (
-                      <View
-                        style={{
-                          height: 1,
-                          backgroundColor: colors.border,
-                          marginHorizontal: -spacing(14),
-                          marginVertical: spacing(14),
-                        }}
-                      />
+                              {/* Content */}
+                              <View
+                                style={{
+                                  flex: 1,
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Text
+                                  numberOfLines={2}
+                                  style={{
+                                    fontSize: font(12),
+                                    fontFamily: "Poppins_600SemiBold",
+                                    color: colors.text,
+                                    lineHeight: font(16),
+                                  }}
+                                >
+                                  {item.product_name}
+                                </Text>
+
+                                <Text
+                                  style={{
+                                    fontSize: font(10.5),
+                                    fontFamily: "Poppins_400Regular",
+                                    color: colors.textSecondary,
+                                    marginTop: spacing(2),
+                                  }}
+                                >
+                                  {item.size
+                                    ? `${item.size} • `
+                                    : item.variation
+                                      ? `${item.variation} • `
+                                      : ""}
+                                  {item.free_quantity
+                                    ? `${item.free_quantity} unit`
+                                    : "1 unit"}
+                                </Text>
+                              </View>
+
+                              {/* Green FREE badge tag */}
+                              <View
+                                style={{
+                                  borderWidth: 1,
+                                  borderColor: "#10B981",
+                                  borderRadius: 6,
+                                  paddingHorizontal: spacing(10),
+                                  paddingVertical: spacing(4),
+                                  backgroundColor: "#10B98110",
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    fontSize: font(11),
+                                    fontFamily: "Poppins_700Bold",
+                                    color: "#10B981",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  Free
+                                </Text>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
                     )}
-                  </React.Fragment>
+                  </View>
                 );
               })}
 
@@ -1308,11 +1164,15 @@ const ProductDetails = () => {
               )}
             </View>
           </View>
+          ) : null
         )}
 
         {/* ── Active Coupons Section ── */}
-        {!isLoading && !error && activeCoupons && activeCoupons.length > 0 && (
-          <View
+        {!isLoading && !error && (
+          isOffersLoading ? (
+            <AvailableCouponsSkeleton />
+          ) : activeCoupons && activeCoupons.length > 0 ? (
+            <View
             style={{
               marginHorizontal: spacing(16),
               marginTop: spacing(12),
@@ -1405,7 +1265,9 @@ const ProductDetails = () => {
               )}
             </View>
           </View>
-        )}
+          ) : null
+
+)}
 
         {/* ── Delivery ── */}
         <View style={{ gap: spacing(10) }}>

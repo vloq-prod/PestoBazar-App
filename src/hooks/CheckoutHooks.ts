@@ -61,10 +61,11 @@ export const useSaveAddress = (onDone?: () => void) => {
     onSuccess: async (_res, variables) => {
       const userId = variables.user_id;
 
-      // Invalidate both the list and any single address queries
+      // Invalidate and refetch immediately so list screen has fresh cache before navigating back
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: ["address", userId],
+          refetchType: "all",
         }),
         queryClient.invalidateQueries({
           queryKey: ["single-address"],
@@ -99,34 +100,38 @@ export const useRemoveAddress = () => {
       // Snapshot the previous value
       const previousData = queryClient.getQueryData<GetAddressResponse>(["address", userId]);
 
-      // Optimistically update to the new value
+      // Optimistically update to the new value instantly
       if (previousData?.data) {
         queryClient.setQueryData<GetAddressResponse>(["address", userId], {
           ...previousData,
           data: {
             ...previousData.data,
-            billing_address: previousData.data.billing_address.filter(a => a.id !== addressId),
-            delivery_address: previousData.data.delivery_address.filter(a => a.id !== addressId),
-          }
+            billing_address: (previousData.data.billing_address || []).filter(
+              (a) => Number(a.id) !== Number(addressId) && String(a.address_id) !== String(addressId)
+            ),
+            delivery_address: (previousData.data.delivery_address || []).filter(
+              (a) => Number(a.id) !== Number(addressId) && String(a.address_id) !== String(addressId)
+            ),
+          },
         });
       }
 
       return { previousData };
     },
 
-    onError: (err, variables, context) => {
+    onError: (err: any, variables, context) => {
       // Rollback if mutation fails
       if (context?.previousData) {
         queryClient.setQueryData(["address", variables.user_id], context.previousData);
       }
-      showToast("Failed to delete address", "error");
+      showToast(err?.message || "Failed to delete address", "error");
     },
 
-    onSuccess: (_res, variables) => {
+    onSuccess: () => {
       showToast("Address deleted successfully", "success");
     },
 
-    onSettled: (data, error, variables) => {
+    onSettled: (_data, _error, variables) => {
       // Always refetch after error or success to keep server in sync
       queryClient.invalidateQueries({
         queryKey: ["address", variables.user_id],

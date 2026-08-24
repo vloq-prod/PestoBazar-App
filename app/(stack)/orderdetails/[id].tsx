@@ -10,7 +10,10 @@ import {
   Animated,
   Easing,
   Platform,
+  Linking,
+  Alert,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -319,6 +322,7 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
 
 const OrderDetails = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -327,7 +331,7 @@ const OrderDetails = () => {
 
   const [isCancelModalVisible, setIsCancelModalVisible] = React.useState(false);
 
-  const { data, isLoading, error } = useViewOrder({
+  const { data, isLoading, error, refetch } = useViewOrder({
     order_id: id || "",
   });
 
@@ -335,15 +339,45 @@ const OrderDetails = () => {
 
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
-  console.log("DEBUG order details api response order:", JSON.stringify(orderData?.order));
+  console.log(
+    "DEBUG order details api response order:",
+    JSON.stringify(orderData?.order),
+  );
   const isReturnAvailable =
     (orderData?.shiprocket_orders || []).some(
-      (so: any) => so.return_available === "Yes"
+      (so: any) => so.return_available === "Yes",
     ) &&
     (orderData?.order_return || []).length === 0 &&
     (orderData?.shiprocket_orders || []).every(
-      (so: any) => so.return_initiated !== "Yes"
+      (so: any) => so.return_initiated !== "Yes",
     );
+
+  const handleInvoiceOpen = async () => {
+    try {
+      if (!id) {
+        Alert.alert("Error", "Order ID is missing.");
+        return;
+      }
+
+      const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${id}`;
+
+      // Using docs.google.com viewer host prevents Android OS App Link / Intent Filter
+      // from intercepting pestobazaar.confidevtech.com and restarting the app!
+      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
+
+      console.log("Opening invoice PDF viewer URL:", viewerUrl);
+
+      await WebBrowser.openBrowserAsync(viewerUrl);
+    } catch (error) {
+      console.error("Invoice open error:", error);
+      try {
+        const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${id}`;
+        await WebBrowser.openBrowserAsync(rawInvoiceUrl);
+      } catch (e) {
+        Alert.alert("Error", "Unable to open invoice. Please try again.");
+      }
+    }
+  };
 
   if (!id) {
     return (
@@ -401,13 +435,22 @@ const OrderDetails = () => {
               paddingHorizontal: 20,
             }}
           >
-            {error instanceof Error ? error.message : "Oops! Error loading details."}
+            {error instanceof Error
+              ? error.message
+              : "Oops! Error loading details."}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.replace("/(tabs)")}
             style={{ marginTop: 20, padding: 10 }}
           >
-            <Text style={{ color: colors.primary, fontFamily: "Poppins_600SemiBold" }}>Go to Home</Text>
+            <Text
+              style={{
+                color: colors.primary,
+                fontFamily: "Poppins_600SemiBold",
+              }}
+            >
+              Go to Home
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -441,157 +484,102 @@ const OrderDetails = () => {
         <View style={{ paddingHorizontal: spacing(16) }}>
           {/* ── 2. Tracker ──────────────────────────────────── */}
 
-        <OrderStatusTracker
-          currentStatus={currentStatus}
-          colors={colors}
-          font={font}
-          spacing={spacing}
-        />
+          <OrderStatusTracker
+            currentStatus={currentStatus}
+            colors={colors}
+            font={font}
+            spacing={spacing}
+          />
 
-        {/* ── 5. Payment Summary (Moved up) ──────────────────────────── */}
-        <View
-          style={[
-            styles.ticketCard,
-            {
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-
-              marginBottom: spacing(20),
-            },
-          ]}
-        >
-          {/* Internal Header */}
+          {/* ── 5. Payment Summary (Moved up) ──────────────────────────── */}
           <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingHorizontal: 10,
-              paddingBottom: 12,
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-              marginBottom: 16,
-            }}
-          >
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: 8,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  backgroundColor: colors.backgroundgray,
-                }}
-              >
-                <Receipt size={16} color={colors.textSecondary} />
-              </View>
-              <Text
-                style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  fontSize: font(14),
-                  color: colors.text,
-                }}
-              >
-                Bill Summary
-              </Text>
-            </View>
+            style={[
+              styles.ticketCard,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
 
-            <TouchableOpacity
-              activeOpacity={0.7}
+                marginBottom: spacing(20),
+              },
+            ]}
+          >
+            {/* Internal Header */}
+            <View
               style={{
                 flexDirection: "row",
+                justifyContent: "space-between",
                 alignItems: "center",
-                backgroundColor: colors.backgroundgray,
-                paddingVertical: spacing(5),
-                paddingHorizontal: spacing(8),
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: colors.border,
-                gap: spacing(6),
+                paddingHorizontal: 10,
+                paddingBottom: 12,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+                marginBottom: 16,
               }}
             >
-              <Download
-                size={16}
-                color={colors.textSecondary}
-                strokeWidth={2}
-              />
-              <View>
-      
-                <Text
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
+                <View
                   style={{
-                    fontFamily: "Poppins_400Regular",
-                    fontSize: font(10),
-                    color: colors.text,
-                    lineHeight: font(8),
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: 8,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.backgroundgray,
                   }}
                 >
-                  Invoice
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.cardContent}>
-            <View style={styles.summaryRow}>
-              <Text
-                style={{
-                  fontFamily: "Poppins_500Medium",
-                  fontSize: font(12.5),
-                  color: colors.text,
-                }}
-              >
-                Item Total
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  fontSize: font(12.5),
-                  color: colors.text,
-                }}
-              >
-                ₹{formatPrice(orderData?.order?.order_amount)}
-              </Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text
-                style={{
-                  fontFamily: "Poppins_500Medium",
-                  fontSize: font(12.5),
-                  color: colors.text,
-                }}
-              >
-                Shipping
-              </Text>
-              {orderData?.order?.shipping_charge === "0" ? (
-                <Text
-                  style={{
-                    fontFamily: "Poppins_700Bold",
-                    fontSize: font(12.5),
-                    color: "#10B981", // Green for FREE
-                  }}
-                >
-                  FREE
-                </Text>
-              ) : (
+                  <Receipt size={16} color={colors.textSecondary} />
+                </View>
                 <Text
                   style={{
                     fontFamily: "Poppins_600SemiBold",
-                    fontSize: font(12.5),
+                    fontSize: font(14),
                     color: colors.text,
                   }}
                 >
-                  + ₹{formatPrice(orderData?.order?.shipping_charge)}
+                  Bill Summary
                 </Text>
-              )}
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleInvoiceOpen}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: colors.backgroundgray,
+                  paddingVertical: spacing(5),
+                  paddingHorizontal: spacing(8),
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  gap: spacing(6),
+                }}
+              >
+                <Download
+                  size={16}
+                  color={colors.textSecondary}
+                  strokeWidth={2}
+                />
+                <View>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(10),
+                      color: colors.text,
+                      lineHeight: font(8),
+                    }}
+                  >
+                    Invoice
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
 
-            {orderData?.order?.cod_charges !== "0" && (
+            <View style={styles.cardContent}>
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -600,329 +588,443 @@ const OrderDetails = () => {
                     color: colors.text,
                   }}
                 >
-                  COD Charges
+                  Item Total
                 </Text>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_700Bold",
-                    fontSize: font(12.5),
-                    color:
-                      Number(orderData?.order?.cod_charges) > 0
-                        ? "#EF4444"
-                        : colors.text,
-                  }}
-                >
-                  + ₹{formatPrice(orderData?.order?.cod_charges)}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.summaryRow}>
-              <Text
-                style={{
-                  fontFamily: "Poppins_500Medium",
-                  fontSize: font(12.5),
-                  color: colors.text,
-                }}
-              >
-                GST (Govt. Taxes)
-              </Text>
-              <Text
-                style={{
-                  fontFamily: "Poppins_600SemiBold",
-                  fontSize: font(12.5),
-                  color: colors.text,
-                }}
-              >
-                + ₹{formatPrice(orderData?.order?.shipping_gst || "0")}
-              </Text>
-            </View>
-          </View>
-
-          <WavyDivider color={colors.border} spacing={spacing} />
-
-          <View
-            style={[
-              styles.cardContent,
-              { marginTop: 0, marginBottom: spacing(8) },
-            ]}
-          >
-            <View style={styles.summaryRow}>
-              <View>
                 <Text
                   style={{
                     fontFamily: "Poppins_600SemiBold",
-                    fontSize: font(14),
-                    color: colors.textSecondary,
-                  }}
-                >
-                  Grand Total
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_500Medium",
-                    fontSize: font(10),
-                    color: colors.textSecondary,
-                    marginTop: -1,
-                  }}
-                >
-                  Payment by{" "}
-                  {orderData?.order?.payment_type?.toLowerCase() === "cash"
-                    ? "Cash"
-                    : "Prepaid"}
-                </Text>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_700Bold",
-                    fontSize: font(20),
+                    fontSize: font(12.5),
                     color: colors.text,
                   }}
                 >
-                  ₹{formatPrice(orderData?.order?.paid_amount)}
+                  ₹{formatPrice(orderData?.order?.order_amount)}
                 </Text>
               </View>
-            </View>
-          </View>
-        </View>
 
-        <OrderDetailsSummary
-          orderData={orderData}
-          colors={colors}
-          font={font}
-          spacing={spacing}
-        />
-
-        {/* ── 4. Items ──────────────────────────────────── */}
-        <SectionLabel
-          title="Items Ordered"
-          colors={colors}
-          font={font}
-          spacing={spacing}
-        />
-        <View>
-          {orderData?.order_detail?.map((item: any, index: number) => (
-            <OrderItemCard
-              key={item.id}
-              item={item}
-              orderData={orderData}
-              isLast={index === (orderData?.order_detail?.length ?? 0) - 1}
-              colors={colors}
-              font={font}
-              spacing={spacing}
-            />
-          ))}
-        </View>
-
-        {/* ── Free Gift Items ───────────────────────────── */}
-        {orderData?.free_product && orderData.free_product.length > 0 && (
-          <View style={{ marginTop: spacing(24) }}>
-            <SectionLabel
-              title="Free Gift Items"
-              colors={colors}
-              font={font}
-              spacing={spacing}
-            />
-            
-            <View
-              style={{
-                borderWidth: 1.2,
-                borderColor: "#A7F3D0", // Soft light green border
-                borderRadius: spacing(12),
-                backgroundColor: colors.surface,
-                overflow: "hidden",
-              }}
-            >
-              {/* Header inside the box */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: spacing(8),
-                  backgroundColor: "#ECFDF5", // Soft light green background
-                  paddingVertical: spacing(10),
-                  paddingHorizontal: spacing(14),
-                  borderBottomWidth: 1.2,
-                  borderBottomColor: "#A7F3D0",
-                }}
-              >
+              <View style={styles.summaryRow}>
                 <Text
                   style={{
+                    fontFamily: "Poppins_500Medium",
                     fontSize: font(12.5),
-                    fontFamily: "Poppins_600SemiBold",
-                    color: "#065F46", // Dark green text matching premium theme
+                    color: colors.text,
                   }}
                 >
-                  Unlocks with your order
+                  Shipping
                 </Text>
+                {orderData?.order?.shipping_charge === "0" ? (
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(12.5),
+                      color: "#10B981", // Green for FREE
+                    }}
+                  >
+                    FREE
+                  </Text>
+                ) : (
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    + ₹{formatPrice(orderData?.order?.shipping_charge)}
+                  </Text>
+                )}
               </View>
 
-              <View style={{ paddingHorizontal: spacing(14), paddingVertical: spacing(8) }}>
-                {orderData.free_product?.map((item: any, idx: number) => {
-                  const imageUri = item.s3_image_path?.startsWith("http")
-                    ? item.s3_image_path
-                    : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
-                  const isLastFreeItem = idx === (orderData.free_product?.length ?? 0) - 1;
+              {orderData?.order?.cod_charges !== "0" && (
+                <View style={styles.summaryRow}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    COD Charges
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(12.5),
+                      color:
+                        Number(orderData?.order?.cod_charges) > 0
+                          ? "#EF4444"
+                          : colors.text,
+                    }}
+                  >
+                    + ₹{formatPrice(orderData?.order?.cod_charges)}
+                  </Text>
+                </View>
+              )}
 
-                  return (
-                    <View
-                      key={item.free_product_order_item_id}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: spacing(14),
-                        paddingVertical: spacing(12),
-                        borderBottomWidth: isLastFreeItem ? 0 : 1,
-                        borderBottomColor: colors.border,
-                      }}
-                    >
-                      {/* Image */}
-                      <View
-                        style={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: 8,
-                          backgroundColor: colors.background,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                          overflow: "hidden",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Image
-                          source={{ uri: imageUri }}
-                          style={{ width: 56, height: 56 }}
-                          contentFit="contain"
-                        />
-                      </View>
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  GST (Govt. Taxes)
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  + ₹{formatPrice(orderData?.order?.shipping_gst || "0")}
+                </Text>
+              </View>
+            </View>
 
-                      {/* Content */}
-                      <View style={{ flex: 1, gap: spacing(4) }}>
-                        <Text
-                          style={{
-                            fontFamily: "Poppins_500Medium",
-                            fontSize: font(12),
-                            color: colors.text,
-                            lineHeight: font(17),
-                          }}
-                          numberOfLines={2}
-                        >
-                          {item.free_product_name}
-                        </Text>
-                        
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontFamily: "Poppins_400Regular",
-                              fontSize: font(11),
-                              color: colors.textSecondary,
-                            }}
-                          >
-                            Size:{" "}
-                            <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
-                              {item.variation_size || "35 g"}
-                            </Text>
-                            {"  |  "}
-                            Qty:{" "}
-                            <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
-                              {item.quantity}
-                            </Text>
-                          </Text>
+            <WavyDivider color={colors.border} spacing={spacing} />
 
-                          <Text
-                            style={{
-                              fontFamily: "Poppins_600SemiBold",
-                              fontSize: font(13),
-                              color: "#10B981", // Green FREE text
-                            }}
-                          >
-                            FREE
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })}
+            <View
+              style={[
+                styles.cardContent,
+                { marginTop: 0, marginBottom: spacing(8) },
+              ]}
+            >
+              <View style={styles.summaryRow}>
+                <View>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(14),
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    Grand Total
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(10),
+                      color: colors.textSecondary,
+                      marginTop: -1,
+                    }}
+                  >
+                    Payment by{" "}
+                    {orderData?.order?.payment_type?.toLowerCase() === "cash"
+                      ? "Cash"
+                      : "Prepaid"}
+                  </Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(20),
+                      color: colors.text,
+                    }}
+                  >
+                    ₹{formatPrice(orderData?.order?.paid_amount)}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        )}
 
-        {/* ── 5. Support & Actions ────────────────────────── */}
-        <View
-          style={{
-            marginTop: spacing(20),
-            marginBottom: spacing(32),
-            paddingHorizontal: 0,
-          }}
-        >
-          <SectionLabel
-            title="Need Help?"
+          <OrderDetailsSummary
+            orderData={orderData}
             colors={colors}
             font={font}
             spacing={spacing}
           />
-          <View
-            style={[
-              styles.infoQuadrantCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                padding: spacing(16),
-                gap: spacing(16),
-              },
-            ]}
-          >
-            {(currentStatus === "Order Placed" ||
-              currentStatus === "Pending") && (
-              <TouchableOpacity
-                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-                onPress={() => setIsCancelModalVisible(true)}
+
+          {/* ── 4. Items ──────────────────────────────────── */}
+          <SectionLabel
+            title="Items Ordered"
+            colors={colors}
+            font={font}
+            spacing={spacing}
+          />
+          <View>
+            {orderData?.order_detail?.map((item: any, index: number) => (
+              <OrderItemCard
+                key={item.id}
+                item={item}
+                orderData={orderData}
+                isLast={index === (orderData?.order_detail?.length ?? 0) - 1}
+                colors={colors}
+                font={font}
+                spacing={spacing}
+              />
+            ))}
+          </View>
+
+          {/* ── Free Gift Items ───────────────────────────── */}
+          {orderData?.free_product && orderData.free_product.length > 0 && (
+            <View style={{ marginTop: spacing(24) }}>
+              <SectionLabel
+                title="Free Gift Items"
+                colors={colors}
+                font={font}
+                spacing={spacing}
+              />
+
+              <View
+                style={{
+                  borderWidth: 1.2,
+                  borderColor: "#A7F3D0", // Soft light green border
+                  borderRadius: spacing(12),
+                  backgroundColor: colors.surface,
+                  overflow: "hidden",
+                }}
               >
+                {/* Header inside the box */}
                 <View
                   style={{
-                    padding: 8,
-                    backgroundColor: "#FEF2F2",
-                    borderRadius: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(8),
+                    backgroundColor: "#ECFDF5", // Soft light green background
+                    paddingVertical: spacing(10),
+                    paddingHorizontal: spacing(14),
+                    borderBottomWidth: 1.2,
+                    borderBottomColor: "#A7F3D0",
                   }}
                 >
-                  <XCircle size={18} color="#EF4444" />
-                </View>
-                <View style={{ flex: 1 }}>
                   <Text
                     style={{
+                      fontSize: font(12.5),
                       fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(13),
-                      color: "#EF4444",
+                      color: "#065F46", // Dark green text matching premium theme
                     }}
                   >
-                    Cancel Order
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_400Regular",
-                      fontSize: font(10.5),
-                      color: colors.textTertiary,
-                    }}
-                  >
-                    {"Cancel this order if you've changed your mind"}
+                    Unlocks with your order
                   </Text>
                 </View>
-              </TouchableOpacity>
-            )}
 
-            {isReturnAvailable && (
+                <View
+                  style={{
+                    paddingHorizontal: spacing(14),
+                    paddingVertical: spacing(8),
+                  }}
+                >
+                  {orderData.free_product?.map((item: any, idx: number) => {
+                    const imageUri = item.s3_image_path?.startsWith("http")
+                      ? item.s3_image_path
+                      : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                    const isLastFreeItem =
+                      idx === (orderData.free_product?.length ?? 0) - 1;
+
+                    return (
+                      <View
+                        key={item.free_product_order_item_id}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: spacing(14),
+                          paddingVertical: spacing(12),
+                          borderBottomWidth: isLastFreeItem ? 0 : 1,
+                          borderBottomColor: colors.border,
+                        }}
+                      >
+                        {/* Image */}
+                        <View
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 8,
+                            backgroundColor: colors.background,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            overflow: "hidden",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Image
+                            source={{ uri: imageUri }}
+                            style={{ width: 56, height: 56 }}
+                            contentFit="contain"
+                          />
+                        </View>
+
+                        {/* Content */}
+                        <View style={{ flex: 1, gap: spacing(4) }}>
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_500Medium",
+                              fontSize: font(12),
+                              color: colors.text,
+                              lineHeight: font(17),
+                            }}
+                            numberOfLines={2}
+                          >
+                            {item.free_product_name}
+                          </Text>
+
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_400Regular",
+                                fontSize: font(11),
+                                color: colors.textSecondary,
+                              }}
+                            >
+                              Size:{" "}
+                              <Text
+                                style={{
+                                  color: colors.text,
+                                  fontFamily: "Poppins_500Medium",
+                                }}
+                              >
+                                {item.variation_size || "35 g"}
+                              </Text>
+                              {"  |  "}
+                              Qty:{" "}
+                              <Text
+                                style={{
+                                  color: colors.text,
+                                  fontFamily: "Poppins_500Medium",
+                                }}
+                              >
+                                {item.quantity}
+                              </Text>
+                            </Text>
+
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_600SemiBold",
+                                fontSize: font(13),
+                                color: "#10B981", // Green FREE text
+                              }}
+                            >
+                              FREE
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* ── 5. Support & Actions ────────────────────────── */}
+          <View
+            style={{
+              marginTop: spacing(20),
+              marginBottom: spacing(32),
+              paddingHorizontal: 0,
+            }}
+          >
+            <SectionLabel
+              title="Need Help?"
+              colors={colors}
+              font={font}
+              spacing={spacing}
+            />
+            <View
+              style={[
+                styles.infoQuadrantCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  padding: spacing(16),
+                  gap: spacing(16),
+                },
+              ]}
+            >
+              {(currentStatus === "Order Placed" ||
+                currentStatus === "Pending") && (
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                  onPress={() => setIsCancelModalVisible(true)}
+                >
+                  <View
+                    style={{
+                      padding: 8,
+                      backgroundColor: "#FEF2F2",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <XCircle size={18} color="#EF4444" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13),
+                        color: "#EF4444",
+                      }}
+                    >
+                      Cancel Order
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(10.5),
+                        color: colors.textTertiary,
+                      }}
+                    >
+                      {"Cancel this order if you've changed your mind"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {isReturnAvailable && (
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                  onPress={() => router.push(`/returnproducts/${id}`)}
+                >
+                  <View
+                    style={{
+                      padding: 8,
+                      backgroundColor: colors.backgroundgray,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <RotateCcw size={18} color={colors.text} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13),
+                        color: colors.text,
+                      }}
+                    >
+                      Return / Exchange
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(10.5),
+                        color: colors.textTertiary,
+                      }}
+                    >
+                      Request a return or exchange for items
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-                onPress={() => router.push(`/returnproducts/${id}`)}
               >
                 <View
                   style={{
@@ -931,7 +1033,7 @@ const OrderDetails = () => {
                     borderRadius: 8,
                   }}
                 >
-                  <RotateCcw size={18} color={colors.text} />
+                  <Phone size={18} color={colors.text} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -941,7 +1043,7 @@ const OrderDetails = () => {
                       color: colors.text,
                     }}
                   >
-                    Return / Exchange
+                    Contact Support
                   </Text>
                   <Text
                     style={{
@@ -950,47 +1052,12 @@ const OrderDetails = () => {
                       color: colors.textTertiary,
                     }}
                   >
-                    Request a return or exchange for items
+                    Get help with your order or delivery
                   </Text>
                 </View>
               </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
-            >
-              <View
-                style={{
-                  padding: 8,
-                  backgroundColor: colors.backgroundgray,
-                  borderRadius: 8,
-                }}
-              >
-                <Phone size={18} color={colors.text} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_600SemiBold",
-                    fontSize: font(13),
-                    color: colors.text,
-                  }}
-                >
-                  Contact Support
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_400Regular",
-                    fontSize: font(10.5),
-                    color: colors.textTertiary,
-                  }}
-                >
-                  Get help with your order or delivery
-                </Text>
-              </View>
-            </TouchableOpacity>
+            </View>
           </View>
-        </View>
         </View>
         {/* <Footer /> */}
       </ScrollView>
@@ -1003,6 +1070,7 @@ const OrderDetails = () => {
         onClose={() => setIsCancelModalVisible(false)}
         onSuccess={() => {
           setIsCancelModalVisible(false);
+          refetch();
         }}
       />
     </SafeAreaView>

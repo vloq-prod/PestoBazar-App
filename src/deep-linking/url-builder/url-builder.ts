@@ -70,7 +70,6 @@ export const DeepLinkURLBuilder = {
     tracking?: TrackingOptions,
   ): string {
     const params = new URLSearchParams();
-    if (productId) params.set("id", productId.toString());
     return buildUrl(`/products/${slug}`, params, tracking);
   },
 

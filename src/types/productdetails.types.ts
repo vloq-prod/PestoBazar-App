@@ -9,6 +9,7 @@ export interface ProductMaster {
   product_name: string;
   description: string;
   slug: string;
+  product_slug?: string;
   category_id: number;
   brand_id: number;
   keywords: string;

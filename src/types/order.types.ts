@@ -19,10 +19,6 @@ export interface CodSuccessResponse {
   order_id: string;
 }
 
-
-
-
-
 // ======================================================
 // REQUEST
 // ======================================================
@@ -54,16 +50,7 @@ export interface InitiateOrderData {
 // FINAL RESPONSE
 // ======================================================
 
-export type InitiateOrderResponse =
-  ApiResponse<InitiateOrderData>;
-
-
-
-
-  
-
-
-
+export type InitiateOrderResponse = ApiResponse<InitiateOrderData>;
 
 // ======================================================
 // REQUEST
@@ -141,8 +128,6 @@ export interface OrderInfo {
   order_no: string;
 
   enc_order_id: string;
-
-
 }
 
 // ======================================================
@@ -245,7 +230,6 @@ export interface ReturnReasonData {
 
 export type ReturnReasonResponse = ApiResponse<ReturnReasonData>;
 
-
 // ======================================================
 // FINAL DATA
 // ======================================================
@@ -305,15 +289,7 @@ export interface ViewOrderData {
 // FINAL RESPONSE
 // ======================================================
 
-export type ViewOrderResponse =
-  ApiResponse<ViewOrderData>;
-
-
-
-
-
-
-
+export type ViewOrderResponse = ApiResponse<ViewOrderData>;
 
 // ======================================================
 // REQUEST
@@ -421,12 +397,7 @@ export interface UserOrderHistoryData {
 // FINAL RESPONSE
 // ======================================================
 
-export type UserOrderHistoryResponse =
-  ApiResponse<UserOrderHistoryData>;
-
-
-
-
+export type UserOrderHistoryResponse = ApiResponse<UserOrderHistoryData>;
 
 // ======================================================
 // REQUEST
@@ -453,19 +424,7 @@ export interface PaymentSuccessData {
 // FINAL RESPONSE
 // ======================================================
 
-export type PaymentSuccessResponse =
-  ApiResponse<PaymentSuccessData>;
-  
-
-
-
-
-
-
-
-
-
-
+export type PaymentSuccessResponse = ApiResponse<PaymentSuccessData>;
 
 export interface Order {
   id: number;
@@ -656,9 +615,6 @@ export interface ViewCustomerReturnOrderResponse {
   status: number;
 }
 
-
-
-
 export interface ReturnHistoryItem {
   return_id: number;
   return_status: string;
@@ -676,9 +632,6 @@ export interface ReturnHistoryResponse {
   order_return: ReturnHistoryItem[];
 }
 
-
-
-
 export interface UploadReturnVideoData {
   video_path: string;
   video_name: string;
@@ -689,8 +642,6 @@ export interface UploadReturnVideoResponse {
   message: string;
   data: UploadReturnVideoData;
 }
-
-
 
 export interface ReturnProductRequest {
   order_id: string;
@@ -725,8 +676,6 @@ export interface ReturnProductResponse {
   };
 }
 
-
-
 export interface SaveReturnImageRequest {
   order_return_product_detail_id: number;
   order_return_id: number;
@@ -738,8 +687,6 @@ export interface SaveReturnImageResponse {
   status: number;
   message: string;
 }
-
-
 
 export interface OrderDetailItem {
   id: number;
@@ -783,8 +730,6 @@ export interface AddressInfo {
   landmark: string | null;
   state_name: string;
 }
-
-
 
 export interface OrderDetailData {
   order_id: string;

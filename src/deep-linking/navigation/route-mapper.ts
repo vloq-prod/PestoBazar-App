@@ -50,17 +50,14 @@ function buildRouteParams(
     case DEEP_LINK_ROUTE_NAMES.PRODUCT: {
       const params: Record<string, string | number> = {};
       if (id) params.id = id;
-      if (slug) params.product_slug = slug;
-      if (queryParams.product_slug)
-        params.product_slug = queryParams.product_slug;
+      const actualSlug =
+        slug || (queryParams.product_slug as string) || undefined;
+      if (actualSlug) {
+        params.slug = actualSlug;
+        params.product_slug = actualSlug;
+      }
       if (queryParams.product_name)
         params.product_name = queryParams.product_name;
-      // If we only have slug but no ID, pass slug as product_slug
-      // and set id to "slug" (the product page checks both)
-      if (!id && slug) {
-        params.id = "slug";
-        params.product_slug = slug;
-      }
       return params;
     }
 

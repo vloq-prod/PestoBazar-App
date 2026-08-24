@@ -1,3 +1,24 @@
+import React, { useEffect } from "react";
+import { View } from "react-native";
+import { useRouter } from "expo-router";
+
+/**
+ * WelcomeScreen (Commented out for now as per requirement)
+ * Visitor ID generation is automatically handled on app startup in _layout.tsx
+ */
+export default function WelcomeScreen() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Auto-redirect to tabs
+    router.replace("/(tabs)");
+  }, [router]);
+
+  return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+}
+
+/*
+// ─── COMMENTED OUT WELCOME SCREEN UI ───────────────────────────────────────
 import { useRef, useState } from "react";
 import {
   Dimensions,
@@ -8,11 +29,9 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
   ViewToken,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
@@ -24,7 +43,6 @@ import { StatusBar } from "expo-status-bar";
 import { useAppVisitorStore } from "../src/store/auth";
 import { useVisitor } from "../src/hooks/useAuthHooks";
 import { StorageUtil } from "../src/utils/storage";
-
 
 const { width, height } = Dimensions.get("window");
 
@@ -67,7 +85,7 @@ function Dot({
   return <Animated.View style={[styles.dot, style]} />;
 }
 
-export default function WelcomeScreen() {
+export function WelcomeScreenOriginal() {
   const visitorId = useAppVisitorStore((state) => state.visitorId);
   const { createVisitor } = useVisitor();
   const setVisitor = useAppVisitorStore((state) => state.setVisitor);
@@ -106,16 +124,11 @@ export default function WelcomeScreen() {
       });
 
       const { visitor_id, token } = res;
-      
 
       setVisitor(visitor_id, token);
-
       await StorageUtil.setVisitor(visitor_id, token);
-
-            router.replace("/(tabs)");
-    } catch (error) {
-   
-    }
+      router.replace("/(tabs)");
+    } catch (error) {}
   };
 
   const isLast = activeIndex === SLIDES.length - 1;
@@ -151,27 +164,22 @@ export default function WelcomeScreen() {
         )}
       />
 
-      {/* Bottom content */}
       <View
         style={[styles.bottomContent, { paddingBottom: insets.bottom + 24 }]}
         pointerEvents="box-none"
       >
-        {/* Title & subtitle — animate per active slide */}
         <View style={styles.textBlock}>
           <Text style={styles.title}>{SLIDES[activeIndex].title}</Text>
           <Text style={styles.subtitle}>{SLIDES[activeIndex].subtitle}</Text>
         </View>
 
-        {/* Dots + Button row */}
         <View style={styles.bottomRow}>
-          {/* Dots */}
           <View style={styles.dots}>
             {SLIDES.map((_, i) => (
               <Dot key={i} index={i} activeIndex={scrollX} />
             ))}
           </View>
 
-          {/* CTA */}
           <TouchableOpacity
             style={styles.btn}
             onPress={isLast ? handleGetStarted : handleNext}
@@ -249,3 +257,4 @@ const styles = StyleSheet.create({
     height: height,
   },
 });
+*/

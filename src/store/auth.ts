@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { StorageUtil } from "../utils/storage";
+import { createVisitor } from "../api/auth.api";
 
 interface AppState {
   // Visitor
@@ -16,6 +17,7 @@ interface AppState {
   setVisitor: (visitorId: string, token: string) => Promise<void>;
   clearVisitor: () => Promise<void>;
   hydrateVisitor: () => Promise<void>;
+  ensureVisitor: () => Promise<void>;
 
   // User actions
   setUser: (
@@ -60,6 +62,30 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     const visitorId = await StorageUtil.getVisitorId();
     const token = await StorageUtil.getToken();
     if (visitorId && token) set({ visitorId, token });
+  },
+
+  ensureVisitor: async () => {
+    let visitorId = await StorageUtil.getVisitorId();
+    let token = await StorageUtil.getToken();
+
+    if (!visitorId || !token) {
+      try {
+        console.log("⚡ Auto-generating visitor ID on app load...");
+        const res = await createVisitor({ visitor_id: "" });
+        if (res && res.visitor_id && res.token) {
+          visitorId = res.visitor_id;
+          token = res.token;
+          await StorageUtil.setVisitor(visitorId, token);
+          console.log("✅ Auto-generated Visitor ID:", visitorId);
+        }
+      } catch (error) {
+        console.error("❌ Failed to auto-generate visitor ID:", error);
+      }
+    }
+
+    if (visitorId && token) {
+      set({ visitorId, token });
+    }
   },
 
   // ── User ─────────────────────────────────────────

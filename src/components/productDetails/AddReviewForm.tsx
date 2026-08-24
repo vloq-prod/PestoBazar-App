@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   ScrollView,
-  Alert,
 } from "react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -22,6 +21,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useAppVisitorStore } from "../../store/auth";
 import { useSubmitRating } from "../../hooks/homeHooks";
+import { useToast } from "../../context/ToastContext";
 
 interface Props {
   product_id: number;
@@ -31,6 +31,7 @@ interface Props {
 const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
   const { colors } = useTheme();
   const { font } = useResponsive();
+  const { showToast } = useToast();
 
   const [rating, setRating] = useState(0);
   const [form, setForm] = useState({
@@ -48,7 +49,7 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
   const pickMedia = async (type: "image" | "video") => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permission Denied", "We need media library permissions to upload review media.");
+      showToast("We need media library permissions to upload review media.", "warning");
       return;
     }
 
@@ -73,11 +74,11 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
 
   const handleSubmit = () => {
     if (rating === 0) {
-      Alert.alert("Rating Required", "Please select a star rating.");
+      showToast("Please select a star rating.", "warning");
       return;
     }
     if (!form.name || !form.comment) {
-      Alert.alert("Missing Fields", "Please fill in your name and comment.");
+      showToast("Please fill in your name and comment.", "warning");
       return;
     }
 
@@ -119,17 +120,17 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
       {
         onSuccess: (data) => {
           if (data.status === 1) {
-            Alert.alert("Success", data.message || "Your review has been submitted successfully!");
+            showToast(data.message || "Your review has been submitted successfully!", "success");
             setForm({ name: "", email: "", comment: "" });
             setRating(0);
             setMedia([]);
             onSuccess?.();
           } else {
-            Alert.alert("Failed", data.message || "Failed to submit review");
+            showToast(data.message || "Failed to submit review", "error");
           }
         },
         onError: (err: any) => {
-          Alert.alert("Error", err?.message || "Something went wrong while submitting the review");
+          showToast(err?.message || "Something went wrong while submitting the review", "error");
         },
       }
     );

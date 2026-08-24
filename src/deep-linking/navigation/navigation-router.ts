@@ -69,42 +69,24 @@ function executeNavigation(instruction: NavigationInstruction): void {
 
   setTimeout(() => {
     try {
-      console.log("[NavigationRouter] Navigating to:", instruction.pathname, instruction.params);
+      console.log(
+        "[NavigationRouter] Navigating to:",
+        instruction.pathname,
+        instruction.params,
+      );
 
-      const canGoBack = _router!.canGoBack();
-      const isStackScreen = instruction.pathname.startsWith("/(stack)");
-
-      if (!canGoBack && isStackScreen) {
-        console.log("[NavigationRouter] No history stack detected. Seeding with home tab first.");
-        _router!.replace("/(tabs)/");
-        
-        setTimeout(() => {
-          try {
-            if (Object.keys(instruction.params).length > 0) {
-              _router!.push({
-                pathname: instruction.pathname as any,
-                params: instruction.params,
-              });
-            } else {
-              _router!.push(instruction.pathname as any);
-            }
-          } catch (innerError) {
-            console.error("[NavigationRouter] Delayed navigation failed:", innerError);
-          }
-        }, 100);
+      const hasParams = Object.keys(instruction.params).length > 0;
+      if (hasParams) {
+        _router!.navigate({
+          pathname: instruction.pathname as any,
+          params: instruction.params,
+        });
       } else {
-        if (Object.keys(instruction.params).length > 0) {
-          _router!.push({
-            pathname: instruction.pathname as any,
-            params: instruction.params,
-          });
-        } else {
-          _router!.push(instruction.pathname as any);
-        }
+        _router!.navigate(instruction.pathname as any);
       }
     } catch (error) {
       console.error("[NavigationRouter] Navigation failed:", error);
       // Don't crash the app — just log the error
     }
-  }, 100);
+  }, 50);
 }
