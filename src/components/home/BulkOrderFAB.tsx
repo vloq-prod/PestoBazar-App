@@ -172,7 +172,7 @@ const BulkOrderFAB: React.FC<Props> = ({
                   fontFamily: "Poppins_500Medium",
                 }}
               >
-                Bulk
+                whole
               </Text>
               <Text
                 style={{
@@ -183,7 +183,7 @@ const BulkOrderFAB: React.FC<Props> = ({
                   fontFamily: "Poppins_500Medium",
                 }}
               >
-                Orders
+                sale
               </Text>
             </View>
 

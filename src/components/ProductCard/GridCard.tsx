@@ -30,10 +30,6 @@ const formatPrice = (price: string | number) => {
 const formatMRP = (price: string | number) => {
   const num = Number(price);
   if (isNaN(num)) return String(price);
-  if (num >= 20000) {
-    const kVal = num / 1000;
-    return (kVal % 1 === 0 ? kVal.toString() : kVal.toFixed(1)) + "k";
-  }
   return num % 1 === 0 ? num.toString() : num.toFixed(2);
 };
 
@@ -251,8 +247,10 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.background,
                   borderRadius: spacing(8),
+                  borderWidth: 1.2,
+                  borderColor: colors.primary,
                   width: "100%",
                   height: "100%",
                   shadowColor: "#000",
@@ -284,7 +282,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
                 >
-                  <Minus size={spacing(12)} color="#fff" strokeWidth={2.5} />
+                  <Minus size={spacing(12)} color={colors.primary} strokeWidth={2.5} />
                 </TouchableOpacity>
 
                 {/* Qty input */}
@@ -295,7 +293,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                   editable={!loading}
                   style={{
                     flex: 1,
-                    color: "#fff",
+                    color: colors.primary,
                     textAlign: "center",
                     fontSize: font(11),
                     fontFamily: "Poppins_600SemiBold",
@@ -326,7 +324,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
                 >
-                  <Plus size={spacing(12)} color="#fff" strokeWidth={2.5} />
+                  <Plus size={spacing(12)} color={colors.primary} strokeWidth={2.5} />
                 </TouchableOpacity>
               </View>
             )}
@@ -336,12 +334,12 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
 
       {/* ── DETAILS SECTION BELOW THE BORDERED CONTAINER ── */}
       <View style={{ paddingTop: spacing(8), gap: spacing(1) }}>
-        {/* Price row */}
+        {/* Price container */}
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing(8),
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: spacing(2),
             marginTop: spacing(1),
           }}
         >
@@ -374,11 +372,11 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
             </Text>
           </View>
 
-          {/* MRP Price crossed out */}
+          {/* MRP Price crossed out below selling price */}
           {discountAmount && (
             <Text
               style={{
-                fontSize: font(13.5),
+                fontSize: font(11),
                 color: colors.textSecondary,
                 textDecorationLine: "line-through",
                 fontFamily: "Poppins_400Regular",

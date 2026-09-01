@@ -42,8 +42,10 @@ const LOCAL_ASSETS: Record<string, any> = {
   Termites: require("../../../assets/HouseHold/Termite.png"),
   Cockroach: require("../../../assets/HouseHold/Cockroach.png"),
   Cockroaches: require("../../../assets/HouseHold/Cockroach.png"),
+  Cockroach2: require("../../../assets/HouseHold/Cockroach2.png"),
   Mosquito: require("../../../assets/HouseHold/Mosquito.png"),
   Mosquitoes: require("../../../assets/HouseHold/Mosquito.png"),
+  Mosquito2: require("../../../assets/HouseHold/Mosquito2.png"),
   Ant: require("../../../assets/HouseHold/ant.png"),
   Ants: require("../../../assets/HouseHold/ant.png"),
   Fly: require("../../../assets/HouseHold/Fly.png"),
@@ -102,7 +104,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const router = useRouter();
-  const [isRatClicked, setIsRatClicked] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -117,12 +119,29 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   };
 
   const bgColor = getDynamicLightColor(index, item.id);
+
+  const isCockroach = /cockroach/i.test(item.category_name || "");
+  const isMosquito = /mosquito/i.test(item.category_name || "");
   const isRat = /rat/i.test(item.category_name || "");
 
+  // Exact requested delays:
+  // Rat = 0.5s (500ms)
+  // Mosquito = 1.0s (1000ms)
+  // Cockroach = 1.5s (1500ms)
+  const animationDelay = isRat
+    ? 500
+    : isMosquito
+      ? 1000
+      : isCockroach
+        ? 1500
+        : 0;
+
+  const hasAnimation = animationDelay > 0;
+
   const handlePress = () => {
-    if (isRat) {
-      if (isRatClicked) return;
-      setIsRatClicked(true);
+    if (hasAnimation) {
+      if (isClicked) return;
+      setIsClicked(true);
 
       timeoutRef.current = setTimeout(() => {
         router.push({
@@ -138,9 +157,9 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
 
         // Reset image back to original state after navigation delay
         timeoutRef.current = setTimeout(() => {
-          setIsRatClicked(false);
+          setIsClicked(false);
         }, 800);
-      }, 1500);
+      }, animationDelay);
     } else {
       router.push({
         pathname: "/(stack)/category/[slug]",
@@ -158,8 +177,14 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   let imageSource =
     getLocalImage(item.category_name) ?? { uri: item.s3_image_path };
 
-  if (isRat && isRatClicked) {
-    imageSource = LOCAL_ASSETS["Rat2"];
+  if (isClicked) {
+    if (isCockroach) {
+      imageSource = LOCAL_ASSETS["Cockroach2"];
+    } else if (isMosquito) {
+      imageSource = LOCAL_ASSETS["Mosquito2"];
+    } else if (isRat) {
+      imageSource = LOCAL_ASSETS["Rat2"];
+    }
   }
 
   return (

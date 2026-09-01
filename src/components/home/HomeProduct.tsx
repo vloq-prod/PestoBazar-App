@@ -4,7 +4,6 @@ import React from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   Dimensions,
 } from "react-native";
@@ -19,10 +18,9 @@ import SeeAllProductsButton from "../comman/SeeAllProductsButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const H_PADDING = 16 * 2;
-const GAP = 10;
-
-const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.7;
+const PADDING = 16;
+const GAP = 8;
+const ITEM_WIDTH = (SCREEN_WIDTH - PADDING * 2 - GAP * 2) / 3;
 
 // ─────────────────────────────────────────────
 // Skeleton Card (matches real UI)
@@ -31,36 +29,36 @@ const SkeletonCard = () => {
   const { colors } = useTheme();
 
   return (
-    <View style={{ width: ITEM_WIDTH, gap: 8 }}>
+    <View style={{ width: ITEM_WIDTH, gap: 6 }}>
       <View
         style={{
           width: "100%",
           aspectRatio: 1,
-          borderRadius: 14,
+          borderRadius: 12,
           backgroundColor: colors.backgroundSkeleton,
-        }}
-      />
-      <View
-        style={{
-          height: 12,
-          width: "80%",
-          backgroundColor: colors.backgroundSkeleton,
-          borderRadius: 6,
         }}
       />
       <View
         style={{
           height: 10,
-          width: "55%",
+          width: "80%",
           backgroundColor: colors.backgroundSkeleton,
-          borderRadius: 6,
+          borderRadius: 4,
         }}
       />
       <View
         style={{
-          height: 36,
+          height: 8,
+          width: "55%",
           backgroundColor: colors.backgroundSkeleton,
-          borderRadius: 8,
+          borderRadius: 4,
+        }}
+      />
+      <View
+        style={{
+          height: 32,
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 6,
         }}
       />
     </View>
@@ -77,7 +75,7 @@ const SkeletonSection = () => {
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
-          paddingHorizontal: 16,
+          paddingHorizontal: PADDING,
         }}
       >
         <View
@@ -98,15 +96,19 @@ const SkeletonSection = () => {
         />
       </View>
 
-      <FlatList
-        horizontal
-        data={[1, 2, 3]}
-        keyExtractor={(i) => String(i)}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-        ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-        renderItem={() => <SkeletonCard />}
-      />
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: PADDING,
+          columnGap: GAP,
+          rowGap: 12,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </View>
     </View>
   );
 };
@@ -117,6 +119,7 @@ const sectionDescriptions: Record<string, string> = {
   "Top Rated": "Highest rated products based on customer reviews.",
   Trending: "Best-selling products trusted by thousands.",
 };
+
 // ─────────────────────────────────────────────
 // Section Header
 // ─────────────────────────────────────────────
@@ -126,7 +129,7 @@ const SectionHeader = ({ title, description }: any) => {
   return (
     <View
       style={{
-        paddingHorizontal: 16,
+        paddingHorizontal: PADDING,
       }}
     >
       <Text
@@ -181,7 +184,7 @@ const HomeProduct = () => {
     return (
       <View
         style={{
-          marginHorizontal: 16,
+          marginHorizontal: PADDING,
           padding: 20,
           borderRadius: 14,
           borderWidth: 1,
@@ -195,7 +198,6 @@ const HomeProduct = () => {
         </Text>
 
         <TouchableOpacity
-          // onPress={refetch}
           style={{
             backgroundColor: colors.primary,
             paddingHorizontal: 16,
@@ -212,43 +214,46 @@ const HomeProduct = () => {
   // ── Main UI
   return (
     <View style={{ gap: 20 }}>
-      {sections.map((section, index) => (
-        <View key={index} style={{ gap: 12 }}>
-          <SectionHeader
-            title={section.title}
-            description={sectionDescriptions[section.title]}
-          />
-          <FlatList
-            horizontal
-            data={section.products}
-            keyExtractor={(item) => String(item.id)}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-            ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
-            renderItem={({ item }) => (
-              <View style={{ width: ITEM_WIDTH }}>
-                <ItemCard item={item as any} />
-              </View>
-            )}
-            initialNumToRender={4}
-            maxToRenderPerBatch={5}
-            windowSize={5}
-            removeClippedSubviews
-          />
-          <SeeAllProductsButton
-            products={section.products}
-            onPress={() =>
-              router.push({
-                pathname: "(stack)/viewall/[all]",
-                params: {
-                  title: section.title,
-                },
-              })
-            }
-            style={{ marginTop: 4 }}
-          />
-        </View>
-      ))}
+      {sections.map((section, index) => {
+        if (!section.products || section.products.length === 0) return null;
+        const displayProducts = section.products.slice(0, 6);
+
+        return (
+          <View key={index} style={{ gap: 12 }}>
+            <SectionHeader
+              title={section.title}
+              description={sectionDescriptions[section.title]}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                paddingHorizontal: PADDING,
+                columnGap: GAP,
+                rowGap: 12,
+              }}
+            >
+              {displayProducts.map((product) => (
+                <View key={product.id} style={{ width: ITEM_WIDTH }}>
+                  <ItemCard item={product as any} />
+                </View>
+              ))}
+            </View>
+            <SeeAllProductsButton
+              products={section.products}
+              onPress={() =>
+                router.push({
+                  pathname: "(stack)/viewall/[all]",
+                  params: {
+                    title: section.title,
+                  },
+                })
+              }
+              style={{ marginTop: 4 }}
+            />
+          </View>
+        );
+      })}
     </View>
   );
 };

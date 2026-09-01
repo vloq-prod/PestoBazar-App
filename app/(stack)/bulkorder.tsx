@@ -29,7 +29,7 @@ import { useBulkEnquiry } from "../../src/hooks/homeHooks";
 import { useToast } from "../../src/context/ToastContext";
 
 const WHATSAPP_NUMBER = "918879660630";
-const WHATSAPP_MESSAGE = "Hi! I'm interested in bulk orders.";
+const WHATSAPP_MESSAGE = "Hi! I'm interested in whole sale orders.";
 const INPUT_HEIGHT = 50;
 
 // ─── Animated Chat Bubble ─────────────────────────────────────
@@ -233,7 +233,7 @@ export default function BulkOrder() {
     >
       <StatusBar barStyle="dark-content" />
       <View style={{ height: insets.top, backgroundColor: colors.background }} />
-      <AppNavbar title="Bulk Orders" showBack />
+      <AppNavbar title="Wholesale" showBack />
 
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <ScrollView
@@ -248,7 +248,7 @@ export default function BulkOrder() {
         >
           {/* ── Msg 1 ── */}
           <ChatBubble delay={200}>
-            <BotBubble text="Hi 👋 Looking for bulk orders?" colors={colors} font={font} spacing={spacing} />
+            <BotBubble text="Hi 👋 Looking for wholesale orders?" colors={colors} font={font} spacing={spacing} />
           </ChatBubble>
 
           {/* ── Msg 2 ── */}
