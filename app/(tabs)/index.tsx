@@ -31,11 +31,11 @@ import HomeProduct from "../../src/components/home/HomeProduct";
 import CustomSections from "../../src/components/home/CustomSections";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
 import FeaturedProducts from "../../src/components/home/FeaturedProducts";
-import image1 from "../../assets/category/category4.png";
-import image2 from "../../assets/category/category2.png";
-import image3 from "../../assets/category/category5.png";
-import image4 from "../../assets/category/category1.png";
-import image5 from "../../assets/category/category3.png";
+import image1 from "../../assets/category/category3.4.png";
+import image2 from "../../assets/category/category3.2.png";
+import image3 from "../../assets/category/category3.5.png";
+import image4 from "../../assets/category/category3.1.png";
+import image5 from "../../assets/category/category3.3.png";
 
 import Animated, {
   useSharedValue,

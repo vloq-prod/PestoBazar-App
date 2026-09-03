@@ -5,7 +5,7 @@ import { MessageCircleReply, Star, Play } from "lucide-react-native";
 import { Image } from "expo-image";
 import { useResponsive } from "../../utils/useResponsive";
 import { ReviewItem } from "../../types/productdetails.types";
-import MediaLightbox from "../comman/MediaLightbox";
+import ReviewMediaLightbox from "./ReviewMediaLightbox";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 const getInitials = (name: string) => {
@@ -328,8 +328,8 @@ const ReviewCard = ({ item }: { item: ReviewItem }) => {
         )}
       </View>
 
-      {/* ── Lightbox ── */}
-      <MediaLightbox
+      {/* ── Review Media Lightbox ── */}
+      <ReviewMediaLightbox
         data={lightboxData}
         initialIndex={lightboxIndex}
         visible={lightboxVisible}

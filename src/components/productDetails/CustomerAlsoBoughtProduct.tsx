@@ -1,4 +1,4 @@
-import { Dimensions, Text, View, ScrollView } from "react-native";
+import { Dimensions, Text, View } from "react-native";
 import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
@@ -7,70 +7,44 @@ import ItemCard from "../comman/ItemCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const H_PADDING = 16 * 2;
-const GAP = 10;
-const ITEM_WIDTH = (SCREEN_WIDTH - H_PADDING - GAP) / 2.7;
+const PADDING = 16;
+const GAP = 8;
+const ITEM_WIDTH = (SCREEN_WIDTH - PADDING * 2 - GAP * 2) / 3;
 
-// ─── Skeleton Card ───────────────────────────────────────────────
-const SkeletonCard = ({
-  spacing,
-  colors,
-}: {
-  spacing: (n: number) => number;
-  colors: any;
-}) => {
+// ─── Skeleton Card (matches ItemCard grid UI) ───────────────────────
+const SkeletonCard = ({ colors }: { colors: any }) => {
   return (
-    <View
-      style={{
-        width: ITEM_WIDTH,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: spacing(14),
-        padding: spacing(10),
-        gap: spacing(8),
-      }}
-    >
-      {/* image skeleton */}
+    <View style={{ width: ITEM_WIDTH, gap: 6 }}>
       <View
         style={{
           width: "100%",
           aspectRatio: 1,
-          borderRadius: spacing(10),
+          borderRadius: 12,
           backgroundColor: colors.backgroundSkeleton,
         }}
       />
-      {/* title skeleton */}
       <View
         style={{
-          height: spacing(12),
-          borderRadius: spacing(6),
-          backgroundColor: colors.backgroundSkeleton,
+          height: 10,
           width: "80%",
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 4,
         }}
       />
       <View
         style={{
-          height: spacing(10),
-          borderRadius: spacing(6),
-          backgroundColor: colors.backgroundSkeleton,
+          height: 8,
           width: "55%",
+          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 4,
         }}
       />
-      {/* price skeleton */}
       <View
         style={{
-          height: spacing(14),
-          borderRadius: spacing(6),
+          height: 32,
           backgroundColor: colors.backgroundSkeleton,
-          width: "45%",
-        }}
-      />
-      {/* button skeleton */}
-      <View
-        style={{
-          height: spacing(36),
-          borderRadius: spacing(10),
-          backgroundColor: colors.backgroundSkeleton,
+          borderRadius: 8,
+          marginTop: 2,
         }}
       />
     </View>
@@ -88,13 +62,39 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
 
-  const { products, loading } = useCustomerAlsoBought({
+  const { products: rawProducts, loading } = useCustomerAlsoBought({
     product_id: productId,
   });
-  // console.log("products: ", products);
 
   // hide section if no data and not loading
-  if (!loading && products.length === 0) return null;
+  if (!loading && (!rawProducts || rawProducts.length === 0)) return null;
+
+  // De-duplicate products by unique variation/product ID
+  const seenIds = new Set<number | string>();
+  const uniqueProducts: any[] = [];
+  for (const item of rawProducts ?? []) {
+    const id = item.product_variation_id || item.product_id || item.id;
+    if (id && !seenIds.has(id)) {
+      seenIds.add(id);
+      uniqueProducts.push(item);
+    }
+  }
+
+  // Maximum 6 products (3 columns x 2 rows grid like CustomSections)
+  const displayProducts = uniqueProducts.slice(0, 6).map((item) => {
+    const s3Path = item.s3_image_path
+      ? item.s3_image_path.startsWith("http")
+        ? item.s3_image_path
+        : `${BASE_URL}${item.s3_image_path}`
+      : null;
+
+    return {
+      ...item,
+      id: item.product_variation_id || item.product_id || item.id,
+      product_id: item.product_id || item.id,
+      s3_image_path: s3Path,
+    };
+  });
 
   return (
     <View style={{ gap: spacing(14) }}>
@@ -122,38 +122,28 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
         </Text>
       </View>
 
-      {/* ── Horizontal Scroll ── */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: spacing(16),
-          gap: GAP,
-          paddingBottom: spacing(4),
+      {/* ── 3 Columns x 2 Rows Grid (Like CustomSections) ── */}
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: PADDING,
+          columnGap: GAP,
+          rowGap: 12,
         }}
       >
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <SkeletonCard key={i} spacing={spacing} colors={colors} />
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <View key={`skeleton-also-${i}`} style={{ width: ITEM_WIDTH }}>
+                <SkeletonCard colors={colors} />
+              </View>
             ))
-          : products.map((item) => {
-              const updatedItem = {
-                ...item,
-                s3_image_path: item.s3_image_path
-                  ? `${BASE_URL}${item.s3_image_path}`
-                  : null,
-              };
-
-              return (
-                <View
-                  key={item.product_variation_id}
-                  style={{ width: ITEM_WIDTH }}
-                >
-                  <ItemCard item={updatedItem as any} />
-                </View>
-              );
-            })}
-      </ScrollView>
+          : displayProducts.map((item, index) => (
+              <View key={`also-bought-${item.id}-${index}`} style={{ width: ITEM_WIDTH }}>
+                <ItemCard item={item as any} />
+              </View>
+            ))}
+      </View>
     </View>
   );
 };

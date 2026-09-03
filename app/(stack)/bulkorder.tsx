@@ -28,7 +28,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useBulkEnquiry } from "../../src/hooks/homeHooks";
 import { useToast } from "../../src/context/ToastContext";
 
-const WHATSAPP_NUMBER = "918879660630";
+const WHATSAPP_NUMBER = "919929929980";
 const WHATSAPP_MESSAGE = "Hi! I'm interested in whole sale orders.";
 const INPUT_HEIGHT = 50;
 

@@ -24,6 +24,7 @@ export default function StackLayout() {
       <Stack.Screen name="ordersuccess" />
       <Stack.Screen name="returndetails/[id]" />
       <Stack.Screen name="returnproducts/[id]" />
+      <Stack.Screen name="product-comparison/[variationId]" />
 
       <Stack.Screen
         name="categories"

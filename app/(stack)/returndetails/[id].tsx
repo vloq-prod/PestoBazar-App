@@ -32,7 +32,7 @@ import {
 
 // Project Imports
 import AppNavbar from "../../../src/components/comman/AppNavbar";
-import MediaLightbox from "../../../src/components/comman/MediaLightbox";
+import ProductMediaLightbox from "../../../src/components/comman/ProductMediaLightbox";
 import { useCustomerReturnOrder } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
@@ -1208,7 +1208,7 @@ const ReturnDetails = () => {
         </View>
       </ScrollView>
 
-      <MediaLightbox
+      <ProductMediaLightbox
         visible={lightboxVisible}
         data={lightboxData}
         initialIndex={lightboxInitialIndex}

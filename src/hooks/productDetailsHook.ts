@@ -16,12 +16,18 @@ import {
   getEstimatedDelivery,
   getProductDetails,
   getProductReviews,
+  getTaggedProducts,
   saveRecentlyViewed,
 } from "../api/productdetails.api";
 
 export const useProductDetails = (params: ProductDetailsParams) => {
   return useQuery({
-    queryKey: ["product-details", params.product_id, params.product_slug],
+    queryKey: [
+      "product-details",
+      params.product_id,
+      params.variation_id,
+      params.product_slug,
+    ],
     queryFn: () => getProductDetails(params),
 
     select: (res) => {
@@ -173,3 +179,21 @@ export const useSaveRecentlyViewed = () => {
     data: mutation.data,
   };
 };
+
+export const useTaggedProducts = (productId?: number) => {
+  const numericId = Number(productId ?? 0);
+  const query = useQuery({
+    queryKey: ["tagged-products", numericId],
+    queryFn: () => getTaggedProducts(numericId),
+    enabled: Number.isFinite(numericId) && numericId > 0,
+    select: (res) => res?.data?.tagged_products ?? [],
+  });
+
+  return {
+    products: query.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+

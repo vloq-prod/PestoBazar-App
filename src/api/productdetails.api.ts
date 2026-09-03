@@ -1,5 +1,17 @@
 import { apiClient } from "../lib/apiClient";
-import { CustomerAlsoBoughtParams, CustomerAlsoBoughtResponse, DeliveryParams, DeliveryResponse, ProductDetailsParams, ProductDetailsResponse, ReviewsParams, ReviewsResponse, SaveRecentlyViewedParams, SaveRecentlyViewedResponse } from "../types/productdetails.types";
+import {
+  CustomerAlsoBoughtParams,
+  CustomerAlsoBoughtResponse,
+  DeliveryParams,
+  DeliveryResponse,
+  ProductDetailsParams,
+  ProductDetailsResponse,
+  ReviewsParams,
+  ReviewsResponse,
+  SaveRecentlyViewedParams,
+  SaveRecentlyViewedResponse,
+  TaggedProductsResponse,
+} from "../types/productdetails.types";
 
 
 
@@ -81,6 +93,16 @@ export const saveRecentlyViewed = async (
   const response = await apiClient.post(
     `/app-api/v1/save-recently-viewed`,
     payload
+  );
+
+  return response.data;
+};
+
+export const getTaggedProducts = async (
+  productId: number
+): Promise<TaggedProductsResponse> => {
+  const response = await apiClient.get(
+    `/app-api/v1/get-tagged-products/${productId}`
   );
 
   return response.data;

@@ -16,7 +16,7 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 import AddReviewForm from "./AddReviewForm";
-import MediaLightbox, { MediaItem } from "../comman/MediaLightbox";
+import ReviewMediaLightbox, { ReviewMediaItem } from "./ReviewMediaLightbox";
 
 type Props = {
   product_id: number;
@@ -72,7 +72,7 @@ const ReviewSection = ({ product_id }: Props) => {
   }
 
   // Build full gallery items for lightbox with review data attached
-  const galleryItems: MediaItem[] = useMemo(() => {
+  const galleryItems: ReviewMediaItem[] = useMemo(() => {
     if (mediaGallery && mediaGallery.length > 0) {
       return mediaGallery.map((item) => ({
         type: (item.media.type === "video" ? "video" : "image") as
@@ -91,7 +91,7 @@ const ReviewSection = ({ product_id }: Props) => {
     }
 
     // Fallback: collect from reviews list
-    const items: MediaItem[] = [];
+    const items: ReviewMediaItem[] = [];
     reviews.forEach((r) => {
       const info = {
         full_name: r.full_name,
@@ -523,8 +523,8 @@ const ReviewSection = ({ product_id }: Props) => {
         </TouchableOpacity>
       )}
 
-      {/* ─── Full Screen Media Lightbox Modal ─── */}
-      <MediaLightbox
+      {/* ─── Full Screen Review Media Lightbox Modal ─── */}
+      <ReviewMediaLightbox
         data={galleryItems}
         initialIndex={lightboxIndex}
         visible={lightboxVisible}

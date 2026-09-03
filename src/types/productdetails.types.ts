@@ -1,5 +1,6 @@
 export interface ProductDetailsParams {
   product_id?: number;
+  variation_id?: number;
   product_slug?: string;
 }
 
@@ -332,3 +333,39 @@ export interface SaveRecentlyViewedResponse {
   message: string;
   status: number;
 }
+
+export interface TaggedProductItem {
+  id: number;
+  product_variation_id: number;
+  product_id: number;
+  active: string;
+  is_new: string;
+  overview: string | null;
+  avg_rating: string | null;
+  product_name: string;
+  url: string;
+  slug?: string;
+  selling_price: string | number;
+  mrp: string | number;
+  size: string | null;
+  unit: string | null;
+  moq: number;
+  image_path: string;
+  s3_image_path: string;
+  tagging_sequence?: number;
+  enc_product_variation_id?: string;
+}
+
+export interface TaggedProductsResponse {
+  message: string;
+  status: number;
+  data: {
+    tagged_products: TaggedProductItem[];
+  };
+}
+
+export interface TaggedProductsParams {
+  product_id?: number;
+  product_variation_id?: number;
+}
+

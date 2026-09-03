@@ -19,13 +19,13 @@ import { ChevronRight } from "lucide-react-native";
 
 // ─── Local Assets Mapping ──────────────────────────────────────
 const LOCAL_ASSETS: Record<string, any> = {
-  // Main Categories (from assets/maincat/)
+  // Main Categories (from assets/category/)
 
-  HouseHold: require("../../../assets/maincat/Household-pesticides.jpg"),
-  "Household Pesticides": require("../../../assets/maincat/Household-pesticides.jpg"),
-  Agrochemicals: require("../../../assets/maincat/Agrochemicals.jpg"),
-  "Pest Equipment": require("../../../assets/maincat/Pestequipment.jpg"),
-  "Gardening tools and supplies": require("../../../assets/maincat/Gardeningtoolsandsupplies.jpg"),
+  HouseHold: require("../../../assets/category/category1.4.png"),
+  "Household Pesticides": require("../../../assets/category/category1.4.png"),
+  Agrochemicals: require("../../../assets/category/category1.2.png"),
+  "Pest Equipment": require("../../../assets/category/category1.5.png"),
+  "Gardening tools and supplies": require("../../../assets/category/category1.1.png"),
 
   // FoggersandMachines Subcategories
   Foggers: require("../../../assets/FoggersandMachines/Foggers.png"),

@@ -15,7 +15,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { Play } from "lucide-react-native";
-import MediaLightbox from "./MediaLightbox";
+import ProductMediaLightbox from "./ProductMediaLightbox";
 
 const { width } = Dimensions.get("window");
 const CAROUSEL_HEIGHT = width;
@@ -51,7 +51,7 @@ const VideoItem = ({
     <VideoView
       player={player}
       style={StyleSheet.absoluteFillObject}
-      nativeControls
+      nativeControls={true}
       contentFit="contain"
     />
   );
@@ -86,7 +86,10 @@ const CarouselDot = ({
 };
 
 // ─── Main ─────────────────────────────────────────────────────
-const ImageVideoCarousel: React.FC<{ data: MediaItem[] }> = ({ data }) => {
+const ImageVideoCarousel: React.FC<{ data: MediaItem[]; title?: string }> = ({
+  data,
+  title,
+}) => {
   const { colors } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -156,12 +159,13 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[] }> = ({ data }) => {
         )}
       </View>
 
-      <MediaLightbox
+      <ProductMediaLightbox
         data={data}
         initialIndex={lightboxIndex}
         visible={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
         accentColor={colors.primary}
+        title={title}
       />
     </>
   );

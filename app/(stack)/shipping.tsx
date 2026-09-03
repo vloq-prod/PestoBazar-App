@@ -267,13 +267,13 @@ export default function ShippingScreen() {
             <TouchableOpacity
               style={styles.contactRow}
               activeOpacity={0.7}
-              onPress={() => Linking.openURL("tel:+919876543210")}
+              onPress={() => Linking.openURL("tel:+919929929980")}
             >
               <View style={[styles.contactIcon, { backgroundColor: colors.border }]}>
                 <Phone size={16} color={colors.textSecondary} />
               </View>
               <Text style={[styles.contactText, { color: colors.textSecondary }]}>
-                +91 98765 43210
+                +91 992 992 9980
               </Text>
             </TouchableOpacity>
 
