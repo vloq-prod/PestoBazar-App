@@ -266,7 +266,7 @@ export default function UserProfile() {
           >
             <View style={[styles.avatarInner, { borderColor: colors.primary }]}>
               <Image
-                source={userAvatar ? { uri: userAvatar } : require("../../assets/profile.jpeg")}
+                source={userAvatar ? { uri: userAvatar } : require("../../assets/icon.png")}
                 style={styles.avatarImage}
                 contentFit="cover"
               />

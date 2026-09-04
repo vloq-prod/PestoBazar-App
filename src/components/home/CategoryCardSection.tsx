@@ -6,6 +6,13 @@ import {
   useWindowDimensions,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Easing,
+} from "react-native-reanimated";
 import { useCategoryWithSubcategories } from "../../hooks/homeHooks";
 import { useTheme } from "../../theme";
 import { Image } from "expo-image";
@@ -17,70 +24,13 @@ import {
 import { useResponsive } from "../../utils/useResponsive";
 import { ChevronRight } from "lucide-react-native";
 
-// ─── Local Assets Mapping ──────────────────────────────────────
-const LOCAL_ASSETS: Record<string, any> = {
-  // Main Categories (from assets/category/)
-
-  HouseHold: require("../../../assets/category/category1.4.png"),
-  "Household Pesticides": require("../../../assets/category/category1.4.png"),
-  Agrochemicals: require("../../../assets/category/category1.2.png"),
-  "Pest Equipment": require("../../../assets/category/category1.5.png"),
-  "Gardening tools and supplies": require("../../../assets/category/category1.1.png"),
-
-  // FoggersandMachines Subcategories
-  Foggers: require("../../../assets/FoggersandMachines/Foggers.png"),
-  Machines: require("../../../assets/FoggersandMachines/Machines.png"),
-  Sprays: require("../../../assets/FoggersandMachines/Sprays.png"),
-  sprayers: require("../../../assets/FoggersandMachines/Sprays.png"),
-
-  // HouseHold Subcategories (Handles both singular and plural)
-  "Bugs Control": require("../../../assets/HouseHold/Bugs Control.png"),
-  "Bug Control": require("../../../assets/HouseHold/Bugs Control.png"),
-  Lizard: require("../../../assets/HouseHold/Lizard.png"),
-  Lizards: require("../../../assets/HouseHold/Lizard.png"),
-  Termite: require("../../../assets/HouseHold/Termite.png"),
-  Termites: require("../../../assets/HouseHold/Termite.png"),
-  Cockroach: require("../../../assets/HouseHold/Cockroach.png"),
-  Cockroaches: require("../../../assets/HouseHold/Cockroach.png"),
-  Cockroach2: require("../../../assets/HouseHold/Cockroach2.png"),
-  Mosquito: require("../../../assets/HouseHold/Mosquito.png"),
-  Mosquitoes: require("../../../assets/HouseHold/Mosquito.png"),
-  Mosquito2: require("../../../assets/HouseHold/Mosquito2.png"),
-  Ant: require("../../../assets/HouseHold/ant.png"),
-  Ants: require("../../../assets/HouseHold/ant.png"),
-  Fly: require("../../../assets/HouseHold/Fly.png"),
-  Flies: require("../../../assets/HouseHold/Fly.png"),
-  Snake: require("../../../assets/HouseHold/Snake.png"),
-  Snakes: require("../../../assets/HouseHold/Snake.png"),
-  Rat: require("../../../assets/HouseHold/rat.png"),
-  Rats: require("../../../assets/HouseHold/rat.png"),
-  Rat2: require("../../../assets/HouseHold/rat2.png"),
-};
-
-const getLocalImage = (name: string) => {
-  if (!name) return null;
-  const normalized = name.trim().toLowerCase();
-
-  // Try exact match or common variations
-  const foundKey = Object.keys(LOCAL_ASSETS).find((key) => {
-    const k = key.toLowerCase();
-    // Exact match
-    if (k === normalized) return true;
-    // Handle "Control" suffix variations (e.g. "Ant Control" matches "Ant")
-    if (normalized.includes(k) || k.includes(normalized)) return true;
-    return false;
-  });
-
-  return foundKey ? LOCAL_ASSETS[foundKey] : null;
-};
-
 const COLUMNS = 4;
 const H_PADDING = 16;
 const GAP = 10;
 
 const getVisibleSubcategories = (subcategories: CategoryItem[]) =>
   subcategories
-    .filter((item) => !/snake/i.test(item.category_name || ""))
+    .filter((item) => item.category_name)
     .slice(0, 8);
 
 // ─── Sub-category Card Item ──────────────────────────────────
@@ -89,7 +39,7 @@ interface SubCategoryCardProps {
   index: number;
   mainCategoryId: number;
   mainCategoryName: string;
-  mainCategoryDisplayImage?: string;
+  mainCategoryDisplayImage?: string | null;
   cardSize: number;
 }
 
@@ -104,7 +54,8 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const router = useRouter();
-  const [isClicked, setIsClicked] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const flipProgress = useSharedValue(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -120,76 +71,70 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
 
   const bgColor = getDynamicLightColor(index, item.id);
 
-  const isCockroach = /cockroach/i.test(item.category_name || "");
-  const isMosquito = /mosquito/i.test(item.category_name || "");
-  const isRat = /rat/i.test(item.category_name || "");
+  const navigateToCategory = () => {
+    router.push({
+      pathname: "/(stack)/category/[slug]",
+      params: {
+        slug: String(mainCategoryId),
+        name: mainCategoryName,
+        image: mainCategoryDisplayImage ?? "",
+        selectedSubCategoryId: String(item.id),
+      },
+    });
 
-  // Exact requested delays:
-  // Rat = 0.5s (500ms)
-  // Mosquito = 1.0s (1000ms)
-  // Cockroach = 1.5s (1500ms)
-  const animationDelay = isRat
-    ? 500
-    : isMosquito
-      ? 1000
-      : isCockroach
-        ? 1500
-        : 0;
-
-  const hasAnimation = animationDelay > 0;
+    // Reset flip after navigating so if user goes back it is in original state
+    timeoutRef.current = setTimeout(() => {
+      flipProgress.value = 0;
+      setIsFlipping(false);
+    }, 600);
+  };
 
   const handlePress = () => {
-    if (hasAnimation) {
-      if (isClicked) return;
-      setIsClicked(true);
+    if (isFlipping) return;
+
+    if (item.flip_image) {
+      setIsFlipping(true);
+      flipProgress.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
+      });
 
       timeoutRef.current = setTimeout(() => {
-        router.push({
-          pathname: "/(stack)/category/[slug]",
-          params: {
-            slug: String(mainCategoryId),
-            name: mainCategoryName,
-            image:
-              getLocalImage(mainCategoryName) ?? mainCategoryDisplayImage ?? "",
-            selectedSubCategoryId: String(item.id),
-          },
-        });
-
-        // Reset image back to original state after navigation delay
-        timeoutRef.current = setTimeout(() => {
-          setIsClicked(false);
-        }, 800);
-      }, animationDelay);
+        navigateToCategory();
+      }, 450);
     } else {
-      router.push({
-        pathname: "/(stack)/category/[slug]",
-        params: {
-          slug: String(mainCategoryId),
-          name: mainCategoryName,
-          image:
-            getLocalImage(mainCategoryName) ?? mainCategoryDisplayImage ?? "",
-          selectedSubCategoryId: String(item.id),
-        },
-      });
+      navigateToCategory();
     }
   };
 
-  let imageSource =
-    getLocalImage(item.category_name) ?? { uri: item.s3_image_path };
+  const frontStyle = useAnimatedStyle(() => {
+    const rotateValue = interpolate(flipProgress.value, [0, 1], [0, 180]);
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateValue}deg` },
+      ],
+      opacity: flipProgress.value >= 0.5 ? 0 : 1,
+    };
+  });
 
-  if (isClicked) {
-    if (isCockroach) {
-      imageSource = LOCAL_ASSETS["Cockroach2"];
-    } else if (isMosquito) {
-      imageSource = LOCAL_ASSETS["Mosquito2"];
-    } else if (isRat) {
-      imageSource = LOCAL_ASSETS["Rat2"];
-    }
-  }
+  const backStyle = useAnimatedStyle(() => {
+    const rotateValue = interpolate(flipProgress.value, [0, 1], [180, 360]);
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateValue}deg` },
+      ],
+      opacity: flipProgress.value >= 0.5 ? 1 : 0,
+    };
+  });
+
+  const imageUrl = item.category_image;
+  const flipImageUrl = item.flip_image;
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={0.85}
       style={{ flex: 1, alignItems: "center", marginBottom: GAP }}
       onPress={handlePress}
     >
@@ -201,13 +146,63 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
           borderRadius: spacing(12),
           alignItems: "center",
           justifyContent: "center",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <Image
-          source={imageSource}
-          style={{ width: cardSize * 0.9, height: cardSize * 0.72 }}
-          contentFit="contain"
-        />
+        {/* Front face (category_image) */}
+        <Animated.View
+          style={[
+            {
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "absolute",
+            },
+            frontStyle,
+          ]}
+        >
+          {imageUrl ? (
+            <Image
+              source={{ uri: imageUrl }}
+              style={{ width: cardSize * 0.88, height: cardSize * 0.72 }}
+              contentFit="contain"
+            />
+          ) : (
+            <Text
+              style={{
+                fontSize: font(16),
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.primary,
+              }}
+            >
+              {item.category_name?.[0]?.toUpperCase() ?? "?"}
+            </Text>
+          )}
+        </Animated.View>
+
+        {/* Back face (flip_image) */}
+        {!!flipImageUrl && (
+          <Animated.View
+            style={[
+              {
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "absolute",
+              },
+              backStyle,
+            ]}
+          >
+            <Image
+              source={{ uri: flipImageUrl }}
+              style={{ width: cardSize * 0.88, height: cardSize * 0.72 }}
+              contentFit="contain"
+            />
+          </Animated.View>
+        )}
       </View>
 
       <Text
@@ -328,20 +323,20 @@ const CategoryCardSection = () => {
   const { categoriesWithSubcategories, loading, error } =
     useCategoryWithSubcategories(0);
 
-  // ✅ Precise item width — same formula everywhere
+  // Precise item width
   const itemWidth =
     (screenWidth - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
   const cardSize = itemWidth;
 
   const visibleCategories = categoriesWithSubcategories.filter(
-    (cat) => getVisibleSubcategories(cat.subcategories).length >= 8,
+    (cat) => getVisibleSubcategories(cat.subcategories).length > 0,
   );
 
   // ── Sub-category card renderer ─────────────────────────────
   const createSubCategoryRenderer = (
     mainCategoryId: number,
     mainCategoryName: string,
-    mainCategoryDisplayImage?: string,
+    mainCategoryDisplayImage?: string | null,
   ) => {
     return ({ item, index }: { item: CategoryItem; index: number }) => (
       <SubCategoryCard
@@ -411,13 +406,12 @@ const CategoryCardSection = () => {
                 color: colors.text,
               }}
             >
-              Shop by problem 
+              Shop by problem
             </Text>
             <View
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
-
                 alignItems: "center",
               }}
             >
@@ -429,10 +423,7 @@ const CategoryCardSection = () => {
                     params: {
                       slug: String(category.mainCategoryId),
                       name: category.mainCategoryName,
-                      image:
-                        getLocalImage(category.mainCategoryName) ??
-                        category.mainCategory.s3_image_path ??
-                        "",
+                      image: category.mainCategory?.category_image ?? "",
                     },
                   })
                 }
@@ -457,7 +448,7 @@ const CategoryCardSection = () => {
             renderItem={createSubCategoryRenderer(
               category.mainCategoryId,
               category.mainCategoryName,
-              category.mainCategory.s3_image_path,
+              category.mainCategory?.category_image,
             )}
             keyExtractor={(item) => item.id.toString()}
             numColumns={COLUMNS}

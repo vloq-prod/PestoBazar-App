@@ -50,9 +50,9 @@ const SidebarCategoryItem: React.FC<Props> = ({
           elevation: isActive ? 4 : 0,
         }}
       >
-        {item.s3_image_path ? (
+        {item.category_image || item.s3_image_path ? (
           <Image
-            source={{ uri: item.s3_image_path }}
+            source={{ uri: (item.category_image || item.s3_image_path)! }}
             style={{ width: "100%", height: "100%" }}
             contentFit="cover"
           />

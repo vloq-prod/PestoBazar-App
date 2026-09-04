@@ -63,19 +63,19 @@ const carouselData = [
     id: 1,
     title: "Fast Pest Control",
     description: "Get quick and reliable pest control service at your doorstep",
-    image: require("../../assets/category/category1.png"),
+    image: require("../../assets/welcome-screen/Farmer Image from Unsplash.jpg"),
   },
   {
     id: 2,
     title: "Trusted Experts",
     description: "Verified professionals with years of experience",
-    image: require("../../assets/category/category2.png"),
+    image: require("../../assets/welcome-screen/Farmer Spraying Vegetables.jpg"),
   },
   {
     id: 3,
     title: "100% Safe",
     description: "Eco-friendly chemicals safe for your family and pets",
-    image: require("../../assets/category/category3.png"),
+    image: require("../../assets/welcome-screen/Male Agronomist Apple Trees Pesticides.jpg"),
   },
 ];
 

@@ -282,7 +282,7 @@ export default function ProfileScreen() {
                   source={
                     userAvatar
                       ? { uri: userAvatar }
-                      : require("../../assets/profile.jpeg")
+                      : require("../../assets/icon.png")
                   }
                   style={styles.avatarImage}
                 />

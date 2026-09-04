@@ -19,7 +19,8 @@ import Animated, {
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 
-import image1 from "../../../assets/image.png";
+const BULK_ORDER_IMAGE =
+  "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=300&auto=format&fit=crop";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 
@@ -122,7 +123,7 @@ const BulkOrderFAB: React.FC<Props> = ({
       {/* when visible show only this show */}
       <Animated.View style={[{ position: "relative" }, expandStyle]}>
         <Image
-          source={image1}
+          source={{ uri: BULK_ORDER_IMAGE }}
           style={{
             width: 80,
             height: 40,

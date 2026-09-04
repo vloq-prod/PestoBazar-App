@@ -64,15 +64,17 @@ export interface AppMainBannerApiResponse {
 
 // category
 export interface CategoryItem {
+  id: number;
   category_name: string;
   slug: string;
-  id: number;
-  category_image?: string;
-  s3_image_path: string;
+  category_image?: string | null;
+  flip_image?: string | null;
+  s3_image_path?: string | null;
 }
 
 export interface CategoryData {
   category_master: CategoryItem[];
+  main_category?: CategoryItem[];
 }
 
 export interface CategoryApiResponse {
@@ -112,8 +114,7 @@ export interface HomeProductApiResponse {
   data: ProductSection[];
 }
 
-
-// deals of the day 
+// deals of the day
 export interface DealItem {
   id: number;
   product_id: number;
@@ -187,7 +188,7 @@ export interface DealsListingApiResponse {
   };
 }
 
-// Feature items 
+// Feature items
 export interface FeaturedItem {
   id: number;
   product_id: number;
@@ -208,7 +209,6 @@ export interface FeaturedApiResponse {
   data: FeaturedItem[];
 }
 
-
 // TestimonialItem
 export interface TestimonialItem {
   name: string;
@@ -223,11 +223,6 @@ export interface TestimonialApiResponse {
   data: TestimonialItem[];
 }
 
-
-
-
-
-
 export interface UspItem {
   image: string;
   text: string;
@@ -238,7 +233,6 @@ export interface UspApiResponse {
   status: number;
   data: UspItem[];
 }
-
 
 export interface BranchItem {
   order_count: number;
@@ -252,10 +246,6 @@ export interface BranchApiResponse {
   status: number;
   data: BranchItem[];
 }
-
-
-
-
 
 // types/recentlyViewed.types.ts
 export interface RecentlyViewedItem {
@@ -289,8 +279,6 @@ export interface GetRecentlyViewedParams {
   visitor_id: string;
   user_id?: string;
 }
-
-
 
 // ======================================================
 // src/services/enquiry/enquiry.types.ts
@@ -336,11 +324,7 @@ export interface BulkEnquiryData {
 // FINAL RESPONSE
 // ======================================================
 
-export type BulkEnquiryResponse =
-  ApiResponse<BulkEnquiryData>;
-
-
-
+export type BulkEnquiryResponse = ApiResponse<BulkEnquiryData>;
 
 export interface CartQuantityItem {
   product_id: number;
@@ -357,9 +341,6 @@ export interface GetCartQuantityParams {
   visitor_id: string;
   user_id: string;
 }
-
-
-
 
 export interface SubmitRatingRequest {
   visitor_id: string;
@@ -387,8 +368,6 @@ export interface SubmitRatingResponse {
   status: number;
   message: string;
 }
-
-
 
 export interface RegisterDeviceTokenRequest {
   token: string;

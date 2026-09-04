@@ -14,12 +14,12 @@ import {
   TouchableOpacity,
   FlatList,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useTheme } from "../../src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, ShoppingCart } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import profile from "../../assets/profile.jpeg";
 import heroImage from "../../assets/hero-image.png";
 import heroBottom from "../../assets/hero-bottom.png";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -31,11 +31,6 @@ import HomeProduct from "../../src/components/home/HomeProduct";
 import CustomSections from "../../src/components/home/CustomSections";
 import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
 import FeaturedProducts from "../../src/components/home/FeaturedProducts";
-import image1 from "../../assets/category/category3.4.png";
-import image2 from "../../assets/category/category3.2.png";
-import image3 from "../../assets/category/category3.5.png";
-import image4 from "../../assets/category/category3.1.png";
-import image5 from "../../assets/category/category3.3.png";
 
 import Animated, {
   useSharedValue,
@@ -483,46 +478,47 @@ const formatCategoryDisplayName = (name: string) => {
   return formatted;
 };
 
-const CATEGORY_IMAGES = [image1, image2, image3, image4, image5];
 
-const SkeletonRow = ({ ITEM_SIZE }: any) => {
+const SkeletonRow = () => {
   const { colors } = useTheme();
   const { spacing } = useResponsive();
+  const { width } = useWindowDimensions();
+  const H_PAD = spacing(10);
+  const itemWidth = (width - H_PAD * 2) / 5;
+  const IMAGE_SIZE = spacing(52);
 
   return (
-    <View className="flex-row" style={{ paddingHorizontal: spacing(16) }}>
-      {Array.from({ length: 6 }).map((_, index) => (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        paddingHorizontal: H_PAD,
+      }}
+    >
+      {Array.from({ length: 5 }).map((_, index) => (
         <View
           key={index}
           style={{
+            width: itemWidth,
             alignItems: "center",
-            marginRight: spacing(14),
           }}
         >
           <View
             style={{
-              width: ITEM_SIZE,
-              height: ITEM_SIZE,
-              borderRadius: ITEM_SIZE / 2,
+              width: IMAGE_SIZE,
+              height: IMAGE_SIZE,
+              borderRadius: spacing(12),
               backgroundColor: colors.backgroundSkeleton,
             }}
           />
           <View
             style={{
-              width: ITEM_SIZE,
-              height: spacing(10),
+              width: itemWidth * 0.75,
+              height: spacing(8),
               borderRadius: spacing(4),
               backgroundColor: colors.backgroundSkeleton,
               marginTop: spacing(6),
-            }}
-          />
-          <View
-            style={{
-              width: ITEM_SIZE * 0.6,
-              height: spacing(10),
-              borderRadius: spacing(4),
-              backgroundColor: colors.backgroundSkeleton,
-              marginTop: spacing(4),
             }}
           />
         </View>
@@ -535,61 +531,17 @@ const CategoryList: React.FC = React.memo(() => {
   const { categories, loading, error } = useCategory(0);
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
+  const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
-  const CARD_RADIUS = spacing(16);
-  const ITEM_SIZE = spacing(58);
-  const IMAGE_SIZE = spacing(50);
 
-  const renderItem = useCallback(
-    ({ item, index }: any) => (
-      <TouchableOpacity
-        activeOpacity={0.75}
-        className="items-center"
-        onPress={() =>
-          router.push({
-            pathname: "/(stack)/category/[slug]",
-            params: {
-              slug: item.id,
-              name: item.category_name,
-              image: item.s3_image_path,
-            },
-          })
-        }
-      >
-        <View
-          style={{
-            width: IMAGE_SIZE,
-            height: IMAGE_SIZE,
-            borderRadius: CARD_RADIUS,
-            overflow: "hidden",
-          }}
-        >
-          <Image
-            source={CATEGORY_IMAGES[index % CATEGORY_IMAGES.length]}
-            style={{
-              width: "100%",
-              height: "100%",
-              backgroundColor: "transparent",
-            }}
-            contentFit="contain"
-          />
-        </View>
-        <Text
-          numberOfLines={2}
-          style={{
-            fontSize: font(11),
-            color: colors.textInverse,
-            textAlign: "center",
-            width: ITEM_SIZE,
-            marginTop: spacing(4),
-          }}
-        >
-          {formatCategoryDisplayName(item.category_name)}
-        </Text>
-      </TouchableOpacity>
-    ),
-    [CARD_RADIUS, ITEM_SIZE, IMAGE_SIZE, colors, font, router, spacing],
+  const displayCategories = useMemo(
+    () => (categories ? categories.slice(0, 5) : []),
+    [categories],
   );
+
+  const H_PAD = spacing(10);
+  const itemWidth = (screenWidth - H_PAD * 2) / 5;
+  const IMAGE_SIZE = spacing(52);
 
   if (error) {
     return (
@@ -601,26 +553,89 @@ const CategoryList: React.FC = React.memo(() => {
     );
   }
 
+  if (loading) {
+    return <SkeletonRow />;
+  }
+
+  if (!displayCategories.length) return null;
+
   return (
-    <View className="">
-      {loading ? (
-        <SkeletonRow ITEM_SIZE={ITEM_SIZE} />
-      ) : (
-        <FlatList
-          data={categories}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={{
-            paddingHorizontal: spacing(16),
-            gap: spacing(12),
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        paddingHorizontal: H_PAD,
+      }}
+    >
+      {displayCategories.map((item) => (
+        <TouchableOpacity
+          key={item.id.toString()}
+          activeOpacity={0.75}
+          style={{
+            width: itemWidth,
+            alignItems: "center",
           }}
-          initialNumToRender={6}
-          windowSize={5}
-          removeClippedSubviews
-        />
-      )}
+          onPress={() =>
+            router.push({
+              pathname: "/(stack)/category/[slug]",
+              params: {
+                slug: item.id,
+                name: item.category_name,
+                image: item.category_image ?? "",
+              },
+            })
+          }
+        >
+          <View
+            style={{
+              width: IMAGE_SIZE,
+              height: IMAGE_SIZE,
+              borderRadius: spacing(12),
+              overflow: "hidden",
+              backgroundColor: "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {item.category_image ? (
+              <Image
+                source={{ uri: item.category_image }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "transparent",
+                }}
+                contentFit="contain"
+              />
+            ) : (
+              <Text
+                style={{
+                  fontSize: font(16),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.textInverse,
+                }}
+              >
+                {item.category_name?.[0]?.toUpperCase() ?? "?"}
+              </Text>
+            )}
+          </View>
+          <Text
+            numberOfLines={2}
+            style={{
+              fontSize: font(11),
+              color: colors.textInverse,
+              textAlign: "center",
+              width: itemWidth,
+              marginTop: spacing(4),
+              lineHeight: font(14),
+              fontFamily: "Poppins_500Medium",
+            }}
+          >
+            {formatCategoryDisplayName(item.category_name)}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 });
@@ -759,7 +774,7 @@ export default function HomeScreen() {
 
   const NAVBAR_HEIGHT = spacing(44);
   const SEARCH_HEIGHT = spacing(42);
-  const CATEGORY_HEIGHT = spacing(86);
+  const CATEGORY_HEIGHT = spacing(88);
   const TOP_PADDING = Platform.OS === "android" ? spacing(10) : 0;
   const BOTTOM_PADDING = spacing(5);
   const GAP = spacing(10);

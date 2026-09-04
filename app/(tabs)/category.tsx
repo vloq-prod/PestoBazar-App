@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +10,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Easing,
+} from "react-native-reanimated";
 
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useCategoryWithSubcategories } from "../../src/hooks/homeHooks";
@@ -19,59 +26,215 @@ import {
   CategoryWithSubcategories,
 } from "../../src/types/home.types";
 import { useResponsive } from "../../src/utils/useResponsive";
-import { ChevronRight } from "lucide-react-native";
-
-const LOCAL_ASSETS: Record<string, any> = {
-  HouseHold: require("../../assets/category/category1.4.png"),
-  "Household Pesticides": require("../../assets/category/category1.4.png"),
-  Agrochemicals: require("../../assets/category/category1.2.png"),
-  "Pest Equipment": require("../../assets/category/category1.5.png"),
-  "Gardening tools and supplies": require("../../assets/category/category1.1.png"),
-
-  Foggers: require("../../assets/FoggersandMachines/Foggers.png"),
-  Machines: require("../../assets/FoggersandMachines/Machines.png"),
-  Sprayers: require("../../assets/FoggersandMachines/Sprays.png"),
-  snake: require("../../assets/HouseHold/Snake.png"),
-
-  "Bugs Control": require("../../assets/HouseHold/Bugs Control.png"),
-  Lizard: require("../../assets/HouseHold/Lizard.png"),
-  Termite: require("../../assets/HouseHold/Termite.png"),
-  Cockroach: require("../../assets/HouseHold/Cockroach.png"),
-  Mosquito: require("../../assets/HouseHold/Mosquito.png"),
-  Ant: require("../../assets/HouseHold/ant.png"),
-  Fly: require("../../assets/HouseHold/Fly.png"),
-  Rat: require("../../assets/HouseHold/rat.png"),
-};
-
-const getLocalImage = (name: string) => {
-  if (!name) return null;
-
-  const normalized = name.trim().toLowerCase();
-
-  const foundKey = Object.keys(LOCAL_ASSETS).find((key) => {
-    const k = key.toLowerCase();
-
-    return normalized.includes(k) || k.includes(normalized);
-  });
-
-  return foundKey ? LOCAL_ASSETS[foundKey] : null;
-};
 
 const COLUMNS = 4;
 const GAP = 10;
 const H_PADDING = 16;
 
-export default function CategoryScreen() {
+interface CategoryScreenSubCardProps {
+  item: CategoryItem;
+  mainCategoryId: number;
+  mainCategoryName: string;
+  mainCategoryDisplayImage?: string | null;
+  itemWidth: number;
+  cardSize: number;
+}
+
+const CategoryScreenSubCard: React.FC<CategoryScreenSubCardProps> = ({
+  item,
+  mainCategoryId,
+  mainCategoryName,
+  mainCategoryDisplayImage,
+  itemWidth,
+  cardSize,
+}) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const router = useRouter();
+  const [isFlipping, setIsFlipping] = useState(false);
+  const flipProgress = useSharedValue(0);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const getDynamicLightColor = (id: number) => {
+    const hue = (id * 137.5) % 360;
+    return `hsl(${hue}, 75%, 96%)`;
+  };
+
+  const navigateToCategory = () => {
+    router.push({
+      pathname: "/(stack)/category/[slug]",
+      params: {
+        slug: String(mainCategoryId),
+        name: mainCategoryName,
+        image: mainCategoryDisplayImage ?? "",
+        selectedSubCategoryId: String(item.id),
+      },
+    });
+
+    timeoutRef.current = setTimeout(() => {
+      flipProgress.value = 0;
+      setIsFlipping(false);
+    }, 600);
+  };
+
+  const handlePress = () => {
+    if (isFlipping) return;
+
+    if (item.flip_image) {
+      setIsFlipping(true);
+      flipProgress.value = withTiming(1, {
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
+      });
+
+      timeoutRef.current = setTimeout(() => {
+        navigateToCategory();
+      }, 450);
+    } else {
+      navigateToCategory();
+    }
+  };
+
+  const frontStyle = useAnimatedStyle(() => {
+    const rotateValue = interpolate(flipProgress.value, [0, 1], [0, 180]);
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateValue}deg` },
+      ],
+      opacity: flipProgress.value >= 0.5 ? 0 : 1,
+    };
+  });
+
+  const backStyle = useAnimatedStyle(() => {
+    const rotateValue = interpolate(flipProgress.value, [0, 1], [180, 360]);
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateValue}deg` },
+      ],
+      opacity: flipProgress.value >= 0.5 ? 1 : 0,
+    };
+  });
+
+  const imageUrl = item.category_image;
+  const flipImageUrl = item.flip_image;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.85}
+      style={{
+        width: itemWidth,
+        marginBottom: GAP,
+        alignItems: "center",
+      }}
+      onPress={handlePress}
+    >
+      <View
+        style={{
+          width: cardSize,
+          height: cardSize,
+          backgroundColor: getDynamicLightColor(item.id),
+          borderRadius: spacing(12),
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Front Face (category_image) */}
+        <Animated.View
+          style={[
+            {
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "absolute",
+            },
+            frontStyle,
+          ]}
+        >
+          {imageUrl ? (
+            <Image
+              source={{ uri: imageUrl }}
+              style={{
+                width: cardSize * 0.88,
+                height: cardSize * 0.72,
+              }}
+              contentFit="contain"
+            />
+          ) : (
+            <Text
+              style={{
+                fontSize: font(16),
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.primary,
+              }}
+            >
+              {item.category_name?.[0]?.toUpperCase() ?? "?"}
+            </Text>
+          )}
+        </Animated.View>
+
+        {/* Back Face (flip_image) */}
+        {!!flipImageUrl && (
+          <Animated.View
+            style={[
+              {
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "absolute",
+              },
+              backStyle,
+            ]}
+          >
+            <Image
+              source={{ uri: flipImageUrl }}
+              style={{
+                width: cardSize * 0.88,
+                height: cardSize * 0.72,
+              }}
+              contentFit="contain"
+            />
+          </Animated.View>
+        )}
+      </View>
+
+      <Text
+        numberOfLines={2}
+        style={{
+          marginTop: spacing(6),
+          width: "92%",
+          textAlign: "center",
+          color: colors.text,
+          fontSize: font(10),
+          fontFamily: "Poppins_500Medium",
+        }}
+      >
+        {item.category_name}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+export default function CategoryScreen() {
+  const { colors } = useTheme();
+  const { spacing, font } = useResponsive();
   const { width } = useWindowDimensions();
 
   const { categoriesWithSubcategories, loading, error } =
     useCategoryWithSubcategories(0);
 
   const itemWidth = (width - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
-
   const cardSize = itemWidth;
 
   // only categories having subcategories
@@ -80,85 +243,10 @@ export default function CategoryScreen() {
       category.subcategories.filter((item) => item.category_name).length > 0,
   );
 
-  const getDynamicLightColor = (id: number) => {
-    const hue = (id * 137.5) % 360;
-    return `hsl(${hue}, 75%, 96%)`;
-  };
-
-  const renderSubCategoryCard = (category: CategoryWithSubcategories) => {
-    return ({ item }: { item: CategoryItem }) => (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={{
-          width: itemWidth,
-          marginBottom: GAP,
-          alignItems: "center",
-        }}
-        onPress={() =>
-          router.push({
-            pathname: "/(stack)/category/[slug]",
-            params: {
-              slug: String(category.mainCategoryId),
-              name: category.mainCategoryName,
-              image:
-                getLocalImage(category.mainCategoryName) ??
-                category.mainCategory.s3_image_path ??
-                "",
-              selectedSubCategoryId: String(item.id),
-            },
-          })
-        }
-      >
-        <View
-          style={{
-            width: cardSize,
-            height: cardSize,
-            backgroundColor: getDynamicLightColor(item.id),
-            borderRadius: spacing(12),
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Image
-            source={
-              getLocalImage(item.category_name) ?? {
-                uri: item.s3_image_path,
-              }
-            }
-            style={{
-              width: cardSize * 0.88,
-              height: cardSize * 0.72,
-            }}
-            contentFit="contain"
-          />
-        </View>
-
-        <Text
-          numberOfLines={2}
-          style={{
-            marginTop: spacing(6),
-            width: "92%",
-            textAlign: "center",
-            color: colors.text,
-            fontSize: font(10),
-            fontFamily: "Poppins_500Medium",
-          }}
-        >
-          {item.category_name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-        <AppNavbar
-          title="Category"
-          showBack
-       
-        />
-
+        <AppNavbar title="Category" showBack />
         <View
           style={{
             flex: 1,
@@ -175,12 +263,7 @@ export default function CategoryScreen() {
   if (error) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-        <AppNavbar
-          title="Category"
-          showBack
-       
-        />
-
+        <AppNavbar title="Category" showBack />
         <View
           style={{
             flex: 1,
@@ -209,11 +292,7 @@ export default function CategoryScreen() {
       }}
       edges={["top"]}
     >
-      <AppNavbar
-        title="Category"
-        showBack
-     
-      />
+      <AppNavbar title="Category" showBack />
 
       <FlatList
         data={visibleCategories}
@@ -226,7 +305,7 @@ export default function CategoryScreen() {
         }}
         renderItem={({ item: category }) => {
           const visibleSubcategories = category.subcategories.filter(
-            (sub) => sub.category_name && sub.category_name,
+            (sub) => sub.category_name,
           );
 
           return (
@@ -244,41 +323,26 @@ export default function CategoryScreen() {
                   style={{
                     fontSize: font(16),
                     color: colors.text,
-                   
-                fontFamily: "Poppins_600SemiBold",
+                    fontFamily: "Poppins_600SemiBold",
                   }}
                 >
                   {category.mainCategoryName}
                 </Text>
-
-                {/* <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colors.primary,
-                      fontSize: font(12),
-                      fontFamily: "Poppins_500Medium",
-                    }}
-                  >
-                    {visibleSubcategories.length} Items
-                  </Text>
-
-                  <ChevronRight
-                    size={14}
-                    color={colors.primary}
-                  />
-                </TouchableOpacity> */}
               </View>
 
               {/* ALL SUBCATEGORY ITEMS */}
               <FlatList
                 data={visibleSubcategories}
-                renderItem={renderSubCategoryCard(category)}
+                renderItem={({ item }) => (
+                  <CategoryScreenSubCard
+                    item={item}
+                    mainCategoryId={category.mainCategoryId}
+                    mainCategoryName={category.mainCategoryName}
+                    mainCategoryDisplayImage={category.mainCategory?.category_image}
+                    itemWidth={itemWidth}
+                    cardSize={cardSize}
+                  />
+                )}
                 keyExtractor={(sub) => sub.id.toString()}
                 numColumns={COLUMNS}
                 scrollEnabled={false}

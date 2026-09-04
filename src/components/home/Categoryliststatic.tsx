@@ -5,15 +5,7 @@ import { useTheme } from "../../theme";
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 
-import image1 from "../../../assets/category/Ant.jpeg";
-import image2 from "../../../assets/category/BadBugs.png";
-import image3 from "../../../assets/category/cockroach.png";
-import image4 from "../../../assets/category/FlyWood.png";
-import image5 from "../../../assets/category/Lizard.png";
-import image6 from "../../../assets/category/Mosquito.jpeg";
-import image7 from "../../../assets/category/Rat.png";
-import image8 from "../../../assets/category/Snake.png";
-import image9 from "../../../assets/category/Termite.png";
+const fallbackIcon = require("../../../assets/icon.png");
 import { useResponsive } from "../../utils/useResponsive";
 
 type StaticCategory = {
@@ -23,15 +15,15 @@ type StaticCategory = {
 };
 
 const STATIC_CATEGORIES: StaticCategory[] = [
-  { id: 1, name: "Ant", image: image1 },
-  { id: 2, name: "Bad Bugs", image: image2 },
-  { id: 3, name: "Cockroach", image: image3 },
-  { id: 4, name: "Fly / Wood", image: image4 },
-  { id: 5, name: "Lizard", image: image5 },
-  { id: 6, name: "Mosquito", image: image6 },
-  { id: 7, name: "Rat", image: image7 },
-  { id: 8, name: "Snake", image: image8 },
-  { id: 9, name: "Termite", image: image9 },
+  { id: 1, name: "Ant", image: fallbackIcon },
+  { id: 2, name: "Bad Bugs", image: fallbackIcon },
+  { id: 3, name: "Cockroach", image: fallbackIcon },
+  { id: 4, name: "Fly / Wood", image: fallbackIcon },
+  { id: 5, name: "Lizard", image: fallbackIcon },
+  { id: 6, name: "Mosquito", image: fallbackIcon },
+  { id: 7, name: "Rat", image: fallbackIcon },
+  { id: 8, name: "Snake", image: fallbackIcon },
+  { id: 9, name: "Termite", image: fallbackIcon },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────

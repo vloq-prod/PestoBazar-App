@@ -42,7 +42,8 @@ const CategoryDetails = () => {
       id: 0,
       slug: "all",
       category_name: "All",
-      s3_image_path: String(image),
+      category_image: String(image || ""),
+      s3_image_path: String(image || ""),
     };
 
     return [allItem, ...categories];

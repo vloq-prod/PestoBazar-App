@@ -18,7 +18,7 @@ import Animated, {
 import { useTheme } from "../../theme";
 import { CategoryItem } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
-import image1 from "../../../assets/category/category4.png";
+const ALL_CATEGORY_ICON = require("../../../assets/icon.png");
 
 const ITEM_HEIGHT = 100;
 const ITEM_GAP = 20;
@@ -87,8 +87,8 @@ const CategorySidebarItem = ({
   const { spacing, font } = useResponsive();
   const imageSource =
     item.category_name?.trim().toLowerCase() === "all"
-      ? image1
-      : { uri: item.s3_image_path };
+      ? ALL_CATEGORY_ICON
+      : { uri: item.category_image || item.s3_image_path || "" };
 
   const bgOpacity = useSharedValue(isActive ? 1 : 0);
   const scale = useSharedValue(isActive ? 1 : 0.94);
@@ -130,6 +130,7 @@ const CategorySidebarItem = ({
         ]}
       >
         {(item.category_name?.trim().toLowerCase() === "all" ||
+          !!item.category_image ||
           !!item.s3_image_path) && (
           <View style={styles.avatarWrap}>
             <Image
