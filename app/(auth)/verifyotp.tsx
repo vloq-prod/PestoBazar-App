@@ -28,7 +28,7 @@ try {
   useOtpListener = OtpAutofill.useOtpListener;
   useGetHash = OtpAutofill.useGetHash;
 } catch (e) {
-  console.warn("AvasOtpAutofill native module is not available.");
+  // module not available
 }
 
 const OTP_LENGTH = 4;
@@ -64,34 +64,19 @@ export default function VerifyOtpScreen() {
   const { receivedOtp, startListener } = useOtpListener();
   const { hash } = useGetHash();
 
-  // Timeout and error are handled internally by the library or via receivedOtp logic
-
-  // Cleanup useEffect for hash logging (already present)
-
-  useEffect(() => {
-    if (hash) {
-      console.log("🔑 Your App Hash for SMS:", hash);
-    }
-  }, [hash]);
-
   useEffect(() => {
     // Start listening for SMS on Android
     if (Platform.OS === "android") {
-      console.log("📡 Starting OTP Listener...");
       startListener();
     }
   }, []);
 
   useEffect(() => {
     if (receivedOtp) {
-      console.log("📨 SMS Received! Raw OTP:", receivedOtp);
       if (receivedOtp.length === OTP_LENGTH) {
         setOtpCode(receivedOtp);
         otpInputRef.current?.setValue(receivedOtp);
-        console.log("⚡ Auto-filling OTP and verifying...");
         setTimeout(() => handleVerify(receivedOtp), 100);
-      } else {
-        console.warn(`⚠️ Received OTP length (${receivedOtp.length}) doesn't match expected length (${OTP_LENGTH})`);
       }
     }
   }, [receivedOtp]);
@@ -137,15 +122,11 @@ export default function VerifyOtpScreen() {
 
     verifyOtpMutate(payload, {
       onSuccess: async (data) => {
-        console.log("✅ RESPONSE:", data);
-
         if (data.status === 0) {
-          console.log("❌ OTP FAILED:", data.message);
           setError(data.message || "Invalid OTP");
           isVerifyingRef.current = false;
           return;
         }
-        console.log("✅ OTP SUCCESS");
         isVerifyingRef.current = false;
 
         await setUser(data.data.user_id, data.data.user_name);

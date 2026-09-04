@@ -33,15 +33,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
           app_version: AppConfigUtil.appVersion,
         };
 
-        console.log("[FCM] Registering device token with backend payload:", payload);
-        registerToken(payload, {
-          onSuccess: (data) => {
-            console.log("[FCM] Device token registered successfully on backend:", data);
-          },
-          onError: (error) => {
-            console.error("[FCM] Failed to register device token on backend:", error);
-          },
-        });
+        registerToken(payload);
       }
     })();
 
@@ -51,14 +43,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     // go through the same pipeline as URL-based deep links (validation,
     // auth guards, pending navigation, analytics tracking).
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const { title, body,  data } = response.notification.request.content;
-      console.log("[Notification Clicked] Full Content:", JSON.stringify(response.notification.request.content, null, 2));
+      const { data } = response.notification.request.content;
       resolveNotification(data);
     });
 
     // 2. Listen for when a notification is received while the app is in the foreground
     const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
-      console.log("[Notification Received in Foreground] Full Object:", JSON.stringify(notification, null, 2));
     });
 
     return () => {

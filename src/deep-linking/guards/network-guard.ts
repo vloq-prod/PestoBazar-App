@@ -72,8 +72,6 @@ export function createNetworkGuard(): Guard {
       return { action: "ALLOW" };
     }
 
-    console.log("[NetworkGuard] Device is offline. Redirecting to no-internet screen.");
-
     return {
       action: "REDIRECT",
       redirectTo: NO_INTERNET_ROUTE,

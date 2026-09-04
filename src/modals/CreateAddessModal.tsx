@@ -69,8 +69,6 @@ export default function CreateAddressModal({ visible, onClose }: Props) {
       address_type: "delivery",
     };
 
-    console.log("📦 Address Payload:", payload);
-
     saveAddress(payload, {
       onSuccess: () => {
         setForm({

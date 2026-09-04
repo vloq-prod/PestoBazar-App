@@ -17,7 +17,6 @@ export function setRouter(router: Router): void {
 
   // Flush any queued navigations
   if (_pendingQueue.length > 0) {
-    console.log(`[NavigationRouter] Flushing ${_pendingQueue.length} queued navigation(s)`);
     const queue = [..._pendingQueue];
     _pendingQueue = [];
     for (const instruction of queue) {
@@ -58,7 +57,6 @@ function scheduleOrExecute(instruction: NavigationInstruction): void {
   if (_router) {
     executeNavigation(instruction);
   } else {
-    console.log("[NavigationRouter] Router not ready. Queueing navigation:", instruction.pathname);
     _pendingQueue.push(instruction);
   }
 }
@@ -69,12 +67,6 @@ function executeNavigation(instruction: NavigationInstruction): void {
 
   setTimeout(() => {
     try {
-      console.log(
-        "[NavigationRouter] Navigating to:",
-        instruction.pathname,
-        instruction.params,
-      );
-
       const hasParams = Object.keys(instruction.params).length > 0;
       if (hasParams) {
         _router!.navigate({
@@ -85,8 +77,6 @@ function executeNavigation(instruction: NavigationInstruction): void {
         _router!.navigate(instruction.pathname as any);
       }
     } catch (error) {
-      console.error("[NavigationRouter] Navigation failed:", error);
-      // Don't crash the app — just log the error
     }
   }, 50);
 }

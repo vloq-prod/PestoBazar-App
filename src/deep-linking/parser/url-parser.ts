@@ -88,7 +88,6 @@ import { sanitizeParam, safeDecodeURIComponent } from "../utils/url-sanitizer";
  */
 export function parseDeepLinkUrl(rawUrl: string): DeepLinkPayload | null {
   if (!rawUrl || typeof rawUrl !== "string") {
-    console.warn("[DeepLink Parser] Empty or invalid URL received");
     return null;
   }
 
@@ -155,7 +154,6 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkPayload | null {
       receivedAt: Date.now(),
     };
   } catch (error) {
-    console.error("[DeepLink Parser] Failed to parse URL:", error);
     return null;
   }
 }

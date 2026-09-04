@@ -173,7 +173,6 @@ export default function Checkout() {
   const clearCart = useCartStore((s) => s.clearCart);
 
   const userId = useAppVisitorStore((s) => s.userId);
-  console.log("userId: ", userId);
   const { mutate: checkoutMutate, isPending, data, error } = useCheckout();
   const { data: addressData } = useAddress({ user_id: userId! });
   const { mutate: shippingMutate, data: shippingData } = useShipping();
@@ -236,15 +235,8 @@ export default function Checkout() {
 
   // ── Place Order handler ─────────────────────────────────────────
   const handlePlaceOrder = () => {
-    console.log("🚀 Starting Order Placement Process...");
-    console.log("DEBUG: userId:", userId);
-    console.log("DEBUG: visitorId:", visitorId);
-    console.log("DEBUG: cartId:", cartId);
-    console.log("DEBUG: effectiveAddressId:", effectiveAddressId);
-
     if (!userId || !visitorId || !cartId || !effectiveAddressId) {
       showToast("Please select a delivery address", "warning");
-      console.log("❌ Missing required fields for order placement");
       return;
     }
 
@@ -254,14 +246,11 @@ export default function Checkout() {
       user_id: userId,
       cart_id: cartId,
     };
-    console.log("📦 Step 1: Validating Cart...", cartPayload);
 
     validateCartMutate(cartPayload, {
       onSuccess: (cartRes) => {
-        console.log("✅ Step 1 Success: Cart Validated", cartRes);
         if (cartRes?.status !== 1) {
           showToast(cartRes?.message || "Cart validation failed", "error");
-          console.log("❌ Step 1 Failed: API returned status", cartRes?.status);
           return;
         }
 
@@ -271,20 +260,14 @@ export default function Checkout() {
           delivery_address_id: effectiveAddressId!,
           payment_method: (isCod ? "cash" : "online") as "cash" | "online",
         };
-        console.log("📍 Step 2: Validating Pincode...", pincodePayload);
 
         validatePincodeMutate(pincodePayload, {
           onSuccess: (pincodeRes) => {
-            console.log("✅ Step 2 Success: Pincode Validated", pincodeRes);
             if (pincodeRes?.status !== 1) {
               showToast(
                 pincodeRes?.message ||
                   "Delivery not available for this pincode",
                 "error",
-              );
-              console.log(
-                "❌ Step 2 Failed: API returned status",
-                pincodeRes?.status,
               );
               return;
             }
@@ -304,36 +287,23 @@ export default function Checkout() {
               delivery_address_id: deliveryAddr?.address_id,
               billing_address_id: billingAddr?.address_id || "",
             };
-            console.log("📝 Step 3: Initiating Order...", initiatePayload);
 
             initiateOrderMutate(initiatePayload, {
               onSuccess: (initRes) => {
-                console.log("✅ Step 3 Success: Order Initiated", initRes);
-
                 if (initRes.status === 0) {
                   showToast(
                     initRes.message || "Failed to initiate order",
                     "error",
                   );
-                  console.log("❌ Step 3 Failed: API returned status 0");
                   return;
                 }
 
                 // Step 4: Process Order based on Payment Method
-                console.log(
-                  "💳 Step 4: Processing Payment Mode:",
-                  paymentMethod,
-                );
                 if (isCod) {
                   const codPayload = { cart_id: String(cartId) };
-                  console.log(
-                    "💵 Step 4 (COD): Confirming Order...",
-                    codPayload,
-                  );
 
                   codSuccessMutate(codPayload, {
                     onSuccess: (res) => {
-                      console.log("✅ Step 4 Success: COD Confirmed", res);
                       clearCart();
                       queryClient.invalidateQueries({ queryKey: ["cart"] });
                       queryClient.invalidateQueries({ queryKey: ["cart-count"] });
@@ -356,7 +326,6 @@ export default function Checkout() {
                       });
                     },
                     onError: (err: any) => {
-                      console.log("❌ Step 4 Failed: COD Confirm Error", err);
                       showToast(
                         err.message || "Failed to process COD order",
                         "error",
@@ -365,8 +334,6 @@ export default function Checkout() {
                   });
                 } else {
                   // Logic for online payment (Razorpay)
-                  console.log("🌐 Step 4 (Online): Payment Data", initRes.data);
-
                   const options = {
                     description: "Payment for Order",
                     image:
@@ -388,7 +355,6 @@ export default function Checkout() {
 
                   RazorpayCheckout.open(options)
                     .then((paymentRes: any) => {
-                      console.log("✅ Razorpay Success:", paymentRes);
                       showToast("Payment Successful!", "success");
 
                       // Step 5: Inform Backend about Success
@@ -400,10 +366,6 @@ export default function Checkout() {
 
                       paymentSuccessMutate(successPayload, {
                         onSuccess: (res) => {
-                          console.log(
-                            "✅ Step 5 Success: Backend Notified",
-                            res,
-                          );
                           clearCart();
                           queryClient.invalidateQueries({ queryKey: ["cart"] });
                           queryClient.invalidateQueries({ queryKey: ["cart-count"] });
@@ -422,10 +384,6 @@ export default function Checkout() {
                           });
                         },
                         onError: (err) => {
-                          console.log(
-                            "❌ Step 5 Failed: Backend Notify Error",
-                            err,
-                          );
                           showToast(
                             "Payment recorded but verification failed. Please contact support.",
                             "warning",
@@ -434,25 +392,21 @@ export default function Checkout() {
                       });
                     })
                     .catch((error: any) => {
-                      console.log("❌ Razorpay Failed:", error);
                       showToast("Payment cancelled or failed.", "error");
                     });
                 }
               },
               onError: (err: any) => {
-                console.log("❌ Step 3 Failed: Initiate Error", err);
                 showToast(err.message || "Order initiation error", "error");
               },
             });
           },
           onError: (err: any) => {
-            console.log("❌ Step 2 Failed: Pincode Error", err);
             showToast("Pincode validation error. Please try again.", "error");
           },
         });
       },
       onError: (err: any) => {
-        console.log("❌ Step 1 Failed: Cart Validation Error", err);
         showToast("Cart validation error. Please try again.", "error");
       },
     });
@@ -540,44 +494,6 @@ export default function Checkout() {
       showToast(shippingData.message, "error");
     }
   }, [shippingData]);
-
-  // useEffect(() => {
-  //   console.log("\n======= CHECKOUT PRICE DEBUG =======");
-  //   console.log("[CART API]");
-  //   console.log("  cart_amount     :", cart?.cart_amount);
-  //   console.log("  shipping_charge :", cart?.shipping_charge);
-  //   console.log("  gst_amount      :", cart?.gst_amount);
-  //   console.log("  cod_charges     :", cart?.cod_charges);
-  //   console.log("  amount_to_pay   :", cart?.amount_to_pay);
-  //   console.log("  free_shipping   :", cart?.free_shipping);
-  //   console.log("[SHIPPING API]");
-  //   console.log("  cart_amount     :", shippingCart?.cart_amount);
-  //   console.log("  shipping_charge :", shippingCart?.shipping_charge);
-  //   console.log("  cod_charges     :", shippingCart?.cod_charges);
-  //   console.log("  amount_to_pay   :", shippingCart?.amount_to_pay);
-  //   console.log("  free_shipping   :", shippingCart?.free_shipping);
-  //   console.log(" message shipping: ", shippingData?.message);
-  //   console.log("[COMPUTED]");
-  //   console.log("  shippingCharge  :", shippingCharge);
-  //   console.log("  codCharge       :", codCharge);
-  //   console.log("  amountToPay     :", amountToPay);
-  //   console.log("  paymentMethod   :", paymentMethod);
-  //   console.log("  isCod           :", isCod);
-  //   console.log("  effectiveAddrId :", effectiveAddressId);
-  //   console.log("[IDs]");
-  //   console.log("  userId          :", userId);
-  //   console.log("  visitorId       :", visitorId);
-  //   console.log("  cartId          :", cartId);
-  //   console.log("===================================\n");
-  // }, [
-  //   shippingCart,
-  //   cart,
-  //   shippingCharge,
-  //   codCharge,
-  //   amountToPay,
-  //   paymentMethod,
-  //   effectiveAddressId,
-  // ]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isPending) {

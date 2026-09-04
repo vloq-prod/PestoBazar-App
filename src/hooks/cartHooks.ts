@@ -30,9 +30,6 @@ export const useAddToCart = () => {
 
   const mutation = useMutation({
     mutationFn: async (payload: AddToCartRequest) => {
-      // ✅ Payload logging
-      console.log("🛒 AddToCart Payload:", payload);
-
       const data = await addToCart(payload);
       if (data.status === 0) {
         throw new Error(data.message || "Failed to update cart");
@@ -41,7 +38,6 @@ export const useAddToCart = () => {
     },
 
     onError: (error: any) => {
-      console.log("❌ AddToCart Error:", error);
       showToast(error?.message || "Failed to update cart", "error");
     },
 
@@ -109,13 +105,7 @@ export const useCartCount = (params: GetCartCountParams) => {
     queryKey: ["cart-count", params.user_id, params.visitor_id],
 
     queryFn: async () => {
-      // ✅ Payload logging (request params)
-      console.log("🧾 CartCount Payload:", params);
-
       const response = await getCartCount(params);
-
-      // ✅ Response logging
-      console.log("📊 CartCount Response:", response);
 
       return response;
     },
@@ -205,13 +195,6 @@ export const useCartAction = () => {
       return { previousCart, previousCartCount, cartKey, cartCountKey };
     },
 
-    onError: (error: any) => {
-      console.log(
-        "❌ CartAction Error:",
-        error?.response?.data || error?.message,
-      );
-    },
-
     onSettled: (_data, _error, variables, context) => {
       if (_error && context?.previousCart) {
         queryClient.setQueryData(context.cartKey, context.previousCart);
@@ -249,9 +232,6 @@ export const useCartAction = () => {
       });
     },
 
-    onSuccess: (data, variables) => {
-      // console.log("✅ CartAction Success:", data?.message, data?.data);
-    },
   });
 
   return {

@@ -163,7 +163,6 @@ const CustomSections = () => {
   }
 
   if (error) {
-    console.error("Error loading custom sections:", error);
     return null;
   }
 

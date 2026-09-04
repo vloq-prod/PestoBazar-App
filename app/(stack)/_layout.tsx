@@ -26,14 +26,7 @@ export default function StackLayout() {
       <Stack.Screen name="returnproducts/[id]" />
       <Stack.Screen name="product-comparison/[variationId]" />
 
-      <Stack.Screen
-        name="categories"
-        options={{
-          presentation: "transparentModal",
-          animation: "slide_from_right",
-          gestureDirection: "horizontal",
-        }}
-      />
+      <Stack.Screen name="category/[slug]" />
     </Stack>
   );
 }

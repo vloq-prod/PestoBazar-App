@@ -99,13 +99,11 @@ export function sanitizeParam(value: string): string {
 
   // Check for dangerous content
   if (containsDangerousContent(trimmed)) {
-    console.warn("[DeepLink] Dangerous content detected in param, dropping:", trimmed.substring(0, 50));
     return "";
   }
 
   // Truncate to max length
   if (trimmed.length > MAX_PARAM_LENGTH) {
-    console.warn("[DeepLink] Param exceeds max length, truncating");
     return trimmed.substring(0, MAX_PARAM_LENGTH);
   }
 

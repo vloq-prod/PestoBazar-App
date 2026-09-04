@@ -46,8 +46,6 @@ const OrderScreen = () => {
     },
   );
 
-  console.log("user id: ", userId)
-
   const { data: returnsData, isLoading: isReturnsLoading, refetch: refetchReturns, isRefetching: isRefetchingReturns } = useReturnHistory(userId || "");
 
   const orders = data?.data?.order_master ?? [];

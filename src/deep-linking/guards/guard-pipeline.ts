@@ -101,7 +101,6 @@ export function runGuardPipeline(payload: DeepLinkPayload): PipelineResult {
       const result = guard(payload);
 
       if (result.action !== "ALLOW") {
-        console.log(`[GuardPipeline] ${name} blocked/redirected: ${result.reason}`);
         return {
           ...result,
           guardName: name,
@@ -109,7 +108,6 @@ export function runGuardPipeline(payload: DeepLinkPayload): PipelineResult {
       }
     } catch (error) {
       // Fail-closed: if a guard throws, block the navigation
-      console.error(`[GuardPipeline] ${name} threw an error:`, error);
       return {
         action: "BLOCK",
         reason: `Guard "${name}" encountered an error`,

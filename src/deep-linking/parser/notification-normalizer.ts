@@ -78,14 +78,8 @@ export function normalizeNotificationData(
   data: NotificationData,
 ): DeepLinkPayload | null {
   if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
-    console.warn("[DeepLink Normalizer] Empty notification data received");
     return null;
   }
-
-  console.log(
-    "[DeepLink Normalizer] Received Raw Notification Data:",
-    JSON.stringify(data, null, 2),
-  );
 
   const rawInput = JSON.stringify(data);
   const receivedAt = Date.now();
@@ -115,7 +109,6 @@ export function normalizeNotificationData(
   ]);
 
   if (!redirectType) {
-    console.warn("[DeepLink Normalizer] No route or type in notification data");
     return null;
   }
 

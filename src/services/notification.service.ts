@@ -35,7 +35,6 @@ export async function getOrCreateDeviceId(): Promise<string> {
     }
     return deviceId;
   } catch (error) {
-    console.error("[FCM] Failed to get or create device ID:", error);
     return "fallback-device-id";
   }
 }
@@ -126,9 +125,6 @@ export async function registerForPushNotifications(): Promise<FCMTokenResult> {
     // ── Step 1: Physical device check ──────────────────────────────────────
     // Emulators / simulators do not have a valid push token from FCM.
     if (!Device.isDevice) {
-      console.warn(
-        "[FCM] Push notifications are not supported on emulators/simulators.",
-      );
       return {
         token: null,
         error: "Must use a physical device for push notifications.",
@@ -142,7 +138,6 @@ export async function registerForPushNotifications(): Promise<FCMTokenResult> {
     const granted = await requestPermission();
 
     if (!granted) {
-      console.warn("[FCM] Notification permission was denied by the user.");
       return {
         token: null,
         error: "Notification permission denied.",
@@ -157,17 +152,10 @@ export async function registerForPushNotifications(): Promise<FCMTokenResult> {
 
     const fcmToken = devicePushToken.data as string;
 
-    // ── Step 5: Log for verification ───────────────────────────────────────
-    console.log("══════════════════════════════════════════════════");
-    console.log("FCM TOKEN:");
-    console.log(fcmToken);
-    console.log("══════════════════════════════════════════════════");
-
     return { token: fcmToken };
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown error occurred.";
-    console.error("[FCM] Failed to register for push notifications:", message);
     return { token: null, error: message };
   }
 }

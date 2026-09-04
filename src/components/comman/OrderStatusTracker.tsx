@@ -62,8 +62,6 @@ const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
   const isCancelled = currentStatus?.toLowerCase() === "cancelled";
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
-
-  console.log("current staus: ", currentStatus)
   React.useEffect(() => {
     if (!isCancelled) {
       Animated.loop(
@@ -162,7 +160,6 @@ const OrderStatusTracker: React.FC<OrderStatusTrackerProps> = ({
   };
 
   const activeIndex = getActiveIndex(currentStatus);
-  console.log("DEBUG tracker status:", currentStatus, "activeIndex:", activeIndex);
 
   const activeColor = "#22C55E";
 

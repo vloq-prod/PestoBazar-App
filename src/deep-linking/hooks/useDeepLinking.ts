@@ -113,13 +113,10 @@ export function useDeepLinking({ isReady }: UseDeepLinkingOptions): void {
       Linking.getInitialURL()
         .then((url) => {
           if (url) {
-            console.log("[useDeepLinking] Initial URL (cold start):", url);
             resolveUrl(url);
           }
         })
-        .catch((error) => {
-          console.error("[useDeepLinking] Failed to get initial URL:", error);
-        });
+        .catch(() => {});
     }
 
     // ── Warm Start: Listen for incoming URLs ────────────────────────────────
@@ -127,7 +124,6 @@ export function useDeepLinking({ isReady }: UseDeepLinkingOptions): void {
     // (foreground or background).
     const subscription = Linking.addEventListener("url", (event) => {
       if (event.url) {
-        console.log("[useDeepLinking] Incoming URL (warm start):", event.url);
         resolveUrl(event.url);
       }
     });

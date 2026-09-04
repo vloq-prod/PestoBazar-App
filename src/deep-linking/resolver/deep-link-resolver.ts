@@ -48,34 +48,27 @@ const DEDUP_WINDOW_MS = 2000; // 2 seconds
 
 export async function resolveUrl(rawUrl: string): Promise<void> {
   if (!rawUrl || typeof rawUrl !== "string") {
-    console.warn("[DeepLinkResolver] Empty URL received, ignoring");
     return;
   }
 
   // Step 0: Bypass route validation for Google OAuth redirect callbacks
   if (isGoogleOAuthRedirect(rawUrl)) {
-    console.log("[DeepLinkResolver] Bypassing Google OAuth redirect URL:", rawUrl);
     return;
   }
 
   // Filter out internal Expo development connection links
   if (isExpoDevelopmentUrl(rawUrl)) {
-    console.log("[DeepLinkResolver] Ignoring Expo development/bundler URL:", rawUrl);
     return;
   }
 
   // Deduplication — prevent processing the same link twice in rapid succession
   if (isDuplicate(rawUrl)) {
-    console.log("[DeepLinkResolver] Duplicate deep link, ignoring:", rawUrl.substring(0, 80));
     return;
   }
-
-  console.log("[DeepLinkResolver] Resolving URL:", rawUrl.substring(0, 100));
 
   // Step 1: Parse
   const payload = parseDeepLinkUrl(rawUrl);
   if (!payload) {
-    console.warn("[DeepLinkResolver] Failed to parse URL:", rawUrl.substring(0, 100));
     trackDeepLinkEvent({
       eventName: "deep_link_failed",
       routeName: "unknown",
@@ -98,16 +91,12 @@ export async function resolveUrl(rawUrl: string): Promise<void> {
 
 export async function resolveNotification(data: NotificationData): Promise<void> {
   if (!data || typeof data !== "object") {
-    console.warn("[DeepLinkResolver] Empty notification data, ignoring");
     return;
   }
-
-  console.log("[DeepLinkResolver] Resolving notification data:", JSON.stringify(data).substring(0, 200));
 
   // Step 1: Normalize
   const payload = normalizeNotificationData(data);
   if (!payload) {
-    console.log("[DeepLinkResolver] Notification has no navigational data, ignoring");
     return;
   }
 
@@ -117,7 +106,6 @@ export async function resolveNotification(data: NotificationData): Promise<void>
 
 
 export async function resolvePayload(payload: DeepLinkPayload): Promise<void> {
-  console.log("[DeepLinkResolver] Resolving payload for route:", payload.routeName);
   await processPipeline(payload);
 }
 
@@ -138,11 +126,9 @@ export async function resolvePayload(payload: DeepLinkPayload): Promise<void> {
 async function processPipeline(payload: DeepLinkPayload): Promise<void> {
   // If the routeName is "url", open it in external browser!
   if (payload.routeName === "url" && payload.slug) {
-    console.log("[DeepLinkResolver] Opening external URL:", payload.slug);
     try {
       await Linking.openURL(payload.slug);
     } catch (e) {
-      console.error("[DeepLinkResolver] Failed to open external URL:", e);
     }
     return;
   }
@@ -154,8 +140,6 @@ async function processPipeline(payload: DeepLinkPayload): Promise<void> {
   const validation = validateDeepLink(payload);
 
   if (!validation.isValid) {
-    console.warn("[DeepLinkResolver] Validation failed:", validation.errors);
-
     // Track the failure
     trackDeepLinkEvent({
       eventName: "deep_link_failed",
@@ -180,7 +164,6 @@ async function processPipeline(payload: DeepLinkPayload): Promise<void> {
   if (guardResult.action === "REDIRECT") {
     // If auth guard blocked, store pending navigation
     if (guardResult.guardName === "AuthGuard") {
-      console.log("[DeepLinkResolver] Auth guard blocked. Storing pending navigation.");
       await usePendingNavigationStore.getState().setPending(payload);
       navigateToLogin();
     } else {
@@ -204,7 +187,6 @@ async function processPipeline(payload: DeepLinkPayload): Promise<void> {
   }
 
   if (guardResult.action === "BLOCK") {
-    console.warn("[DeepLinkResolver] Guard blocked navigation:", guardResult.reason);
     navigateToFallback();
     return;
   }

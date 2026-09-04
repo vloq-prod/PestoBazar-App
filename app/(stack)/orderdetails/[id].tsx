@@ -335,14 +335,8 @@ const OrderDetails = () => {
     order_id: id || "",
   });
 
-  console.log(" order id enc : ", id);
-
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
-  console.log(
-    "DEBUG order details api response order:",
-    JSON.stringify(orderData?.order),
-  );
   const isReturnAvailable =
     (orderData?.shiprocket_orders || []).some(
       (so: any) => so.return_available === "Yes",
@@ -365,11 +359,8 @@ const OrderDetails = () => {
       // from intercepting pestobazaar.confidevtech.com and restarting the app!
       const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
 
-      console.log("Opening invoice PDF viewer URL:", viewerUrl);
-
       await WebBrowser.openBrowserAsync(viewerUrl);
     } catch (error) {
-      console.error("Invoice open error:", error);
       try {
         const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${id}`;
         await WebBrowser.openBrowserAsync(rawInvoiceUrl);

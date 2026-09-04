@@ -96,9 +96,7 @@ export const usePendingNavigationStore = create<PendingNavigationState>((set, ge
         PENDING_NAV_STORAGE_KEY,
         JSON.stringify(pendingNav),
       );
-      console.log("[PendingNav] Stored pending navigation for route:", payload.routeName);
     } catch (error) {
-      console.error("[PendingNav] Failed to persist pending navigation:", error);
     }
   },
 
@@ -110,7 +108,6 @@ export const usePendingNavigationStore = create<PendingNavigationState>((set, ge
     // Check expiry
     const age = Date.now() - pending.storedAt;
     if (age > pending.maxAge) {
-      console.log("[PendingNav] Pending navigation expired. Age:", age, "ms");
       await get().clearPending();
       return null;
     }
@@ -119,7 +116,6 @@ export const usePendingNavigationStore = create<PendingNavigationState>((set, ge
     const payload = pending.payload;
     await get().clearPending();
 
-    console.log("[PendingNav] Consumed pending navigation for route:", payload.routeName);
     return payload;
   },
 
@@ -129,7 +125,6 @@ export const usePendingNavigationStore = create<PendingNavigationState>((set, ge
     try {
       await SecureStore.deleteItemAsync(PENDING_NAV_STORAGE_KEY);
     } catch (error) {
-      console.error("[PendingNav] Failed to clear persisted pending navigation:", error);
     }
   },
 
@@ -144,15 +139,12 @@ export const usePendingNavigationStore = create<PendingNavigationState>((set, ge
       // Check expiry during hydration
       const age = Date.now() - pendingNav.storedAt;
       if (age > pendingNav.maxAge) {
-        console.log("[PendingNav] Hydrated pending navigation is expired. Clearing.");
         await SecureStore.deleteItemAsync(PENDING_NAV_STORAGE_KEY);
         return;
       }
 
       set({ pending: pendingNav });
-      console.log("[PendingNav] Hydrated pending navigation for route:", pendingNav.payload.routeName);
     } catch (error) {
-      console.error("[PendingNav] Failed to hydrate pending navigation:", error);
       // Don't crash — just start with no pending nav
     }
   },

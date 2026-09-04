@@ -77,10 +77,6 @@ export function createAuthGuard(): Guard {
     }
 
     // User is NOT logged in but route requires auth → redirect to login
-    console.log(
-      `[AuthGuard] Route "${payload.routeName}" requires auth but user is not logged in. Redirecting to login.`,
-    );
-
     return {
       action: "REDIRECT",
       redirectTo: LOGIN_ROUTE,

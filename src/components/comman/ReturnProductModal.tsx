@@ -24,9 +24,7 @@ import { useReturnReason } from "../../hooks/orderHooks";
 let ImagePicker: any = null;
 try {
   ImagePicker = require("expo-image-picker");
-} catch (e) {
-  console.warn("expo-image-picker module not found or loaded in ReturnProductModal");
-}
+} catch (e) {}
 
 interface ReturnProductModalProps {
   visible: boolean;

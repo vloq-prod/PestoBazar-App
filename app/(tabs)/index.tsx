@@ -428,7 +428,7 @@ const AppSearchBar = React.memo(({ onPress }: any) => {
               width: "78%",
               height: "78%",
             }}
-            resizeMode="contain"
+            contentFit="contain"
           />
         </View>
 

@@ -20,9 +20,7 @@ const DiyScreen = () => {
 
   const handleBannerPress = () => {
     if (banner?.redirect) {
-      Linking.openURL(banner.redirect).catch((err) =>
-        console.error("Failed to open banner redirect URL:", err)
-      );
+      Linking.openURL(banner.redirect).catch(() => {});
     }
   };
 

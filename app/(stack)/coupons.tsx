@@ -94,7 +94,6 @@ export default function CouponsScreen() {
   }
 
   const handleApply = (code: string) => {
-    console.log("🎟️ handleApply called with code:", code, "cartId:", cartId);
     if (!cartId) {
       setErrorMsg("Cart not loaded yet");
       return;
@@ -112,7 +111,6 @@ export default function CouponsScreen() {
       },
       {
         onSuccess: (res) => {
-          console.log("🎟️ applyPromo success response:", res);
           setLoadingCode(null);
           if (res.status) {
             showToast(
@@ -141,7 +139,6 @@ export default function CouponsScreen() {
           }
         },
         onError: (err: any) => {
-          console.error("🎟️ applyPromo error response:", err);
           setLoadingCode(null);
           setErrorMsg(err?.message || "Failed to apply promo code");
         },
@@ -150,7 +147,6 @@ export default function CouponsScreen() {
   };
 
   const handleRemove = (code: string) => {
-    console.log("🎟️ handleRemove called for code:", code);
     if (!cartId) return;
 
     setErrorMsg(null);
@@ -164,7 +160,6 @@ export default function CouponsScreen() {
       },
       {
         onSuccess: (res) => {
-          console.log("🎟️ removePromo success response:", res);
           setLoadingCode(null);
           if (res.status) {
             showToast(
@@ -180,7 +175,6 @@ export default function CouponsScreen() {
           }
         },
         onError: (err: any) => {
-          console.error("🎟️ removePromo error response:", err);
           setLoadingCode(null);
           setErrorMsg(err?.message || "Failed to remove promo code");
         },
@@ -189,7 +183,6 @@ export default function CouponsScreen() {
   };
 
   const handleToggleCoupon = (code: string) => {
-    console.log("🎟️ handleToggleCoupon clicked. code:", code, "appliedCouponCode:", appliedCouponCode);
     if (
       appliedCouponCode &&
       appliedCouponCode.toUpperCase() === code.toUpperCase()

@@ -70,16 +70,13 @@ export const useAppVisitorStore = create<AppState>((set) => ({
 
     if (!visitorId || !token) {
       try {
-        console.log("⚡ Auto-generating visitor ID on app load...");
         const res = await createVisitor({ visitor_id: "" });
         if (res && res.visitor_id && res.token) {
           visitorId = res.visitor_id;
           token = res.token;
           await StorageUtil.setVisitor(visitorId, token);
-          console.log("✅ Auto-generated Visitor ID:", visitorId);
         }
       } catch (error) {
-        console.error("❌ Failed to auto-generate visitor ID:", error);
       }
     }
 

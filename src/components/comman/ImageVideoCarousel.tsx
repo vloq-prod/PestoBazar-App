@@ -101,8 +101,6 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[]; title?: string }> = ({
     if (viewableItems.length > 0) setActiveIndex(viewableItems[0].index ?? 0);
   }, []);
 
-  // console.log("iamges data: ", data)
-
   if (!data || data.length === 0) return null;
 
   return (

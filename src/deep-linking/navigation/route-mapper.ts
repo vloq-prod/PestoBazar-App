@@ -14,9 +14,6 @@ export function mapPayloadToNavigation(
   const routeConfig = findRouteByName(payload.routeName);
 
   if (!routeConfig) {
-    console.warn(
-      `[RouteMapper] No route config for "${payload.routeName}". Falling back to home.`,
-    );
     return { pathname: FALLBACK_ROUTE, params: {} };
   }
 

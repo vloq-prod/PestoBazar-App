@@ -69,7 +69,6 @@ function RootLayoutNav() {
 
     // 🚀 Bypass welcome screen → redirect to tabs
     if (inWelcome) {
-      console.log("🚀 Redirecting from welcome → tabs");
       router.replace("/(tabs)");
     }
   }, [visitorId, token, isReady, segments]);
@@ -82,8 +81,6 @@ function RootLayoutNav() {
   if (!splashDone) {
     return <SplashScreen onFinish={() => setSplashDone(true)} />;
   }
-
-  console.log("visitorId, token:", visitorId, token);
 
   // 🔥 ALWAYS RENDER BOTH (NO CONDITION)
   return (

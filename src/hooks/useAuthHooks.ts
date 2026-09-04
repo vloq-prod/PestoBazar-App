@@ -26,29 +26,12 @@ export const useVisitor = () => {
 export const useSendOtp = () => {
   return useMutation<SendOtpResponse, Error, SendOtpRequest>({
     mutationFn: sendOtpApi,
-
-    onSuccess: (data) => {
-      console.log("OTP Sent:", data.message);
-    },
-
-    onError: (error) => {
-      console.log("OTP Error:", error.message);
-    },
   });
 };
 
 export const useVerifyOtp = () => {
   return useMutation<VerifyOtpResponse, Error, VerifyOtpRequest>({
     mutationFn: verifyOtpApi,
-
-    onSuccess: (data) => {
-      console.log("Verify Success:", data.message);
-      console.log("User:", data.data);
-    },
-
-    onError: (error) => {
-      console.log("Verify OTP Error:", error.message);
-    },
   });
 };
 
@@ -58,14 +41,6 @@ export const useVerifyUser = () => {
   return useMutation({
     mutationFn: (payload: VerifyUserRequest) =>
       verifyUser(payload),
-
-    onSuccess: (data) => {
-      console.log("Verify User Success:", data);
-    },
-
-    onError: (error) => {
-      console.log("Verify User Error:", error);
-    },
   });
 };
 

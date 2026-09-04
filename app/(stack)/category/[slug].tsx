@@ -92,8 +92,6 @@ const CategoryDetails = () => {
     return String(selectedCategory.id);
   }, [selectedCategory, hasSidebar, mainCategoryId]);
 
-  console.log("category id: ", categoryId)
-
   const apiCategoryName = mainCategory?.[0]?.category_name;
   const categoryTitle =
     apiCategoryName ||

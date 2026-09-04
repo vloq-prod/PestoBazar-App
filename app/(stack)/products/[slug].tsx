@@ -187,9 +187,6 @@ const ProductDetails = () => {
 
   const productSlug = getValidSlug(slug) || getValidSlug(product_slug);
 
-  // console.log("product slug: ", productSlug);
-  console.log("product product id: ", productId, "variation_id: ", variationId);
-
   // ─── Animation Values ───────────────────────────────────────
   const scrollY = useSharedValue(0);
 
@@ -221,42 +218,11 @@ const ProductDetails = () => {
     error: comparisonError,
   } = useProductComparison(comparisonVariationId);
 
-  useEffect(() => {
-    if (comparisonResponse) {
-      console.log("=== Comparison API Response ===", {
-        variationId: comparisonVariationId,
-        has_comparison: comparisonResponse?.data?.has_comparison,
-        productsCount: comparisonResponse?.data?.products?.length,
-      });
-    }
-    if (comparisonError) {
-      console.log("=== Comparison API Error ===", comparisonError);
-    }
-  }, [comparisonResponse, comparisonError, comparisonVariationId]);
-
-  console.log("product details id: ", realProductId);
   const quantity = useProductQuantity(realProductId ?? productId);
 
   // Free products API integration
   const { data: freeProductsData, isLoading: isOffersLoading } =
     useFreeProducts(selectedVariation?.id);
-
-  useEffect(() => {
-    if (freeProductsData?.data) {
-      console.log(
-        "=== active_coupons ===",
-        JSON.stringify(freeProductsData.data.active_coupons, null, 2),
-      );
-      console.log(
-        "=== free_products ===",
-        JSON.stringify(
-          freeProductsData.data.primary_offer?.free_products,
-          null,
-          2,
-        ),
-      );
-    }
-  }, [freeProductsData]);
 
   // Extract free products list across all rules and rule groups
   const freeProducts = React.useMemo(() => {
@@ -460,7 +426,6 @@ const ProductDetails = () => {
         title: resolvedProductName, // Android only
       });
     } catch (error) {
-      console.error("Error sharing product:", error);
     }
   }, [productSlug, productInfo, slug, resolvedProductName]);
 

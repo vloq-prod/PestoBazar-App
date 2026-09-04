@@ -232,7 +232,7 @@ export default function ProfileScreen() {
           "Check out Pestobazaar! Order premium pest control products and services instantly: https://pestobazaar.com",
       });
     } catch (error) {
-      console.error("[ProfileScreen] Share failed:", error);
+      // share cancelled or failed
     }
   };
   return (

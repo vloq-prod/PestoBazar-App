@@ -85,17 +85,13 @@ async function handlePostLoginNavigation(): Promise<void> {
     const payload = await usePendingNavigationStore.getState().consumePending();
 
     if (!payload) {
-      console.log("[PendingNav] No pending navigation after login");
       return;
     }
-
-    console.log("[PendingNav] Resuming pending navigation for route:", payload.routeName);
 
     // Delay to ensure navigation tree is ready after layout transition
     setTimeout(() => {
       resolvePayload(payload);
     }, 500);
   } catch (error) {
-    console.error("[PendingNav] Failed to resume pending navigation:", error);
   }
 }

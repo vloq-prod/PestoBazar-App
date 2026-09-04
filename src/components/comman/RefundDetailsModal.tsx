@@ -21,9 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 let ImagePicker: any = null;
 try {
   ImagePicker = require("expo-image-picker");
-} catch (e) {
-  console.warn("expo-image-picker module not found or loaded in RefundDetailsModal");
-}
+} catch (e) {}
 
 interface RefundDetailsModalProps {
   visible: boolean;

@@ -77,7 +77,6 @@ const MapScreen = () => {
   const reverseGeocode = useCallback(
     async (latitude: number, longitude: number) => {
       if (!isMounted.current) return;
-      console.log("[Map] Geocoding start for:", latitude, longitude);
       try {
         const result = await Location.reverseGeocodeAsync({
           latitude,
@@ -87,10 +86,9 @@ const MapScreen = () => {
           const addr = buildAddress(result[0]);
           setSelectedAddress(addr);
           lastGeocodedCoords.current = { latitude, longitude };
-          console.log("[Map] Geocoding success:", addr);
         }
       } catch (err) {
-        console.error("[Map] Geocoding error:", err);
+        // geocode error
       }
     },
     [],
@@ -99,7 +97,6 @@ const MapScreen = () => {
   // ── Move camera to coords ───────────────────────────────────────────────────
   const flyTo = useCallback(
     (latitude: number, longitude: number, zoom = 16) => {
-      console.log("[Map] FlyTo:", latitude, longitude);
       // Convert zoom to deltas roughly
       const latDelta = 0.01 / (zoom / 16);
       const lngDelta = 0.01 / (zoom / 16);
@@ -125,26 +122,20 @@ const MapScreen = () => {
   useEffect(() => {
     (async () => {
       try {
-        console.log("[Map] Requesting permissions...");
         const { status: existingStatus } =
           await Location.getForegroundPermissionsAsync();
-        console.log("[Map] Existing permission status:", existingStatus);
 
         let finalStatus = existingStatus;
         if (existingStatus !== "granted") {
-          console.log("[Map] Requesting fresh permissions...");
           const { status } = await Location.requestForegroundPermissionsAsync();
           finalStatus = status;
         }
 
-        console.log("[Map] Final permission status:", finalStatus);
         if (finalStatus !== "granted") {
-          console.log("[Map] Permission denied");
           if (isMounted.current) setIsInitializing(false);
           return;
         }
 
-        console.log("[Map] Fetching current position...");
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
@@ -156,7 +147,7 @@ const MapScreen = () => {
           await reverseGeocode(latitude, longitude);
         }
       } catch (err) {
-        console.error("[Map] Initial position error:", err);
+        // initial position error
       } finally {
         if (isMounted.current) setIsInitializing(false);
       }
@@ -167,11 +158,9 @@ const MapScreen = () => {
   const handleCurrentLocation = useCallback(async () => {
     if (isLocating) return;
     setIsLocating(true);
-    console.log("[Map] Manual location fetch...");
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        console.log("[Map] Permission denied for manual fetch");
         return;
       }
       const loc = await Location.getCurrentPositionAsync({
@@ -184,7 +173,7 @@ const MapScreen = () => {
         await reverseGeocode(latitude, longitude);
       }
     } catch (err) {
-      console.error("[Map] Manual location error:", err);
+      // manual location error
     } finally {
       if (isMounted.current) setIsLocating(false);
     }
@@ -199,7 +188,6 @@ const MapScreen = () => {
 
   // ── Confirm handler ─────────────────────────────────────────────────────────
   const handleConfirm = useCallback(() => {
-    console.log("[Map] Confirming location:", selectedCoords);
     useMapStore.getState().setSelectedLocation({
       address: selectedAddress,
       latitude: selectedCoords.latitude,
@@ -286,6 +274,7 @@ const MapScreen = () => {
           <Image
             source={require("../../assets/pin.png")}
             style={styles.pinImage}
+            contentFit="contain"
           />
           <View style={[styles.pinDot, { backgroundColor: colors.primary }]} />
         </View>
@@ -466,7 +455,6 @@ const styles = StyleSheet.create({
   pinImage: {
     width: 48,
     height: 48,
-    resizeMode: "contain",
   },
   pinDot: {
     width: 8,

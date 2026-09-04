@@ -29,9 +29,7 @@ const H_PADDING = 16;
 const GAP = 10;
 
 const getVisibleSubcategories = (subcategories: CategoryItem[]) =>
-  subcategories
-    .filter((item) => item.category_name)
-    .slice(0, 8);
+  subcategories.filter((item) => item.category_name).slice(0, 8);
 
 // ─── Sub-category Card Item ──────────────────────────────────
 interface SubCategoryCardProps {
@@ -110,10 +108,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   const frontStyle = useAnimatedStyle(() => {
     const rotateValue = interpolate(flipProgress.value, [0, 1], [0, 180]);
     return {
-      transform: [
-        { perspective: 1000 },
-        { rotateY: `${rotateValue}deg` },
-      ],
+      transform: [{ perspective: 1000 }, { rotateY: `${rotateValue}deg` }],
       opacity: flipProgress.value >= 0.5 ? 0 : 1,
     };
   });
@@ -121,10 +116,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   const backStyle = useAnimatedStyle(() => {
     const rotateValue = interpolate(flipProgress.value, [0, 1], [180, 360]);
     return {
-      transform: [
-        { perspective: 1000 },
-        { rotateY: `${rotateValue}deg` },
-      ],
+      transform: [{ perspective: 1000 }, { rotateY: `${rotateValue}deg` }],
       opacity: flipProgress.value >= 0.5 ? 1 : 0,
     };
   });

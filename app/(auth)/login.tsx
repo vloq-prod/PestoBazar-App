@@ -126,10 +126,8 @@ export default function Login() {
 
   useEffect(() => {
     RNOtpVerify.getHash()
-      .then(hash => {
-        console.log("OTP Hash:", hash);
-      })
-      .catch(console.log);
+      .then(() => {})
+      .catch(() => {});
   }, []);
 
   const googleRedirectUri = AuthSession.makeRedirectUri({
@@ -148,11 +146,6 @@ export default function Login() {
 
   const handleGoogleLogin = useCallback(() => {
     if (isExpoGo) {
-      console.error("❌ Google Auth blocked in Expo Go", {
-        redirectUri: googleRedirectUri,
-        platform: Platform.OS,
-        executionEnvironment: Constants.executionEnvironment,
-      });
       Alert.alert(
         "Google login unavailable",
         "Google Sign-In cannot run inside Expo Go. Use a development build or standalone app for Google login.",
@@ -160,13 +153,7 @@ export default function Login() {
       return;
     }
 
-    promptAsync().catch((authError) => {
-      console.error("❌ Failed to start Google Auth:", {
-        authError,
-        redirectUri: googleRedirectUri,
-        platform: Platform.OS,
-      });
-    });
+    promptAsync().catch(() => {});
   }, [googleRedirectUri, isExpoGo, promptAsync]);
 
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
@@ -287,14 +274,13 @@ export default function Login() {
             },
           );
         } catch (err) {
-          console.error("❌ Failed to fetch Google user info:", err);
           Alert.alert(
             "Google Sign-In Failed",
             "Could not retrieve account details.",
           );
         }
       } else if (response?.type === "error") {
-        console.error("❌ Google Auth Error:", response.error);
+        // error handling
       }
     };
 

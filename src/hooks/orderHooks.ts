@@ -24,18 +24,11 @@ export const useCodSuccess = () => {
     mutationFn: codSuccessApi,
 
     onSuccess: (response) => {
-      console.log("✅", response.message);
-      console.log("Order ID:", response.order_id);
-
       // Strategic refresh
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cart-count"] });
       queryClient.invalidateQueries({ queryKey: ["quick-cart"] });
       queryClient.invalidateQueries({ queryKey: ["user-order-history"] });
-    },
-
-    onError: (error) => {
-      console.log("❌", error.message);
     },
   });
 };
@@ -47,15 +40,6 @@ export const useCodSuccess = () => {
 export const useInitiateOrder = () => {
   return useMutation<InitiateOrderResponse, Error, InitiateOrderRequest>({
     mutationFn: initiateOrderApi,
-
-    onSuccess: (response) => {
-      console.log("✅", response.message);
-      console.log("Order Data:", response.data);
-    },
-
-    onError: (error) => {
-      console.log("❌", error.message);
-    },
   });
 };
 
@@ -112,17 +96,11 @@ export const usePaymentSuccess = () => {
     mutationFn: paymentSuccessApi,
 
     onSuccess: (response) => {
-      console.log("✅", response.message);
-
       // Strategic refresh
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cart-count"] });
       queryClient.invalidateQueries({ queryKey: ["quick-cart"] });
       queryClient.invalidateQueries({ queryKey: ["user-order-history"] });
-    },
-
-    onError: (error) => {
-      console.log("❌", error.message);
     },
   });
 };
@@ -143,8 +121,6 @@ export const useCancelOrder = () => {
     mutationFn: cancelOrderApi,
 
     onSuccess: (response, variables) => {
-      console.log("✅", response.message);
-
       // Optimistic update for instant change
       queryClient.setQueryData(["view-order", variables.order_id], (oldData: any) => {
         if (!oldData) return oldData;
@@ -164,10 +140,6 @@ export const useCancelOrder = () => {
       queryClient.invalidateQueries({ queryKey: ["user-order-history"] });
       queryClient.invalidateQueries({ queryKey: ["view-order", variables.order_id] });
       queryClient.invalidateQueries({ queryKey: ["view-order"] });
-    },
-
-    onError: (error) => {
-      console.log("❌", error.message);
     },
   });
 };

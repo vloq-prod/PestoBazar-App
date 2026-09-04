@@ -266,15 +266,6 @@ export const useRecentlyViewed = (visitorId: string) => {
 export const useBulkEnquiry = () => {
   return useMutation<BulkEnquiryResponse, Error, BulkEnquiryRequest>({
     mutationFn: bulkEnquiryApi,
-
-    onSuccess: (response) => {
-      console.log("✅", response.message);
-      console.log("Enquiry ID:", response.data.id);
-    },
-
-    onError: (error) => {
-      console.log("❌", error.message);
-    },
   });
 };
 

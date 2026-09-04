@@ -88,14 +88,11 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
 
         setResults(res.data.predictions || []);
       } catch (error) {
-        console.log(error);
       } finally {
         setLoading(false);
       }
     }, 400);
   };
-
-  console.log("api key : ", process.env.EXPO_PUBLIC_GOOGLE_MAP_API_KEY)
 
   const handleSelect = async (item: PlaceItem) => {
     try {
@@ -124,7 +121,6 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
       setResults([]);
       onClose();
     } catch (error) {
-      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -135,7 +131,6 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
       setLoading(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        console.log("Permission to access location was denied");
         return;
       }
 
@@ -165,7 +160,6 @@ const SearchLocationModal = ({ visible, onClose, onSelectLocation }: Props) => {
         onClose();
       }
     } catch (error) {
-      console.log("Error fetching current location:", error);
     } finally {
       setLoading(false);
     }

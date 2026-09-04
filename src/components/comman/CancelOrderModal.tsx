@@ -59,14 +59,7 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
   const [reasonModalVisible, setReasonModalVisible] = useState(false);
 
   const handleSubmit = () => {
-    console.log("Submitting cancel order:", { orderId, userId, reasonId, comments });
-
     if (!reasonId || !orderId || !userId) {
-      console.log("Validation failed:", {
-        missingReason: !reasonId,
-        missingOrderId: !orderId,
-        missingUserId: !userId
-      });
       showToast("Please select a cancellation reason", "error");
       return;
     }
@@ -80,7 +73,6 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
       },
       {
         onSuccess: (data: any) => {
-          console.log("Cancel Order Success Response:", data);
           showToast(
             data?.message || `Order #${orderNumber || orderId} cancelled successfully`,
             "success"
@@ -89,7 +81,6 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
           handleClose();
         },
         onError: (error: any) => {
-          console.log("Cancel Order Error:", error);
           showToast(
             error?.response?.data?.message || error?.message || "Failed to cancel order",
             "error"

@@ -143,28 +143,12 @@ export const useRemoveAddress = () => {
 export const useShipping = () => {
   return useMutation({
     mutationFn: (payload: ShippingRequest) => shippingApi(payload),
-
-    onSuccess: (data) => {
-      console.log("Shipping Calculated:", data);
-    },
-
-    onError: (error) => {
-      console.log("Shipping Error:", error);
-    },
   });
 };
 
 export const useValidateCart = () => {
   return useMutation({
     mutationFn: (payload: ValidateCartRequest) => validateCartApi(payload),
-
-    onSuccess: (data) => {
-      console.log("Cart Valid:", data);
-    },
-
-    onError: (error) => {
-      console.log("Cart Validation Error:", error);
-    },
   });
 };
 
@@ -172,14 +156,6 @@ export const useValidatePincode = () => {
   return useMutation({
     mutationFn: (payload: ValidatePincodeRequest) =>
       validatePincodeApi(payload),
-
-    onSuccess: (data) => {
-      console.log("Pincode Valid:", data);
-    },
-
-    onError: (error) => {
-      console.log("Pincode Validation Error:", error);
-    },
   });
 };
 

@@ -17,9 +17,7 @@
  *   - deep-link.types.ts (DeepLinkAnalyticsEvent)
  *
  * CURRENT IMPLEMENTATION:
- *   Uses console.log for now. This is intentional — the app doesn't currently
- *   have a dedicated analytics backend. When you add Firebase Analytics, Mixpanel,
- *   or your own analytics API, you only need to modify this ONE file.
+ *   Extensible stub for future analytics backend (e.g. Firebase, Mixpanel).
  *
  * FUTURE EXTENSION:
  *   - Wire up to Firebase Analytics (firebase/analytics)
@@ -53,42 +51,7 @@ import type { DeepLinkAnalyticsEvent } from "../types/deep-link.types";
  *   }
  */
 export function trackDeepLinkEvent(event: DeepLinkAnalyticsEvent): void {
-  // ── Console logging for development and debugging ───────────────────────
-  const emoji = getEventEmoji(event.eventName);
-  const summary = [
-    `${emoji} [DeepLink Analytics] ${event.eventName}`,
-    `  Route: ${event.routeName}`,
-    `  Source: ${event.source}`,
-    event.utm.utm_source ? `  UTM Source: ${event.utm.utm_source}` : null,
-    event.utm.utm_campaign ? `  UTM Campaign: ${event.utm.utm_campaign}` : null,
-    event.utm.utm_medium ? `  UTM Medium: ${event.utm.utm_medium}` : null,
-    event.blockedBy ? `  Blocked By: ${event.blockedBy}` : null,
-    event.validationErrors?.length ? `  Errors: ${event.validationErrors.join(", ")}` : null,
-    `  Auth Required: ${event.authRequired}`,
-    `  Was Authenticated: ${event.wasAuthenticated}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  console.log(summary);
-
-  // ── Future: Wire to Firebase Analytics ──────────────────────────────────
-  // import { getAnalytics, logEvent } from 'firebase/analytics';
-  // const analytics = getAnalytics();
-  // logEvent(analytics, event.eventName, {
-  //   route_name: event.routeName,
-  //   source: event.source,
-  //   utm_source: event.utm.utm_source,
-  //   utm_campaign: event.utm.utm_campaign,
-  //   utm_medium: event.utm.utm_medium,
-  //   is_valid: event.isValid,
-  //   auth_required: event.authRequired,
-  //   was_authenticated: event.wasAuthenticated,
-  //   blocked_by: event.blockedBy,
-  // });
-
-  // ── Future: Wire to custom backend ──────────────────────────────────────
-  // apiClient.post('/analytics/deep-link', event).catch(console.error);
+  // Event tracked - extensible for future analytics backends (e.g. Firebase, Mixpanel)
 }
 
 /**

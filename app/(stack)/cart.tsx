@@ -74,8 +74,6 @@ const FilledWavyDivider = ({ color }: { color: string }) => {
 export default function CartScreen() {
   const { visitorId, userId } = useAppVisitorStore((state) => state);
 
-  console.log("userId: ", userId);
-
   const router = useRouter();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
@@ -137,7 +135,6 @@ export default function CartScreen() {
   const freeProducts = cartData?.data?.free_products;
 
   const cartId = cartData?.data?.cart_app?.cart_id || cartData?.data?.cart?.cart_id;
-  console.log("cartId: ", cartId);
 
   const cartTotal = cartData?.data?.cart_app || cartData?.data?.cart;
   const isFreeShipping = cartTotal?.free_shipping;
@@ -289,12 +286,9 @@ export default function CartScreen() {
   };
 
   const handleContinue = () => {
-    console.log("🛒 Continue Pressed! userId:", userId);
     if (userId) {
-      console.log("➡️ Navigating to /(stack)/checkout");
       router.push("/(stack)/checkout");
     } else {
-      console.log("🔑 Navigating to /login");
       router.push({
         pathname: "/login",
         params: { redirectTo: "/(stack)/checkout" },

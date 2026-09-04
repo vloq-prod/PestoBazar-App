@@ -80,17 +80,8 @@ const NotificationsScreen = () => {
 
   // Sync data to local state
   useEffect(() => {
-    console.log("[NotificationsScreen] Query params state:", {
-      user_id: userId || undefined,
-      visitor_id: visitorId || undefined,
-      page,
-      isLoading,
-      isFetching,
-    });
-
     if (notificationsData?.data?.notifications) {
       const fetchedList = notificationsData.data.notifications;
-      console.log(`[NotificationsScreen] Fetched ${fetchedList.length} notification(s) from API.`);
       if (page === 1) {
         setNotificationsList(fetchedList);
       } else {
@@ -133,17 +124,14 @@ const NotificationsScreen = () => {
         user_id: userId || undefined,
         visitor_id: visitorId || undefined,
       };
-      console.log(`[handleMarkAsRead] Triggering API for notification ${notification.id} with payload:`, markAsReadPayload);
 
       markAsRead(
         markAsReadPayload,
         {
-          onSuccess: (res) => {
-            console.log("[Notifications] markAsRead response:", res);
+          onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
           },
-          onError: (err) => {
-            console.warn("[Notifications] markAsRead API error:", err);
+          onError: () => {
             // Retain local read status so UI remains marked as read
           },
         }
@@ -159,7 +147,7 @@ const NotificationsScreen = () => {
       };
       resolveNotification(navPayload);
     } catch (error) {
-      console.error("[Notifications] Failed to resolve navigation action:", error);
+      // navigation error handling
     }
   };
 
@@ -176,20 +164,17 @@ const NotificationsScreen = () => {
       user_id: userId || undefined,
       visitor_id: visitorId || undefined,
     };
-    console.log("[handleMarkAllAsRead] Triggering markAllAsRead API with payload:", markAllPayload);
 
     markAllAsRead(
       markAllPayload,
       {
         onSuccess: (res) => {
-          console.log("[handleMarkAllAsRead] Response:", res);
           if (res.status) {
             showToast(res.message || 'All notifications marked as read', 'success');
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
           }
         },
         onError: (err: any) => {
-          console.warn("[handleMarkAllAsRead] Error:", err);
           showToast(err?.message || 'Failed to mark all as read', 'error');
           // Invalidate to fetch correct status
           queryClient.invalidateQueries({ queryKey: ['notifications'] });

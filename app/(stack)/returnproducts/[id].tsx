@@ -47,7 +47,7 @@ let ImagePicker: any = null;
 try {
   ImagePicker = require("expo-image-picker");
 } catch (e) {
-  console.warn("expo-image-picker module not found or loaded");
+  // module not available
 }
 
 const IMAGE_BASE = "https://static-cdn.pestobazaar.com/";
@@ -500,7 +500,6 @@ const ReturnProductsScreen = () => {
       ]);
     } catch (err: any) {
       setIsSubmitting(false);
-      console.error("Return failed:", err);
       Alert.alert("Error", err?.message || "Failed to submit return request.");
     }
   };

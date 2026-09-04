@@ -190,8 +190,6 @@ export const getReturnReasonApi = async (): Promise<ReturnReasonResponse> => {
 export const getOrderDetail = async (
   orderId: string,
 ): Promise<OrderDetailResponse> => {
-
-  console.log("order id from api :", orderId)
   const { data } = await apiClient.get<OrderDetailResponse>(
     `/app-api/v1/order-detail/${orderId}`,
   );
