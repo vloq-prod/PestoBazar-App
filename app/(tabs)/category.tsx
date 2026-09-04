@@ -338,7 +338,11 @@ export default function CategoryScreen() {
                     item={item}
                     mainCategoryId={category.mainCategoryId}
                     mainCategoryName={category.mainCategoryName}
-                    mainCategoryDisplayImage={category.mainCategory?.category_image}
+                    mainCategoryDisplayImage={
+                      category.mainCategory?.category_image ||
+                      category.mainCategory?.s3_image_path ||
+                      ""
+                    }
                     itemWidth={itemWidth}
                     cardSize={cardSize}
                   />

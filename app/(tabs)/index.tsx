@@ -467,7 +467,7 @@ const AppSearchBar = React.memo(({ onPress }: any) => {
 
 const formatCategoryName = (name: string) => {
   if (!name) return "";
-  return name.replace(/control/gi, "").trim();
+  return name;
 };
 
 const formatCategoryDisplayName = (name: string) => {
@@ -494,6 +494,7 @@ const SkeletonRow = () => {
         justifyContent: "space-between",
         alignItems: "flex-start",
         paddingHorizontal: H_PAD,
+        marginTop: spacing(8),
       }}
     >
       {Array.from({ length: 5 }).map((_, index) => (
@@ -566,6 +567,7 @@ const CategoryList: React.FC = React.memo(() => {
         justifyContent: "space-between",
         alignItems: "flex-start",
         paddingHorizontal: H_PAD,
+        marginTop: spacing(8),
       }}
     >
       {displayCategories.map((item) => (
@@ -591,29 +593,61 @@ const CategoryList: React.FC = React.memo(() => {
             style={{
               width: IMAGE_SIZE,
               height: IMAGE_SIZE,
-              borderRadius: spacing(12),
-              overflow: "hidden",
-              backgroundColor: "transparent",
               alignItems: "center",
               justifyContent: "center",
+              position: "relative",
             }}
           >
             {item.category_image ? (
-              <Image
-                source={{ uri: item.category_image }}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "transparent",
-                }}
-                contentFit="contain"
-              />
+              <>
+                {/* Soft Spread Black Silhouette Layer */}
+                <Image
+                  source={{ uri: item.category_image }}
+                  style={{
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                    top: 3,
+                    left: 0,
+                    transform: [{ scale: 1.05 }],
+                    opacity: 0.22,
+                    tintColor: "#000000",
+                  }}
+                  contentFit="contain"
+                />
+                {/* Core Black Silhouette Drop Shadow Layer */}
+                <Image
+                  source={{ uri: item.category_image }}
+                  style={{
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                    top: 2,
+                    left: 0,
+                    opacity: 0.35,
+                    tintColor: "#000000",
+                  }}
+                  contentFit="contain"
+                />
+                {/* Foreground Image */}
+                <Image
+                  source={{ uri: item.category_image }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  contentFit="contain"
+                />
+              </>
             ) : (
               <Text
                 style={{
                   fontSize: font(16),
                   fontFamily: "Poppins_600SemiBold",
                   color: colors.textInverse,
+                  textShadowColor: "rgba(0, 0, 0, 0.6)",
+                  textShadowOffset: { width: 0, height: 2 },
+                  textShadowRadius: 4,
                 }}
               >
                 {item.category_name?.[0]?.toUpperCase() ?? "?"}
@@ -623,7 +657,7 @@ const CategoryList: React.FC = React.memo(() => {
           <Text
             numberOfLines={2}
             style={{
-              fontSize: font(11),
+              fontSize: font(10),
               color: colors.textInverse,
               textAlign: "center",
               width: itemWidth,
@@ -775,6 +809,7 @@ export default function HomeScreen() {
   const NAVBAR_HEIGHT = spacing(44);
   const SEARCH_HEIGHT = spacing(42);
   const CATEGORY_HEIGHT = spacing(88);
+  const CATEGORY_MARGIN_TOP = spacing(8);
   const TOP_PADDING = Platform.OS === "android" ? spacing(10) : 0;
   const BOTTOM_PADDING = spacing(5);
   const GAP = spacing(10);
@@ -786,6 +821,7 @@ export default function HomeScreen() {
     GAP +
     SEARCH_HEIGHT +
     GAP +
+    CATEGORY_MARGIN_TOP +
     CATEGORY_HEIGHT +
     BOTTOM_PADDING;
 

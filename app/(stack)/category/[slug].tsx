@@ -38,16 +38,22 @@ const CategoryDetails = () => {
   const categoriesWithAll: CategoryItem[] = React.useMemo(() => {
     if (!categories || categories.length === 0) return [];
 
+    const parentImage =
+      mainCategory?.[0]?.category_image ||
+      mainCategory?.[0]?.s3_image_path ||
+      (typeof image === "string" ? image : "") ||
+      "";
+
     const allItem: CategoryItem = {
       id: 0,
       slug: "all",
       category_name: "All",
-      category_image: String(image || ""),
-      s3_image_path: String(image || ""),
+      category_image: parentImage,
+      s3_image_path: parentImage,
     };
 
     return [allItem, ...categories];
-  }, [categories, image]);
+  }, [categories, mainCategory, image]);
 
   useEffect(() => {
     if (categoriesWithAll.length === 0) return;

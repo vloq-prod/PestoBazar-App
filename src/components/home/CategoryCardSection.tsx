@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
   interpolate,
   Easing,
+  Extrapolation,
 } from "react-native-reanimated";
 import { useCategoryWithSubcategories } from "../../hooks/homeHooks";
 import { useTheme } from "../../theme";
@@ -87,42 +88,59 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
     }, 600);
   };
 
+  const imageUrl = item.category_image;
+  const flipImageUrl = item.flip_image || item.category_image;
+
   const handlePress = () => {
     if (isFlipping) return;
 
-    if (item.flip_image) {
+    if (flipImageUrl) {
       setIsFlipping(true);
       flipProgress.value = withTiming(1, {
-        duration: 400,
+        duration: 350,
         easing: Easing.out(Easing.cubic),
       });
 
+      // Hold the flipped image in the box for 0.5 second (500ms), then navigate
       timeoutRef.current = setTimeout(() => {
         navigateToCategory();
-      }, 450);
+      }, 850);
     } else {
       navigateToCategory();
     }
   };
 
   const frontStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(flipProgress.value, [0, 1], [0, 180]);
+    const rotateValue = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [0, 90, 90],
+      Extrapolation.CLAMP,
+    );
+    const opacityValue = flipProgress.value < 0.5 ? 1 : 0;
+
     return {
       transform: [{ perspective: 1000 }, { rotateY: `${rotateValue}deg` }],
-      opacity: flipProgress.value >= 0.5 ? 0 : 1,
+      opacity: opacityValue,
+      zIndex: flipProgress.value < 0.5 ? 2 : 1,
     };
   });
 
   const backStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(flipProgress.value, [0, 1], [180, 360]);
+    const rotateValue = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [-90, -90, 0],
+      Extrapolation.CLAMP,
+    );
+    const opacityValue = flipProgress.value >= 0.5 ? 1 : 0;
+
     return {
       transform: [{ perspective: 1000 }, { rotateY: `${rotateValue}deg` }],
-      opacity: flipProgress.value >= 0.5 ? 1 : 0,
+      opacity: opacityValue,
+      zIndex: flipProgress.value >= 0.5 ? 2 : 1,
     };
   });
-
-  const imageUrl = item.category_image;
-  const flipImageUrl = item.flip_image;
 
   return (
     <TouchableOpacity
@@ -175,26 +193,36 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
         </Animated.View>
 
         {/* Back face (flip_image) */}
-        {!!flipImageUrl && (
-          <Animated.View
-            style={[
-              {
-                width: "100%",
-                height: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "absolute",
-              },
-              backStyle,
-            ]}
-          >
+        <Animated.View
+          style={[
+            {
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "absolute",
+            },
+            backStyle,
+          ]}
+        >
+          {flipImageUrl ? (
             <Image
               source={{ uri: flipImageUrl }}
               style={{ width: cardSize * 0.88, height: cardSize * 0.72 }}
               contentFit="contain"
             />
-          </Animated.View>
-        )}
+          ) : (
+            <Text
+              style={{
+                fontSize: font(16),
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.primary,
+              }}
+            >
+              {item.category_name?.[0]?.toUpperCase() ?? "?"}
+            </Text>
+          )}
+        </Animated.View>
       </View>
 
       <Text
@@ -321,7 +349,7 @@ const CategoryCardSection = () => {
   const cardSize = itemWidth;
 
   const visibleCategories = categoriesWithSubcategories.filter(
-    (cat) => getVisibleSubcategories(cat.subcategories).length > 0,
+    (cat) => getVisibleSubcategories(cat.subcategories).length === 8,
   );
 
   // ── Sub-category card renderer ─────────────────────────────
@@ -415,7 +443,10 @@ const CategoryCardSection = () => {
                     params: {
                       slug: String(category.mainCategoryId),
                       name: category.mainCategoryName,
-                      image: category.mainCategory?.category_image ?? "",
+                      image:
+                        category.mainCategory?.category_image ||
+                        category.mainCategory?.s3_image_path ||
+                        "",
                     },
                   })
                 }
@@ -440,7 +471,9 @@ const CategoryCardSection = () => {
             renderItem={createSubCategoryRenderer(
               category.mainCategoryId,
               category.mainCategoryName,
-              category.mainCategory?.category_image,
+              category.mainCategory?.category_image ||
+                category.mainCategory?.s3_image_path ||
+                "",
             )}
             keyExtractor={(item) => item.id.toString()}
             numColumns={COLUMNS}

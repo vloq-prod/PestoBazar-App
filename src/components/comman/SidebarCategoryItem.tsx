@@ -41,7 +41,7 @@ const SidebarCategoryItem: React.FC<Props> = ({
           overflow: "hidden",
           borderWidth: isActive ? 2 : 1.5,
           borderColor: isActive ? colors.primary : colors.border,
-          backgroundColor: colors.border,
+          backgroundColor: "transparent",
           // Subtle shadow on active
           shadowColor: isActive ? colors.primary : "transparent",
           shadowOffset: { width: 0, height: 2 },

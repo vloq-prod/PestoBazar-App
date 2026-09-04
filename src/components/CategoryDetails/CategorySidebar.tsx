@@ -18,7 +18,7 @@ import Animated, {
 import { useTheme } from "../../theme";
 import { CategoryItem } from "../../types/home.types";
 import { useResponsive } from "../../utils/useResponsive";
-const ALL_CATEGORY_ICON = require("../../../assets/icon.png");
+import { LayoutGrid } from "lucide-react-native";
 
 const ITEM_HEIGHT = 100;
 const ITEM_GAP = 20;
@@ -85,10 +85,7 @@ const CategorySidebarItem = ({
 }: SidebarItemProps) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
-  const imageSource =
-    item.category_name?.trim().toLowerCase() === "all"
-      ? ALL_CATEGORY_ICON
-      : { uri: item.category_image || item.s3_image_path || "" };
+  const imageUrl = item.category_image || item.s3_image_path;
 
   const bgOpacity = useSharedValue(isActive ? 1 : 0);
   const scale = useSharedValue(isActive ? 1 : 0.94);
@@ -129,17 +126,27 @@ const CategorySidebarItem = ({
           },
         ]}
       >
-        {(item.category_name?.trim().toLowerCase() === "all" ||
-          !!item.category_image ||
-          !!item.s3_image_path) && (
-          <View style={styles.avatarWrap}>
+        <View
+          style={[
+            styles.avatarWrap,
+            {
+              backgroundColor: "transparent",
+            },
+          ]}
+        >
+          {imageUrl ? (
             <Image
-              source={imageSource}
+              source={{ uri: imageUrl }}
               style={styles.avatar}
               contentFit="cover"
             />
-          </View>
-        )}
+          ) : (
+            <LayoutGrid
+              size={22}
+              color={isActive ? primaryColor : textSecondaryColor}
+            />
+          )}
+        </View>
 
         <Text
           numberOfLines={2}
@@ -319,6 +326,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     marginBottom: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatar: { width: "100%", height: "100%" },
   label: {
