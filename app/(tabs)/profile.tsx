@@ -200,6 +200,16 @@ const MenuRow = ({ item, colors, isLast, onPressOverride }: any) => {
   );
 };
 
+const getInitials = (name?: string | null) => {
+  if (!name || !name.trim()) return "G";
+  const cleanName = name.trim();
+  const parts = cleanName.split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return cleanName.slice(0, 2).toUpperCase();
+};
+
 // ── Screen ─────────────────────────────────────
 export default function ProfileScreen() {
   const { colors } = useTheme();
@@ -209,6 +219,12 @@ export default function ProfileScreen() {
   const userId = useAppVisitorStore((s) => s.userId);
   const userName = useAppVisitorStore((s) => s.userName);
   const userAvatar = useAppVisitorStore((s) => s.userAvatar);
+
+  const [imageError, setImageError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImageError(false);
+  }, [userAvatar]);
 
   const logout = useAppVisitorStore((s) => s.logout);
 
@@ -275,18 +291,40 @@ export default function ProfileScreen() {
                 </Text>
               </View>
 
-              <View
-                style={[styles.avatarRing, { borderColor: colors.primary }]}
-              >
-                <Image
-                  source={
-                    userAvatar
-                      ? { uri: userAvatar }
-                      : require("../../assets/icon.png")
-                  }
-                  style={styles.avatarImage}
-                />
-              </View>
+              {userAvatar && !imageError ? (
+                <View
+                  style={[styles.avatarRing, { borderColor: colors.primary }]}
+                >
+                  <Image
+                    source={{ uri: userAvatar }}
+                    onError={() => setImageError(true)}
+                    style={styles.avatarImage}
+                  />
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.avatarRing,
+                    {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary + "1A",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: 22,
+                      color: colors.primary,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    {getInitials(userName || (userId ? "User" : "Guest User"))}
+                  </Text>
+                </View>
+              )}
             </View>
 
             <Text style={[styles.description, { color: colors.textSecondary }]}>

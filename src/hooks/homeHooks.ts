@@ -15,6 +15,7 @@ import {
   getAppMainBanner,
   submitRating,
   registerDeviceToken,
+  getAppMenuCategories,
 } from "../api/home.api";
 import {
   BulkEnquiryRequest,
@@ -281,3 +282,20 @@ export const useRegisterDeviceToken = () => {
       registerDeviceToken(payload),
   });
 };
+
+// useAppMenuCategories hook
+export const useAppMenuCategories = () => {
+  const query = useQuery({
+    queryKey: ["app-menu-categories"],
+    queryFn: getAppMenuCategories,
+  });
+
+  return {
+    categories: query.data?.data?.categories || [],
+    brands: query.data?.data?.brands || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+

@@ -15,20 +15,6 @@ import { useUsp } from "../../hooks/homeHooks";
 import { UspItem } from "../../types/home.types";
 import GradientDivider from "../common/GradientDivider";
 
-const TECHNICAL_ICON = require("../../../assets/usp/Technical.png");
-const GENUINE_ICON = require("../../../assets/usp/Genuine.png");
-const VERIFIED_ICON = require("../../../assets/usp/Verified.png");
-const PROTECTION_ICON = require("../../../assets/usp/Protection.png");
-const TRUSTED_ICON = require("../../../assets/usp/Trusted.png");
-
-const USP_IMAGE_MAP: { [key: string]: any } = {
-  "Dedicated Technical Support": TECHNICAL_ICON,
-  "100% Genuine Product": GENUINE_ICON,
-  "Verified Seller": VERIFIED_ICON,
-  "Buyer Protection": PROTECTION_ICON,
-  "Trusted Delivery": TRUSTED_ICON,
-};
-
 // ─── UspCard ──────────────────────────────────────────────────────────────────
 
 interface UspCardProps {
@@ -49,19 +35,13 @@ const UspCard: React.FC<UspCardProps> = ({ item, width, index }) => {
         styles.card,
         {
           width: width,
-          backgroundColor: "#FFFFFF", // Start with white
+          backgroundColor: "#FFFFFF",
           borderRadius: RADIUS,
           borderWidth: 1,
-          borderColor: "#E5E7EB", // Very subtle gray border
+          borderColor: "#E5E7EB",
           padding: spacing(6),
           alignItems: "center",
           justifyContent: "center",
-          // Add subtle shadow for depth (not flat)
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 3,
         },
       ]}
     >
@@ -81,11 +61,13 @@ const UspCard: React.FC<UspCardProps> = ({ item, width, index }) => {
           marginBottom: spacing(5),
         }}
       >
-        <Image
-          source={USP_IMAGE_MAP[item.text] || { uri: item.image }}
-          style={{ width: "100%", height: "100%" }}
-          resizeMode="contain"
-        />
+        {item.image ? (
+          <Image
+            source={{ uri: item.image }}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode="contain"
+          />
+        ) : null}
       </View>
 
       {/* Text */}

@@ -21,6 +21,7 @@ import {
   GetCartQuantityResponse,
   RegisterDeviceTokenRequest,
   RegisterDeviceTokenResponse,
+  AppMenuCategoriesApiResponse,
 } from "../types/home.types";
 
 // banner api
@@ -33,18 +34,19 @@ export const getBanners = async (): Promise<BannerApiResponse> => {
 };
 
 // app header banner api
-export const getAppHeaderBanner = async (): Promise<AppHeaderBannerApiResponse> => {
-  const response = await apiClient.get<AppHeaderBannerApiResponse>(
-    "/app-api/v1/app-header-banner"
-  );
+export const getAppHeaderBanner =
+  async (): Promise<AppHeaderBannerApiResponse> => {
+    const response = await apiClient.get<AppHeaderBannerApiResponse>(
+      "/app-api/v1/app-header-banner",
+    );
 
-  return response.data;
-};
+    return response.data;
+  };
 
 // app main banner api
 export const getAppMainBanner = async (): Promise<AppMainBannerApiResponse> => {
   const response = await apiClient.get<AppMainBannerApiResponse>(
-    "/app-api/v1/app-main-banner"
+    "/app-api/v1/app-main-banner",
   );
 
   return response.data;
@@ -81,10 +83,10 @@ export const getDealsOfTheDay = async (): Promise<DealsApiResponse> => {
 // Deals Listing API
 export const getDealsListing = async (
   page_no: number = 1,
-  page_size: number = 16
+  page_size: number = 16,
 ): Promise<DealsListingApiResponse> => {
   const response = await apiClient.get<DealsListingApiResponse>(
-    `/app-api/v1/deals-of-the-day?page_no=${page_no}&page_size=${page_size}`
+    `/app-api/v1/deals-of-the-day?page_no=${page_no}&page_size=${page_size}`,
   );
   return response.data;
 };
@@ -144,15 +146,6 @@ export const bulkEnquiryApi = async (
   return response.data;
 };
 
-
-
-
-
-
-  
-
-
-
 export const getCartQuantity = async ({
   visitor_id,
   user_id,
@@ -169,8 +162,6 @@ export const getCartQuantity = async ({
 
   return data;
 };
-
-
 
 export const submitRating = async (
   payload: SubmitRatingRequest,
@@ -216,15 +207,24 @@ export const submitRating = async (
   return data;
 };
 
-
 export const registerDeviceToken = async (
   payload: RegisterDeviceTokenRequest,
 ) => {
-  const { data } =
-    await apiClient.post<RegisterDeviceTokenResponse>(
-      "/app-api/v1/device-token",
-      payload,
-    );
+  const { data } = await apiClient.post<RegisterDeviceTokenResponse>(
+    "/app-api/v1/device-token",
+    payload,
+  );
 
   return data;
 };
+
+// app menu categories api
+export const getAppMenuCategories =
+  async (): Promise<AppMenuCategoriesApiResponse> => {
+    const response = await apiClient.get<AppMenuCategoriesApiResponse>(
+      "/app-api/v1/app-menu-categories",
+    );
+
+    return response.data;
+  };
+

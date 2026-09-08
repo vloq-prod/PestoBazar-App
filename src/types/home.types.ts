@@ -1,5 +1,8 @@
 export interface BannerItem {
-  s3_image_path: string;
+  s3_image_path?: string;
+  mobile_banner_url?: string;
+  s3_image_url?: string;
+  desktop_banner_url?: string;
   app_redirect_key: string;
   app_redirect_value: string;
 }
@@ -391,3 +394,34 @@ export interface RegisterDeviceTokenResponse {
   message: string;
   data: DeviceTokenData;
 }
+
+// app menu categories
+export interface AppMenuCategoryItem {
+  id: number;
+  category_name: string;
+  name: string;
+  slug: string;
+  parent_id: number;
+  sequence: number | null;
+  category_image: string;
+  s3_image_path: string;
+  s3_image_url: string;
+}
+
+export interface AppMenuBrandItem {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface AppMenuCategoriesData {
+  categories: AppMenuCategoryItem[];
+  brands: AppMenuBrandItem[];
+}
+
+export interface AppMenuCategoriesApiResponse {
+  message: string;
+  status: number;
+  data: AppMenuCategoriesData;
+}
+

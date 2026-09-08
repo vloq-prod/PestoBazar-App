@@ -2,7 +2,7 @@ import "../global.css";
 
 import { useEffect, useState } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { Text, TextInput } from "react-native";
+import { Text, TextInput, View } from "react-native";
 
 import { ThemeProvider } from "../src/theme";
 import { useFonts } from "../src/hooks/useFonts";
@@ -73,31 +73,29 @@ function RootLayoutNav() {
     }
   }, [visitorId, token, isReady, segments]);
 
-  // ⏳ Splash handling
-  if (!isReady) {
-    return <SplashScreen onFinish={() => setSplashDone(true)} />;
-  }
-
-  if (!splashDone) {
-    return <SplashScreen onFinish={() => setSplashDone(true)} />;
-  }
-
-  // 🔥 ALWAYS RENDER BOTH (NO CONDITION)
+  // 🔥 ALWAYS RENDER STACK IN BACKGROUND (Load Home Screen while splash is active)
   return (
-    <CartQuantitySyncProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: "slide_from_right",
-          gestureEnabled: true,
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(stack)" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="welcome" />
-      </Stack>
-    </CartQuantitySyncProvider>
+    <View style={{ flex: 1 }}>
+      <CartQuantitySyncProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
+            gestureEnabled: true,
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(stack)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="welcome" />
+        </Stack>
+      </CartQuantitySyncProvider>
+
+      {/* ⏳ Splash Screen Overlay */}
+      {(!isReady || !splashDone) && (
+        <SplashScreen onFinish={() => setSplashDone(true)} />
+      )}
+    </View>
   );
 }
 

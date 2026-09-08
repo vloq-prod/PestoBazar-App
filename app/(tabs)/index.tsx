@@ -20,8 +20,6 @@ import { useTheme } from "../../src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, ShoppingCart } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import heroImage from "../../assets/hero-image.png";
-import heroBottom from "../../assets/hero-bottom.png";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useCartCount } from "../../src/hooks/cartHooks";
 import { useUnreadNotificationCount } from "../../src/hooks/useNotifications";
@@ -69,6 +67,8 @@ import {
   useBranch,
   useRecentlyViewed,
   useCategory,
+  useAppMainBanner,
+  useAppHeaderBanner,
 } from "../../src/hooks/homeHooks";
 import { Image } from "expo-image";
 
@@ -697,7 +697,12 @@ const MemoFooter = React.memo(Footer);
 export default function HomeScreen() {
   const isConnected = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const userId = useAppVisitorStore((state) => state.userId);
   const visitorId = useAppVisitorStore((state) => state.visitorId);
+
+  useEffect(() => {
+    console.log("user_id:", userId, "visitor_id:", visitorId);
+  }, [userId, visitorId]);
   const { colors } = useTheme();
   const { spacing } = useResponsive();
 
@@ -744,6 +749,8 @@ export default function HomeScreen() {
 
   const { slidingbanners, featureBanners, homeBottomBanners } =
     useHomeBanners();
+  const { banners: mainBanners } = useAppMainBanner();
+  const { banners: headerBanners } = useAppHeaderBanner();
   const { sections: homeProducts } = useHomeProduct();
   const { deals } = useDeals();
   const { featured } = useFeatured();
@@ -753,6 +760,20 @@ export default function HomeScreen() {
   const { recentlyViewed } = useRecentlyViewed(visitorId || "");
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
   const promoHeight = useSharedValue(0);
+
+  const mainBannerImageUri =
+    mainBanners?.[0]?.s3_image_url ||
+    mainBanners?.[0]?.mobile_banner_url ||
+    mainBanners?.[0]?.desktop_banner_url ||
+    mainBanners?.[0]?.s3_image_path ||
+    "";
+
+  const headerBannerImageUri =
+    headerBanners?.[0]?.s3_image_url ||
+    headerBanners?.[0]?.mobile_banner_url ||
+    headerBanners?.[0]?.desktop_banner_url ||
+    headerBanners?.[0]?.s3_image_path ||
+    "";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -893,11 +914,15 @@ export default function HomeScreen() {
       case "sliding_banners":
         return (
           <View>
-            <Image
-              source={heroBottom}
-              style={{ width: "100%", height: 140, marginTop: -1 }} // Increased height
-              contentFit="fill"
-            />
+            {!!headerBannerImageUri && (
+              <Image
+                source={{ uri: headerBannerImageUri }}
+                style={{ width: "100%", height: 140, marginTop: -1 }}
+                contentFit="fill"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
+            )}
             <View style={{ marginTop: 15 }}>
               <MemoSlidingBanners data={item.data} />
             </View>
@@ -932,7 +957,7 @@ export default function HomeScreen() {
       default:
         return null;
     }
-  }, []);
+  }, [headerBannerImageUri]);
 
   if (!isConnected) return <NoInternet />;
 
@@ -954,21 +979,23 @@ export default function HomeScreen() {
           animatedHeaderContainerStyle,
         ]}
       >
-        {/* Full Header Background Image */}
-        <Image
-          source={heroImage}
-          style={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            top: 0,
-            left: 0,
-          }}
-          contentFit="cover"
-          pointerEvents="none"
-          transition={0}
-          cachePolicy="memory-disk"
-        />
+        {/* Full Header Background Image from API */}
+        {!!mainBannerImageUri && (
+          <Image
+            source={{ uri: mainBannerImageUri }}
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              top: 0,
+              left: 0,
+            }}
+            contentFit="cover"
+            pointerEvents="none"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
+        )}
 
         {/* Seamless Promo Banner Top Section */}
         <Animated.View style={promoAnimatedStyle}>

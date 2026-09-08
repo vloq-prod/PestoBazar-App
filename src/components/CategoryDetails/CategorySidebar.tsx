@@ -13,6 +13,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  interpolate,
+  Extrapolation,
   Easing,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
@@ -85,12 +87,23 @@ const CategorySidebarItem = ({
 }: SidebarItemProps) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
-  const imageUrl = item.category_image || item.s3_image_path;
+
+  const normalImage = item.category_image || item.s3_image_path;
+  const flipImage = item.flip_image;
+  const hasFlipImage = !!flipImage;
+  const displayImage = isActive
+    ? flipImage || normalImage
+    : normalImage || flipImage;
 
   const bgOpacity = useSharedValue(isActive ? 1 : 0);
   const scale = useSharedValue(isActive ? 1 : 0.94);
+  const flipProgress = useSharedValue(isActive ? 1 : 0);
 
   useEffect(() => {
+    flipProgress.value = withTiming(isActive ? 1 : 0, {
+      duration: 320,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
+    });
     bgOpacity.value = withTiming(isActive ? 1 : 0, {
       duration: ANIM_DURATION,
       easing: EASING,
@@ -99,11 +112,51 @@ const CategorySidebarItem = ({
       duration: ANIM_DURATION,
       easing: EASING,
     });
-  }, [bgOpacity, isActive, scale]);
+  }, [bgOpacity, isActive, scale, flipProgress]);
 
   const wrapperStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const frontStyle = useAnimatedStyle(() => {
+    const rotateValue = interpolate(
+      flipProgress.value,
+      [0, 1],
+      [0, 180],
+      Extrapolation.CLAMP
+    );
+    return {
+      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
+      backfaceVisibility: "hidden",
+      opacity: flipProgress.value < 0.5 ? 1 : 0,
+    };
+  });
+
+  const backStyle = useAnimatedStyle(() => {
+    const rotateValue = interpolate(
+      flipProgress.value,
+      [0, 1],
+      [180, 360],
+      Extrapolation.CLAMP
+    );
+    return {
+      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
+      backfaceVisibility: "hidden",
+      opacity: flipProgress.value >= 0.5 ? 1 : 0,
+    };
+  });
+
+  const avatarPopStyle = useAnimatedStyle(() => {
+    const scaleVal = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [1, 1.15, 1],
+      Extrapolation.CLAMP
+    );
+    return {
+      transform: [{ scale: scaleVal }],
+    };
+  });
 
   return (
     <TouchableOpacity
@@ -126,17 +179,58 @@ const CategorySidebarItem = ({
           },
         ]}
       >
-        <View
+        <Animated.View
           style={[
             styles.avatarWrap,
+            avatarPopStyle,
             {
               backgroundColor: "transparent",
+              position: "relative",
             },
           ]}
         >
-          {imageUrl ? (
+          {hasFlipImage ? (
+            <>
+              {/* Front (normal image) */}
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { alignItems: "center", justifyContent: "center" },
+                  frontStyle,
+                ]}
+              >
+                {normalImage ? (
+                  <Image
+                    source={{ uri: normalImage }}
+                    style={styles.avatar}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <LayoutGrid
+                    size={22}
+                    color={textSecondaryColor}
+                  />
+                )}
+              </Animated.View>
+
+              {/* Back (flip image) */}
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { alignItems: "center", justifyContent: "center" },
+                  backStyle,
+                ]}
+              >
+                <Image
+                  source={{ uri: flipImage }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                />
+              </Animated.View>
+            </>
+          ) : displayImage ? (
             <Image
-              source={{ uri: imageUrl }}
+              source={{ uri: displayImage }}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -146,7 +240,7 @@ const CategorySidebarItem = ({
               color={isActive ? primaryColor : textSecondaryColor}
             />
           )}
-        </View>
+        </Animated.View>
 
         <Text
           numberOfLines={2}

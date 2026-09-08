@@ -24,34 +24,78 @@ const DealsScreen = () => {
     }
   };
 
-  const renderHeader = () => {
-    if (!banner) return null;
-    
+  const getBannerImageUrl = (b: any) => {
+    if (!b) return null;
     const baseUrl = "https://static-cdn.pestobazaar.com/";
-    const rawUrl =
-      banner.s3_image_url ||
-      banner.mobile_banner_url ||
-      banner.desktop_banner_url ||
-      banner.mobile_banner ||
-      banner.s3_image_path;
 
-    if (!rawUrl) return null;
+    // Check if s3_image_url is a direct valid CDN URL
+    if (
+      b.s3_image_url &&
+      b.s3_image_url.startsWith("http") &&
+      !b.s3_image_url.includes("localhost") &&
+      !b.s3_image_url.includes("127.0.0.1")
+    ) {
+      return b.s3_image_url;
+    }
 
-    const imageUrl = rawUrl.startsWith("http")
-      ? rawUrl
-      : baseUrl + (rawUrl.startsWith("/") ? rawUrl.slice(1) : rawUrl);
+    if (b.s3_image_path) {
+      const path = b.s3_image_path;
+      return path.startsWith("http")
+        ? path
+        : baseUrl + (path.startsWith("/") ? path.slice(1) : path);
+    }
+
+    const fileName = b.mobile_banner || b.desktop_banner;
+    if (fileName) {
+      if (fileName.startsWith("http")) return fileName;
+      const cleanPath = fileName.startsWith("pestobazaar/")
+        ? fileName
+        : `pestobazaar/uploads/Banners/${fileName.replace(/^\//, "")}`;
+      return baseUrl + cleanPath;
+    }
+
+    if (b.mobile_banner_url) {
+      let url = b.mobile_banner_url;
+      if (url.includes("localhost") || url.includes("127.0.0.1")) {
+        url = url.replace(/^https?:\/\/[^\/]+/, baseUrl.replace(/\/$/, ""));
+      }
+      return url;
+    }
+
+    if (b.desktop_banner_url) {
+      let url = b.desktop_banner_url;
+      if (url.includes("localhost") || url.includes("127.0.0.1")) {
+        url = url.replace(/^https?:\/\/[^\/]+/, baseUrl.replace(/\/$/, ""));
+      }
+      return url;
+    }
+
+    return null;
+  };
+
+  const renderHeader = () => {
+    const imageUrl = getBannerImageUrl(banner);
+    if (!imageUrl) return null;
+
+    const bannerHeight = SCREEN_WIDTH * 0.48;
 
     return (
       <TouchableOpacity 
-        activeOpacity={banner.redirect ? 0.8 : 1}
+        activeOpacity={banner?.redirect ? 0.88 : 1}
         onPress={handleBannerPress}
-        disabled={!banner.redirect}
-        style={{ width: SCREEN_WIDTH, marginBottom: spacing(16) }}
+        disabled={!banner?.redirect}
+        style={{ 
+          width: SCREEN_WIDTH, 
+          height: bannerHeight,
+          backgroundColor: colors.surface || "#F3F4F6",
+          marginBottom: spacing(16),
+        }}
       >
         <Image 
           source={{ uri: imageUrl }}
-          style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH / 2 }} 
+          style={{ width: "100%", height: "100%" }} 
           contentFit="cover"
+          transition={300}
         />
       </TouchableOpacity>
     );

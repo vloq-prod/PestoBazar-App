@@ -56,7 +56,7 @@ export default function HomeBottomBanner({ item }: Props) {
         }}
       >
         <Image
-          source={{ uri: item.s3_image_path }}
+          source={{ uri: item.mobile_banner_url || item.s3_image_url || item.s3_image_path }}
           style={{
             width: "100%",
             borderRadius: spacing(12),

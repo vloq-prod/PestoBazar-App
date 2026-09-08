@@ -102,9 +102,24 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
               }}
             >
               <Image
-                source={TopImage}
+                source={
+                  item.mobile_banner_url ||
+                  item.s3_image_url ||
+                  item.s3_image_path ||
+                  item.desktop_banner_url
+                    ? {
+                        uri:
+                          item.mobile_banner_url ||
+                          item.s3_image_url ||
+                          item.s3_image_path ||
+                          item.desktop_banner_url,
+                      }
+                    : TopImage
+                }
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
               />
             </TouchableOpacity>
           </View>

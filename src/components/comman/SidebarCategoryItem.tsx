@@ -1,13 +1,15 @@
-// src/components/category/SidebarCategoryItem.tsx
+// src/components/comman/SidebarCategoryItem.tsx
 import React from "react";
 import { TouchableOpacity, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { CategoryItem } from "../../types/home.types";
+import { CategoryItem, AppMenuCategoryItem } from "../../types/home.types";
+
+type SidebarItemType = CategoryItem | AppMenuCategoryItem;
 
 type Props = {
-  item: CategoryItem;
+  item: SidebarItemType;
   isActive: boolean;
-  onPress: (item: CategoryItem) => void;
+  onPress: (item: any) => void;
   colors: any;
 };
 
@@ -17,93 +19,88 @@ const SidebarCategoryItem: React.FC<Props> = ({
   onPress,
   colors,
 }) => {
+  const flipImg = "flip_image" in item ? item.flip_image : null;
+  const normalImg =
+    item.category_image ||
+    item.s3_image_path ||
+    ("s3_image_url" in item ? item.s3_image_url : null);
+
+  const imageUrl = isActive
+    ? flipImg || normalImg
+    : normalImg || flipImg;
+
+  const activeColor = colors?.primary || "#00875A";
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       onPress={() => onPress(item)}
       style={{
-        paddingVertical: 12,
-        paddingHorizontal: 8,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
         alignItems: "center",
-        gap: 6,
-        backgroundColor: isActive ? colors.primary + "15" : "transparent",
-        borderLeftWidth: 3,
-        borderLeftColor: isActive ? colors.primary : "transparent",
         position: "relative",
       }}
     >
-      {/* Image circle */}
+      {/* Circle Image Wrapper */}
       <View
         style={{
           width: 48,
           height: 48,
           borderRadius: 24,
+          backgroundColor: isActive ? `${activeColor}1A` : "#F2F4F7",
+          alignItems: "center",
+          justifyContent: "center",
           overflow: "hidden",
-          borderWidth: isActive ? 2 : 1.5,
-          borderColor: isActive ? colors.primary : colors.border,
-          backgroundColor: "transparent",
-          // Subtle shadow on active
-          shadowColor: isActive ? colors.primary : "transparent",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.35,
-          shadowRadius: 6,
-          elevation: isActive ? 4 : 0,
         }}
       >
-        {item.category_image || item.s3_image_path ? (
+        {imageUrl ? (
           <Image
-            source={{ uri: (item.category_image || item.s3_image_path)! }}
-            style={{ width: "100%", height: "100%" }}
-            contentFit="cover"
+            source={{ uri: imageUrl }}
+            style={{ width: 35, height: 35 }}
+            contentFit="contain"
           />
         ) : (
-          // Fallback: first letter of category name
-          <View
+          <Text
             style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: isActive ? colors.primary + "20" : colors.border,
+              fontSize: 15,
+              fontFamily: "Poppins_600SemiBold",
+              color: isActive ? activeColor : "#757575",
             }}
           >
-            <Text
-              style={{
-                fontSize: 16,
-                fontFamily: "Poppins_600SemiBold",
-                color: isActive ? colors.primary : colors.textSecondary,
-              }}
-            >
-              {item.category_name?.[0]?.toUpperCase() ?? "?"}
-            </Text>
-          </View>
+            {item.category_name?.[0]?.toUpperCase() ?? "?"}
+          </Text>
         )}
       </View>
 
-      {/* Category name */}
+      {/* Category Title */}
       <Text
         numberOfLines={2}
         style={{
-          fontSize: 10,
-          fontFamily: isActive ? "Poppins_600SemiBold" : "Poppins_400Regular",
-          color: isActive ? colors.primary : colors.textSecondary,
+          marginTop: 4,
+          fontSize: 9.5,
+          fontFamily: isActive ? "Poppins_700Bold" : "Poppins_500Medium",
+          color: isActive ? "#111111" : "#666666",
           textAlign: "center",
-          lineHeight: 14,
+          lineHeight: 12,
+          width: "100%",
         }}
       >
         {item.category_name}
       </Text>
 
-      {/* Active dot indicator */}
+      {/* Right Active Indicator Bar */}
       {isActive && (
         <View
           style={{
             position: "absolute",
-            right: 6,
-            top: "50%",
-            width: 5,
-            height: 5,
-            borderRadius: 3,
-            backgroundColor: colors.primary,
+            right: 0,
+            top: 6,
+            bottom: 6,
+            width: 4,
+            borderTopLeftRadius: 3,
+            borderBottomLeftRadius: 3,
+            backgroundColor: activeColor,
           }}
         />
       )}

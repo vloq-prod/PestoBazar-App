@@ -1,5 +1,5 @@
 // app/userprofile.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,17 @@ import {
 } from "lucide-react-native";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useAppVisitorStore } from "../../src/store/auth";
+
+const getInitials = (name?: string | null) => {
+  if (!name) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
 
 // ─── Field config ─────────────────────────────────────────────────────────────
 const FIELDS = [
@@ -225,6 +236,12 @@ export default function UserProfile() {
   const { font, spacing } = useResponsive();
 
   const { userName, userEmail, userAvatar } = useAppVisitorStore();
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [userAvatar]);
+
   const [form, setForm] = useState({
     fullName: userName || "",
     email: userEmail || "",
@@ -265,11 +282,36 @@ export default function UserProfile() {
             style={[styles.avatarOuter, { borderColor: colors.primary + "40" }]}
           >
             <View style={[styles.avatarInner, { borderColor: colors.primary }]}>
-              <Image
-                source={userAvatar ? { uri: userAvatar } : require("../../assets/icon.png")}
-                style={styles.avatarImage}
-                contentFit="cover"
-              />
+              {userAvatar && !imageError ? (
+                <Image
+                  source={{ uri: userAvatar }}
+                  onError={() => setImageError(true)}
+                  style={styles.avatarImage}
+                  contentFit="cover"
+                />
+              ) : (
+                <View
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: 50,
+                    backgroundColor: colors.primary + "1A",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: 26,
+                      color: colors.primary,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    {getInitials(userName || "User")}
+                  </Text>
+                </View>
+              )}
             </View>
 
             <TouchableOpacity

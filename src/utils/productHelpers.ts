@@ -1,5 +1,3 @@
-
-
 export const formatPrice = (price: string): string =>
   `₹ ${parseFloat(price).toLocaleString("en-IN")}`;
 
@@ -20,23 +18,18 @@ export const resolveImages = (
   return [];
 };
 
-
 export const getDiscount = (mrp: number, selling: number): number | null => {
   if (!mrp || !selling || mrp <= selling) return null;
   return Math.round(((mrp - selling) / mrp) * 100);
 };
 
-
 export const shouldShowRating = (
   avgRating: string,
-  totalReviews: number
+  totalReviews: number,
 ): boolean => {
   const rating = parseFloat(avgRating);
   return rating > 0 && totalReviews > 0;
 };
-
-
-
 
 export const fmt = (value: string | number) => {
   const num = Number(value);
@@ -52,4 +45,3 @@ export const formatINR = (amount: number) => {
     maximumFractionDigits: 2,
   }).format(amount);
 };
-

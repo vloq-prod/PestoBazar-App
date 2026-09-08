@@ -81,7 +81,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
       },
     });
 
-    // Reset flip after navigating so if user goes back it is in original state
+    // Reset flip 600ms after navigating so card is cleanly back in original state when user returns
     timeoutRef.current = setTimeout(() => {
       flipProgress.value = 0;
       setIsFlipping(false);
@@ -97,31 +97,41 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
     if (flipImageUrl) {
       setIsFlipping(true);
       flipProgress.value = withTiming(1, {
-        duration: 350,
-        easing: Easing.out(Easing.cubic),
+        duration: 280,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
       });
 
-      // Hold the flipped image in the box for 0.5 second (500ms), then navigate
+      // 3D Flip finishes in 280ms -> navigate immediately at 300ms
       timeoutRef.current = setTimeout(() => {
         navigateToCategory();
-      }, 850);
+      }, 300);
     } else {
       navigateToCategory();
     }
   };
 
+  const cardContainerStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [1, 1.06, 1],
+      Extrapolation.CLAMP,
+    );
+    return {
+      transform: [{ scale }],
+    };
+  });
+
   const frontStyle = useAnimatedStyle(() => {
     const rotateValue = interpolate(
       flipProgress.value,
-      [0, 0.5, 1],
-      [0, 90, 90],
+      [0, 1],
+      [0, 180],
       Extrapolation.CLAMP,
     );
-    const opacityValue = flipProgress.value < 0.5 ? 1 : 0;
-
     return {
-      transform: [{ perspective: 1000 }, { rotateY: `${rotateValue}deg` }],
-      opacity: opacityValue,
+      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
+      opacity: flipProgress.value < 0.5 ? 1 : 0,
       zIndex: flipProgress.value < 0.5 ? 2 : 1,
     };
   });
@@ -129,15 +139,13 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   const backStyle = useAnimatedStyle(() => {
     const rotateValue = interpolate(
       flipProgress.value,
-      [0, 0.5, 1],
-      [-90, -90, 0],
+      [0, 1],
+      [180, 360],
       Extrapolation.CLAMP,
     );
-    const opacityValue = flipProgress.value >= 0.5 ? 1 : 0;
-
     return {
-      transform: [{ perspective: 1000 }, { rotateY: `${rotateValue}deg` }],
-      opacity: opacityValue,
+      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
+      opacity: flipProgress.value >= 0.5 ? 1 : 0,
       zIndex: flipProgress.value >= 0.5 ? 2 : 1,
     };
   });
@@ -148,17 +156,20 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
       style={{ flex: 1, alignItems: "center", marginBottom: GAP }}
       onPress={handlePress}
     >
-      <View
-        style={{
-          width: cardSize,
-          height: cardSize,
-          backgroundColor: bgColor,
-          borderRadius: spacing(12),
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          overflow: "hidden",
-        }}
+      <Animated.View
+        style={[
+          {
+            width: cardSize,
+            height: cardSize,
+            backgroundColor: bgColor,
+            borderRadius: spacing(12),
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            overflow: "hidden",
+          },
+          cardContainerStyle,
+        ]}
       >
         {/* Front face (category_image) */}
         <Animated.View
@@ -223,7 +234,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
             </Text>
           )}
         </Animated.View>
-      </View>
+      </Animated.View>
 
       <Text
         numberOfLines={2}

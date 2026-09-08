@@ -63,19 +63,19 @@ const carouselData = [
     id: 1,
     title: "Fast Pest Control",
     description: "Get quick and reliable pest control service at your doorstep",
-    image: require("../../assets/welcome-screen/Farmer Image from Unsplash.jpg"),
+    image: "https://cdn-icons-png.flaticon.com/512/3595/3595701.png",
   },
   {
     id: 2,
     title: "Trusted Experts",
-    description: "Verified professionals with years of experience",
-    image: require("../../assets/welcome-screen/Farmer Spraying Vegetables.jpg"),
+    description: "Verified professionals with years of experience in pest management",
+    image: "https://cdn-icons-png.flaticon.com/512/1533/1533924.png",
   },
   {
     id: 3,
-    title: "100% Safe",
-    description: "Eco-friendly chemicals safe for your family and pets",
-    image: require("../../assets/welcome-screen/Male Agronomist Apple Trees Pesticides.jpg"),
+    title: "100% Safe & Eco-Friendly",
+    description: "Safe pest control solutions for your family and pets",
+    image: "https://cdn-icons-png.flaticon.com/512/3063/3063823.png",
   },
 ];
 
@@ -363,8 +363,16 @@ export default function Login() {
                 renderItem={({ item }) => (
                   <View style={styles.slide}>
                     <Image
-                      source={item.image}
-                      style={{ width: 140, height: 140, resizeMode: "contain" }}
+                      source={
+                        typeof item.image === "string"
+                          ? { uri: item.image }
+                          : item.image
+                      }
+                      style={{
+                        width: 140,
+                        height: 140,
+                        resizeMode: "contain",
+                      }}
                     />
                     <Text
                       style={{

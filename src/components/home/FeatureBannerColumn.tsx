@@ -92,7 +92,7 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
         }}
       >
         <Image
-          source={{ uri: item.s3_image_path }}
+          source={{ uri: item.mobile_banner_url || item.s3_image_url || item.s3_image_path }}
           style={{ width: "100%", height: "100%" }}
           resizeMode="cover"
           className="rounded-xl"

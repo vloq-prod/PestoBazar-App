@@ -1,117 +1,87 @@
 import React from "react";
-import { View, Text, TouchableOpacity, FlatList, Dimensions } from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import ItemCard from "../comman/ItemCard";
+import SeeAllProductsButton from "../comman/SeeAllProductsButton";
 import { useDiyListing } from "../../hooks/diyHooks";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const Diy = () => {
-    const { products } = useDiyListing({});
+    const { products, loading } = useDiyListing({});
     const { colors } = useTheme();
     const { spacing, font } = useResponsive();
     const router = useRouter();
 
+    if (!loading && (!products || products.length === 0)) {
+        return null;
+    }
 
-    const H_PADDING = 16 * 1;
-    const rightWidth = (SCREEN_WIDTH - H_PADDING) * 0.58;
-    const GAP = spacing(5);
+    const CARD_PADDING = spacing(14);
+    const GAP = spacing(6);
+    const innerWidth = SCREEN_WIDTH - CARD_PADDING * 2;
+    const ITEM_WIDTH = (innerWidth - GAP * 2) / 3;
 
-    // Show 1 full card + ~85% of 2nd card peeking
-    const CARD_WIDTH = (rightWidth - GAP * 0.85) / 1.90;
+    // Display 3 products in one row
+    const displayedProducts = products ? products.slice(0, 3) : [];
 
     return (
-        <View style={{ paddingHorizontal: spacing(16) }}>
+        <View style={{ marginVertical: spacing(8) }}>
             <View style={{
-                borderRadius: spacing(16),
-                backgroundColor: colors.primary + "10",
-                flexDirection: "row",
-                overflow: "hidden",
-                minHeight: spacing(200),
+                backgroundColor: colors.primary + "20",
+                padding: CARD_PADDING,
+                gap: spacing(12),
             }}>
-                {/* ── Left Side ── */}
-                <View style={{
-                    flex: 0.42,
-                    paddingTop: spacing(16),
-                    paddingBottom: spacing(16),
-                    paddingLeft: spacing(16),
-                    paddingRight: spacing(6),
-                    justifyContent: "center",
-                    gap: spacing(10),
-                }}>
+                {/* ── Top Header (Title & Description) ── */}
+                <View style={{ gap: spacing(4) }}>
                     <Text style={{
-                        fontSize: font(24),
+                        fontSize: font(20),
                         fontWeight: "800",
-                        color: colors.primaryDark,
-                        lineHeight: font(22),
+                        color: colors.primaryDark || colors.text,
+                        lineHeight: font(24),
                     }}>
-                        Do it{"\n"}Yourself
+                        Do it Yourself
                     </Text>
 
-                    <Text
-                        numberOfLines={3}
-                        style={{
-                            fontSize: font(11),
-                            color: colors.textSecondary,
-                            lineHeight: font(17),
-                        }}>
+                    <Text style={{
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        lineHeight: font(17),
+                    }}>
                         Complete pest control solutions you can easily apply at home.
                     </Text>
-
-                    <TouchableOpacity 
-                        onPress={() => router.push('/(stack)/diy')}
-                        style={{
-                            backgroundColor: colors.primary,
-                            paddingVertical: spacing(7),
-                            paddingHorizontal: spacing(14),
-                            borderRadius: spacing(10),
-                            alignSelf: "flex-start",
-                        }}
-                    >
-                        <Text style={{
-                            color: colors.primaryForeground,
-                            fontSize: font(11),
-                            fontWeight: "700",
-                        }}>
-                            Explore Now
-                        </Text>
-                    </TouchableOpacity>
                 </View>
 
-                {/* ── Right Side — horizontal product scroll ── */}
+                {/* ── Middle: 3 Products per Row Grid ── */}
                 <View style={{
-                    flex: 0.58,
-                    paddingVertical: spacing(12),
-                    paddingRight: spacing(8),
-                    overflow: "hidden",
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: GAP,
                 }}>
-                    <FlatList
-                        horizontal
-                        data={products}
-                        keyExtractor={(item) => String(item.id)}
-                        showsHorizontalScrollIndicator={false}
-                        nestedScrollEnabled
-                        ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
-                        contentContainerStyle={{ paddingRight: spacing(4) }}
-                        renderItem={({ item }) => (
-                            <View style={{ width: CARD_WIDTH }}>
-                                <ItemCard
-                                    item={{
-                                        ...item,
-                                        s3_image_path: item.image_path,
-                                    } as any}
-                                    onPress={() => { }}
-                                />
-                            </View>
-                        )}
-                    />
+                    {displayedProducts.map((item) => (
+                        <View key={item.id} style={{ width: ITEM_WIDTH }}>
+                            <ItemCard
+                                item={{
+                                    ...item,
+                                    s3_image_path: item.image_path,
+                                } as any}
+                            />
+                        </View>
+                    ))}
                 </View>
+
+                {/* ── Bottom: See All Products Button ── */}
+                <SeeAllProductsButton
+                    products={displayedProducts}
+                    label="See all products"
+                    onPress={() => router.push('/(stack)/diy')}
+                    style={{ marginHorizontal: 0, marginTop: spacing(2) }}
+                />
             </View>
         </View>
     );
 };
 
 export default Diy;
-

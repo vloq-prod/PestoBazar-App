@@ -38,6 +38,7 @@ export const getThreeProductImageUris = (products: any[] = []): string[] => {
         (Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : undefined) ||
         item.category_image ||
         item.image_url ||
+        item.image_path ||
         item.image;
     }
 

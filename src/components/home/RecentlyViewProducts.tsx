@@ -147,7 +147,10 @@ const RecentlyViewProducts = () => {
               </View>
             ))
           : displayProducts.map((item: any, index: number) => (
-              <View key={`recent-${item.id}-${index}`} style={{ width: ITEM_WIDTH }}>
+              <View
+                key={`recent-${item.id}-${index}`}
+                style={{ width: ITEM_WIDTH }}
+              >
                 <ItemCard item={item as any} />
               </View>
             ))}
