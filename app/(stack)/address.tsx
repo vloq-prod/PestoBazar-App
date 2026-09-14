@@ -237,7 +237,7 @@ export default function Address() {
               "No billing address added",
               "billing",
             )}
-            <View style={{ height: spacing(12) }} />
+          
             {renderAddressList(
               deliveryList,
               "Delivery Address",

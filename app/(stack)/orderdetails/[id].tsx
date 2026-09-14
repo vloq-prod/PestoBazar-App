@@ -322,6 +322,7 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
 
 const OrderDetails = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
+  console.log("order id", id);
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -588,7 +589,10 @@ const OrderDetails = () => {
                     color: colors.text,
                   }}
                 >
-                  ₹{formatPrice(orderData?.order?.order_amount)}
+                  ₹{formatPrice(
+                    orderData?.order?.total_before_discount ||
+                      orderData?.order?.order_amount
+                  )}
                 </Text>
               </View>
 
@@ -671,6 +675,58 @@ const OrderDetails = () => {
                   + ₹{formatPrice(orderData?.order?.shipping_gst || "0")}
                 </Text>
               </View>
+
+              {Number(orderData?.order?.b2b_discount_amount) > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    B2B Discount{" "}
+                    {orderData?.order?.b2b_discount_percent
+                      ? `(${orderData?.order?.b2b_discount_percent}%)`
+                      : ""}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12.5),
+                      color: "#10B981",
+                    }}
+                  >
+                    - ₹{formatPrice(orderData?.order?.b2b_discount_amount)}
+                  </Text>
+                </View>
+              )}
+
+              {Number(orderData?.order?.promo_discount_amount) > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    Coupon Discount{" "}
+                    {orderData?.order?.promo_code
+                      ? `(${orderData?.order?.promo_code})`
+                      : ""}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12.5),
+                      color: "#10B981",
+                    }}
+                  >
+                    - ₹{formatPrice(orderData?.order?.promo_discount_amount)}
+                  </Text>
+                </View>
+              )}
             </View>
 
             <WavyDivider color={colors.border} spacing={spacing} />
@@ -714,7 +770,11 @@ const OrderDetails = () => {
                       color: colors.text,
                     }}
                   >
-                    ₹{formatPrice(orderData?.order?.paid_amount)}
+                    ₹{formatPrice(
+                      orderData?.order?.total_after_discount ??
+                        orderData?.order?.paid_amount ??
+                        orderData?.order?.order_amount
+                    )}
                   </Text>
                 </View>
               </View>
@@ -799,9 +859,11 @@ const OrderDetails = () => {
                   }}
                 >
                   {orderData.free_product?.map((item: any, idx: number) => {
-                    const imageUri = item.s3_image_path?.startsWith("http")
+                    const imageUri = !item.s3_image_path
+                      ? ""
+                      : item.s3_image_path.startsWith("http")
                       ? item.s3_image_path
-                      : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                      : `https://static-cdn.pestobazaar.com${item.s3_image_path.startsWith("/") ? "" : "/"}${item.s3_image_path}`;
                     const isLastFreeItem =
                       idx === (orderData.free_product?.length ?? 0) - 1;
 

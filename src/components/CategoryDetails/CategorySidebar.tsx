@@ -1,5 +1,5 @@
 // src/components/category/CategorySidebar.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,10 +12,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
+  withSpring,
   interpolate,
   Extrapolation,
-  Easing,
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 import { CategoryItem } from "../../types/home.types";
@@ -24,8 +23,6 @@ import { LayoutGrid } from "lucide-react-native";
 
 const ITEM_HEIGHT = 100;
 const ITEM_GAP = 20;
-const ANIM_DURATION = 220;
-const EASING = Easing.out(Easing.quad);
 
 const SkeletonBox = ({
   width,
@@ -73,207 +70,256 @@ const SidebarSkeleton = () => (
 type SidebarItemProps = {
   item: CategoryItem;
   isActive: boolean;
-  onPress: () => void;
+  onPress: (item: CategoryItem) => void;
   primaryColor: string;
   textSecondaryColor: string;
 };
 
-const CategorySidebarItem = ({
-  item,
-  isActive,
-  onPress,
-  primaryColor,
-  textSecondaryColor,
-}: SidebarItemProps) => {
-  const { colors } = useTheme();
-  const { spacing, font } = useResponsive();
+const CategorySidebarItem = React.memo(
+  ({
+    item,
+    isActive,
+    onPress,
+    primaryColor,
+    textSecondaryColor,
+  }: SidebarItemProps) => {
+    const { spacing, font } = useResponsive();
 
-  const normalImage = item.category_image || item.s3_image_path;
-  const flipImage = item.flip_image;
-  const hasFlipImage = !!flipImage;
-  const displayImage = isActive
-    ? flipImage || normalImage
-    : normalImage || flipImage;
+    const normalImage = item.category_image || item.s3_image_path || "";
+    const flipImage = item.flip_image;
+    const hasFlipImage = !!flipImage;
 
-  const bgOpacity = useSharedValue(isActive ? 1 : 0);
-  const scale = useSharedValue(isActive ? 1 : 0.94);
-  const flipProgress = useSharedValue(isActive ? 1 : 0);
+    const flipProgress = useSharedValue(isActive && hasFlipImage ? 1 : 0);
+    const activeGlow = useSharedValue(isActive ? 1 : 0);
 
-  useEffect(() => {
-    flipProgress.value = withTiming(isActive ? 1 : 0, {
-      duration: 320,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
-    });
-    bgOpacity.value = withTiming(isActive ? 1 : 0, {
-      duration: ANIM_DURATION,
-      easing: EASING,
-    });
-    scale.value = withTiming(isActive ? 1 : 0.94, {
-      duration: ANIM_DURATION,
-      easing: EASING,
-    });
-  }, [bgOpacity, isActive, scale, flipProgress]);
+    useEffect(() => {
+      flipProgress.value = withSpring(isActive && hasFlipImage ? 1 : 0, {
+        damping: 14,
+        stiffness: 110,
+        mass: 0.75,
+      });
+      activeGlow.value = withSpring(isActive ? 1 : 0, {
+        damping: 16,
+        stiffness: 120,
+      });
+    }, [isActive, hasFlipImage, flipProgress, activeGlow]);
 
-  const wrapperStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const frontStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(
-      flipProgress.value,
-      [0, 1],
-      [0, 180],
-      Extrapolation.CLAMP
-    );
-    return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
-      backfaceVisibility: "hidden",
-      opacity: flipProgress.value < 0.5 ? 1 : 0,
-    };
-  });
-
-  const backStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(
-      flipProgress.value,
-      [0, 1],
-      [180, 360],
-      Extrapolation.CLAMP
-    );
-    return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
-      backfaceVisibility: "hidden",
-      opacity: flipProgress.value >= 0.5 ? 1 : 0,
-    };
-  });
-
-  const avatarPopStyle = useAnimatedStyle(() => {
-    const scaleVal = interpolate(
-      flipProgress.value,
-      [0, 0.5, 1],
-      [1, 1.15, 1],
-      Extrapolation.CLAMP
-    );
-    return {
-      transform: [{ scale: scaleVal }],
-    };
-  });
-
-  return (
-    <TouchableOpacity
-      activeOpacity={0.75}
-      onPress={onPress}
-      style={[
-        styles.itemOuter,
+    const wrapperStyle = useAnimatedStyle(() => ({
+      transform: [
         {
-          flexDirection: "row",
+          scale: interpolate(
+            activeGlow.value,
+            [0, 1],
+            [0.94, 1.02],
+            Extrapolation.CLAMP,
+          ),
         },
-      ]}
-    >
-      <Animated.View
+      ],
+    }));
+
+    const frontStyle = useAnimatedStyle(() => {
+      const rotateYVal = interpolate(
+        flipProgress.value,
+        [0, 1],
+        [0, 180],
+        Extrapolation.CLAMP,
+      );
+      const rotateZVal = interpolate(
+        flipProgress.value,
+        [0, 0.5, 1],
+        [0, -10, 0],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        transform: [
+          { perspective: 1200 },
+          { rotateY: `${rotateYVal}deg` },
+          { rotateZ: `${rotateZVal}deg` },
+        ],
+        backfaceVisibility: "hidden",
+        opacity: flipProgress.value < 0.5 ? 1 : 0,
+        zIndex: flipProgress.value < 0.5 ? 2 : 1,
+      };
+    });
+
+    const backStyle = useAnimatedStyle(() => {
+      const rotateYVal = interpolate(
+        flipProgress.value,
+        [0, 1],
+        [180, 360],
+        Extrapolation.CLAMP,
+      );
+      const rotateZVal = interpolate(
+        flipProgress.value,
+        [0, 0.5, 1],
+        [0, 10, 0],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        transform: [
+          { perspective: 1200 },
+          { rotateY: `${rotateYVal}deg` },
+          { rotateZ: `${rotateZVal}deg` },
+        ],
+        backfaceVisibility: "hidden",
+        opacity: flipProgress.value >= 0.5 ? 1 : 0,
+        zIndex: flipProgress.value >= 0.5 ? 2 : 1,
+      };
+    });
+
+    const avatarPopStyle = useAnimatedStyle(() => {
+      const scaleVal = interpolate(
+        activeGlow.value,
+        [0, 1],
+        [1, 1.08],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        transform: [{ scale: scaleVal }],
+      };
+    });
+
+    const indicatorStyle = useAnimatedStyle(() => {
+      const scaleY = interpolate(activeGlow.value, [0, 1], [0, 1]);
+      const opacity = interpolate(activeGlow.value, [0, 1], [0, 1]);
+      return {
+        transform: [{ scaleY }],
+        opacity,
+      };
+    });
+
+    const handlePress = useCallback(() => {
+      onPress(item);
+    }, [onPress, item]);
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={handlePress}
         style={[
-          styles.itemInner,
-          wrapperStyle,
+          styles.itemOuter,
           {
-            borderRadius: spacing(14),
-            paddingHorizontal: spacing(4),
+            flexDirection: "row",
+            alignItems: "center",
+            position: "relative",
+            width: "100%",
           },
         ]}
       >
         <Animated.View
           style={[
-            styles.avatarWrap,
-            avatarPopStyle,
+            styles.itemInner,
+            wrapperStyle,
             {
+              borderRadius: spacing(14),
+              paddingHorizontal: spacing(4),
               backgroundColor: "transparent",
-              position: "relative",
             },
           ]}
         >
-          {hasFlipImage ? (
-            <>
-              {/* Front (normal image) */}
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFill,
-                  { alignItems: "center", justifyContent: "center" },
-                  frontStyle,
-                ]}
-              >
-                {normalImage ? (
-                  <Image
-                    source={{ uri: normalImage }}
-                    style={styles.avatar}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <LayoutGrid
-                    size={22}
-                    color={textSecondaryColor}
-                  />
-                )}
-              </Animated.View>
+          <View style={{ alignItems: "center", justifyContent: "center" }}>
+            <Animated.View
+              style={[
+                styles.avatarWrap,
+                avatarPopStyle,
+                {
+                  backgroundColor: "transparent",
+                  position: "relative",
+                },
+              ]}
+            >
+              {hasFlipImage ? (
+                <>
+                  <Animated.View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { alignItems: "center", justifyContent: "center" },
+                      frontStyle,
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: normalImage }}
+                      style={styles.avatar}
+                      contentFit="cover"
+                    />
+                  </Animated.View>
 
-              {/* Back (flip image) */}
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFill,
-                  { alignItems: "center", justifyContent: "center" },
-                  backStyle,
-                ]}
-              >
+                  <Animated.View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      { alignItems: "center", justifyContent: "center" },
+                      backStyle,
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: flipImage! }}
+                      style={styles.avatar}
+                      contentFit="cover"
+                    />
+                  </Animated.View>
+                </>
+              ) : normalImage ? (
                 <Image
-                  source={{ uri: flipImage }}
+                  source={{ uri: normalImage }}
                   style={styles.avatar}
                   contentFit="cover"
                 />
-              </Animated.View>
-            </>
-          ) : displayImage ? (
-            <Image
-              source={{ uri: displayImage }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
-          ) : (
-            <LayoutGrid
-              size={22}
-              color={isActive ? primaryColor : textSecondaryColor}
-            />
-          )}
+              ) : (
+                <LayoutGrid
+                  size={22}
+                  color={isActive ? primaryColor : textSecondaryColor}
+                />
+              )}
+            </Animated.View>
+          </View>
+
+          <Text
+            numberOfLines={2}
+            style={[
+              styles.label,
+              {
+                color: isActive ? primaryColor : textSecondaryColor,
+                fontSize: font(9),
+                paddingHorizontal: spacing(2),
+                fontFamily: isActive
+                  ? "Poppins_600SemiBold"
+                  : "Poppins_500Medium",
+              },
+            ]}
+          >
+            {item.category_name}
+          </Text>
         </Animated.View>
 
-        <Text
-          numberOfLines={2}
+        <Animated.View
           style={[
-            styles.label,
             {
-              color: isActive ? primaryColor : textSecondaryColor,
-              fontSize: font(9),
-
-              paddingHorizontal: spacing(2),
-              fontFamily: isActive
-                ? "Poppins_600SemiBold"
-                : "Poppins_500Medium",
+              position: "absolute",
+              right: 0,
+              top: 4,
+              bottom: 4,
+              width: 4,
+              backgroundColor: primaryColor,
+              borderTopLeftRadius: 4,
+              borderBottomLeftRadius: 4,
             },
+            indicatorStyle,
           ]}
-        >
-          {item.category_name}
-        </Text>
-      </Animated.View>
-
-      {isActive && (
-        <View
-          style={{
-            padding: 2,
-            backgroundColor: colors.primary,
-            borderTopLeftRadius: 6,
-            borderBottomLeftRadius: 6,
-          }}
         />
-      )}
-    </TouchableOpacity>
-  );
-};
+      </TouchableOpacity>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.isActive === nextProps.isActive &&
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.category_image === nextProps.item.category_image &&
+    prevProps.item.flip_image === nextProps.item.flip_image &&
+    prevProps.primaryColor === nextProps.primaryColor &&
+    prevProps.textSecondaryColor === nextProps.textSecondaryColor,
+);
 
 export type CategorySidebarProps = {
   categories: CategoryItem[];
@@ -295,8 +341,6 @@ const CategorySidebar = ({
   const itemTotalHeight = ITEM_HEIGHT + ITEM_GAP;
   const listTopPadding = spacing(10);
 
-  // ── Auto-scroll to active item when selectedSlug changes ──────────────────
-  // Small delay so the list has rendered before we scroll
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -307,43 +351,74 @@ const CategorySidebar = ({
     );
     if (index < 0) return;
 
-    // Clear any pending scroll from a previous effect
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
 
     scrollTimeoutRef.current = setTimeout(() => {
       listRef.current?.scrollToIndex({
         index,
         animated: true,
-        // 0.5 = center the active item vertically in the visible area
         viewPosition: 0.5,
       });
-    }, 80); // 80 ms is enough for RN to finish its layout pass
+    }, 80);
 
     return () => {
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
   }, [selectedSlug, categories]);
 
-  // ── Fallback: if scrollToIndex fires before item is measured ─────────────
-  const handleScrollToIndexFailed = ({
-    index,
-    averageItemLength,
-  }: {
-    index: number;
-    averageItemLength: number;
-  }) => {
-    // Scroll to approximate offset first, then retry after layout
-    const offset = listTopPadding + averageItemLength * index;
-    listRef.current?.scrollToOffset({ offset, animated: false });
+  const handleScrollToIndexFailed = useCallback(
+    ({
+      index,
+      averageItemLength,
+    }: {
+      index: number;
+      averageItemLength: number;
+    }) => {
+      const offset = listTopPadding + averageItemLength * index;
+      listRef.current?.scrollToOffset({ offset, animated: false });
 
-    setTimeout(() => {
-      listRef.current?.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5,
-      });
-    }, 120);
-  };
+      setTimeout(() => {
+        listRef.current?.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.5,
+        });
+      }, 120);
+    },
+    [listTopPadding],
+  );
+
+  const keyExtractor = useCallback(
+    (item: CategoryItem) => item.id?.toString() ?? item.slug?.toString(),
+    [],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: CategoryItem }) => (
+      <CategorySidebarItem
+        item={item}
+        isActive={selectedSlug === item.slug?.toString()}
+        onPress={onSelect}
+        primaryColor={colors.primary}
+        textSecondaryColor={colors.textSecondary}
+      />
+    ),
+    [selectedSlug, onSelect, colors.primary, colors.textSecondary],
+  );
+
+  const separator = useCallback(
+    () => <View style={{ height: ITEM_GAP }} />,
+    [],
+  );
+
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: itemTotalHeight,
+      offset: listTopPadding + itemTotalHeight * index,
+      index,
+    }),
+    [itemTotalHeight, listTopPadding],
+  );
 
   return (
     <View
@@ -352,7 +427,7 @@ const CategorySidebar = ({
         {
           backgroundColor: colors.surface,
           borderRightWidth: 1,
-          borderRightColor: colors.border
+          borderRightColor: colors.border,
         },
       ]}
     >
@@ -362,31 +437,19 @@ const CategorySidebar = ({
         <FlatList
           ref={listRef}
           data={categories}
-          keyExtractor={(item) => item.slug.toString()}
+          keyExtractor={keyExtractor}
           contentContainerStyle={{
             paddingBottom: insets.bottom + spacing(80),
           }}
-          renderItem={({ item }) => (
-            <CategorySidebarItem
-              item={item}
-              isActive={selectedSlug === item.slug?.toString()}
-              onPress={() => onSelect(item)}
-              primaryColor={colors.primary}
-              textSecondaryColor={colors.textSecondary}
-            />
-          )}
+          renderItem={renderItem}
           viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={false}
-          getItemLayout={(_, index) => ({
-            length: itemTotalHeight,
-            offset: listTopPadding + itemTotalHeight * index,
-            index,
-          })}
+          removeClippedSubviews={true}
+          getItemLayout={getItemLayout}
           onScrollToIndexFailed={handleScrollToIndexFailed}
-          ItemSeparatorComponent={() => <View style={{ height: ITEM_GAP }} />}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
+          ItemSeparatorComponent={separator}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
           windowSize={5}
         />
       )}
@@ -396,15 +459,10 @@ const CategorySidebar = ({
 
 export default CategorySidebar;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   root: {
     width: "19%",
   },
-  listContent: {},
   itemOuter: {
     alignSelf: "flex-start",
   },

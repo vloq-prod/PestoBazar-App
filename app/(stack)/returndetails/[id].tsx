@@ -926,6 +926,160 @@ const ReturnDetails = () => {
             </View>
           )}
 
+          {/* Free Gift Items (Included in Return Parcel) */}
+          {returnDetails?.free_product && returnDetails.free_product.length > 0 && (
+            <View style={{ marginBottom: spacing(20) }}>
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  fontSize: font(10.5),
+                  color: colors.textSecondary,
+                  marginBottom: spacing(10),
+                }}
+              >
+                Free Gift Items (To Be Returned)
+              </Text>
+
+              <View
+                style={{
+                  borderWidth: 1.2,
+                  borderColor: "#A7F3D0",
+                  borderRadius: spacing(12),
+                  backgroundColor: colors.surface,
+                  overflow: "hidden",
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(8),
+                    backgroundColor: "#ECFDF5",
+                    paddingVertical: spacing(10),
+                    paddingHorizontal: spacing(14),
+                    borderBottomWidth: 1.2,
+                    borderBottomColor: "#A7F3D0",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: font(12),
+                      fontFamily: "Poppins_600SemiBold",
+                      color: "#065F46",
+                    }}
+                  >
+                    Must be included in return parcel with this order
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    paddingHorizontal: spacing(14),
+                    paddingVertical: spacing(8),
+                  }}
+                >
+                  {returnDetails.free_product?.map((item: any, idx: number) => {
+                    const imageUri = !item.s3_image_path
+                      ? ""
+                      : item.s3_image_path.startsWith("http")
+                      ? item.s3_image_path
+                      : item.s3_image_path.startsWith("/")
+                      ? `${IMAGE_BASE}${item.s3_image_path.substring(1)}`
+                      : `${IMAGE_BASE}${item.s3_image_path}`;
+                    const isLastFreeItem =
+                      idx === (returnDetails.free_product?.length ?? 0) - 1;
+
+                    return (
+                      <View
+                        key={item.free_product_order_item_id || idx}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: spacing(14),
+                          paddingVertical: spacing(12),
+                          borderBottomWidth: isLastFreeItem ? 0 : 1,
+                          borderBottomColor: colors.border,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 8,
+                            backgroundColor: colors.background,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            overflow: "hidden",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Image
+                            source={{ uri: imageUri }}
+                            style={{ width: 56, height: 56 }}
+                            contentFit="contain"
+                          />
+                        </View>
+
+                        <View style={{ flex: 1, gap: spacing(4) }}>
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_500Medium",
+                              fontSize: font(12),
+                              color: colors.text,
+                              lineHeight: font(17),
+                            }}
+                            numberOfLines={2}
+                          >
+                            {item.free_product_name}
+                          </Text>
+
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_400Regular",
+                                fontSize: font(11),
+                                color: colors.textSecondary,
+                              }}
+                            >
+                              Qty:{" "}
+                              <Text
+                                style={{
+                                  color: colors.text,
+                                  fontFamily: "Poppins_500Medium",
+                                }}
+                              >
+                                {item.quantity}
+                              </Text>
+                            </Text>
+
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_600SemiBold",
+                                fontSize: font(12),
+                                color: "#10B981",
+                              }}
+                            >
+                              FREE GIFT
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Returned Products */}
           <Text
             style={{

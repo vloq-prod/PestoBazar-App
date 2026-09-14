@@ -112,7 +112,9 @@ const OrderCard = ({
             { color: colors.text, fontSize: font(16) },
           ]}
         >
-          ₹{parseFloat(item.order_amount).toFixed(0)}
+          ₹{parseFloat(
+            String(item.total_after_discount ?? item.order_amount)
+          ).toFixed(0)}
         </Text>
       </View>
 

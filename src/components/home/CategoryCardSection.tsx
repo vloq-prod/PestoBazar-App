@@ -10,6 +10,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSpring,
   interpolate,
   Easing,
   Extrapolation,
@@ -89,23 +90,25 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   };
 
   const imageUrl = item.category_image;
-  const flipImageUrl = item.flip_image || item.category_image;
+  const flipImageUrl = item.flip_image;
+  const hasFlipImage = !!flipImageUrl;
 
   const handlePress = () => {
     if (isFlipping) return;
 
-    if (flipImageUrl) {
+    if (hasFlipImage) {
       setIsFlipping(true);
       flipProgress.value = withTiming(1, {
         duration: 280,
         easing: Easing.bezier(0.4, 0, 0.2, 1),
       });
 
-      // 3D Flip finishes in 280ms -> navigate immediately at 300ms
+      // 3D Flip finishes in 280ms -> navigate at 300ms
       timeoutRef.current = setTimeout(() => {
         navigateToCategory();
       }, 300);
     } else {
+      // Immediate direct navigation when flip_image is null/empty
       navigateToCategory();
     }
   };
@@ -114,38 +117,79 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
     const scale = interpolate(
       flipProgress.value,
       [0, 0.5, 1],
-      [1, 1.06, 1],
+      [1, 1.18, 1],
       Extrapolation.CLAMP,
     );
+    const translateY = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [0, -6, 0],
+      Extrapolation.CLAMP,
+    );
+
     return {
-      transform: [{ scale }],
+      transform: [{ scale }, { translateY }],
     };
   });
 
   const frontStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(
+    const rotateYVal = interpolate(
       flipProgress.value,
       [0, 1],
       [0, 180],
       Extrapolation.CLAMP,
     );
+    const rotateZVal = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [0, -10, 0],
+      Extrapolation.CLAMP,
+    );
+
     return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
-      opacity: flipProgress.value < 0.5 ? 1 : 0,
+      transform: [
+        { perspective: 1200 },
+        { rotateY: `${rotateYVal}deg` },
+        { rotateZ: `${rotateZVal}deg` },
+      ],
+      backfaceVisibility: "hidden",
+      opacity: interpolate(
+        flipProgress.value,
+        [0, 0.46, 0.54, 1],
+        [1, 1, 0, 0],
+        Extrapolation.CLAMP,
+      ),
       zIndex: flipProgress.value < 0.5 ? 2 : 1,
     };
   });
 
   const backStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(
+    const rotateYVal = interpolate(
       flipProgress.value,
       [0, 1],
       [180, 360],
       Extrapolation.CLAMP,
     );
+    const rotateZVal = interpolate(
+      flipProgress.value,
+      [0, 0.5, 1],
+      [0, 10, 0],
+      Extrapolation.CLAMP,
+    );
+
     return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
-      opacity: flipProgress.value >= 0.5 ? 1 : 0,
+      transform: [
+        { perspective: 1200 },
+        { rotateY: `${rotateYVal}deg` },
+        { rotateZ: `${rotateZVal}deg` },
+      ],
+      backfaceVisibility: "hidden",
+      opacity: interpolate(
+        flipProgress.value,
+        [0, 0.46, 0.54, 1],
+        [0, 0, 1, 1],
+        Extrapolation.CLAMP,
+      ),
       zIndex: flipProgress.value >= 0.5 ? 2 : 1,
     };
   });

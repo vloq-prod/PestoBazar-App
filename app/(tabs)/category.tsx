@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -6,11 +6,21 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  Easing,
+  Extrapolation,
+} from "react-native-reanimated";
 
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import SidebarCategoryItem from "../../src/components/comman/SidebarCategoryItem";
@@ -23,6 +33,246 @@ const SIDEBAR_WIDTH = 74;
 const RIGHT_PADDING = 12;
 const GRID_GAP = 8;
 const GRID_COLUMNS = 3;
+
+interface RightCategoryCardProps {
+  item: AppMenuCategoryItem;
+  parentItem?: AppMenuCategoryItem;
+  cardWidth: number;
+  bgColor: string;
+  onNavigate: (item: AppMenuCategoryItem, parent?: AppMenuCategoryItem) => void;
+}
+
+const RightCategoryCard: React.FC<RightCategoryCardProps> = React.memo(
+  ({ item, parentItem, cardWidth, bgColor, onNavigate }) => {
+    const { colors } = useTheme();
+    const { spacing, font } = useResponsive();
+    const [isFlipping, setIsFlipping] = useState(false);
+    const flipProgress = useSharedValue(0);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+      return () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      };
+    }, []);
+
+    const navigateToCategory = () => {
+      onNavigate(item, parentItem);
+
+      // Reset flip 600ms after navigating so card is cleanly back in original state when user returns
+      timeoutRef.current = setTimeout(() => {
+        flipProgress.value = 0;
+        setIsFlipping(false);
+      }, 600);
+    };
+
+    const imageUrl = item.s3_image_url || item.category_image || item.s3_image_path;
+    const flipImageUrl = "flip_image" in item ? (item as any).flip_image : null;
+    const hasFlipImage = !!flipImageUrl;
+
+    const handlePress = () => {
+      if (isFlipping) return;
+
+      if (hasFlipImage) {
+        setIsFlipping(true);
+        flipProgress.value = withTiming(1, {
+          duration: 280,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+        });
+
+        // 3D Flip finishes in 280ms -> navigate at 300ms
+        timeoutRef.current = setTimeout(() => {
+          navigateToCategory();
+        }, 300);
+      } else {
+        // Immediate direct navigation when flip_image is null/empty
+        navigateToCategory();
+      }
+    };
+
+    const cardContainerStyle = useAnimatedStyle(() => {
+      const scale = interpolate(
+        flipProgress.value,
+        [0, 0.5, 1],
+        [1, 1.18, 1],
+        Extrapolation.CLAMP,
+      );
+      const translateY = interpolate(
+        flipProgress.value,
+        [0, 0.5, 1],
+        [0, -6, 0],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        transform: [{ scale }, { translateY }],
+      };
+    });
+
+    const frontStyle = useAnimatedStyle(() => {
+      const rotateYVal = interpolate(
+        flipProgress.value,
+        [0, 1],
+        [0, 180],
+        Extrapolation.CLAMP,
+      );
+      const rotateZVal = interpolate(
+        flipProgress.value,
+        [0, 0.5, 1],
+        [0, -10, 0],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        transform: [
+          { perspective: 1200 },
+          { rotateY: `${rotateYVal}deg` },
+          { rotateZ: `${rotateZVal}deg` },
+        ],
+        backfaceVisibility: "hidden",
+        opacity: flipProgress.value < 0.5 ? 1 : 0,
+        zIndex: flipProgress.value < 0.5 ? 2 : 1,
+      };
+    });
+
+    const backStyle = useAnimatedStyle(() => {
+      const rotateYVal = interpolate(
+        flipProgress.value,
+        [0, 1],
+        [180, 360],
+        Extrapolation.CLAMP,
+      );
+      const rotateZVal = interpolate(
+        flipProgress.value,
+        [0, 0.5, 1],
+        [0, 10, 0],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        transform: [
+          { perspective: 1200 },
+          { rotateY: `${rotateYVal}deg` },
+          { rotateZ: `${rotateZVal}deg` },
+        ],
+        backfaceVisibility: "hidden",
+        opacity: flipProgress.value >= 0.5 ? 1 : 0,
+        zIndex: flipProgress.value >= 0.5 ? 2 : 1,
+      };
+    });
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={handlePress}
+        style={{
+          width: cardWidth,
+          alignItems: "center",
+          marginBottom: spacing(10),
+        }}
+      >
+        <Animated.View
+          style={[
+            {
+              width: cardWidth,
+              height: Math.round(cardWidth * 0.9),
+              backgroundColor: bgColor,
+              borderRadius: spacing(12),
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              overflow: "hidden",
+            },
+            cardContainerStyle,
+          ]}
+        >
+          {/* Front face (category_image) */}
+          <Animated.View
+            style={[
+              {
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "absolute",
+              },
+              frontStyle,
+            ]}
+          >
+            {imageUrl ? (
+              <Image
+                source={{ uri: imageUrl }}
+                style={{ width: "75%", height: "75%" }}
+                contentFit="contain"
+              />
+            ) : (
+              <Text
+                style={{
+                  fontSize: font(14),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.primary,
+                }}
+              >
+                {item.category_name?.[0]?.toUpperCase() ?? "?"}
+              </Text>
+            )}
+          </Animated.View>
+
+          {/* Back face (flip_image) */}
+          <Animated.View
+            style={[
+              {
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "absolute",
+              },
+              backStyle,
+            ]}
+          >
+            {flipImageUrl ? (
+              <Image
+                source={{ uri: flipImageUrl }}
+                style={{ width: "75%", height: "75%" }}
+                contentFit="contain"
+              />
+            ) : (
+              <Text
+                style={{
+                  fontSize: font(14),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.primary,
+                }}
+              >
+                {item.category_name?.[0]?.toUpperCase() ?? "?"}
+              </Text>
+            )}
+          </Animated.View>
+        </Animated.View>
+
+        <Text
+          numberOfLines={2}
+          style={{
+            marginTop: spacing(6),
+            fontSize: font(11),
+            fontFamily: "Poppins_500Medium",
+            color: colors.text,
+            textAlign: "center",
+            width: "100%",
+            lineHeight: font(14),
+          }}
+        >
+          {item.category_name}
+        </Text>
+      </TouchableOpacity>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.cardWidth === nextProps.cardWidth &&
+    prevProps.bgColor === nextProps.bgColor,
+);
 
 export default function CategoryScreen() {
   const { colors } = useTheme();
@@ -281,75 +531,16 @@ export default function CategoryScreen() {
                     gap: GRID_GAP,
                   }}
                 >
-                  {level3Children.map((level3Item) => {
-                    const img =
-                      level3Item.s3_image_url || level3Item.category_image;
-
-                    return (
-                      <TouchableOpacity
-                        key={level3Item.id}
-                        activeOpacity={0.8}
-                        onPress={() =>
-                          navigateToCategory(level3Item, level2Item)
-                        }
-                        style={{
-                          width: cardWidth,
-                          alignItems: "center",
-                          marginBottom: spacing(10),
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: cardWidth,
-                            height: Math.round(cardWidth * 0.9),
-                            backgroundColor: getDynamicLightColor(
-                              level3Item.id,
-                            ),
-                            borderRadius: spacing(12),
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: spacing(4),
-                            overflow: "hidden",
-                          }}
-                        >
-                          {img ? (
-                            <Image
-                              source={{ uri: img }}
-                              style={{
-                                width: "75%",
-                                height: "75%",
-                              }}
-                              contentFit="contain"
-                            />
-                          ) : (
-                            <Text
-                              style={{
-                                fontSize: font(14),
-                                fontFamily: "Poppins_600SemiBold",
-                                color: colors.primary,
-                              }}
-                            >
-                              {level3Item.category_name?.[0]}
-                            </Text>
-                          )}
-                        </View>
-                        <Text
-                          numberOfLines={2}
-                          style={{
-                            marginTop: spacing(6),
-                            fontSize: font(11),
-                            fontFamily: "Poppins_500Medium",
-                            color: colors.text,
-                            textAlign: "center",
-                            width: "100%",
-                            lineHeight: font(14),
-                          }}
-                        >
-                          {level3Item.category_name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {level3Children.map((level3Item) => (
+                    <RightCategoryCard
+                      key={level3Item.id}
+                      item={level3Item}
+                      parentItem={level2Item}
+                      cardWidth={cardWidth}
+                      bgColor={getDynamicLightColor(level3Item.id)}
+                      onNavigate={navigateToCategory}
+                    />
+                  ))}
                 </View>
               </View>
             ))}
@@ -377,75 +568,16 @@ export default function CategoryScreen() {
                     gap: GRID_GAP,
                   }}
                 >
-                  {directLevel2Only.map((level2Item) => {
-                    const img =
-                      level2Item.s3_image_url || level2Item.category_image;
-
-                    return (
-                      <TouchableOpacity
-                        key={level2Item.id}
-                        activeOpacity={0.8}
-                        onPress={() =>
-                          navigateToCategory(level2Item, selectedLevel1)
-                        }
-                        style={{
-                          width: cardWidth,
-                          alignItems: "center",
-                          marginBottom: spacing(10),
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: cardWidth,
-                            height: Math.round(cardWidth * 0.9),
-                            backgroundColor: getDynamicLightColor(
-                              level2Item.id,
-                            ),
-                            borderRadius: spacing(12),
-                            alignItems: "center",
-                            justifyContent: "center",
-                            padding: spacing(4),
-                            overflow: "hidden",
-                          }}
-                        >
-                          {img ? (
-                            <Image
-                              source={{ uri: img }}
-                              style={{
-                                width: "75%",
-                                height: "75%",
-                              }}
-                              contentFit="contain"
-                            />
-                          ) : (
-                            <Text
-                              style={{
-                                fontSize: font(14),
-                                fontFamily: "Poppins_600SemiBold",
-                                color: colors.primary,
-                              }}
-                            >
-                              {level2Item.category_name?.[0]}
-                            </Text>
-                          )}
-                        </View>
-                        <Text
-                          numberOfLines={2}
-                          style={{
-                            marginTop: spacing(6),
-                            fontSize: font(11),
-                            fontFamily: "Poppins_500Medium",
-                            color: colors.text,
-                            textAlign: "center",
-                            width: "100%",
-                            lineHeight: font(14),
-                          }}
-                        >
-                          {level2Item.category_name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                  {directLevel2Only.map((level2Item) => (
+                    <RightCategoryCard
+                      key={level2Item.id}
+                      item={level2Item}
+                      parentItem={selectedLevel1}
+                      cardWidth={cardWidth}
+                      bgColor={getDynamicLightColor(level2Item.id)}
+                      onNavigate={navigateToCategory}
+                    />
+                  ))}
                 </View>
               </View>
             )}

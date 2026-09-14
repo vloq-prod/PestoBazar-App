@@ -59,13 +59,10 @@ export const useSaveAddress = (onDone?: () => void) => {
     mutationFn: (payload: SaveAddressRequest) => saveAddressApi(payload),
 
     onSuccess: async (_res, variables) => {
-      const userId = variables.user_id;
-
-      // Invalidate and refetch immediately so list screen has fresh cache before navigating back
+      // Invalidate all address and single-address queries immediately so list screen updates instantly
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["address", userId],
-          refetchType: "all",
+          queryKey: ["address"],
         }),
         queryClient.invalidateQueries({
           queryKey: ["single-address"],
@@ -95,7 +92,7 @@ export const useRemoveAddress = () => {
       const addressId = variables.address_id;
 
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["address", userId] });
+      await queryClient.cancelQueries({ queryKey: ["address"] });
 
       // Snapshot the previous value
       const previousData = queryClient.getQueryData<GetAddressResponse>(["address", userId]);
@@ -116,13 +113,13 @@ export const useRemoveAddress = () => {
         });
       }
 
-      return { previousData };
+      return { previousData, userId };
     },
 
-    onError: (err: any, variables, context) => {
+    onError: (err: any, _variables, context) => {
       // Rollback if mutation fails
-      if (context?.previousData) {
-        queryClient.setQueryData(["address", variables.user_id], context.previousData);
+      if (context?.previousData && context?.userId) {
+        queryClient.setQueryData(["address", context.userId], context.previousData);
       }
       showToast(err?.message || "Failed to delete address", "error");
     },
@@ -131,10 +128,10 @@ export const useRemoveAddress = () => {
       showToast("Address deleted successfully", "success");
     },
 
-    onSettled: (_data, _error, variables) => {
+    onSettled: () => {
       // Always refetch after error or success to keep server in sync
       queryClient.invalidateQueries({
-        queryKey: ["address", variables.user_id],
+        queryKey: ["address"],
       });
     },
   });

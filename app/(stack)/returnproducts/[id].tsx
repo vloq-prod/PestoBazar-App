@@ -597,6 +597,47 @@ const ReturnProductsScreen = () => {
             </View>
           )}
 
+          {/* Free Product Return Notice Banner */}
+          {orderData?.free_product && orderData.free_product.length > 0 && (
+            <View
+              style={{
+                backgroundColor: "#FFFBEB",
+                borderWidth: 1.5,
+                borderColor: "#FCD34D",
+                borderRadius: 12,
+                padding: spacing(12),
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing(10),
+                marginTop: spacing(10),
+              }}
+            >
+              <ShieldAlert size={20} color="#D97706" />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12),
+                    color: "#92400E",
+                  }}
+                >
+                  Free Gift Item Notice
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: "#78350F",
+                    lineHeight: font(16),
+                    marginTop: 2,
+                  }}
+                >
+                  Any free product received with this order must also be included in the return parcel.
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Products List Section */}
           <View style={{ marginTop: spacing(12) }}>
             <SectionLabel

@@ -75,7 +75,7 @@ const Diy = () => {
                 {/* ── Bottom: See All Products Button ── */}
                 <SeeAllProductsButton
                     products={displayedProducts}
-                    label="See all products"
+                    label="Explore Now"
                     onPress={() => router.push('/(stack)/diy')}
                     style={{ marginHorizontal: 0, marginTop: spacing(2) }}
                 />

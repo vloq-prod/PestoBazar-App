@@ -128,6 +128,16 @@ export interface OrderInfo {
   order_no: string;
 
   enc_order_id: string;
+
+  promo_code_id?: number | null;
+  promo_code?: string | null;
+  promo_discount_amount?: string | number | null;
+  total_before_discount?: string | number | null;
+  total_after_discount?: string | number | null;
+  b2b_discount_percent?: string | number | null;
+  b2b_discount_amount?: string | number | null;
+  is_unboxing_message_sent?: number;
+  tally_remark?: string | null;
 }
 
 // ======================================================
@@ -383,6 +393,15 @@ export interface OrderHistoryItem {
   cod_charges_gst?: string;
   return_id?: number;
   product_images?: string[];
+  promo_code_id?: number | null;
+  promo_code?: string | null;
+  promo_discount_amount?: string | number | null;
+  total_before_discount?: string | number | null;
+  total_after_discount?: string | number | null;
+  b2b_discount_percent?: string | number | null;
+  b2b_discount_amount?: string | number | null;
+  is_unboxing_message_sent?: number;
+  tally_remark?: string | null;
 }
 
 // ======================================================
@@ -487,6 +506,15 @@ export interface Order {
   cod_charges_gst: string;
   return_id: number;
   paid_amount: string;
+  promo_code_id?: number | null;
+  promo_code?: string | null;
+  promo_discount_amount?: string | number | null;
+  total_before_discount?: string | number | null;
+  total_after_discount?: string | number | null;
+  b2b_discount_percent?: string | number | null;
+  b2b_discount_amount?: string | number | null;
+  is_unboxing_message_sent?: number;
+  tally_remark?: string | null;
 }
 
 export interface OrderDetail {
@@ -612,6 +640,7 @@ export interface ViewCustomerReturnOrderResponse {
   order_return_product: OrderReturnProduct[];
   order_return_product_images: OrderReturnProductImage[];
   refund_bank_details?: RefundBankDetail[];
+  free_product?: FreeProductOrderItem[];
   status: number;
 }
 
