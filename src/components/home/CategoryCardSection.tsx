@@ -69,7 +69,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
     return `hsl(${hue}, 75%, 96%)`;
   };
 
-  const bgColor = getDynamicLightColor(index, item.id);
+  const bgColor = item.category_bg_color || getDynamicLightColor(index, item.id);
 
   const navigateToCategory = () => {
     router.push({

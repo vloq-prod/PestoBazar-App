@@ -551,9 +551,12 @@ export default function AddAddress() {
   const { pincode } = useDeliveryStore();
 
   const { data: addressData } = useAddress({ user_id: userId! });
-  const stateList: StateItem[] = addressData?.data?.state_master ?? [];
+  const stateList: StateItem[] = useMemo(
+    () => addressData?.data?.state_master ?? [],
+    [addressData?.data?.state_master]
+  );
 
-  const { data: singleAddress } = useSingleAddress({
+  const { data: singleAddress, isLoading: isLoadingSingle } = useSingleAddress({
     user_id: userId!,
     id: id ? Number(id) : 0,
   });
@@ -593,7 +596,7 @@ export default function AddAddress() {
         email: singleAddress.email || "",
         building: singleAddress.building || "",
         area: singleAddress.area || "",
-        address: "",
+        address: singleAddress.address || "",
         city: singleAddress.city || "",
         pincode: singleAddress.pincode || "",
         gst: singleAddress.gst || "",
@@ -704,7 +707,7 @@ export default function AddAddress() {
       email: form.email,
       building: form.building,
       area: form.area,
-      address: "",
+      address: form.address || "",
       state: String(selectedState!.id),
       city: form.city,
       pincode: form.pincode,

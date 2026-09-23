@@ -19,11 +19,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
 
   notification: {
-    icon: "./assets/Pestobazaarlogosmall.png",
+    icon: "./app/AppIcons/playstore.png",
     color: "#6C63FF",
   },
 
-  icon: "./assets/Pestobazaarlogosmall.png",
+  icon: "./app/AppIcons/playstore.png",
 
   splash: {
     image: "./assets/icon.png",
@@ -533,7 +533,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
 
     adaptiveIcon: {
-      foregroundImage: "./assets/Pestobazaarlogosmall.png",
+      foregroundImage: "./app/AppIcons/android/adaptive-foreground.png",
       backgroundColor: "#ffffff",
     },
 

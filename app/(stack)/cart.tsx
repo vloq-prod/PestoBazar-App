@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -97,6 +97,8 @@ export default function CartScreen() {
   const clearCouponSuccessCode = useCartStore(
     (state) => state.clearCouponSuccessCode,
   );
+  
+  const scrollViewRef = useRef<ScrollView>(null);
 
   React.useEffect(() => {
     if (params.couponApplied === "true" && params.couponCode) {
@@ -236,6 +238,7 @@ export default function CartScreen() {
       performRemoval();
     }
   };
+  console.log("cart id: ", cartId)
 
   const confirmRemove = () => {
     if (itemToRemove) {
@@ -307,6 +310,7 @@ export default function CartScreen() {
 
       {isLoading || (items && items.length > 0) || error ? (
         <ScrollView
+          ref={scrollViewRef}
           style={[styles.content, { backgroundColor: colors.backgroundgray }]}
           contentContainerStyle={{
             paddingTop: spacing(15),
@@ -1066,7 +1070,10 @@ export default function CartScreen() {
             }}
           >
             {/* LEFT: PRICE SECTION */}
-            <View className="">
+            <TouchableOpacity 
+              activeOpacity={0.7} 
+              onPress={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
               <Text
                 style={{
                   fontSize: 22,
@@ -1078,14 +1085,14 @@ export default function CartScreen() {
                 {formatINR(cartTotal?.amount_to_pay || 0)}
               </Text>
               <View
-                style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
               >
                 <Text style={{ fontSize: 14, color: "#888", marginBottom: 2 }}>
                   Grand Total
                 </Text>
                 <Info size={14} color={colors.textTertiary} />
               </View>
-            </View>
+            </TouchableOpacity>
 
             {/* RIGHT: BUTTON */}
             <TouchableOpacity

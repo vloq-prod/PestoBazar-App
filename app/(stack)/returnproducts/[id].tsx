@@ -38,6 +38,8 @@ import Svg, { Path } from "react-native-svg";
 import AppNavbar from "../../../src/components/comman/AppNavbar";
 import ReturnProductModal from "../../../src/components/comman/ReturnProductModal";
 import RefundDetailsModal from "../../../src/components/comman/RefundDetailsModal";
+import ReturnSuccessModal from "../../../src/components/comman/ReturnSuccessModal";
+import { useToast } from "../../../src/context/ToastContext";
 import { useViewOrder, useUploadReturnVideo, useReturnProduct, useSaveReturnImage } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
@@ -370,6 +372,8 @@ const ReturnProductsScreen = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isRefundModalVisible, setIsRefundModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const { showToast } = useToast();
 
   const selectVideo = async () => {
     if (!ImagePicker) {
@@ -495,12 +499,11 @@ const ReturnProductsScreen = () => {
       }
 
       setIsSubmitting(false);
-      Alert.alert("Success", "Your return request has been submitted successfully!", [
-        { text: "OK", onPress: () => router.back() }
-      ]);
+      setIsRefundModalVisible(false);
+      setIsSuccessModalVisible(true);
     } catch (err: any) {
       setIsSubmitting(false);
-      Alert.alert("Error", err?.message || "Failed to submit return request.");
+      showToast(err?.message || "Failed to submit return request.", "error");
     }
   };
 
@@ -1000,7 +1003,7 @@ const ReturnProductsScreen = () => {
         <TouchableOpacity
           onPress={() => {
             if (!isSubmitEnabled) {
-              Alert.alert("Error", "Please select at least one item and fill in their return details.");
+              showToast("Please select at least one item and fill in their return details.", "warning");
               return;
             }
             setIsRefundModalVisible(true);
@@ -1060,6 +1063,17 @@ const ReturnProductsScreen = () => {
         visible={isRefundModalVisible}
         onClose={() => setIsRefundModalVisible(false)}
         onSubmit={handleSubmitReturn}
+      />
+
+      {/* Return Success Modal */}
+      <ReturnSuccessModal
+        visible={isSuccessModalVisible}
+        orderId={orderData?.order_id || id}
+        itemCount={checkedItems.length}
+        onClose={() => {
+          setIsSuccessModalVisible(false);
+          router.back();
+        }}
       />
     </SafeAreaView>
   );

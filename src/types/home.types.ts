@@ -73,6 +73,7 @@ export interface CategoryItem {
   category_image?: string | null;
   flip_image?: string | null;
   s3_image_path?: string | null;
+  category_bg_color?: string;
 }
 
 export interface CategoryData {

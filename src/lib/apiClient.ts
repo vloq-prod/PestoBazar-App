@@ -19,6 +19,9 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
   },
 });
 
@@ -30,6 +33,19 @@ apiClient.interceptors.request.use(
         config.headers?.set(key, String(value));
       }
     });
+
+    // Ensure cache-busting headers are always present
+    config.headers?.set("Cache-Control", "no-cache, no-store, must-revalidate");
+    config.headers?.set("Pragma", "no-cache");
+    config.headers?.set("Expires", "0");
+
+    // Add unique timestamp query parameter to GET requests to bypass any HTTP/CDN/Device caching
+    if (config.method?.toLowerCase() === "get") {
+      config.params = {
+        ...config.params,
+        _t: Date.now(),
+      };
+    }
 
     return config;
   },

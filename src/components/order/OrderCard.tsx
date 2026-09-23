@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Image, Alert } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import {
   Package,
   ShoppingBag,
@@ -7,6 +8,7 @@ import {
   CheckCircle2,
   Truck,
   XCircle,
+  Download,
 } from "lucide-react-native";
 import { OrderHistoryItem } from "../../types/order.types";
 
@@ -60,8 +62,30 @@ const OrderCard = ({
   const cfg = getStatusConfig(item.current_status);
   const StatusIcon = cfg.icon;
 
-  const handleInvoicePress = () => {
-    // invoice download functionality placeholder/trigger
+  const handleInvoicePress = async () => {
+    try {
+      const orderId = item.enc_order_id || item.id;
+      if (!orderId) {
+        Alert.alert("Error", "Order ID is missing.");
+        return;
+      }
+
+      const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${orderId}`;
+
+      // Using docs.google.com viewer host prevents Android OS App Link / Intent Filter
+      // from intercepting pestobazaar.confidevtech.com and restarting the app!
+      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
+
+      await WebBrowser.openBrowserAsync(viewerUrl);
+    } catch (error) {
+      try {
+        const orderId = item.enc_order_id || item.id;
+        const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${orderId}`;
+        await WebBrowser.openBrowserAsync(rawInvoiceUrl);
+      } catch (e) {
+        Alert.alert("Error", "Unable to open invoice. Please try again.");
+      }
+    }
   };
 
   return (
@@ -157,14 +181,17 @@ const OrderCard = ({
           activeOpacity={0.7}
           onPress={handleInvoicePress}
         >
-          <Text
-            style={[
-              styles.actionBtnText,
-              { color: colors.text, fontSize: font(13) },
-            ]}
-          >
-            Invoice
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            <Download size={14} color={colors.textSecondary} strokeWidth={2} />
+            <Text
+              style={[
+                styles.actionBtnText,
+                { color: colors.text, fontSize: font(13) },
+              ]}
+            >
+              Invoice
+            </Text>
+          </View>
         </TouchableOpacity>
 
         <View

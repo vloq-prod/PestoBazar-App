@@ -96,15 +96,53 @@ export default function CreateAddressModal({ visible, onClose }: Props) {
         <View style={{ backgroundColor: "#fff", padding: 16 }}>
           <Text>Add Address</Text>
 
-          <TextInput placeholder="Full Name" value={form.full_name} onChangeText={(t) => handleChange("full_name", t)} />
-          <TextInput placeholder="Mobile" value={form.number} keyboardType="number-pad" onChangeText={(t) => handleChange("number", t)} />
-          <TextInput placeholder="Email" value={form.email} onChangeText={(t) => handleChange("email", t)} />
-          <TextInput placeholder="Building" value={form.building} onChangeText={(t) => handleChange("building", t)} />
-          <TextInput placeholder="Area" value={form.area} onChangeText={(t) => handleChange("area", t)} />
-          <TextInput placeholder="Address" value={form.address} onChangeText={(t) => handleChange("address", t)} />
-          <TextInput placeholder="City" value={form.city} onChangeText={(t) => handleChange("city", t)} />
-          <TextInput placeholder="Pincode" value={form.pincode} keyboardType="number-pad" onChangeText={(t) => handleChange("pincode", t)} />
-          <TextInput placeholder="GST (Optional)" value={form.gst} onChangeText={(t) => handleChange("gst", t.toUpperCase())} />
+          <TextInput
+            placeholder="Full Name"
+            value={form.full_name}
+            onChangeText={(t) => handleChange("full_name", t)}
+          />
+          <TextInput
+            placeholder="Mobile"
+            value={form.number}
+            keyboardType="number-pad"
+            onChangeText={(t) => handleChange("number", t)}
+          />
+          <TextInput
+            placeholder="Email"
+            value={form.email}
+            onChangeText={(t) => handleChange("email", t)}
+          />
+          <TextInput
+            placeholder="Building"
+            value={form.building}
+            onChangeText={(t) => handleChange("building", t)}
+          />
+          <TextInput
+            placeholder="Area"
+            value={form.area}
+            onChangeText={(t) => handleChange("area", t)}
+          />
+          <TextInput
+            placeholder="Address"
+            value={form.address}
+            onChangeText={(t) => handleChange("address", t)}
+          />
+          <TextInput
+            placeholder="City"
+            value={form.city}
+            onChangeText={(t) => handleChange("city", t)}
+          />
+          <TextInput
+            placeholder="Pincode"
+            value={form.pincode}
+            keyboardType="number-pad"
+            onChangeText={(t) => handleChange("pincode", t)}
+          />
+          <TextInput
+            placeholder="GST (Optional)"
+            value={form.gst}
+            onChangeText={(t) => handleChange("gst", t.toUpperCase())}
+          />
 
           {!!error && <Text style={{ color: "red" }}>{error}</Text>}
 

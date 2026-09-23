@@ -57,24 +57,18 @@ export const useSaveAddress = (onDone?: () => void) => {
 
   return useMutation({
     mutationFn: (payload: SaveAddressRequest) => saveAddressApi(payload),
-
-    onSuccess: async (_res, variables) => {
-      // Invalidate all address and single-address queries immediately so list screen updates instantly
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["address"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["single-address"],
-        }),
-      ]);
-
-      showToast(`Address ${variables.address_id ? "updated" : "saved"} successfully`, "success");
+    onSuccess: (_res, variables) => {
+      showToast(
+        `Address ${variables.address_id ? "updated" : "saved"} successfully`,
+        "success",
+      );
+      queryClient.invalidateQueries({ queryKey: ["address"] });
+      queryClient.invalidateQueries({ queryKey: ["single-address"] });
       onDone?.();
     },
     onError: (error: any) => {
       showToast(error?.message || "Failed to save address", "error");
-    }
+    },
   });
 };
 
@@ -85,54 +79,12 @@ export const useRemoveAddress = () => {
 
   return useMutation({
     mutationFn: (payload: RemoveAddressRequest) => removeAddressApi(payload),
-
-    // ── Optimistic Update ──
-    onMutate: async (variables) => {
-      const userId = variables.user_id;
-      const addressId = variables.address_id;
-
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ["address"] });
-
-      // Snapshot the previous value
-      const previousData = queryClient.getQueryData<GetAddressResponse>(["address", userId]);
-
-      // Optimistically update to the new value instantly
-      if (previousData?.data) {
-        queryClient.setQueryData<GetAddressResponse>(["address", userId], {
-          ...previousData,
-          data: {
-            ...previousData.data,
-            billing_address: (previousData.data.billing_address || []).filter(
-              (a) => Number(a.id) !== Number(addressId) && String(a.address_id) !== String(addressId)
-            ),
-            delivery_address: (previousData.data.delivery_address || []).filter(
-              (a) => Number(a.id) !== Number(addressId) && String(a.address_id) !== String(addressId)
-            ),
-          },
-        });
-      }
-
-      return { previousData, userId };
-    },
-
-    onError: (err: any, _variables, context) => {
-      // Rollback if mutation fails
-      if (context?.previousData && context?.userId) {
-        queryClient.setQueryData(["address", context.userId], context.previousData);
-      }
-      showToast(err?.message || "Failed to delete address", "error");
-    },
-
     onSuccess: () => {
       showToast("Address deleted successfully", "success");
+      queryClient.invalidateQueries({ queryKey: ["address"] });
     },
-
-    onSettled: () => {
-      // Always refetch after error or success to keep server in sync
-      queryClient.invalidateQueries({
-        queryKey: ["address"],
-      });
+    onError: (err: any) => {
+      showToast(err?.message || "Failed to delete address", "error");
     },
   });
 };
@@ -155,6 +107,3 @@ export const useValidatePincode = () => {
       validatePincodeApi(payload),
   });
 };
-
-// await queryClient.refetchQueries(...)
-// setTimeout(() => router.back(), 500)

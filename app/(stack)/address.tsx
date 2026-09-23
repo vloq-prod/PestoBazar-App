@@ -1,6 +1,3 @@
-
-
-
 import React, { useCallback, useState } from "react";
 import {
   View,
@@ -78,13 +75,11 @@ export default function Address() {
     refetch,
   } = useAddress({ user_id: userId! });
 
-  // When the screen comes into focus, trigger a background refetch
+  // Triggers whenever the user navigates back to this screen
   useFocusEffect(
     useCallback(() => {
-      if (userId) {
-        refetch();
-      }
-    }, [userId, refetch]),
+      refetch();
+    }, [refetch]),
   );
 
   const { mutate: removeAddress, isPending: isRemoving } = useRemoveAddress();
@@ -237,7 +232,7 @@ export default function Address() {
               "No billing address added",
               "billing",
             )}
-          
+
             {renderAddressList(
               deliveryList,
               "Delivery Address",

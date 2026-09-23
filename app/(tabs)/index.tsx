@@ -423,7 +423,7 @@ const AppSearchBar = React.memo(({ onPress }: any) => {
           }}
         >
           <Image
-            source={require("../../assets/Pestobazaarlogosmall.png")}
+            source={require("../../app/AppIcons/playstore.png")}
             style={{
               width: "78%",
               height: "78%",

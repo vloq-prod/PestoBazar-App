@@ -67,7 +67,7 @@ const PromoBanner = () => {
         {/* Top Header Row */}
         <View style={[styles.messageRow, { gap: 10 }]}>
           <Image
-            source={require("../../../assets/Pestobazaarlogosmall.png")}
+            source={require("../../../app/AppIcons/playstore.png")}
             style={{ width: 24, height: 24 }}
             contentFit="contain"
           />

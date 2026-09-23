@@ -182,14 +182,7 @@ const CategorySidebarItem = React.memo(
       };
     });
 
-    const indicatorStyle = useAnimatedStyle(() => {
-      const scaleY = interpolate(activeGlow.value, [0, 1], [0, 1]);
-      const opacity = interpolate(activeGlow.value, [0, 1], [0, 1]);
-      return {
-        transform: [{ scaleY }],
-        opacity,
-      };
-    });
+
 
     const handlePress = useCallback(() => {
       onPress(item);
@@ -294,9 +287,9 @@ const CategorySidebarItem = React.memo(
           </Text>
         </Animated.View>
 
-        <Animated.View
-          style={[
-            {
+        {isActive && (
+          <View
+            style={{
               position: "absolute",
               right: 0,
               top: 4,
@@ -305,10 +298,9 @@ const CategorySidebarItem = React.memo(
               backgroundColor: primaryColor,
               borderTopLeftRadius: 4,
               borderBottomLeftRadius: 4,
-            },
-            indicatorStyle,
-          ]}
-        />
+            }}
+          />
+        )}
       </TouchableOpacity>
     );
   },

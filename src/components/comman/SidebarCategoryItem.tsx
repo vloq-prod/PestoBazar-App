@@ -32,19 +32,13 @@ const SidebarCategoryItem: React.FC<Props> = React.memo(
     const activeColor = colors?.primary || "#00875A";
 
     const flipProgress = useSharedValue(isActive ? 1 : 0);
-    const activeGlow = useSharedValue(isActive ? 1 : 0);
-
     useEffect(() => {
       flipProgress.value = withSpring(isActive ? 1 : 0, {
         damping: 14,
         stiffness: 110,
         mass: 0.75,
       });
-      activeGlow.value = withSpring(isActive ? 1 : 0, {
-        damping: 16,
-        stiffness: 120,
-      });
-    }, [isActive, flipProgress, activeGlow]);
+    }, [isActive, flipProgress]);
 
     const frontStyle = useAnimatedStyle(() => {
       const rotateYVal = interpolate(
@@ -117,14 +111,7 @@ const SidebarCategoryItem: React.FC<Props> = React.memo(
       };
     });
 
-    const indicatorStyle = useAnimatedStyle(() => {
-      const scaleY = interpolate(activeGlow.value, [0, 1], [0, 1]);
-      const opacity = interpolate(activeGlow.value, [0, 1], [0, 1]);
-      return {
-        transform: [{ scaleY }],
-        opacity,
-      };
-    });
+
 
     const handlePress = useCallback(() => {
       onPress(item);
@@ -220,9 +207,9 @@ const SidebarCategoryItem: React.FC<Props> = React.memo(
         </Text>
 
         {/* Right Active Indicator Bar */}
-        <Animated.View
-          style={[
-            {
+        {isActive && (
+          <View
+            style={{
               position: "absolute",
               right: 0,
               top: 6,
@@ -231,10 +218,9 @@ const SidebarCategoryItem: React.FC<Props> = React.memo(
               borderTopLeftRadius: 3,
               borderBottomLeftRadius: 3,
               backgroundColor: activeColor,
-            },
-            indicatorStyle,
-          ]}
-        />
+            }}
+          />
+        )}
       </TouchableOpacity>
     );
   },

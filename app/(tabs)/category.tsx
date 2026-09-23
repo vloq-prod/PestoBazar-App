@@ -59,7 +59,7 @@ const RightCategoryCard: React.FC<RightCategoryCardProps> = React.memo(
     const navigateToCategory = () => {
       onNavigate(item, parentItem);
 
-      // Reset flip 600ms after navigating so card is cleanly back in original state when user returns
+  // Reset flip 600ms after navigating so card is cleanly back in original state when user returns
       timeoutRef.current = setTimeout(() => {
         flipProgress.value = 0;
         setIsFlipping(false);
@@ -67,8 +67,16 @@ const RightCategoryCard: React.FC<RightCategoryCardProps> = React.memo(
     };
 
     const imageUrl = item.s3_image_url || item.category_image || item.s3_image_path;
-    const flipImageUrl = "flip_image" in item ? (item as any).flip_image : null;
-    const hasFlipImage = !!flipImageUrl;
+    const rawFlipImage = "flip_image" in item ? (item as any).flip_image : null;
+    
+    const hasFlipImage = 
+      typeof rawFlipImage === "string" && 
+      rawFlipImage.trim() !== "" && 
+      rawFlipImage !== "null" && 
+      rawFlipImage !== "undefined" &&
+      rawFlipImage !== imageUrl;
+
+    const flipImageUrl = hasFlipImage ? rawFlipImage : null;
 
     const handlePress = () => {
       if (isFlipping) return;
