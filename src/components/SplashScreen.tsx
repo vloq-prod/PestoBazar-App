@@ -15,57 +15,63 @@ interface Props {
 }
 
 export function SplashScreen({ onFinish }: Props) {
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.85);
-  const containerOpacity = useSharedValue(1);
-
   useEffect(() => {
-    // Fade + scale in
-    opacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-    scale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+    onFinish();
+  }, [onFinish]);
 
-    // Hold → fade out whole screen → call onFinish
-    containerOpacity.value = withDelay(
-      2200,
-      withTiming(0, { duration: 500, easing: Easing.in(Easing.cubic) }, (finished) => {
-        if (finished) runOnJS(onFinish)();
-      })
-    );
-  }, []);
+  return null;
 
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
-  }));
+  // const opacity = useSharedValue(0);
+  // const scale = useSharedValue(0.85);
+  // const containerOpacity = useSharedValue(1);
 
-  const containerStyle = useAnimatedStyle(() => ({
-    opacity: containerOpacity.value,
-  }));
+  // useEffect(() => {
+  //   // Fade + scale in
+  //   opacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
+  //   scale.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
 
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, containerStyle]}>
-      <LinearGradient
-        colors={["#4a3280", "#3a286c", "#7a1840", "#e10320"]}
-        locations={[0, 0.35, 0.7, 1]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+  //   // Hold → fade out whole screen → call onFinish
+  //   containerOpacity.value = withDelay(
+  //     2200,
+  //     withTiming(0, { duration: 500, easing: Easing.in(Easing.cubic) }, (finished) => {
+  //       if (finished) runOnJS(onFinish)();
+  //     })
+  //   );
+  // }, []);
 
-      {/* Centered content */}
-      <View style={styles.center}>
-        <Animated.View style={[styles.content, contentStyle]}>
-          <Text style={styles.brand}>Pestobazaar</Text>
-          <Text style={styles.tagline}>India&apos;s Leading Online Pesticide Hub</Text>
-        </Animated.View>
-      </View>
+  // const contentStyle = useAnimatedStyle(() => ({
+  //   opacity: opacity.value,
+  //   transform: [{ scale: scale.value }],
+  // }));
 
-      {/* Bottom badge */}
-      <Animated.View style={[styles.bottomBadge, contentStyle]}>
-        <Text style={styles.bottomText}>Trusted by farmers across India</Text>
-      </Animated.View>
-    </Animated.View>
-  );
+  // const containerStyle = useAnimatedStyle(() => ({
+  //   opacity: containerOpacity.value,
+  // }));
+
+  // return (
+  //   <Animated.View style={[StyleSheet.absoluteFill, containerStyle]}>
+  //     <LinearGradient
+  //       colors={["#4a3280", "#3a286c", "#7a1840", "#e10320"]}
+  //       locations={[0, 0.35, 0.7, 1]}
+  //       start={{ x: 0.5, y: 0 }}
+  //       end={{ x: 0.5, y: 1 }}
+  //       style={StyleSheet.absoluteFill}
+  //     />
+
+  //     {/* Centered content */}
+  //     <View style={styles.center}>
+  //       <Animated.View style={[styles.content, contentStyle]}>
+  //         <Text style={styles.brand}>Pestobazaar</Text>
+  //         <Text style={styles.tagline}>India&apos;s Leading Online Pesticide Hub</Text>
+  //       </Animated.View>
+  //     </View>
+
+  //     {/* Bottom badge */}
+  //     <Animated.View style={[styles.bottomBadge, contentStyle]}>
+  //       <Text style={styles.bottomText}>Trusted by farmers across India</Text>
+  //     </Animated.View>
+  //   </Animated.View>
+  // );
 }
 
 const styles = StyleSheet.create({

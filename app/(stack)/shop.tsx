@@ -51,7 +51,7 @@ import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
 const DEFAULT_PRICE = { from: 200, to: 50000 };
 
 export default function ShopScreen() {
-  const { search } = useLocalSearchParams();
+  const { search, category_slug } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
@@ -95,11 +95,12 @@ export default function ShopScreen() {
   const cartCount = cartCountData?.data ?? 0;
 
   const initialQuery = Array.isArray(search) ? search[0] : (search ?? "");
+  const initialCategorySlug = Array.isArray(category_slug) ? category_slug[0] : (category_slug ?? null);
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<
     string | null
-  >(null);
+  >(initialCategorySlug);
   const [selectedCategoryName, setSelectedCategoryName] = useState<
     string | null
   >(null);
@@ -175,9 +176,10 @@ export default function ShopScreen() {
   const H_PAD = spacing(12) * 2;
   const H_GAP = spacing(10); // horizontal gap between cards
   const V_GAP = spacing(20); // vertical gap between rows
-  // Use Math.floor and subtract a small buffer to prevent subpixel layout rounding 
+  // Use Math.floor and subtract a small buffer to prevent subpixel layout rounding
   // on some Android devices which causes the 3rd item to be clipped/overflow
-  const CARD_WIDTH = Math.floor((width - H_PAD - H_GAP * (COLS - 1)) / COLS) - 1;
+  const CARD_WIDTH =
+    Math.floor((width - H_PAD - H_GAP * (COLS - 1)) / COLS) - 1;
 
   // ── Section list (suggestions + results) ───────────────
   type Section =
@@ -347,7 +349,11 @@ export default function ShopScreen() {
     if (item.type === "products_header") {
       let headerText = "Products";
       if (selectedCategorySlug) {
-        headerText = `Category: '${selectedCategoryName || "Selected Category"}'`;
+        const formattedSlug = selectedCategorySlug
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        headerText = `Category: '${selectedCategoryName || formattedSlug}'`;
       } else if (debouncedQuery) {
         headerText = `Search by text: '${debouncedQuery}'`;
       }
@@ -396,7 +402,13 @@ export default function ShopScreen() {
 
     if (item.type === "product_row") {
       return (
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: V_GAP }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: V_GAP,
+          }}
+        >
           {(item as any).items.map((product: ListingItem) => (
             <View key={product.id} style={{ width: CARD_WIDTH }}>
               <ListingGridCard item={product} />
@@ -476,7 +488,7 @@ export default function ShopScreen() {
             <TextInput
               ref={inputRef}
               value={query}
-              autoFocus={true}
+              autoFocus={!initialCategorySlug && !initialQuery}
               onChangeText={(t) => {
                 setQuery(t);
                 setShowSuggestions(true);
@@ -558,7 +570,7 @@ export default function ShopScreen() {
                         color: colors.text,
                       }}
                     >
-                      {listingLoading ? "—" :  totalCount}
+                      {listingLoading ? "—" : totalCount}
                     </Text>{" "}
                     Products
                   </Text>

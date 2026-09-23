@@ -406,6 +406,8 @@ export interface AppMenuCategoryItem {
   category_image: string;
   s3_image_path: string;
   s3_image_url: string;
+  flip_image?: string | null;
+  category_bg_color?: string;
 }
 
 export interface AppMenuBrandItem {

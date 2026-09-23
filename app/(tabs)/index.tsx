@@ -19,7 +19,7 @@ import {
 import { useTheme } from "../../src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, ShoppingCart } from "lucide-react-native";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useCartCount } from "../../src/hooks/cartHooks";
 import { useUnreadNotificationCount } from "../../src/hooks/useNotifications";
@@ -683,9 +683,7 @@ const MemoCategoryCardSection = React.memo(CategoryCardSection);
 const MemoHomeProduct = React.memo(HomeProduct);
 const MemoCustomSections = React.memo(CustomSections);
 const MemoFeatureBanner = React.memo(FeatureBanner);
-const MemoDealsOfTheDay = React.memo(DealsOfTheDay);
 const MemoRecentlyViewProducts = React.memo(RecentlyViewProducts);
-const MemoFeaturedProducts = React.memo(FeaturedProducts);
 const MemoHomeBottomCarousel = React.memo(HomeBottomCarousel);
 const MemoTestimonial = React.memo(Testimonial);
 const MemoHomeUsp = React.memo(HomeUsp);
@@ -915,13 +913,35 @@ export default function HomeScreen() {
         return (
           <View>
             {!!headerBannerImageUri && (
-              <Image
-                source={{ uri: headerBannerImageUri }}
-                style={{ width: "100%", height: 140, marginTop: -1 }}
-                contentFit="fill"
-                transition={200}
-                cachePolicy="memory-disk"
-              />
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => {
+                  const headerBanner = headerBanners?.[0];
+                  if (!headerBanner) return;
+                  if (headerBanner.banner_type === "products") {
+                    const isNumeric = !isNaN(Number(headerBanner.redirect));
+                    router.push({
+                      pathname: "/(stack)/products/[slug]",
+                      params: isNumeric
+                        ? { id: headerBanner.redirect, slug: "product" }
+                        : { slug: headerBanner.redirect, id: "slug" },
+                    });
+                  } else if (headerBanner.banner_type === "categories") {
+                    router.push({
+                      pathname: "/(stack)/shop",
+                      params: { category_slug: headerBanner.redirect },
+                    });
+                  }
+                }}
+              >
+                <Image
+                  source={{ uri: headerBannerImageUri }}
+                  style={{ width: "100%", height: 140, marginTop: -1 }}
+                  contentFit="fill"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                />
+              </TouchableOpacity>
             )}
             <View style={{ marginTop: 15 }}>
               <MemoSlidingBanners data={item.data} />
@@ -1030,7 +1050,7 @@ export default function HomeScreen() {
       {/* CONTENT */}
       <Animated.FlatList
         data={visibleSections}
-        keyExtractor={(item) => item.id}
+        keyExtractor={useCallback((item: any) => item.id, [])}
         renderItem={renderItem}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -1039,14 +1059,15 @@ export default function HomeScreen() {
         overScrollMode="never"
         contentContainerStyle={{
           paddingTop: HEADER_HEIGHT_BASE,
-          paddingBottom: insets.bottom + 120,
+          paddingBottom: insets.bottom + 20,
         }}
-        ListHeaderComponent={<Animated.View style={{ height: promoHeight }} />}
-        ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
-        initialNumToRender={4}
-        maxToRenderPerBatch={4}
+        ListHeaderComponent={useCallback(() => <Animated.View style={{ height: promoHeight }} />, [promoHeight])}
+        ItemSeparatorComponent={useCallback(() => <View style={{ height: 15 }} />, [])}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
         windowSize={5}
-        removeClippedSubviews={true}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={Platform.OS === 'android'}
       />
 
       {/* FLOATING ELEMENTS (Animations Preserved) */}

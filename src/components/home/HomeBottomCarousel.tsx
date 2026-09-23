@@ -21,23 +21,23 @@ export default function HomeBottomBanner({ item }: Props) {
 
 
     if (app_redirect_key === "products") {
+      const isNumeric = !isNaN(Number(app_redirect_value));
       router.push({
         pathname: "/(stack)/products/[slug]",
-        params: {
-          slug: app_redirect_value,
-          id: "slug",
-        },
+        params: isNumeric
+          ? { id: app_redirect_value, slug: "product" }
+          : { slug: app_redirect_value, id: "slug" },
       });
       return;
     }
 
     if (app_redirect_key === "categories") {
-      // router.push({
-      //   pathname: "(stack)/shop",
-      //   params: {
-      //     category_slug: app_redirect_value,
-      //   },
-      // });
+      router.push({
+        pathname: "/(stack)/shop",
+        params: {
+          category_slug: app_redirect_value,
+        },
+      });
       return;
     }
   };

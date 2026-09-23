@@ -54,16 +54,21 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
     const { app_redirect_key, app_redirect_value } = banner;
 
     if (app_redirect_key === "products") {
+      const isNumeric = !isNaN(Number(app_redirect_value));
       router.push({
         pathname: "/(stack)/products/[slug]",
-        params: { slug: app_redirect_value, id: "slug" },
+        params: isNumeric
+          ? { id: app_redirect_value, slug: "product" }
+          : { slug: app_redirect_value, id: "slug" },
       });
     }
 
     if (app_redirect_key === "categories") {
       router.push({
-        pathname: "(stack)/shop",
-        params: { category_slug: app_redirect_value },
+        pathname: "/(stack)/shop",
+        params: {
+          category_slug: app_redirect_value,
+        },
       });
     }
   };

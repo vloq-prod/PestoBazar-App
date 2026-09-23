@@ -55,12 +55,12 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
     if (!app_redirect_key || !app_redirect_value) return;
 
     if (app_redirect_key === "products") {
+      const isNumeric = !isNaN(Number(app_redirect_value));
       router.push({
         pathname: "/(stack)/products/[slug]",
-        params: {
-          slug: app_redirect_value,
-          id: "slug", // required fallback
-        },
+        params: isNumeric
+          ? { id: app_redirect_value, slug: "product" }
+          : { slug: app_redirect_value, id: "slug" },
       });
       return;
     }
@@ -68,7 +68,7 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
  
     if (app_redirect_key === "categories") {
       router.push({
-        pathname: "(stack)/shop",
+        pathname: "/(stack)/shop",
         params: {
           category_slug: app_redirect_value,
         },

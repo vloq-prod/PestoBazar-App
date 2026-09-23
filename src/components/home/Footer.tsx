@@ -15,11 +15,21 @@ const Footer = () => {
           borderBottomWidth: 1,
           borderColor: colors.border,
           backgroundColor: colors.backgroundgray,
-          alignItems: "center",
+         
           justifyContent: "center",
           paddingHorizontal: 16,
         }}
       >
+         <Text
+          style={{
+            fontSize: 18,
+            fontFamily: "Poppins_700Bold",
+            
+            color: colors.textgray,
+          }}
+        >
+          Pestobazaar
+        </Text>
         <Text
           style={{
             fontSize: 30,
@@ -30,17 +40,7 @@ const Footer = () => {
           India&apos;s Leading Online Pesticide Hub
         </Text>
       </View>
-      <View style={{ paddingHorizontal: 16 }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontFamily: "Poppins_700Bold",
-            color: colors.textgray,
-          }}
-        >
-          Pestobazaar
-        </Text>
-      </View>
+     
     </View>
   );
 };

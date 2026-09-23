@@ -23,7 +23,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     color: "#6C63FF",
   },
 
-  icon: "./assets/icon.png",
+  icon: "./assets/Pestobazaarlogosmall.png",
 
   splash: {
     image: "./assets/icon.png",
@@ -533,7 +533,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
 
     adaptiveIcon: {
-      foregroundImage: "./assets/icon.png",
+      foregroundImage: "./assets/Pestobazaarlogosmall.png",
       backgroundColor: "#ffffff",
     },
 

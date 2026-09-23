@@ -537,7 +537,7 @@ export default function CategoryScreen() {
                       item={level3Item}
                       parentItem={level2Item}
                       cardWidth={cardWidth}
-                      bgColor={getDynamicLightColor(level3Item.id)}
+                      bgColor={level3Item.category_bg_color || getDynamicLightColor(level3Item.id)}
                       onNavigate={navigateToCategory}
                     />
                   ))}
@@ -574,7 +574,7 @@ export default function CategoryScreen() {
                       item={level2Item}
                       parentItem={selectedLevel1}
                       cardWidth={cardWidth}
-                      bgColor={getDynamicLightColor(level2Item.id)}
+                      bgColor={level2Item.category_bg_color || getDynamicLightColor(level2Item.id)}
                       onNavigate={navigateToCategory}
                     />
                   ))}
