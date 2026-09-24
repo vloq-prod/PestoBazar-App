@@ -44,8 +44,16 @@ import RNOtpVerify from 'react-native-otp-verify';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_REDIRECT_SCHEME =
-  "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh";
+const androidClientId =
+  process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
+  "147081453519-lap730k31jgsjlk2d0ovb6ok4p9rn8tr.apps.googleusercontent.com";
+
+const androidSchemePrefix = androidClientId.replace(
+  /\.apps\.googleusercontent\.com$/,
+  "",
+);
+
+const GOOGLE_REDIRECT_SCHEME = `com.googleusercontent.apps.${androidSchemePrefix}`;
 
 type SafeParseReturn<T> =
   | { success: true; data: T }

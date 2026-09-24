@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useAppVisitorStore } from "../../src/store/auth";
+import { BASE_URL } from "../../src/lib/apiClient";
 import {
   useAddress,
   useCheckout,
@@ -334,10 +335,10 @@ export default function Checkout() {
                   });
                 } else {
                   // Logic for online payment (Razorpay)
+                  const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
                   const options = {
                     description: "Payment for Order",
-                    image:
-                      "https://pestobazaar.confidevtech.com/images/logo.png",
+                    image: `${cleanBaseUrl}images/logo.png`,
                     currency: "INR",
                     key: initRes.data?.key || razorpayKey,
                     amount:

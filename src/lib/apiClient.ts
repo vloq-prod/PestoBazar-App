@@ -4,15 +4,17 @@ import axios from "axios";
 import { getAppHeaders } from "../utils/appHeaders";
 
 const ENVIRONMENT =
-  process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "STAGING";
+  process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "PRODUCTION";
 
 const BASE_URLS = {
-  STAGING: "https://pestobazaar.confidevtech.com/",
-  PRODUCTION: "https://pestobazaar.confidevtech.com/",
+  STAGING: "https://pestobazaar.vloq.com/",
+  PRODUCTION: "https://pestobazaar.com/",
 };
 
-const baseURL =
-  BASE_URLS[ENVIRONMENT as keyof typeof BASE_URLS] || BASE_URLS.STAGING;
+export const BASE_URL =
+  BASE_URLS[ENVIRONMENT as keyof typeof BASE_URLS] || BASE_URLS.PRODUCTION;
+
+const baseURL = BASE_URL;
 
 export const apiClient = axios.create({
   baseURL,

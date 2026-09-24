@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
+import { UNIVERSAL_LINK_BASE_URL } from "../../src/deep-linking/constants/schemes";
 
 import { Image } from "expo-image";
 import {
@@ -244,8 +245,7 @@ export default function ProfileScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message:
-          "Check out Pestobazaar! Order premium pest control products and services instantly: https://pestobazaar.com",
+        message: `Check out Pestobazaar! Order premium pest control products and services instantly: ${UNIVERSAL_LINK_BASE_URL}`,
       });
     } catch (error) {
       // share cancelled or failed

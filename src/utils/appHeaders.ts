@@ -3,8 +3,8 @@ import { AppConfigUtil } from "./appConfig";
 
 export const getAppHeaders = () => {
   return {
-    app_name: AppConfigUtil.appName,
-    app_code: AppConfigUtil.appCode,
-    app_version: AppConfigUtil.appVersion,
+    "app-name": AppConfigUtil.appName,
+    "app-code": AppConfigUtil.appCode,
+    "app-version": AppConfigUtil.appVersion,
   };
 };

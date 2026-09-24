@@ -11,6 +11,7 @@ import {
   Download,
 } from "lucide-react-native";
 import { OrderHistoryItem } from "../../types/order.types";
+import { BASE_URL } from "../../lib/apiClient";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers & Config
@@ -70,17 +71,19 @@ const OrderCard = ({
         return;
       }
 
-      const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${orderId}`;
+      const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+      const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${orderId}`;
 
       // Using docs.google.com viewer host prevents Android OS App Link / Intent Filter
-      // from intercepting pestobazaar.confidevtech.com and restarting the app!
+      // from intercepting domain URLs and restarting the app!
       const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
 
       await WebBrowser.openBrowserAsync(viewerUrl);
     } catch (error) {
       try {
         const orderId = item.enc_order_id || item.id;
-        const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${orderId}`;
+        const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+        const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${orderId}`;
         await WebBrowser.openBrowserAsync(rawInvoiceUrl);
       } catch (e) {
         Alert.alert("Error", "Unable to open invoice. Please try again.");

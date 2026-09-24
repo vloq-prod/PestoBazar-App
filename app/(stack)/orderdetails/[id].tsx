@@ -30,6 +30,7 @@ import OrderItemCard from "../../../src/components/order/OrderItemCard";
 import { useViewOrder } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
+import { BASE_URL } from "../../../src/lib/apiClient";
 
 // Icons
 import {
@@ -354,16 +355,18 @@ const OrderDetails = () => {
         return;
       }
 
-      const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${id}`;
+      const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+      const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${id}`;
 
       // Using docs.google.com viewer host prevents Android OS App Link / Intent Filter
-      // from intercepting pestobazaar.confidevtech.com and restarting the app!
+      // from intercepting domain URLs and restarting the app!
       const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
 
       await WebBrowser.openBrowserAsync(viewerUrl);
     } catch (error) {
       try {
-        const rawInvoiceUrl = `https://pestobazaar.confidevtech.com/generate-download/${id}`;
+        const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+        const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${id}`;
         await WebBrowser.openBrowserAsync(rawInvoiceUrl);
       } catch (e) {
         Alert.alert("Error", "Unable to open invoice. Please try again.");

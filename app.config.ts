@@ -15,7 +15,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   scheme: [
     "pestobazaar",
+    "com.googleusercontent.apps.147081453519-lap730k31jgsjlk2d0ovb6ok4p9rn8tr",
     "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh",
+    ...(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+      ? [
+          `com.googleusercontent.apps.${process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID.replace(/\.apps\.googleusercontent\.com$/, "")}`,
+        ]
+      : []),
   ],
 
   notification: {
@@ -53,7 +59,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     associatedDomains: [
       "applinks:pestobazaar.com",
       "applinks:www.pestobazaar.com",
+      "applinks:pestobazaar.vloq.com",
+      "applinks:www.pestobazaar.vloq.com",
       "applinks:pestobazaar.confidevtech.com",
+      "applinks:www.pestobazaar.confidevtech.com",
     ],
   },
 

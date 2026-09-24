@@ -20,6 +20,14 @@
  *   - Add additional schemes if the business requires (e.g., for partner apps)
  */
 
+const ENVIRONMENT =
+  process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "PRODUCTION";
+
+export const DOMAINS = {
+  STAGING: "pestobazaar.vloq.com",
+  PRODUCTION: "pestobazaar.com",
+} as const;
+
 // ─── Custom Scheme ─────────────────────────────────────────────────────────────
 
 /**
@@ -33,10 +41,11 @@ export const CUSTOM_SCHEME = "pestobazaar" as const;
 // ─── Domains ───────────────────────────────────────────────────────────────────
 
 /**
- * The production domain for universal links / app links.
+ * The domain for universal links / app links based on current environment.
  * Used for deep links like: https://pestobazaar.com/product/123
  */
-export const UNIVERSAL_LINK_DOMAIN = "pestobazaar.confidevtech.com" as const;
+export const UNIVERSAL_LINK_DOMAIN =
+  DOMAINS[ENVIRONMENT as keyof typeof DOMAINS] || DOMAINS.PRODUCTION;
 
 // ─── Allowed Schemes ───────────────────────────────────────────────────────────
 
@@ -50,23 +59,23 @@ export const UNIVERSAL_LINK_DOMAIN = "pestobazaar.confidevtech.com" as const;
  */
 export const ALLOWED_SCHEMES: readonly string[] = [
   CUSTOM_SCHEME,   // pestobazaar://
-  "https",         // https://pestobazaar.com/...
+  "https",         // https://...
 ] as const;
 
 // ─── Allowed Hosts ─────────────────────────────────────────────────────────────
 
 /**
  * Hosts that the deep link validator will accept for HTTPS links.
- * Custom scheme links don't have a host to validate.
- *
- * WHY SEPARATE FROM SCHEMES:
- *   An HTTPS link to a random domain should not be processed
- *   by our deep link handler.
+ * Accepts BOTH production and staging domains (and www subdomains) so that
+ * deep links from any environment / campaign are properly recognized and handled.
  */
 export const ALLOWED_HOSTS: readonly string[] = [
-  UNIVERSAL_LINK_DOMAIN,                 // pestobazaar.com
-  `www.${UNIVERSAL_LINK_DOMAIN}`,        // www.pestobazaar.com
-  "pestobazaar.confidevtech.com",        // pestobazaar.confidevtech.com
+  DOMAINS.PRODUCTION,
+  `www.${DOMAINS.PRODUCTION}`,
+  DOMAINS.STAGING,
+  `www.${DOMAINS.STAGING}`,
+  "pestobazaar.confidevtech.com",
+  "www.pestobazaar.confidevtech.com",
 ] as const;
 
 // ─── URL Building ──────────────────────────────────────────────────────────────
