@@ -42,7 +42,7 @@ function isGoogleOAuthRedirect(url: string): boolean {
 
 let _lastResolvedInput = "";
 let _lastResolvedTime = 0;
-const DEDUP_WINDOW_MS = 2000; // 2 seconds
+const DEDUP_WINDOW_MS = 3000; // 3 seconds
 
 // ─── Public API ────────────────────────────────────────────────────────────────
 
@@ -214,11 +214,12 @@ async function processPipeline(payload: DeepLinkPayload): Promise<void> {
  * Prevents double-processing from cold start + warm start events.
  */
 function isDuplicate(rawInput: string): boolean {
+  const normalized = rawInput.trim().toLowerCase().replace(/\/$/, "");
   const now = Date.now();
-  if (rawInput === _lastResolvedInput && now - _lastResolvedTime < DEDUP_WINDOW_MS) {
+  if (normalized === _lastResolvedInput && now - _lastResolvedTime < DEDUP_WINDOW_MS) {
     return true;
   }
-  _lastResolvedInput = rawInput;
+  _lastResolvedInput = normalized;
   _lastResolvedTime = now;
   return false;
 }

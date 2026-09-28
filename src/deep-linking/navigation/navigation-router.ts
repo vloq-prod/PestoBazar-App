@@ -53,17 +53,29 @@ export function navigateToRedirect(path: string): void {
 // ─── Internal ──────────────────────────────────────────────────────────────────
 
 
+let _lastNavigationKey = "";
+let _lastNavigationTime = 0;
+const NAVIGATION_DEDUP_WINDOW_MS = 2500;
+
 function scheduleOrExecute(instruction: NavigationInstruction): void {
   if (_router) {
     executeNavigation(instruction);
   } else {
-    _pendingQueue.push(instruction);
+    // Only queue latest pending instruction
+    _pendingQueue = [instruction];
   }
 }
 
-
 function executeNavigation(instruction: NavigationInstruction): void {
   if (!_router) return;
+
+  const navKey = `${instruction.pathname}:${JSON.stringify(instruction.params || {})}`;
+  const now = Date.now();
+  if (navKey === _lastNavigationKey && now - _lastNavigationTime < NAVIGATION_DEDUP_WINDOW_MS) {
+    return;
+  }
+  _lastNavigationKey = navKey;
+  _lastNavigationTime = now;
 
   setTimeout(() => {
     try {
@@ -77,6 +89,19 @@ function executeNavigation(instruction: NavigationInstruction): void {
         _router!.navigate(instruction.pathname as any);
       }
     } catch (error) {
+      try {
+        const hasParams = Object.keys(instruction.params).length > 0;
+        if (hasParams) {
+          _router!.push({
+            pathname: instruction.pathname as any,
+            params: instruction.params,
+          });
+        } else {
+          _router!.push(instruction.pathname as any);
+        }
+      } catch (e) {
+        console.warn("[DeepLink] Navigation error:", e);
+      }
     }
   }, 50);
 }

@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2 } from "lucide-react-native";
 import { useResponsive } from "../../utils/useResponsive";
 import { CartItem as CartItemType } from "../../types/cart.types";
 import { useRouter } from "expo-router";
+import { useToast } from "../../context/ToastContext";
 
 interface Props {
   item: CartItemType;
@@ -27,6 +28,7 @@ const CartItem = ({
 }: Props) => {
   const { colors } = useTheme();
   const router = useRouter();
+  const { showToast } = useToast();
   const { spacing, font, wp } = useResponsive();
   const [inputQty, setInputQty] = useState(String(item.qty));
 
@@ -36,6 +38,19 @@ const CartItem = ({
   useEffect(() => {
     setInputQty(String(item.qty));
   }, [item.qty]);
+
+  const handlePlusPress = () => {
+    if (qty >= item.stock) {
+      showToast(
+        item.stock <= 0
+          ? "This item is out of stock"
+          : `Only ${item.stock} item${item.stock > 1 ? "s" : ""} available in stock`,
+        "warning"
+      );
+      return;
+    }
+    onIncrease(item);
+  };
 
   const formatPrice = (value: string | number) => {
     const num = Number(value);
@@ -178,7 +193,15 @@ const CartItem = ({
                   onBlur={() => {
                     let newQty = Number(inputQty);
                     if (!newQty || newQty < 1) newQty = 1;
-                    if (newQty > item.stock) newQty = item.stock;
+                    if (newQty > item.stock) {
+                      newQty = Math.max(1, item.stock);
+                      showToast(
+                        item.stock <= 0
+                          ? "This item is out of stock"
+                          : `Only ${item.stock} item${item.stock > 1 ? "s" : ""} available in stock`,
+                        "warning"
+                      );
+                    }
                     setInputQty(String(newQty));
                     onChangeQty(item, newQty);
                   }}
@@ -195,8 +218,7 @@ const CartItem = ({
 
               {/* Plus */}
               <TouchableOpacity
-                onPress={() => onIncrease(item)}
-                disabled={qty >= item.stock}
+                onPress={handlePlusPress}
                 style={{
                   width: spacing(30),
                   height: spacing(30),

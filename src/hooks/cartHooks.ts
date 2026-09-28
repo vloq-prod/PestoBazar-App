@@ -245,7 +245,13 @@ export const useRemoveCartItem = () => {
   const { showToast } = useToast();
 
   return useMutation({
-    mutationFn: (payload: RemoveCartItemRequest) => removeCartItem(payload),
+    mutationFn: async (payload: RemoveCartItemRequest) => {
+      const data = await removeCartItem(payload);
+      if (data.status === 0) {
+        throw new Error(data.message || "Failed to remove item");
+      }
+      return data;
+    },
 
     onSuccess: (data) => {
       showToast(data.message || "Item removed from cart", "success");
@@ -258,11 +264,15 @@ export const useRemoveCartItem = () => {
       });
 
       queryClient.invalidateQueries({
+        queryKey: ["quick-cart"],
+      });
+
+      queryClient.invalidateQueries({
         queryKey: ["cart-quantity"],
       });
     },
 
-    onError: (error) => {
+    onError: (error: any) => {
       showToast(error?.message || "Failed to remove item", "error");
     },
   });

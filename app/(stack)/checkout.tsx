@@ -174,6 +174,7 @@ export default function Checkout() {
   const clearCart = useCartStore((s) => s.clearCart);
 
   const userId = useAppVisitorStore((s) => s.userId);
+  const visitorId = useAppVisitorStore((s) => s.visitorId);
   const { mutate: checkoutMutate, isPending, data, error } = useCheckout();
   const { data: addressData } = useAddress({ user_id: userId! });
   const { mutate: shippingMutate, data: shippingData } = useShipping();
@@ -241,6 +242,8 @@ export default function Checkout() {
       return;
     }
 
+    console.log("🛒 [Checkout] Place Order Triggered | Mode:", isCod ? "COD" : "Online", "| Amount:", amountToPay, "| CartId:", cartId);
+
     // Step 1: Validate Cart
     const cartPayload = {
       visitor_id: visitorId,
@@ -248,9 +251,13 @@ export default function Checkout() {
       cart_id: cartId,
     };
 
+    console.log("🔍 [Checkout] Step 1: Validating Cart with payload:", cartPayload);
+
     validateCartMutate(cartPayload, {
       onSuccess: (cartRes) => {
+        console.log("✅ [Checkout] Step 1 Cart Validation Success:", cartRes);
         if (cartRes?.status !== 1) {
+          console.warn("⚠️ [Checkout] Cart validation returned status !== 1:", cartRes?.message);
           showToast(cartRes?.message || "Cart validation failed", "error");
           return;
         }
@@ -262,9 +269,13 @@ export default function Checkout() {
           payment_method: (isCod ? "cash" : "online") as "cash" | "online",
         };
 
+        console.log("📍 [Checkout] Step 2: Validating Pincode with payload:", pincodePayload);
+
         validatePincodeMutate(pincodePayload, {
           onSuccess: (pincodeRes) => {
+            console.log("✅ [Checkout] Step 2 Pincode Validation Success:", pincodeRes);
             if (pincodeRes?.status !== 1) {
+              console.warn("⚠️ [Checkout] Pincode validation failed:", pincodeRes?.message);
               showToast(
                 pincodeRes?.message ||
                   "Delivery not available for this pincode",
@@ -289,9 +300,13 @@ export default function Checkout() {
               billing_address_id: billingAddr?.address_id || "",
             };
 
+            console.log("🚀 [Checkout] Step 3: Initiating Order with payload:", initiatePayload);
+
             initiateOrderMutate(initiatePayload, {
               onSuccess: (initRes) => {
+                console.log("📥 [Checkout] Step 3 Initiate Order Response:", initRes);
                 if (initRes.status === 0) {
+                  console.warn("⚠️ [Checkout] Initiate order returned status 0:", initRes.message);
                   showToast(
                     initRes.message || "Failed to initiate order",
                     "error",
@@ -302,9 +317,11 @@ export default function Checkout() {
                 // Step 4: Process Order based on Payment Method
                 if (isCod) {
                   const codPayload = { cart_id: String(cartId) };
+                  console.log("💵 [Checkout] Step 4: Processing COD with payload:", codPayload);
 
                   codSuccessMutate(codPayload, {
                     onSuccess: (res) => {
+                      console.log("🎉 [Checkout] COD Order Placed Successfully:", res);
                       clearCart();
                       queryClient.invalidateQueries({ queryKey: ["cart"] });
                       queryClient.invalidateQueries({ queryKey: ["cart-count"] });
@@ -327,6 +344,7 @@ export default function Checkout() {
                       });
                     },
                     onError: (err: any) => {
+                      console.error("❌ [Checkout] COD Order Error:", err);
                       showToast(
                         err.message || "Failed to process COD order",
                         "error",
@@ -336,11 +354,17 @@ export default function Checkout() {
                 } else {
                   // Logic for online payment (Razorpay)
                   const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
+                  const activeRazorpayKey =
+                    initRes.data?.key ||
+                    razorpayKey ||
+                    process.env.EXPO_PUBLIC_RAZORPAY_KEY ||
+                    "rzp_test_S9hH56T4ntHqvV";
+
                   const options = {
                     description: "Payment for Order",
                     image: `${cleanBaseUrl}images/logo.png`,
                     currency: "INR",
-                    key: initRes.data?.key || razorpayKey,
+                    key: activeRazorpayKey,
                     amount:
                       Number(initRes.data?.total_cost) * 100 ||
                       amountToPay * 100,
@@ -354,8 +378,19 @@ export default function Checkout() {
                     theme: { color: colors.primary },
                   };
 
+                  console.log("💳 [Checkout] Opening Razorpay SDK with options:", {
+                    key: options.key,
+                    order_id: options.order_id,
+                    amount: options.amount,
+                    currency: options.currency,
+                    name: options.name,
+                    email: options.prefill.email,
+                    contact: options.prefill.contact,
+                  });
+
                   RazorpayCheckout.open(options)
                     .then((paymentRes: any) => {
+                      console.log("🎉 [Checkout] Razorpay Payment Success from SDK:", paymentRes);
                       showToast("Payment Successful!", "success");
 
                       // Step 5: Inform Backend about Success
@@ -365,8 +400,11 @@ export default function Checkout() {
                         razorpay_signature: paymentRes.razorpay_signature,
                       };
 
+                      console.log("📤 [Checkout] Step 5: Verifying Payment with backend:", successPayload);
+
                       paymentSuccessMutate(successPayload, {
                         onSuccess: (res) => {
+                          console.log("🎉 [Checkout] Backend Payment Verification Success:", res);
                           clearCart();
                           queryClient.invalidateQueries({ queryKey: ["cart"] });
                           queryClient.invalidateQueries({ queryKey: ["cart-count"] });
@@ -374,7 +412,10 @@ export default function Checkout() {
                           router.replace({
                             pathname: "/ordersuccess",
                             params: {
-                              order_id: initRes.data?.orderId,
+                              order_id:
+                                res.order_id ||
+                                res.data?.order_id ||
+                                initRes.data?.orderId,
                               amount: String(amountToPay),
                               subtotal: String(cart?.cart_amount || 0),
                               shipping: String(shippingCharge),
@@ -385,6 +426,7 @@ export default function Checkout() {
                           });
                         },
                         onError: (err) => {
+                          console.error("❌ [Checkout] Payment verification error:", err);
                           showToast(
                             "Payment recorded but verification failed. Please contact support.",
                             "warning",
@@ -393,22 +435,26 @@ export default function Checkout() {
                       });
                     })
                     .catch((error: any) => {
+                      console.warn("⚠️ [Checkout] Razorpay Payment Dismissed or Failed:", error);
                       showToast("Payment cancelled or failed.", "error");
                     });
                 }
               },
               onError: (err: any) => {
+                console.error("❌ [Checkout] Order Initiation Error:", err);
                 showToast(err.message || "Order initiation error", "error");
               },
             });
           },
           onError: (err: any) => {
+            console.error("❌ [Checkout] Pincode Validation Error:", err);
             showToast("Pincode validation error. Please try again.", "error");
           },
         });
       },
       onError: (err: any) => {
-        showToast("Cart validation error. Please try again.", "error");
+        console.error("❌ [Checkout] Cart Validation Error:", err);
+        showToast(err.message || "Cart validation error. Please try again.", "error");
       },
     });
   };
@@ -438,7 +484,10 @@ export default function Checkout() {
   const items: any[] = data?.data?.cart_details || [];
   const freeProducts: any[] = data?.data?.free_products || [];
   const cartId = data?.data?.cart_app?.cart_id;
-  const razorpayKey = data?.data?.razorpay?.RAZORPAY_KEY;
+  const razorpayKey =
+    data?.data?.razorpay?.RAZORPAY_KEY ||
+    process.env.EXPO_PUBLIC_RAZORPAY_KEY ||
+    "rzp_test_S9hH56T4ntHqvV";
 
   const billingList: any[] = addressData?.data?.billing_address ?? [];
   const deliveryList: any[] = addressData?.data?.delivery_address ?? [];
@@ -467,18 +516,31 @@ export default function Checkout() {
     : Number(cart?.amount_to_pay ?? 0);
 
   useEffect(() => {
+    console.log(
+      "🛒 [Checkout] Screen Mounted | userId:",
+      userId,
+      "| visitorId:",
+      visitorId,
+    );
     if (!userId) return;
     checkoutMutate(
       { user_id: userId },
       {
-        onError: () => {
+        onSuccess: (data) => {
+          console.log("✅ [Checkout] Checkout details loaded successfully:", {
+            cartId: data?.data?.cart?.cart_id,
+            itemCount: data?.data?.cart_details?.length,
+            cartAmount: data?.data?.cart?.cart_amount,
+            amountToPay: data?.data?.cart?.amount_to_pay,
+          });
+        },
+        onError: (err) => {
+          console.error("❌ [Checkout] Failed to load checkout details:", err);
           showToast("Failed to load checkout details", "error");
         },
       },
     );
-  }, [checkoutMutate, userId]);
-
-  const visitorId = useAppVisitorStore((s) => s.visitorId);
+  }, [checkoutMutate, userId, visitorId]);
   useEffect(() => {
     if (!userId || !visitorId || !cartId || !effectiveAddressId) return;
     shippingMutate({

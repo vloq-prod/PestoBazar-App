@@ -74,8 +74,6 @@ export const ALLOWED_HOSTS: readonly string[] = [
   `www.${DOMAINS.PRODUCTION}`,
   DOMAINS.STAGING,
   `www.${DOMAINS.STAGING}`,
-  "pestobazaar.confidevtech.com",
-  "www.pestobazaar.confidevtech.com",
 ] as const;
 
 // ─── URL Building ──────────────────────────────────────────────────────────────

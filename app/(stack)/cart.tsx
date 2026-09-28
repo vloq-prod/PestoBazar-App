@@ -198,7 +198,15 @@ export default function CartScreen() {
   };
 
   const handleIncrease = (item: CartItemTypes) => {
-    if (item.qty >= item.stock) return;
+    if (item.qty >= item.stock) {
+      showToast(
+        item.stock <= 0
+          ? "This item is out of stock"
+          : `Only ${item.stock} item${item.stock > 1 ? "s" : ""} available in stock`,
+        "warning"
+      );
+      return;
+    }
 
     updateCart({
       product_id: getCartPayloadProductId(item),
@@ -224,9 +232,9 @@ export default function CartScreen() {
       removeCartItem({
         product_id: item.enc_product_id,
         qty: 0,
-        user_id: userId ?? 0,
-        visitor_id: visitorId!,
-        cart_id: cartId!,
+        user_id: userId ? String(userId) : "",
+        visitor_id: visitorId || "",
+        cart_id: String(cartId || item.cart_id || ""),
         cart_detail_id: item.id,
       });
     };
@@ -238,16 +246,15 @@ export default function CartScreen() {
       performRemoval();
     }
   };
-  console.log("cart id: ", cartId)
 
   const confirmRemove = () => {
     if (itemToRemove) {
       removeCartItem({
         product_id: itemToRemove.enc_product_id,
         qty: 0,
-        user_id: userId ?? 0,
-        visitor_id: visitorId!,
-        cart_id: cartId!,
+        user_id: userId ? String(userId) : "",
+        visitor_id: visitorId || "",
+        cart_id: String(cartId || itemToRemove.cart_id || ""),
         cart_detail_id: itemToRemove.id,
       });
       setRemoveModalVisible(false);
@@ -256,9 +263,20 @@ export default function CartScreen() {
   };
 
   const handleChangeQty = (item: CartItemTypes, qty: number) => {
+    let finalQty = qty;
+    if (finalQty > item.stock) {
+      showToast(
+        item.stock <= 0
+          ? "This item is out of stock"
+          : `Only ${item.stock} item${item.stock > 1 ? "s" : ""} available in stock`,
+        "warning"
+      );
+      finalQty = Math.max(1, item.stock);
+    }
+
     updateCart({
       product_id: getCartPayloadProductId(item),
-      qty,
+      qty: finalQty,
       user_id: userId ?? 0,
       visitor_id: visitorId,
     });

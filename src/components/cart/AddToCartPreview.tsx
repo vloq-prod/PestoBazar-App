@@ -31,8 +31,18 @@ const dropFrom100px = () => {
       transform: [{ translateY: -100 }],
     },
     animations: {
-      opacity: withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) }),
-      transform: [{ translateY: withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) }) }],
+      opacity: withTiming(1, {
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+      }),
+      transform: [
+        {
+          translateY: withTiming(0, {
+            duration: 300,
+            easing: Easing.out(Easing.cubic),
+          }),
+        },
+      ],
     },
   };
 };
@@ -54,7 +64,7 @@ const AddToCartPreview: React.FC<Props> = ({
   const { colors } = useTheme();
   const { spacing, font, isTablet } = useResponsive();
 
-  const {visitorId, userId} = useAppVisitorStore((state) => state);
+  const { visitorId, userId } = useAppVisitorStore((state) => state);
 
   const { data: quickCartData } = useQuickCart({
     user_id: userId ?? 0,
@@ -144,19 +154,21 @@ const AddToCartPreview: React.FC<Props> = ({
           ]}
         >
           {latestItems.map((item: any, index: number) => {
-            const uniqueKey = item.product_id 
-              ? String(item.product_id) 
-              : item.id 
-                ? String(item.id) 
-                : item.s3_image_path 
-                  ? String(item.s3_image_path) 
+            const uniqueKey = item.product_id
+              ? String(item.product_id)
+              : item.id
+                ? String(item.id)
+                : item.s3_image_path
+                  ? String(item.s3_image_path)
                   : String(index);
-                  
+
             return (
               <Animated.View
                 key={uniqueKey}
                 entering={dropFrom100px}
-                layout={LinearTransition.duration(300).easing(Easing.out(Easing.cubic))}
+                layout={LinearTransition.duration(300).easing(
+                  Easing.out(Easing.cubic),
+                )}
                 style={[
                   styles.imageFrame,
                   {

@@ -61,6 +61,17 @@ export default function OrderSuccess() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    console.log("🎉 [OrderSuccess] Screen Mounted with Params:", {
+      order_id: params.order_id,
+      amount: params.amount,
+      subtotal: params.subtotal,
+      shipping: params.shipping,
+      gst: params.gst,
+      cod: params.cod,
+      payment_method: params.payment_method,
+      allParams: params,
+    });
+
     // Invalidate cart related queries to ensure count is updated
     queryClient.invalidateQueries({ queryKey: ["cart"] });
     queryClient.invalidateQueries({ queryKey: ["cart-count"] });
@@ -87,7 +98,7 @@ export default function OrderSuccess() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [queryClient]);
+  }, [queryClient, params]);
 
   // Robust number parsing
   const parseSafe = (val: any) => {
@@ -355,7 +366,10 @@ export default function OrderSuccess() {
         {/* ── Buttons ── */}
         <View style={styles.buttonGroup}>
           <TouchableOpacity
-            onPress={() => router.replace("/(tabs)")}
+            onPress={() => {
+              console.log("🛒 [OrderSuccess] 'Continue Shopping' Clicked -> Navigating to tabs home");
+              router.replace("/(tabs)");
+            }}
             activeOpacity={0.8}
             style={[styles.btnPrimary, { backgroundColor: colors.primary }]}
           >
@@ -365,9 +379,11 @@ export default function OrderSuccess() {
 
           <TouchableOpacity
             onPress={() => {
+              console.log("📦 [OrderSuccess] 'View Order Details' Clicked | order_id:", params.order_id);
               if (params.order_id) {
                 router.replace(`/(stack)/orderdetails/${params.order_id}`);
               } else {
+                console.warn("⚠️ [OrderSuccess] Missing order_id, fallback to tabs home");
                 router.replace("/(tabs)");
               }
             }}

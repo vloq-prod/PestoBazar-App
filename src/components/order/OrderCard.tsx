@@ -1,6 +1,5 @@
-import React from "react";
-import { StyleSheet, Text, View, TouchableOpacity, Image, Alert } from "react-native";
-import * as WebBrowser from "expo-web-browser";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, Image, Alert, ActivityIndicator } from "react-native";
 import {
   Package,
   ShoppingBag,
@@ -11,7 +10,7 @@ import {
   Download,
 } from "lucide-react-native";
 import { OrderHistoryItem } from "../../types/order.types";
-import { BASE_URL } from "../../lib/apiClient";
+import { downloadAndOpenInvoice } from "../../utils/invoiceUtils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers & Config
@@ -62,33 +61,16 @@ const OrderCard = ({
 }: OrderCardProps) => {
   const cfg = getStatusConfig(item.current_status);
   const StatusIcon = cfg.icon;
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleInvoicePress = async () => {
-    try {
-      const orderId = item.enc_order_id || item.id;
-      if (!orderId) {
-        Alert.alert("Error", "Order ID is missing.");
-        return;
-      }
-
-      const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
-      const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${orderId}`;
-
-      // Using docs.google.com viewer host prevents Android OS App Link / Intent Filter
-      // from intercepting domain URLs and restarting the app!
-      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
-
-      await WebBrowser.openBrowserAsync(viewerUrl);
-    } catch (error) {
-      try {
-        const orderId = item.enc_order_id || item.id;
-        const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
-        const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${orderId}`;
-        await WebBrowser.openBrowserAsync(rawInvoiceUrl);
-      } catch (e) {
-        Alert.alert("Error", "Unable to open invoice. Please try again.");
-      }
-    }
+  const handleInvoicePress = () => {
+    const orderId = item.enc_order_id || item.id;
+    downloadAndOpenInvoice({
+      orderId,
+      displayId: item.id,
+      onStart: () => setIsDownloading(true),
+      onFinish: () => setIsDownloading(false),
+    });
   };
 
   return (
@@ -182,18 +164,25 @@ const OrderCard = ({
         <TouchableOpacity
           style={styles.actionBtn}
           activeOpacity={0.7}
+          disabled={isDownloading}
           onPress={handleInvoicePress}
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <Download size={14} color={colors.textSecondary} strokeWidth={2} />
-            <Text
-              style={[
-                styles.actionBtnText,
-                { color: colors.text, fontSize: font(13) },
-              ]}
-            >
-              Invoice
-            </Text>
+            {isDownloading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Download size={14} color={colors.textSecondary} strokeWidth={2} />
+                <Text
+                  style={[
+                    styles.actionBtnText,
+                    { color: colors.text, fontSize: font(13) },
+                  ]}
+                >
+                  Invoice
+                </Text>
+              </>
+            )}
           </View>
         </TouchableOpacity>
 

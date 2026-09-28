@@ -635,7 +635,7 @@ export default function Login() {
             >
               By continuing, you agree to our{" "}
               <Text
-                onPress={() => {}}
+                onPress={() => router.push("/terms")}
                 style={{
                   color: colors.primary,
                   fontFamily: "Poppins_500Medium",
@@ -645,7 +645,7 @@ export default function Login() {
               </Text>
               {", "}
               <Text
-                onPress={() => {}}
+                onPress={() => router.push("/returns")}
                 style={{
                   color: colors.primary,
                   fontFamily: "Poppins_500Medium",
@@ -655,7 +655,7 @@ export default function Login() {
               </Text>
               {" and "}
               <Text
-                onPress={() => {}}
+                onPress={() => router.push("/privacy")}
                 style={{
                   color: colors.primary,
                   fontFamily: "Poppins_500Medium",

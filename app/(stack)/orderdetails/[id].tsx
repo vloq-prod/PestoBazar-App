@@ -31,6 +31,7 @@ import { useViewOrder } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import { BASE_URL } from "../../../src/lib/apiClient";
+import { downloadAndOpenInvoice } from "../../../src/utils/invoiceUtils";
 
 // Icons
 import {
@@ -323,7 +324,7 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
 
 const OrderDetails = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
-  console.log("order id", id);
+  console.log("📦 [OrderDetails] Screen Mounted with Order ID:", id);
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -332,6 +333,7 @@ const OrderDetails = () => {
   const { font, spacing } = useResponsive();
 
   const [isCancelModalVisible, setIsCancelModalVisible] = React.useState(false);
+  const [isDownloading, setIsDownloading] = React.useState(false);
 
   const { data, isLoading, error, refetch } = useViewOrder({
     order_id: id || "",
@@ -339,6 +341,33 @@ const OrderDetails = () => {
 
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
+
+  React.useEffect(() => {
+    if (orderData) {
+      console.log("📦 [OrderDetails] Order Data Loaded Successfully:", {
+        orderId: id,
+        orderNo: orderData?.order?.order_no,
+        dbId: orderData?.order?.id,
+        currentStatus,
+        paymentType: orderData?.order?.payment_type,
+        grandTotal:
+          orderData?.order?.total_after_discount ??
+          orderData?.order?.paid_amount ??
+          orderData?.order?.order_amount,
+        itemsCount: orderData?.order_detail?.length,
+        freeProductsCount: orderData?.free_product?.length,
+        shippingAddress: orderData?.order_billing_info,
+        shiprocketOrders: orderData?.shiprocket_orders,
+      });
+    }
+  }, [orderData, id, currentStatus]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error("❌ [OrderDetails] Error fetching order details:", error);
+    }
+  }, [error]);
+
   const isReturnAvailable =
     (orderData?.shiprocket_orders || []).some(
       (so: any) => so.return_available === "Yes",
@@ -348,30 +377,30 @@ const OrderDetails = () => {
       (so: any) => so.return_initiated !== "Yes",
     );
 
-  const handleInvoiceOpen = async () => {
-    try {
-      if (!id) {
-        Alert.alert("Error", "Order ID is missing.");
-        return;
-      }
-
-      const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
-      const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${id}`;
-
-      // Using docs.google.com viewer host prevents Android OS App Link / Intent Filter
-      // from intercepting domain URLs and restarting the app!
-      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(rawInvoiceUrl)}`;
-
-      await WebBrowser.openBrowserAsync(viewerUrl);
-    } catch (error) {
-      try {
-        const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
-        const rawInvoiceUrl = `${cleanBaseUrl}generate-download/${id}`;
-        await WebBrowser.openBrowserAsync(rawInvoiceUrl);
-      } catch (e) {
-        Alert.alert("Error", "Unable to open invoice. Please try again.");
-      }
+  const handleInvoiceOpen = () => {
+    console.log("📄 [OrderDetails] Invoice button clicked for order:", {
+      id,
+      displayId: orderData?.order?.id,
+      orderNo: orderData?.order?.order_no,
+    });
+    if (!id) {
+      console.warn("⚠️ [OrderDetails] Cannot open invoice: Order ID is missing.");
+      Alert.alert("Error", "Order ID is missing.");
+      return;
     }
+
+    downloadAndOpenInvoice({
+      orderId: id,
+      displayId: orderData?.order?.id,
+      onStart: () => {
+        console.log("⏳ [OrderDetails] Invoice download started...");
+        setIsDownloading(true);
+      },
+      onFinish: () => {
+        console.log("✅ [OrderDetails] Invoice download finished.");
+        setIsDownloading(false);
+      },
+    });
   };
 
   if (!id) {
@@ -541,6 +570,7 @@ const OrderDetails = () => {
 
               <TouchableOpacity
                 activeOpacity={0.7}
+                disabled={isDownloading}
                 onPress={handleInvoiceOpen}
                 style={{
                   flexDirection: "row",
@@ -554,23 +584,29 @@ const OrderDetails = () => {
                   gap: spacing(6),
                 }}
               >
-                <Download
-                  size={16}
-                  color={colors.textSecondary}
-                  strokeWidth={2}
-                />
-                <View>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_400Regular",
-                      fontSize: font(10),
-                      color: colors.text,
-                      lineHeight: font(8),
-                    }}
-                  >
-                    Invoice
-                  </Text>
-                </View>
+                {isDownloading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Download
+                      size={16}
+                      color={colors.textSecondary}
+                      strokeWidth={2}
+                    />
+                    <View>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: font(10),
+                          color: colors.text,
+                          lineHeight: font(8),
+                        }}
+                      >
+                        Invoice
+                      </Text>
+                    </View>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -1004,7 +1040,13 @@ const OrderDetails = () => {
                     alignItems: "center",
                     gap: 12,
                   }}
-                  onPress={() => setIsCancelModalVisible(true)}
+                  onPress={() => {
+                    console.log("🛑 [OrderDetails] Cancel Order clicked for order:", {
+                      id,
+                      orderNo: orderData?.order?.order_no,
+                    });
+                    setIsCancelModalVisible(true);
+                  }}
                 >
                   <View
                     style={{
@@ -1045,7 +1087,10 @@ const OrderDetails = () => {
                     alignItems: "center",
                     gap: 12,
                   }}
-                  onPress={() => router.push(`/returnproducts/${id}`)}
+                  onPress={() => {
+                    console.log("🔄 [OrderDetails] Navigating to return products for order:", id);
+                    router.push(`/returnproducts/${id}`);
+                  }}
                 >
                   <View
                     style={{
@@ -1081,6 +1126,12 @@ const OrderDetails = () => {
 
               <TouchableOpacity
                 style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+                onPress={() => {
+                  console.log("📞 [OrderDetails] Contact support clicked for order:", {
+                    id,
+                    orderNo: orderData?.order?.order_no,
+                  });
+                }}
               >
                 <View
                   style={{
@@ -1123,8 +1174,12 @@ const OrderDetails = () => {
         visible={isCancelModalVisible}
         orderId={id}
         orderNumber={orderData?.order?.order_no ?? ""}
-        onClose={() => setIsCancelModalVisible(false)}
+        onClose={() => {
+          console.log("🛑 [OrderDetails] Cancel modal closed");
+          setIsCancelModalVisible(false);
+        }}
         onSuccess={() => {
+          console.log("✅ [OrderDetails] Order cancelled successfully, refreshing data...");
           setIsCancelModalVisible(false);
           refetch();
         }}

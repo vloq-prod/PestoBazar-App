@@ -33,9 +33,10 @@ export const initiateOrderApi = async (
 export const viewOrderApi = async (
   params: ViewOrderRequest
 ): Promise<ViewOrderResponse> => {
+  const encodedId = encodeURIComponent(params.order_id);
   const response =
     await apiClient.get<ViewOrderResponse>(
-      `/app-api/v1/view-order/${params.order_id}`
+      `/app-api/v1/view-order/${encodedId}`
     );
 
   return response.data;
@@ -49,9 +50,10 @@ export const viewOrderApi = async (
 export const getUserOrderHistoryApi = async (
   params: UserOrderHistoryRequest
 ): Promise<UserOrderHistoryResponse> => {
+  const encodedUserId = encodeURIComponent(params.user_id);
   const response =
     await apiClient.get<UserOrderHistoryResponse>(
-      `/app-api/v1/user-order-history/${params.user_id}`
+      `/app-api/v1/user-order-history/${encodedUserId}`
     );
 
   return response.data;
@@ -190,8 +192,9 @@ export const getReturnReasonApi = async (): Promise<ReturnReasonResponse> => {
 export const getOrderDetail = async (
   orderId: string,
 ): Promise<OrderDetailResponse> => {
+  const encodedId = encodeURIComponent(orderId);
   const { data } = await apiClient.get<OrderDetailResponse>(
-    `/app-api/v1/order-detail/${orderId}`,
+    `/app-api/v1/order-detail/${encodedId}`,
   );
 
   return data;

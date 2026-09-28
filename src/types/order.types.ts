@@ -439,11 +439,12 @@ export interface PaymentSuccessData {
   transaction_id?: string;
 }
 
-// ======================================================
-// FINAL RESPONSE
-// ======================================================
-
-export type PaymentSuccessResponse = ApiResponse<PaymentSuccessData>;
+export interface PaymentSuccessResponse {
+  status?: number;
+  message?: string;
+  order_id?: string;
+  data?: PaymentSuccessData;
+}
 
 export interface Order {
   id: number;

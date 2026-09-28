@@ -83,9 +83,10 @@ interface UseDeepLinkingOptions {
  *   - Multiple URLs arriving rapidly → resolver handles deduplication
  *   - Initial URL might be the app's own scheme (e.g., from Expo Go) → ignored
  */
+let _initialUrlHandled = false;
+
 export function useDeepLinking({ isReady }: UseDeepLinkingOptions): void {
   const router = useRouter();
-  const initialUrlHandled = useRef(false);
 
   // Step 1: Register router instance
   useEffect(() => {
@@ -107,8 +108,8 @@ export function useDeepLinking({ isReady }: UseDeepLinkingOptions): void {
     // getInitialURL() returns the URL that launched the app (if any).
     // This only applies to cold start — when the app was killed and opened
     // via a deep link.
-    if (!initialUrlHandled.current) {
-      initialUrlHandled.current = true;
+    if (!_initialUrlHandled) {
+      _initialUrlHandled = true;
 
       Linking.getInitialURL()
         .then((url) => {
