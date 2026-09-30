@@ -16,6 +16,7 @@ import { ToastProvider } from "../src/context/ToastContext";
 import { ToastContainer } from "../src/components/Toast/ToastContainer";
 import { useCartQuantitySync } from "../src/hooks/cartHooks";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
+import { AppUpdateProvider } from "../src/providers/AppUpdateProvider";
 import { useDeepLinking, usePendingNavigation } from "../src/deep-linking";
 
 function RootLayoutNav() {
@@ -124,7 +125,9 @@ export default function RootLayout() {
             <BottomSheetModalProvider>
               {/* NotificationProvider runs FCM token registration once on mount */}
               <NotificationProvider>
-                <RootLayoutNav />
+                <AppUpdateProvider>
+                  <RootLayoutNav />
+                </AppUpdateProvider>
               </NotificationProvider>
             </BottomSheetModalProvider>
           </ThemeProvider>

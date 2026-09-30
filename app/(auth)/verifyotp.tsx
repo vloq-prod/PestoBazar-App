@@ -19,17 +19,7 @@ import { useAppVisitorStore } from "../../src/store/auth";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import ResendOtpModal from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
-
-let useOtpListener = () => ({ receivedOtp: "", startListener: () => {} });
-let useGetHash = () => ({ hash: [] as string[] });
-
-try {
-  const OtpAutofill = require("@avasapp/react-native-otp-autofill");
-  useOtpListener = OtpAutofill.useOtpListener;
-  useGetHash = OtpAutofill.useGetHash;
-} catch (e) {
-  // module not available
-}
+import RNOtpVerify from "react-native-otp-verify";
 
 const OTP_LENGTH = 4;
 
@@ -60,26 +50,7 @@ export default function VerifyOtpScreen() {
   const otpInputRef = useRef<OtpInputRef>(null);
   const isVerifyingRef = useRef(false);
 
-  // ── Android SMS Auto-Detection ──
-  const { receivedOtp, startListener } = useOtpListener();
-  const { hash } = useGetHash();
 
-  useEffect(() => {
-    // Start listening for SMS on Android
-    if (Platform.OS === "android") {
-      startListener();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (receivedOtp) {
-      if (receivedOtp.length === OTP_LENGTH) {
-        setOtpCode(receivedOtp);
-        otpInputRef.current?.setValue(receivedOtp);
-        setTimeout(() => handleVerify(receivedOtp), 100);
-      }
-    }
-  }, [receivedOtp]);
 
   // ── Countdown Timer ──
   const [timer, setTimer] = useState(60);
@@ -148,6 +119,54 @@ export default function VerifyOtpScreen() {
       },
     });
   }, [otpCode, mobile, visitorId, isNewUser, fullName, verifyOtpMutate, setUser, router]);
+
+  // ── Android SMS Auto-Detection via react-native-otp-verify ──
+  const startSmsListener = useCallback(() => {
+    if (Platform.OS !== "android") return;
+
+    RNOtpVerify.getOtp()
+      .then(() => {
+        RNOtpVerify.addListener((message: string) => {
+          try {
+            if (message) {
+              const otpMatch = /(\d{4})/g.exec(message);
+              if (otpMatch && otpMatch[1]) {
+                const detectedOtp = otpMatch[1];
+                setOtpCode(detectedOtp);
+                otpInputRef.current?.setValue(detectedOtp);
+                setTimeout(() => {
+                  handleVerify(detectedOtp);
+                }, 100);
+              }
+            }
+          } catch (e) {
+            console.warn("OTP parsing error:", e);
+          }
+        });
+      })
+      .catch((err) => {
+        console.warn("SMS listener start error:", err);
+      });
+  }, [handleVerify]);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    // Log the hash for developer/testing convenience
+    RNOtpVerify.getHash()
+      .then((hashes) => {
+        console.log("🔑 [SMS RETRIEVER HASH]:", hashes);
+      })
+      .catch((err) => {
+        console.warn("Could not get SMS hash:", err);
+      });
+
+    startSmsListener();
+
+    return () => {
+      RNOtpVerify.removeListener();
+    };
+  }, [startSmsListener]);
 
   // ── Resend ──
   const handleResend = useCallback(() => {
@@ -356,6 +375,7 @@ export default function VerifyOtpScreen() {
                 setError("");
                 setTimer(60);
                 setCanResend(false);
+                startSmsListener();
               },
             },
           );

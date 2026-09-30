@@ -151,11 +151,15 @@ export async function registerForPushNotifications(): Promise<FCMTokenResult> {
     const devicePushToken = await Notifications.getDevicePushTokenAsync();
 
     const fcmToken = devicePushToken.data as string;
+    console.log("🔥 ==================== [FCM TOKEN] ====================");
+    console.log(fcmToken);
+    console.log("🔥 =====================================================");
 
     return { token: fcmToken };
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown error occurred.";
+    console.error("❌ [FCM TOKEN ERROR]:", message);
     return { token: null, error: message };
   }
 }

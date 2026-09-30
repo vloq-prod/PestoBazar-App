@@ -84,7 +84,6 @@ import Branches from "../../../src/components/home/Branches";
 
 // ─── Constants ────────────────────────────────────────────────
 const FOOTER_HEIGHT = 112;
-const BASE_URL = "https://static-cdn.pestobazaar.com";
 
 // ─── Helper Components ────────────────────────────────────────
 const FilledWavyDivider = ({
@@ -395,10 +394,8 @@ const ProductDetails = () => {
   const mediaList = React.useMemo(() => {
     return productImages.map((item) => ({
       type: item.asset_type,
-      image: item.s3_image_path ? BASE_URL + item.s3_image_path : null,
-      video: item.video_path
-        ? BASE_URL + "/product-video/" + item.video_path
-        : null,
+      image: item.s3_image_path || null,
+      video: item.video_path || null,
     }));
   }, [productImages]);
 
@@ -425,8 +422,7 @@ const ProductDetails = () => {
         url: fallbackUrl, // url is iOS only, but good practice
         title: resolvedProductName, // Android only
       });
-    } catch (error) {
-    }
+    } catch (error) {}
   }, [productSlug, productInfo, slug, resolvedProductName]);
 
   // ─── Helpers ────────────────────────────────────────────────
@@ -1037,11 +1033,7 @@ const ProductDetails = () => {
                       {ruleProducts.length > 0 && (
                         <View style={{ gap: spacing(12) }}>
                           {ruleProducts.map((item, itemIdx) => {
-                            const imageUri = item.s3_image_path?.startsWith(
-                              "http",
-                            )
-                              ? item.s3_image_path
-                              : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                            const imageUri = item.s3_image_path || "";
 
                             return (
                               <View

@@ -27,6 +27,7 @@ export default function StackLayout() {
       <Stack.Screen name="product-comparison/[variationId]" />
 
       <Stack.Screen name="category/[slug]" />
+      <Stack.Screen name="faq" />
     </Stack>
   );
 }

@@ -4,65 +4,75 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getTermsApi, getAboutUsApi, getRefundApi, getShippingApi, getPrivacyPolicyApi } from "../api/content.api";
+import {
+  getTermsApi,
+  getAboutUsApi,
+  getRefundApi,
+  getShippingApi,
+  getPrivacyPolicyApi,
+  getFaqApi,
+} from "../api/content.api";
 
-    
 // Terms
 export const useTerms = () => {
-    return useQuery({
-        queryKey: ["terms"],
+  return useQuery({
+    queryKey: ["terms"],
 
-        queryFn: getTermsApi,
+    queryFn: getTermsApi,
 
-        staleTime: 1000 * 60 * 10,
-    });
+    staleTime: 1000 * 60 * 10,
+  });
 };
-
 
 // Shipping
 export const useShipping = () => {
-    return useQuery({
-        queryKey: ["shipping"],
+  return useQuery({
+    queryKey: ["shipping"],
 
-        queryFn: getShippingApi,
+    queryFn: getShippingApi,
 
-        staleTime: 1000 * 60 * 10,
-    });
+    staleTime: 1000 * 60 * 10,
+  });
 };
-
 
 // Refund
 export const useRefund = () => {
-    return useQuery({
-        queryKey: ["refund"],
+  return useQuery({
+    queryKey: ["refund"],
 
-        queryFn: getRefundApi,
+    queryFn: getRefundApi,
 
-        staleTime: 1000 * 60 * 10,
-    });
+    staleTime: 1000 * 60 * 10,
+  });
 };
-
 
 // About Us
 export const useAboutUs = () => {
-    return useQuery({
-        queryKey: ["about-us"],
+  return useQuery({
+    queryKey: ["about-us"],
 
-        queryFn: getAboutUsApi,
+    queryFn: getAboutUsApi,
 
-        staleTime: 1000 * 60 * 10,
-    });
+    staleTime: 1000 * 60 * 10,
+  });
 };
 
-
 // Privacy Policy
-
 export const usePrivacyPolicy = () => {
   return useQuery({
     queryKey: ["privacy-policy"],
 
     queryFn: getPrivacyPolicyApi,
 
+    staleTime: 1000 * 60 * 10,
+  });
+};
+
+// FAQ
+export const useFaq = () => {
+  return useQuery({
+    queryKey: ["faq"],
+    queryFn: getFaqApi,
     staleTime: 1000 * 60 * 10,
   });
 };

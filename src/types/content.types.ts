@@ -98,20 +98,15 @@ export interface AboutUsData {
 // FINAL RESPONSES
 // ======================================================
 
-export type TermsResponse =
-  ApiResponse<PolicyData>;
+export type TermsResponse = ApiResponse<PolicyData>;
 
-export type ShippingResponse =
-  ApiResponse<PolicyData>;
+export type ShippingResponse = ApiResponse<PolicyData>;
 
-export type RefundResponse =
-  ApiResponse<PolicyData>;
+export type RefundResponse = ApiResponse<PolicyData>;
 
-export type AboutUsResponse =
-  ApiResponse<AboutUsData>;
+export type AboutUsResponse = ApiResponse<AboutUsData>;
 
-
-  // ======================================================
+// ======================================================
 // PRIVACY POLICY
 // ======================================================
 
@@ -122,5 +117,37 @@ export interface PrivacyPolicyData {
   sections: ContentSection[];
 }
 
-export type PrivacyPolicyResponse =
-  ApiResponse<PrivacyPolicyData>;
+export type PrivacyPolicyResponse = ApiResponse<PrivacyPolicyData>;
+
+// ======================================================
+// FAQ
+// ======================================================
+
+export interface FaqItem {
+  id: number;
+  question: string;
+  answer: string;
+}
+
+export interface FaqCategory {
+  category_name: string;
+  faqs: FaqItem[];
+}
+
+export interface FaqContactUs {
+  title: string;
+  description: string;
+  company_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  note: string;
+}
+
+export interface FaqData {
+  title: string;
+  faq: FaqCategory[];
+  contact_us?: FaqContactUs;
+}
+
+export type FaqResponse = ApiResponse<FaqData>;

@@ -40,7 +40,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect } from "react";
-import RNOtpVerify from 'react-native-otp-verify';
+import RNOtpVerify from "react-native-otp-verify";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -64,7 +64,7 @@ const phoneSchema = z.object({
 });
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const INPUT_HEIGHT =  45;
+const INPUT_HEIGHT = 45;
 
 const carouselData = [
   {
@@ -76,7 +76,8 @@ const carouselData = [
   {
     id: 2,
     title: "Trusted Experts",
-    description: "Verified professionals with years of experience in pest management",
+    description:
+      "Verified professionals with years of experience in pest management",
     image: "https://cdn-icons-png.flaticon.com/512/1533/1533924.png",
   },
   {
@@ -122,7 +123,6 @@ const PillDot = ({
 
 // ─── Gradient Divider ─────────────────────────────────────────
 
-
 export default function Login() {
   const router = useRouter();
   const { redirectTo } = useLocalSearchParams<{ redirectTo?: string }>();
@@ -133,9 +133,13 @@ export default function Login() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    RNOtpVerify.getHash()
-      .then(() => {})
-      .catch(() => {});
+    if (Platform.OS === "android") {
+      RNOtpVerify.getHash()
+        .then((hashes) => {
+          console.log("🔑 [SMS RETRIEVER HASH]:", hashes);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const googleRedirectUri = AuthSession.makeRedirectUri({
@@ -309,7 +313,9 @@ export default function Login() {
           ref={scrollViewRef}
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
           automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
           showsVerticalScrollIndicator={false}
           bounces={false}
@@ -543,7 +549,9 @@ export default function Login() {
                     styles.inlineOtpBtn,
                     {
                       backgroundColor: colors.primary,
-                      borderColor: isLoading ? colors.inputBackground : colors.surface,
+                      borderColor: isLoading
+                        ? colors.inputBackground
+                        : colors.surface,
                       opacity: isLoading ? 0.6 : 1,
                     },
                   ]}
@@ -574,7 +582,6 @@ export default function Login() {
                   {error}
                 </Text>
               )}
-
             </View>
 
             {/* Gradient Divider */}
@@ -680,7 +687,7 @@ const styles = StyleSheet.create({
   inputBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap:2,
+    gap: 2,
     paddingLeft: 10,
     paddingRight: 12,
     borderRadius: 12,

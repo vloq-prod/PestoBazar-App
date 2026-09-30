@@ -32,7 +32,9 @@ apiClient.interceptors.request.use(
     const appHeaders = getAppHeaders();
     Object.entries(appHeaders).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        config.headers?.set(key, String(value));
+        if (!config.headers?.has(key)) {
+          config.headers?.set(key, String(value));
+        }
       }
     });
 

@@ -22,6 +22,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   useEffect(() => {
     (async () => {
       const result = await registerForPushNotifications();
+      if (result.token) {
+        console.log("📲 [NotificationProvider] FCM Token:", result.token);
+      } else if (result.error) {
+        console.warn("⚠️ [NotificationProvider] FCM Token Error:", result.error);
+      }
       
       if (result.token && visitorId) {
         const deviceId = await getOrCreateDeviceId();

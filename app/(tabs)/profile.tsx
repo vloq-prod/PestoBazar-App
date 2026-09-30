@@ -9,12 +9,16 @@ import {
   StatusBar,
   Alert,
   Share,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { UNIVERSAL_LINK_BASE_URL } from "../../src/deep-linking/constants/schemes";
+import { getAppBuildDetails, checkAppUpdateApi } from "../../src/api/appVersion.api";
+import { useAppUpdate } from "../../src/providers/AppUpdateProvider";
+import { useToast } from "../../src/context/ToastContext";
 
 import { Image } from "expo-image";
 import {
@@ -88,34 +92,35 @@ const MENU_SECTIONS = [
         label: "FAQ",
         sub: "Frequently asked questions",
         icon: HelpCircle,
+        route: "/faq",
       },
       {
         id: "terms",
         label: "Terms & Conditions",
         sub: "Read terms of service",
         icon: FileText,
-        route: "/terms"
+        route: "/terms",
       },
       {
         id: "shipping",
         label: "Shipping & Cancellation",
         sub: "Delivery and cancellation info",
         icon: Package,
-        route: "/shipping"
+        route: "/shipping",
       },
       {
         id: "returns",
         label: "Return & Refund",
         sub: "Refund and return policy",
         icon: RotateCcw,
-        route: "/returns"
+        route: "/returns",
       },
       {
         id: "privacy",
         label: "Privacy Policy",
         sub: "How we use your data",
         icon: Lock,
-        route: "/privacy"
+        route: "/privacy",
       },
     ],
   },
@@ -134,7 +139,7 @@ const MENU_SECTIONS = [
         label: "About Us",
         sub: "Learn more about our company",
         icon: Info,
-        route: "/about"
+        route: "/about",
       },
       {
         id: "logout",
@@ -242,6 +247,28 @@ export default function ProfileScreen() {
     router.replace("/login");
   };
 
+  const appBuild = React.useMemo(() => getAppBuildDetails(), []);
+  const { checkForUpdates } = useAppUpdate();
+  const { showToast } = useToast();
+  const [checkingUpdate, setCheckingUpdate] = React.useState(false);
+
+  const handleCheckUpdate = async () => {
+    if (checkingUpdate) return;
+    setCheckingUpdate(true);
+    try {
+      const res = await checkAppUpdateApi();
+      if (res?.status && res?.data?.update_available) {
+        await checkForUpdates(true);
+      } else {
+        showToast("App is up to date", "info");
+      }
+    } catch {
+      showToast("Unable to check for updates", "error");
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
+
   const handleShare = async () => {
     try {
       await Share.share({
@@ -336,27 +363,36 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => router.push("/login")}
-                style={{ marginTop: 2, flexDirection: "row", alignItems: "center", gap: 4 }}
-
+                style={{
+                  marginTop: 2,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                }}
               >
-
-                <View style={{flexDirection: "row", alignItems: "center", gap: 4}}>
-
-                <Text
-                  style={{
-                    color: colors.primary,
-                    fontFamily: "Poppins_600SemiBold",
-                    fontSize: 14,
-                  }}
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                 >
-                  Login / Signup
-                  
-                </Text>
+                  <Text
+                    style={{
+                      color: colors.primary,
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: 14,
+                    }}
+                  >
+                    Login / Signup
+                  </Text>
 
-              <MoveRight size={22} color={colors.primary} />
+                  <MoveRight size={22} color={colors.primary} />
                 </View>
 
-                <View  style={{height: 1,flex:1, backgroundColor: colors.textSecondary,}}/>
+                <View
+                  style={{
+                    height: 1,
+                    flex: 1,
+                    backgroundColor: colors.textSecondary,
+                  }}
+                />
               </TouchableOpacity>
             )}
           </>
@@ -431,9 +467,23 @@ export default function ProfileScreen() {
             Pestobazaar
           </Text>
 
-          <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-            Version 1.0.0
-          </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleCheckUpdate}
+            disabled={checkingUpdate}
+            style={styles.versionContainer}
+          >
+            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+              Version {appBuild.versionName}
+            </Text>
+            {checkingUpdate && (
+              <ActivityIndicator
+                size="small"
+                color={colors.primary}
+                style={{ marginLeft: 6 }}
+              />
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -566,11 +616,18 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
 
+  versionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+
   versionText: {
     fontFamily: "Poppins_400Regular",
     fontSize: 11,
-
-    opacity: 0.3,
+    opacity: 0.4,
   },
 
   guestCard: {

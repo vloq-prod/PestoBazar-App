@@ -35,40 +35,32 @@ export const sendOtpApi = async (
   return response.data;
 };
 
-
-
 export const verifyOtpApi = async (
-  payload: VerifyOtpRequest
+  payload: VerifyOtpRequest,
 ): Promise<VerifyOtpResponse> => {
   const response = await apiClient.post<VerifyOtpResponse>(
     "/app-api/v1/verify-otp",
-    payload
+    payload,
   );
 
   return response.data;
 };
 
-
-
 export const verifyUser = async (
-  payload: VerifyUserRequest
+  payload: VerifyUserRequest,
 ): Promise<VerifyUserResponse> => {
-  const response = await apiClient.post(
-    "/app-api/v1/verify-user",
-    payload
-  );
+  const response = await apiClient.post("/app-api/v1/verify-user", payload);
 
   return response.data;
 };
 
 export const googleAuthCallback = async (
-  payload: GoogleCallbackRequest
+  payload: GoogleCallbackRequest,
 ): Promise<GoogleCallbackResponse> => {
   const response = await apiClient.post<GoogleCallbackResponse>(
     "/app-api/v1/auth/google/callback",
-    payload
+    payload,
   );
 
   return response.data;
 };
-

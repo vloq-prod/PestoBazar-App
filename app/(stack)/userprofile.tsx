@@ -1,4 +1,4 @@
-// app/userprofile.tsx
+// app/(stack)/userprofile.tsx
 import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
@@ -9,12 +9,14 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import {
   User,
   Mail,
@@ -23,103 +25,77 @@ import {
   Eye,
   EyeOff,
   Camera,
-  CheckCircle2,
+  ShieldCheck,
 } from "lucide-react-native";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useAppVisitorStore } from "../../src/store/auth";
+import { useToast } from "../../src/context/ToastContext";
+import { useRouter } from "expo-router";
 
 const getInitials = (name?: string | null) => {
-  if (!name) return "?";
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  if (!name || !name.trim()) return "U";
+  const cleanName = name.trim();
+  const parts = cleanName.split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return cleanName.slice(0, 2).toUpperCase();
 };
 
-// ─── Field config ─────────────────────────────────────────────────────────────
-const FIELDS = [
-  {
-    key: "fullName",
-    label: "Full Name",
-    placeholder: "Enter your full name",
-    icon: User,
-    keyboardType: "default" as const,
-    autoCapitalize: "words" as const,
-  },
-  {
-    key: "email",
-    label: "Email Address",
-    placeholder: "you@email.com",
-    icon: Mail,
-    keyboardType: "email-address" as const,
-    autoCapitalize: "none" as const,
-  },
-  {
-    key: "phone",
-    label: "Phone Number",
-    placeholder: "+91 XXXXX XXXXX",
-    icon: Phone,
-    keyboardType: "phone-pad" as const,
-    autoCapitalize: "none" as const,
-  },
-];
+const INPUT_HEIGHT = 50;
 
-// ─── Consistent cross-platform input height ───────────────────────────────────
-// iOS: no default height, relies on paddingVertical → can be smaller
-// Android: has system padding + includeFontPadding adds extra line spacing
-// Fix: explicit INPUT_HEIGHT + includeFontPadding:false + textAlignVertical:center
-const INPUT_HEIGHT = 52;
-
-// ─── Single Field ─────────────────────────────────────────────────────────────
+// ─── Profile Field ────────────────────────────────────────────────────────────
 const ProfileField = React.memo(
   ({
-    field,
+    label,
     value,
+    placeholder,
+    icon: Icon,
+    keyboardType = "default",
+    autoCapitalize = "none",
     onChange,
     colors,
     font,
   }: {
-    field: (typeof FIELDS)[0];
+    label: string;
     value: string;
+    placeholder: string;
+    icon: any;
+    keyboardType?: any;
+    autoCapitalize?: any;
     onChange: (v: string) => void;
     colors: any;
     font: (n: number) => number;
   }) => {
     const [focused, setFocused] = useState(false);
-    const Icon = field.icon;
 
     return (
       <View style={styles.fieldWrap}>
-        {/* Label */}
         <Text
           style={[
             styles.fieldLabel,
             {
               color: focused ? colors.primary : colors.textSecondary,
-              fontSize: font(11),
+              fontSize: font(12.5),
             },
           ]}
         >
-          {field.label}
+          {label}
         </Text>
 
-        {/* Input box — border on ALL 4 sides */}
         <View
           style={[
             styles.inputBox,
             {
               height: INPUT_HEIGHT,
-              backgroundColor: colors.inputBackground ?? colors.surface,
+              backgroundColor: colors.inputBackground ?? "#F5F5F5",
               borderColor: focused ? colors.primary : colors.border,
-              borderWidth: focused ? 1.8 : 1.2,
+              borderWidth: focused ? 1.6 : 1,
             },
           ]}
         >
           <Icon
-            size={17}
+            size={18}
             color={focused ? colors.primary : colors.textSecondary}
             strokeWidth={1.8}
           />
@@ -127,20 +103,17 @@ const ProfileField = React.memo(
           <TextInput
             value={value}
             onChangeText={onChange}
-            placeholder={field.placeholder}
-            placeholderTextColor={colors.textSecondary}
-            keyboardType={field.keyboardType}
-            autoCapitalize={field.autoCapitalize}
+            placeholder={placeholder}
+            placeholderTextColor={colors.textTertiary ?? colors.textSecondary}
+            keyboardType={keyboardType}
+            autoCapitalize={autoCapitalize}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             style={[
               styles.textInput,
               {
                 color: colors.text,
-                fontSize: font(14),
-                // ── Cross-platform fix ──────────────────────────
-                // Android adds extra padding via includeFontPadding
-                // textAlignVertical centers text inside explicit height
+                fontSize: font(13.5),
                 height: INPUT_HEIGHT,
                 textAlignVertical: "center",
               },
@@ -153,9 +126,19 @@ const ProfileField = React.memo(
 );
 ProfileField.displayName = "ProfileField";
 
-// ─── Password Field (separate — has toggle) ────────────────────────────────────
+// ─── Password Field ───────────────────────────────────────────────────────────
 const PasswordField = React.memo(
-  ({ colors, font }: { colors: any; font: (n: number) => number }) => {
+  ({
+    value,
+    onChange,
+    colors,
+    font,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+    colors: any;
+    font: (n: number) => number;
+  }) => {
     const [focused, setFocused] = useState(false);
     const [show, setShow] = useState(false);
 
@@ -166,11 +149,11 @@ const PasswordField = React.memo(
             styles.fieldLabel,
             {
               color: focused ? colors.primary : colors.textSecondary,
-              fontSize: font(11),
+              fontSize: font(12.5),
             },
           ]}
         >
-          Password
+          Change Password
         </Text>
 
         <View
@@ -178,21 +161,23 @@ const PasswordField = React.memo(
             styles.inputBox,
             {
               height: INPUT_HEIGHT,
-              backgroundColor: colors.inputBackground ?? colors.surface,
+              backgroundColor: colors.inputBackground ?? "#F5F5F5",
               borderColor: focused ? colors.primary : colors.border,
-              borderWidth: focused ? 1.8 : 1.2,
+              borderWidth: focused ? 1.6 : 1,
             },
           ]}
         >
           <Lock
-            size={17}
+            size={18}
             color={focused ? colors.primary : colors.textSecondary}
             strokeWidth={1.8}
           />
 
           <TextInput
+            value={value}
+            onChangeText={onChange}
             placeholder="Enter new password"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.textTertiary ?? colors.textSecondary}
             secureTextEntry={!show}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
@@ -200,7 +185,7 @@ const PasswordField = React.memo(
               styles.textInput,
               {
                 color: colors.text,
-                fontSize: font(14),
+                fontSize: font(13.5),
                 height: INPUT_HEIGHT,
                 textAlignVertical: "center",
               },
@@ -214,12 +199,12 @@ const PasswordField = React.memo(
           >
             {show ? (
               <EyeOff
-                size={17}
+                size={18}
                 color={colors.textSecondary}
                 strokeWidth={1.8}
               />
             ) : (
-              <Eye size={17} color={colors.textSecondary} strokeWidth={1.8} />
+              <Eye size={18} color={colors.textSecondary} strokeWidth={1.8} />
             )}
           </TouchableOpacity>
         </View>
@@ -229,23 +214,34 @@ const PasswordField = React.memo(
 );
 PasswordField.displayName = "PasswordField";
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function UserProfile() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { font, spacing } = useResponsive();
+  const { showToast } = useToast();
+  const router = useRouter();
 
-  const { userName, userEmail, userAvatar } = useAppVisitorStore();
+  const userId = useAppVisitorStore((s) => s.userId);
+  const userName = useAppVisitorStore((s) => s.userName);
+  const userEmail = useAppVisitorStore((s) => s.userEmail);
+  const userAvatar = useAppVisitorStore((s) => s.userAvatar);
+  const setUser = useAppVisitorStore((s) => s.setUser);
+
   const [imageError, setImageError] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState(userAvatar);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setImageError(false);
+    setCurrentAvatar(userAvatar);
   }, [userAvatar]);
 
   const [form, setForm] = useState({
     fullName: userName || "",
     email: userEmail || "",
     phone: "",
+    password: "",
   });
 
   const setField = useCallback(
@@ -254,204 +250,373 @@ export default function UserProfile() {
     [],
   );
 
-  return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "height" : undefined}
-      // 👈 important
-      keyboardVerticalOffset={0}
-    >
-      <StatusBar barStyle={"dark-content"} />
+  const handlePickAvatar = async () => {
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        showToast("Gallery permission is required to change avatar", "warning");
+        return;
+      }
 
-      <View style={{ height: insets.top }} />
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        const pickedUri = result.assets[0].uri;
+        setCurrentAvatar(pickedUri);
+        setImageError(false);
+        showToast("Profile image selected", "info");
+      }
+    } catch {
+      showToast("Unable to select image", "error");
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form.fullName.trim()) {
+      showToast("Please enter your full name", "warning");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await setUser(
+        userId || "user",
+        form.fullName.trim(),
+        form.email.trim(),
+        currentAvatar || undefined,
+      );
+      showToast("Profile updated successfully!", "success");
+      setTimeout(() => {
+        router.back();
+      }, 500);
+    } catch {
+      showToast("Failed to update profile", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* ── Status Bar & Top Safe Area matching profile.tsx ── */}
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={colors.background}
+      />
+      <View
+        style={{ height: insets.top, backgroundColor: colors.background }}
+      />
+
       <AppNavbar title="User Profile" showBack />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          padding: spacing(16),
-          paddingBottom: spacing(24),
-          gap: spacing(24),
-        }}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 48 : 0}
       >
-        {/* ── Avatar section ──────────────────────────────── */}
-        <View style={styles.avatarSection}>
-          {/* Subtle ring + shadow */}
-          <View
-            style={[styles.avatarOuter, { borderColor: colors.primary + "40" }]}
-          >
-            <View style={[styles.avatarInner, { borderColor: colors.primary }]}>
-              {userAvatar && !imageError ? (
-                <Image
-                  source={{ uri: userAvatar }}
-                  onError={() => setImageError(true)}
-                  style={styles.avatarImage}
-                  contentFit="cover"
-                />
-              ) : (
-                <View
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: 50,
-                    backgroundColor: colors.primary + "1A",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.scroll,
+            {
+              paddingBottom: insets.bottom + 90,
+            },
+          ]}
+        >
+          {/* ── Hero Section matching profile.tsx ── */}
+          <View style={styles.heroSection}>
+            <View style={styles.heroRow}>
+              <View style={styles.heroTextCol}>
+                <Text
+                  style={[styles.greeting, { color: colors.textSecondary }]}
                 >
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_700Bold",
-                      fontSize: 26,
-                      color: colors.primary,
-                      includeFontPadding: false,
-                    }}
-                  >
-                    {getInitials(userName || "User")}
-                  </Text>
-                </View>
-              )}
-            </View>
+                  Hey there,
+                </Text>
+                <Text
+                  style={[
+                    styles.userName,
+                    { color: colors.text, fontSize: font(22) },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {form.fullName || userName || "Guest User"}
+                </Text>
+                <Text
+                  style={[styles.description, { color: colors.textSecondary }]}
+                >
+                  Keep your personal info and account details up to date.
+                </Text>
+              </View>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.cameraBtn, { backgroundColor: colors.primary }]}
-            >
-              <Camera size={13} color="#fff" strokeWidth={2.2} />
-            </TouchableOpacity>
+              {/* Avatar Ring */}
+              <View style={styles.avatarWrap}>
+                <View
+                  style={[styles.avatarRing, { borderColor: colors.primary }]}
+                >
+                  {currentAvatar && !imageError ? (
+                    <Image
+                      source={{ uri: currentAvatar }}
+                      onError={() => setImageError(true)}
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.avatarFallback,
+                        { backgroundColor: colors.primary + "1A" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.initialsText,
+                          { color: colors.primary, fontSize: font(22) },
+                        ]}
+                      >
+                        {getInitials(form.fullName || userName || "User")}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Camera Edit Button */}
+                <TouchableOpacity
+                  onPress={handlePickAvatar}
+                  activeOpacity={0.85}
+                  style={[styles.cameraBtn, { backgroundColor: colors.primary }]}
+                >
+                  <Camera size={13} color="#fff" strokeWidth={2.2} />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
-          {/* Camera button */}
+          {/* ── Section 1: Personal Information ── */}
+          <View style={styles.menuSection}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.textSecondary, fontSize: font(17) },
+              ]}
+            >
+              Personal Details
+            </Text>
 
-          {/* Name + email below avatar */}
-          <Text
-            style={[
-              styles.avatarName,
-              { color: colors.text, fontSize: font(18) },
-            ]}
-          >
-            {form.fullName || "Your Name"}
-          </Text>
-          <Text
-            style={[
-              styles.avatarEmail,
-              { color: colors.textSecondary, fontSize: font(12) },
-            ]}
-          >
-            {form.email || "your@email.com"}
-          </Text>
-        </View>
+            <View style={{ gap: spacing(12) }}>
+              <ProfileField
+                label="Full Name"
+                value={form.fullName}
+                placeholder="Enter your full name"
+                icon={User}
+                autoCapitalize="words"
+                onChange={setField("fullName")}
+                colors={colors}
+                font={font}
+              />
 
-        {/* ── Fields ──────────────────────────────────────── */}
-        <View style={{ gap: spacing(14) }}>
-          {FIELDS.map((f) => (
-            <ProfileField
-              key={f.key}
-              field={f}
-              value={form[f.key as keyof typeof form]}
-              onChange={setField(f.key as keyof typeof form)}
-              colors={colors}
-              font={font}
-            />
-          ))}
+              <ProfileField
+                label="Email Address"
+                value={form.email}
+                placeholder="Enter your email"
+                icon={Mail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onChange={setField("email")}
+                colors={colors}
+                font={font}
+              />
 
-          <PasswordField colors={colors} font={font} />
-        </View>
-      </ScrollView>
+              <ProfileField
+                label="Phone Number"
+                value={form.phone}
+                placeholder="+91 XXXXX XXXXX"
+                icon={Phone}
+                keyboardType="phone-pad"
+                onChange={setField("phone")}
+                colors={colors}
+                font={font}
+              />
+            </View>
+          </View>
 
-      {/* ── Footer ──────────────────────────────────────── */}
-      <View
-        style={[
-          styles.footer,
-          {
-            paddingBottom: insets.bottom + 10,
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+          {/* ── Section 2: Account Security ── */}
+          <View style={styles.menuSection}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.textSecondary, fontSize: font(17) },
+              ]}
+            >
+              Account Security
+            </Text>
+
+            <View style={{ gap: spacing(10) }}>
+              <PasswordField
+                value={form.password}
+                onChange={setField("password")}
+                colors={colors}
+                font={font}
+              />
+
+              <View style={styles.securityNote}>
+                <ShieldCheck size={14} color={colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.securityNoteText,
+                    { color: colors.textSecondary, fontSize: font(12) },
+                  ]}
+                >
+                  Leave blank if you don't want to change your password.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* ── Footer Action Button ── */}
+        <View
+          style={[
+            styles.footer,
+            {
+              paddingBottom: Math.max(insets.bottom, 16),
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+            },
+          ]}
         >
-          <Text style={[styles.saveBtnText, { fontSize: font(15) }]}>
-            Update Profile
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <TouchableOpacity
+            onPress={handleSave}
+            disabled={isSaving}
+            activeOpacity={0.88}
+            style={[
+              styles.saveBtn,
+              {
+                backgroundColor: colors.primary,
+                opacity: isSaving ? 0.75 : 1,
+              },
+            ]}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={[styles.saveBtnText, { fontSize: font(15) }]}>
+                Update Profile
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles matching profile.tsx ──────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-
-  // ── Avatar ──────────────────────────────────────────────────────────────────
-  avatarSection: {
-    alignItems: "center",
-    paddingTop: 10,
-    gap: 6,
+  scroll: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    gap: 16,
   },
-  avatarOuter: {
+
+  // ── Hero Section (Direct match of profile.tsx) ──────────────────────────────
+  heroSection: {
+    gap: 12,
+    marginTop: 4,
+  },
+  heroRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  heroTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  greeting: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 14,
+  },
+  userName: {
+    fontFamily: "Poppins_700Bold",
+    lineHeight: 28,
+  },
+  description: {
+    fontFamily: "Poppins_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+
+  // ── Avatar (Direct match of profile.tsx) ────────────────────────────────────
+  avatarWrap: {
     position: "relative",
   },
-  avatarInner: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  avatarRing: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     borderWidth: 2.5,
-
     padding: 2,
   },
   avatarImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 50,
+    borderRadius: 32,
+  },
+  avatarFallback: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  initialsText: {
+    fontFamily: "Poppins_700Bold",
+    includeFontPadding: false,
   },
   cameraBtn: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    bottom: -2,
+    right: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2.5,
+    borderWidth: 2,
     borderColor: "#fff",
-    zIndex: 2,
-  },
-  avatarName: {
-    fontFamily: "Poppins_700Bold",
-    marginTop: 2,
-  },
-  avatarEmail: {
-    fontFamily: "Poppins_400Regular",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
   },
 
-  // ── Section heading ─────────────────────────────────────────────────────────
-  sectionHeadRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+  // ── Menu Section (Direct match of profile.tsx) ──────────────────────────────
+  menuSection: {
+    marginTop: 12,
   },
-  sectionHead: {
-    fontFamily: "Poppins_600SemiBold",
-  },
-  sectionLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
+  sectionTitle: {
+    fontFamily: "Poppins_500Medium",
+    fontSize: 18,
+    marginBottom: 6,
   },
 
-  // ── Field ────────────────────────────────────────────────────────────────────
+  // ── Input Fields ────────────────────────────────────────────────────────────
   fieldWrap: {
     gap: 5,
   },
   fieldLabel: {
     fontFamily: "Poppins_500Medium",
-    marginLeft: 2,
+    marginLeft: 1,
   },
   inputBox: {
     flexDirection: "row",
@@ -459,47 +624,45 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
-    // 4-side border via borderWidth above
   },
   textInput: {
     flex: 1,
     fontFamily: "Poppins_400Regular",
-    // ── Critical cross-platform fixes ──────────────────
-    paddingVertical: 0, // remove default iOS/Android padding
-    // Android-only: kills the extra line-height padding inside TextInput
-    // that makes it taller than iOS at the same fontSize
+    paddingVertical: 0,
     ...Platform.select({
       android: { includeFontPadding: false },
       ios: {},
     }),
   },
 
-  // ── Info note ────────────────────────────────────────────────────────────────
-  infoNote: {
+  // ── Security Note ───────────────────────────────────────────────────────────
+  securityNote: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderRadius: 12,
-    borderWidth: 1,
+    gap: 6,
+    marginTop: 2,
+    paddingHorizontal: 2,
   },
-  infoNoteText: {
-    flex: 1,
+  securityNoteText: {
     fontFamily: "Poppins_400Regular",
-    lineHeight: 16,
+    flex: 1,
   },
 
-  // ── Footer ───────────────────────────────────────────────────────────────────
+  // ── Footer ──────────────────────────────────────────────────────────────────
   footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
   },
   saveBtn: {
-    borderRadius: 14,
-    paddingVertical: 15,
+    minHeight: 52,
+    borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
   },
   saveBtnText: {
     fontFamily: "Poppins_600SemiBold",

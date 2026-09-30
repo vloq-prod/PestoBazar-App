@@ -3,10 +3,10 @@ import {
   View,
   FlatList,
   Dimensions,
-  Image,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useTheme } from "../../theme";
 import Animated, {
@@ -46,6 +46,8 @@ const VideoItem = ({
       player.currentTime = 0;
     }
   }, [shouldPlay, player]);
+
+  if (!uri) return null;
 
   return (
     <VideoView
@@ -124,18 +126,19 @@ const ImageVideoCarousel: React.FC<{ data: MediaItem[]; title?: string }> = ({
               }}
               style={styles.slide}
             >
-              {item.type === "image" ? (
-                <Image
-                  source={{ uri: item.image! }}
-                  style={StyleSheet.absoluteFillObject}
-                  resizeMode="cover"
-                />
-              ) : (
+              {item.type === "video" && item.video ? (
                 <VideoItem
-                  uri={item.video!}
+                  uri={item.video}
                   shouldPlay={activeIndex === index}
                 />
-              )}
+              ) : item.image ? (
+                <Image
+                  source={{ uri: item.image }}
+                  style={StyleSheet.absoluteFillObject}
+                  contentFit="contain"
+                  transition={200}
+                />
+              ) : null}
             </TouchableOpacity>
           )}
         />
