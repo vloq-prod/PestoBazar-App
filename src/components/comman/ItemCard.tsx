@@ -536,9 +536,9 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
           <View
             style={{
               position: "absolute",
-              right: -spacing(6),
+              right: -spacing(4),
               top: -spacing(3),
-              width: spacing(58),
+              width: spacing(32),
               height: spacing(30),
               borderRadius: spacing(8),
               backgroundColor: colors.backgroundSkeleton,
@@ -548,29 +548,31 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
       </View>
 
       {/* ── CONTENT SKELETON BELOW IMAGE ── */}
-      <View style={{ paddingTop: spacing(8), gap: spacing(2) }}>
-        {/* Price row skeleton */}
+      <View style={{ paddingTop: spacing(8), gap: spacing(1) }}>
+        {/* Price column skeleton */}
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing(6),
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: spacing(3),
             marginTop: spacing(1),
           }}
         >
+          {/* Selling price pill skeleton */}
           <View
             style={{
-              width: "45%",
-              height: font(16),
-              borderRadius: spacing(4),
+              width: spacing(52),
+              height: spacing(24),
+              borderRadius: spacing(8),
               backgroundColor: colors.backgroundSkeleton,
             }}
           />
+          {/* MRP skeleton */}
           <View
             style={{
-              width: "25%",
-              height: font(10),
-              borderRadius: spacing(4),
+              width: spacing(38),
+              height: font(11),
+              borderRadius: spacing(3),
               backgroundColor: colors.backgroundSkeleton,
             }}
           />
@@ -579,10 +581,12 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
         {/* Off price skeleton */}
         <View
           style={{
-            width: spacing(40),
-            height: font(10),
+            width: spacing(48),
+            height: font(11),
             borderRadius: spacing(3),
             backgroundColor: colors.backgroundSkeleton,
+            marginTop: spacing(3),
+            marginBottom: spacing(2),
           }}
         />
 
@@ -593,6 +597,7 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
             height: font(12),
             borderRadius: spacing(4),
             backgroundColor: colors.backgroundSkeleton,
+            marginTop: spacing(1),
           }}
         />
         <View
@@ -601,6 +606,7 @@ export function ItemCardSkeleton({ width }: { width?: DimensionValue }) {
             height: font(12),
             borderRadius: spacing(4),
             backgroundColor: colors.backgroundSkeleton,
+            marginTop: spacing(2),
           }}
         />
       </View>

@@ -86,7 +86,7 @@ const FormField = ({
   label, placeholder, icon: Icon, value, onChange,
   keyboardType = "default", autoCapitalize = "sentences",
   optional = false, multiline = false, numberOfLines = 1,
-  colors, font,
+  colors, font, onFocus,
 }: any) => {
   const [focused, setFocused] = useState(false);
 
@@ -139,7 +139,10 @@ const FormField = ({
           placeholderTextColor={colors.textTertiary}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
-          onFocus={() => setFocused(true)}
+          onFocus={(e) => {
+            setFocused(true);
+            onFocus?.(e);
+          }}
           onBlur={() => setFocused(false)}
           multiline={multiline}
           numberOfLines={multiline ? numberOfLines : undefined}
@@ -176,6 +179,12 @@ export default function BulkOrder() {
 
   const [form, setForm] = useState({ name: "", mobile: "", email: "", product: "" });
   const setField = (key: keyof typeof form) => (v: string) => setForm((p) => ({ ...p, [key]: v }));
+
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+  };
 
   const handleWhatsApp = () => {
     Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`);
@@ -226,16 +235,16 @@ export default function BulkOrder() {
   const formStyle = useAnimatedStyle(() => ({ opacity: formOpacity.value, transform: [{ translateY: formY.value }] }));
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={0}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="dark-content" />
       <View style={{ height: insets.top, backgroundColor: colors.background }} />
       <AppNavbar title="Wholesale" showBack />
 
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
         <ScrollView
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
@@ -243,7 +252,7 @@ export default function BulkOrder() {
           contentContainerStyle={{
             padding: spacing(16),
             gap: spacing(14),
-            paddingBottom: insets.bottom + spacing(24),
+            paddingBottom: insets.bottom + spacing(40),
           }}
         >
           {/* ── Msg 1 ── */}
@@ -335,6 +344,7 @@ export default function BulkOrder() {
                   icon={User}
                   value={form.name}
                   onChange={setField("name")}
+                  onFocus={handleInputFocus}
                   autoCapitalize="words"
                   colors={colors}
                   font={font}
@@ -345,6 +355,7 @@ export default function BulkOrder() {
                   icon={Phone}
                   value={form.mobile}
                   onChange={setField("mobile")}
+                  onFocus={handleInputFocus}
                   keyboardType="phone-pad"
                   autoCapitalize="none"
                   colors={colors}
@@ -356,6 +367,7 @@ export default function BulkOrder() {
                   icon={Mail}
                   value={form.email}
                   onChange={setField("email")}
+                  onFocus={handleInputFocus}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   optional
@@ -368,6 +380,7 @@ export default function BulkOrder() {
                   placeholder="Describe the product and quantity..."
                   value={form.product}
                   onChange={setField("product")}
+                  onFocus={handleInputFocus}
                   multiline
                   numberOfLines={3}
                   colors={colors}
@@ -413,8 +426,8 @@ export default function BulkOrder() {
             </ChatBubble>
           )}
         </ScrollView>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 

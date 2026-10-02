@@ -9,6 +9,8 @@ import { useAppVisitorStore } from "../store/auth";
 import { AppConfigUtil } from "../utils/appConfig";
 import { resolveNotification } from "../deep-linking";
 
+import OtpVerify from "react-native-otp-verify";
+
 interface NotificationProviderProps {
   children: React.ReactNode;
 }
@@ -21,6 +23,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   useEffect(() => {
     (async () => {
+      if (Platform.OS === "android") {
+        OtpVerify.getHash()
+          .then((hash) => console.log("🔑 [AppHash]:", hash))
+          .catch((error) => console.log("AppHash Error:", error));
+      }
+
       const result = await registerForPushNotifications();
       if (result.token) {
         console.log("📲 [NotificationProvider] FCM Token:", result.token);

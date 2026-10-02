@@ -75,9 +75,23 @@ const DealsScreen = () => {
 
   const renderHeader = () => {
     const imageUrl = getBannerImageUrl(banner);
-    if (!imageUrl) return null;
-
     const bannerHeight = SCREEN_WIDTH * 0.48;
+
+    if (!imageUrl) {
+      if (loading) {
+        return (
+          <View 
+            style={{ 
+              width: SCREEN_WIDTH, 
+              height: bannerHeight,
+              backgroundColor: colors.backgroundSkeleton || "#E5E7EB",
+              marginBottom: spacing(16),
+            }}
+          />
+        );
+      }
+      return null;
+    }
 
     return (
       <TouchableOpacity 
@@ -103,53 +117,40 @@ const DealsScreen = () => {
 
   // Compute exact width for each card so the last odd item doesn't stretch
   const itemWidth = (SCREEN_WIDTH - spacing(16) * 2 - spacing(12)) / 2;
+  const isSkeleton = loading && deals.length === 0;
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: colors.background }}>
       <AppNavbar title="Deals Of The Day" showBack hideBorder />
       
-      {loading && deals.length === 0 ? (
-        <View 
-          style={{ 
-            paddingHorizontal: spacing(16), 
-            flexDirection: 'row', 
-            flexWrap: 'wrap', 
-            gap: spacing(12),
-            paddingTop: spacing(16),
-          }}
-        >
-          {[1, 2, 3, 4, 5, 6].map((key) => (
-            <View key={key} style={{ width: itemWidth, marginBottom: spacing(16) }}>
+      <FlatList
+        data={isSkeleton ? ([1, 2, 3, 4, 5, 6] as any[]) : deals}
+        keyExtractor={(item, index) => (isSkeleton ? `skeleton-${index}` : String(item.id))}
+        ListHeaderComponent={renderHeader}
+        numColumns={2}
+        contentContainerStyle={{ 
+          paddingBottom: insets.bottom + spacing(20) 
+        }}
+        columnWrapperStyle={{
+          paddingHorizontal: spacing(16),
+          gap: spacing(12),
+          marginBottom: spacing(16)
+        }}
+        renderItem={({ item }) => (
+          <View style={{ width: itemWidth }}>
+            {isSkeleton ? (
               <ItemCardSkeleton />
-            </View>
-          ))}
-        </View>
-      ) : (
-        <FlatList
-          data={deals}
-          keyExtractor={(item) => String(item.id)}
-          ListHeaderComponent={renderHeader}
-          numColumns={2}
-          contentContainerStyle={{ 
-            paddingBottom: insets.bottom + spacing(20) 
-          }}
-          columnWrapperStyle={{
-            paddingHorizontal: spacing(16),
-            gap: spacing(12),
-            marginBottom: spacing(16)
-          }}
-          renderItem={({ item }) => (
-            <View style={{ width: itemWidth }}>
+            ) : (
               <ItemCard 
-                 item={{
-                     ...item,
-                     s3_image_path: item.image_path, 
-                 } as any} 
+                item={{
+                  ...item,
+                  s3_image_path: item.image_path, 
+                } as any} 
               />
-            </View>
-          )}
-        />
-      )}
+            )}
+          </View>
+        )}
+      />
     </View>
   );
 };
