@@ -3,6 +3,7 @@ import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useTaggedProducts } from "../../hooks/productDetailsHook";
+import { getImageUrl } from "../../utils/imageUtils";
 import ItemCard from "../comman/ItemCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -49,8 +50,6 @@ const SkeletonCard = ({ colors }: { colors: any }) => (
   </View>
 );
 
-const BASE_URL = "https://static-cdn.pestobazaar.com";
-
 interface Props {
   productId: number;
 }
@@ -78,11 +77,7 @@ const RecommendedProducts = ({ productId }: Props) => {
   // Maximum 6 products (3 columns x 2 rows grid like CustomSections)
   const displayProducts = uniqueProducts.slice(0, 6).map((item) => {
     const slug = item.slug || (item.url ? item.url.split("/").pop() : "") || "";
-    const s3Path = item.s3_image_path
-      ? item.s3_image_path.startsWith("http")
-        ? item.s3_image_path
-        : `${BASE_URL}${item.s3_image_path}`
-      : undefined;
+    const s3Path = getImageUrl(item.s3_image_path) || undefined;
 
     return {
       ...item,

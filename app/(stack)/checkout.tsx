@@ -27,6 +27,7 @@ import {
   useValidatePincode,
 } from "../../src/hooks/CheckoutHooks";
 import { useResponsive } from "../../src/utils/useResponsive";
+import { getImageUrl } from "../../src/utils/imageUtils";
 import CheckoutItem from "../../src/components/cart/CheckoutItem";
 import {
   ShoppingBag,
@@ -1246,9 +1247,7 @@ export default function Checkout() {
               ))}
 
               {freeProducts && freeProducts.map((item, index) => {
-                const imageUri = item.s3_image_path?.startsWith("http")
-                  ? item.s3_image_path
-                  : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                const imageUri = getImageUrl(item.s3_image_path);
 
                 return (
                   <React.Fragment key={item.free_cart_item_id}>
@@ -1640,6 +1639,7 @@ export default function Checkout() {
               defaultTextProps={{
                 allowFontScaling: false,
               }}
+              ignoredDomTags={["o:p"]}
             />
           </View>
         ) : null}

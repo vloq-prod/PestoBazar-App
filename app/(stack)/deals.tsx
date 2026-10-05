@@ -7,6 +7,7 @@ import { useTheme } from '../../src/theme';
 import { useDealsListing } from '../../src/hooks/homeHooks';
 import ItemCard, { ItemCardSkeleton } from '../../src/components/comman/ItemCard';
 import { useResponsive } from '../../src/utils/useResponsive';
+import { getImageUrl } from '../../src/utils/imageUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -26,51 +27,14 @@ const DealsScreen = () => {
 
   const getBannerImageUrl = (b: any) => {
     if (!b) return null;
-    const baseUrl = "https://static-cdn.pestobazaar.com/";
-
-    // Check if s3_image_url is a direct valid CDN URL
-    if (
-      b.s3_image_url &&
-      b.s3_image_url.startsWith("http") &&
-      !b.s3_image_url.includes("localhost") &&
-      !b.s3_image_url.includes("127.0.0.1")
-    ) {
-      return b.s3_image_url;
-    }
-
-    if (b.s3_image_path) {
-      const path = b.s3_image_path;
-      return path.startsWith("http")
-        ? path
-        : baseUrl + (path.startsWith("/") ? path.slice(1) : path);
-    }
-
-    const fileName = b.mobile_banner || b.desktop_banner;
-    if (fileName) {
-      if (fileName.startsWith("http")) return fileName;
-      const cleanPath = fileName.startsWith("pestobazaar/")
-        ? fileName
-        : `pestobazaar/uploads/Banners/${fileName.replace(/^\//, "")}`;
-      return baseUrl + cleanPath;
-    }
-
-    if (b.mobile_banner_url) {
-      let url = b.mobile_banner_url;
-      if (url.includes("localhost") || url.includes("127.0.0.1")) {
-        url = url.replace(/^https?:\/\/[^\/]+/, baseUrl.replace(/\/$/, ""));
-      }
-      return url;
-    }
-
-    if (b.desktop_banner_url) {
-      let url = b.desktop_banner_url;
-      if (url.includes("localhost") || url.includes("127.0.0.1")) {
-        url = url.replace(/^https?:\/\/[^\/]+/, baseUrl.replace(/\/$/, ""));
-      }
-      return url;
-    }
-
-    return null;
+    return getImageUrl(
+      b.s3_image_url ||
+        b.s3_image_path ||
+        b.mobile_banner_url ||
+        b.desktop_banner_url ||
+        b.mobile_banner ||
+        b.desktop_banner,
+    );
   };
 
   const renderHeader = () => {

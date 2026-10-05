@@ -139,10 +139,11 @@ const ProductDescriptionModal: React.FC<Props> = ({
           >
             <RenderHTML
               contentWidth={width - spacing(32)}
-              source={{ html }}
+              source={{ html: (html || "").replace(/<\/?o:p[^>]*>/gi, "") }}
               baseStyle={baseStyle}
               tagsStyles={tagStyles}
               enableCSSInlineProcessing={false}
+              ignoredDomTags={["o:p"]}
               systemFonts={[
                 "Poppins_400Regular",
                 "Poppins_600SemiBold",

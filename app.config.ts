@@ -58,76 +58,28 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // iOS Universal Links — all deep-linkable paths
     associatedDomains: [
       "applinks:pestobazaar.com",
-      "applinks:www.pestobazaar.com",
       "applinks:pestobazaar.vloq.com",
-      "applinks:www.pestobazaar.vloq.com",
     ],
   },
 
   android: {
     package: "com.pestobazaar.app",
-    versionCode: 1,
+    versionCode: 9,
 
     permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
 
     googleServicesFile: "./google-services.json",
 
-    // Android App Links — covers all deep-linkable routes across all domains.
+    // Android App Links — simplified host-based verification across all domains.
     // autoVerify: true enables instant link verification via .well-known/assetlinks.json
     intentFilters: [
       {
         action: "VIEW",
         autoVerify: true,
         data: [
-          "/",
-          "/products",
-          "/product",
-          "/category",
-          "/shop",
-          "/search",
-          "/cart",
-          "/checkout",
-          "/orders",
-          "/orderdetails",
-          "/deals",
-          "/coupons",
-          "/profile",
-          "/userprofile",
-          "/address",
-          "/addaddress",
-          "/returns",
-          "/returndetails",
-          "/returnproducts",
-          "/viewall",
-          "/wishlist",
-          "/notifications",
-          "/ordersuccess",
-          "/map",
-          "/about",
-          "/terms",
-          "/privacy",
-          "/shipping",
-          "/section",
-          "/reviews",
-          "/diy",
-          "/bulkorder",
-          "/welcome",
-          "/login",
-          "/verifyotp",
-          "/userinfo",
-          "/home",
-        ].flatMap((pathPrefix) =>
-          [
-            "pestobazaar.com",
-            "www.pestobazaar.com",
-            "pestobazaar.vloq.com",
-            "www.pestobazaar.vloq.com",
-          ].map((host) => ({
-            scheme: "https",
-            host,
-            pathPrefix,
-          })),
-        ),
+          { scheme: "https", host: "pestobazaar.com" },
+          { scheme: "https", host: "pestobazaar.vloq.com" },
+        ],
         category: ["BROWSABLE", "DEFAULT"],
       },
     ],

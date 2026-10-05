@@ -17,6 +17,7 @@ import {
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
+import { getImageUrl } from "../../src/utils/imageUtils";
 import {
   useCart,
   useCartAction,
@@ -594,9 +595,7 @@ export default function CartScreen() {
                 <View style={{ padding: spacing(14), gap: spacing(16) }}>
                   {freeProducts.map((item) => {
                     // Resolve image path
-                    const imageUri = item.s3_image_path?.startsWith("http")
-                      ? item.s3_image_path
-                      : `https://static-cdn.pestobazaar.com${item.s3_image_path}`;
+                    const imageUri = getImageUrl(item.s3_image_path);
 
                     return (
                       <View

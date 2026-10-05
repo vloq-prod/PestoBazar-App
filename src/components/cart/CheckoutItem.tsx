@@ -2,8 +2,7 @@ import React from "react";
 import { View, Text, Image } from "react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
-
-const BASE_URL = "https://static-cdn.pestobazaar.com";
+import { getImageUrl } from "../../utils/imageUtils";
 
 
 interface CheckoutItemProps {
@@ -57,7 +56,7 @@ const CheckoutItem = ({ item, isLast }: CheckoutItemProps) => {
           }}
         >
           <Image
-            source={{ uri: item.s3_image_path ? BASE_URL + item.s3_image_path : undefined }}
+            source={{ uri: getImageUrl(item.s3_image_path) || undefined }}
             style={{ width: imageSize - spacing(4), height: imageSize - spacing(4) }}
             resizeMode="contain"
           />

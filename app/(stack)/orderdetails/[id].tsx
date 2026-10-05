@@ -32,6 +32,7 @@ import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import { BASE_URL } from "../../../src/lib/apiClient";
 import { downloadAndOpenInvoice } from "../../../src/utils/invoiceUtils";
+import { getImageUrl } from "../../../src/utils/imageUtils";
 
 // Icons
 import {
@@ -898,11 +899,7 @@ const OrderDetails = () => {
                   }}
                 >
                   {orderData.free_product?.map((item: any, idx: number) => {
-                    const imageUri = !item.s3_image_path
-                      ? ""
-                      : item.s3_image_path.startsWith("http")
-                      ? item.s3_image_path
-                      : `https://static-cdn.pestobazaar.com${item.s3_image_path.startsWith("/") ? "" : "/"}${item.s3_image_path}`;
+                    const imageUri = getImageUrl(item.s3_image_path) || "";
                     const isLastFreeItem =
                       idx === (orderData.free_product?.length ?? 0) - 1;
 

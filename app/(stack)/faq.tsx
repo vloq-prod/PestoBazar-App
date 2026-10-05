@@ -121,10 +121,16 @@ export default function FaqScreen() {
                   </Text>
                   <RenderHTML
                     contentWidth={contentWidth}
-                    source={{ html: faq.answer || "<p></p>" }}
+                    source={{
+                      html: (faq.answer || "<p></p>").replace(
+                        /<\/?o:p[^>]*>/gi,
+                        ""
+                      ),
+                    }}
                     baseStyle={HTML_BASE_STYLE}
                     tagsStyles={HTML_TAGS_STYLES}
                     defaultTextProps={{ selectable: true }}
+                    ignoredDomTags={["o:p"]}
                   />
                 </View>
               ))}

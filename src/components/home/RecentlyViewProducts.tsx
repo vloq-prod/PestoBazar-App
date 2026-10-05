@@ -3,6 +3,7 @@ import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import ItemCard from "../comman/ItemCard";
+import { getImageUrl } from "../../utils/imageUtils";
 import { useAppVisitorStore } from "../../store/auth";
 import { useQuery } from "@tanstack/react-query";
 import { getRecentlyViewed } from "../../api/home.api";
@@ -52,8 +53,6 @@ const SkeletonCard = ({ colors }: { colors: any }) => (
   </View>
 );
 
-const BASE_URL = "https://static-cdn.pestobazaar.com";
-
 const RecentlyViewProducts = () => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
@@ -88,11 +87,7 @@ const RecentlyViewProducts = () => {
   // Maximum 6 products (3 columns x 2 rows grid like CustomSections)
   const displayProducts = uniqueProducts.slice(0, 6).map((item) => {
     const slug = (item.url ? item.url.split("/").pop() : "") || "";
-    const s3Path = item.s3_image_path
-      ? item.s3_image_path.startsWith("http")
-        ? item.s3_image_path
-        : `${BASE_URL}${item.s3_image_path}`
-      : undefined;
+    const s3Path = getImageUrl(item.s3_image_path) || undefined;
 
     return {
       ...item,

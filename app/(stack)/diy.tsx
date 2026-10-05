@@ -18,6 +18,7 @@ import ItemCard, {
   ItemCardSkeleton,
 } from "../../src/components/comman/ItemCard";
 import { useResponsive } from "../../src/utils/useResponsive";
+import { getImageUrl } from "../../src/utils/imageUtils";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -37,27 +38,14 @@ const DiyScreen = () => {
 
   const getBannerImageUrl = (b: any) => {
     if (!b) return null;
-    const baseUrl = "https://static-cdn.pestobazaar.com/";
-
-    if (b.s3_image_url) return b.s3_image_url;
-
-    if (b.s3_image_path) {
-      return b.s3_image_path.startsWith("http")
-        ? b.s3_image_path
-        : baseUrl + b.s3_image_path.replace(/^\//, "");
-    }
-
-    const fileName = b.mobile_banner || b.desktop_banner;
-    if (fileName) {
-      if (fileName.startsWith("http")) return fileName;
-      return (
-        baseUrl +
-        (fileName.startsWith("pestobazaar/") ? "" : "pestobazaar/uploads/Banners/") +
-        fileName.replace(/^\//, "")
-      );
-    }
-
-    return b.mobile_banner_url || b.desktop_banner_url || null;
+    return getImageUrl(
+      b.s3_image_url ||
+        b.s3_image_path ||
+        b.mobile_banner_url ||
+        b.desktop_banner_url ||
+        b.mobile_banner ||
+        b.desktop_banner,
+    );
   };
 
   const renderHeader = () => {

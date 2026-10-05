@@ -3,8 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Star, RotateCcw, ChevronUp, ChevronDown } from "lucide-react-native";
-
-const IMAGE_BASE = "https://static-cdn.pestobazaar.com/";
+import { getImageUrl } from "../../utils/imageUtils";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
@@ -34,9 +33,7 @@ const OrderProductItem = ({
   children,
   calculatedPrice,
 }: OrderProductItemProps) => {
-  const imageUri = item.main_image?.startsWith("http")
-    ? item.main_image
-    : IMAGE_BASE + item.main_image;
+  const imageUri = getImageUrl(item.main_image);
 
   const displayTotalAmount = formatPrice(calculatedPrice ?? item.total_amount);
 

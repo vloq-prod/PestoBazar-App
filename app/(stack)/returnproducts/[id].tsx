@@ -43,6 +43,7 @@ import { useToast } from "../../../src/context/ToastContext";
 import { useViewOrder, useUploadReturnVideo, useReturnProduct, useSaveReturnImage } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
+import { getImageUrl } from "../../../src/utils/imageUtils";
 
 // Safe Dynamic Import to prevent crash when bundler is not restarted
 let ImagePicker: any = null;
@@ -51,8 +52,6 @@ try {
 } catch (e) {
   // module not available
 }
-
-const IMAGE_BASE = "https://static-cdn.pestobazaar.com/";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
@@ -653,9 +652,8 @@ const ReturnProductsScreen = () => {
           {orderData?.order_detail?.map((item: any) => {
             const isChecked = !!checkedProducts[item.id];
             const hasDetails = !!productReturns[item.id]?.reasonId;
-            const imageUri = item.main_image?.startsWith("http")
-              ? item.main_image
-              : IMAGE_BASE + item.main_image;            return (
+            const imageUri = getImageUrl(item.main_image);
+            return (
               <TouchableOpacity
                 key={item.id}
                 activeOpacity={0.7}

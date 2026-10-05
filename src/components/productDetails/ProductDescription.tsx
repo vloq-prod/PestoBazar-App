@@ -55,6 +55,7 @@ const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
     ?.replace(/font-size:[^;"]+;?/gi, "")
     ?.replace(/line-height:[^;"]+;?/gi, "")
     ?.replace(/font-family:[^;"]+;?/gi, "")
+    ?.replace(/<\/?o:p[^>]*>/gi, "")
     ?.replace(/<span[^>]*>/gi, "")
     ?.replace(/<\/span>/gi, "");
 
@@ -137,6 +138,7 @@ const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
       baseStyle={baseStyle}
       tagsStyles={tagStyles}
       enableCSSInlineProcessing={false}
+      ignoredDomTags={["o:p"]}
       systemFonts={[
         "Poppins_400Regular",
         "Poppins_600SemiBold",

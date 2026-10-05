@@ -36,8 +36,7 @@ import ProductMediaLightbox from "../../../src/components/comman/ProductMediaLig
 import { useCustomerReturnOrder } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
-
-const IMAGE_BASE = "https://static-cdn.pestobazaar.com/";
+import { getImageUrl } from "../../../src/utils/imageUtils";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
@@ -528,9 +527,7 @@ const ReturnDetails = () => {
 
   const handleWatchImages = (productImages: any[], initialIndex: number) => {
     const formattedImages = productImages.map((img: any) => {
-      const imgUrl = img.image_path?.startsWith("http")
-        ? img.image_path
-        : IMAGE_BASE + img.image_path;
+      const imgUrl = getImageUrl(img.image_path);
       return {
         type: "image",
         image: imgUrl,
@@ -981,13 +978,7 @@ const ReturnDetails = () => {
                   }}
                 >
                   {returnDetails.free_product?.map((item: any, idx: number) => {
-                    const imageUri = !item.s3_image_path
-                      ? ""
-                      : item.s3_image_path.startsWith("http")
-                      ? item.s3_image_path
-                      : item.s3_image_path.startsWith("/")
-                      ? `${IMAGE_BASE}${item.s3_image_path.substring(1)}`
-                      : `${IMAGE_BASE}${item.s3_image_path}`;
+                    const imageUri = getImageUrl(item.s3_image_path) || "";
                     const isLastFreeItem =
                       idx === (returnDetails.free_product?.length ?? 0) - 1;
 
@@ -1096,9 +1087,7 @@ const ReturnDetails = () => {
 
           <View>
             {returnedProducts.map((productItem: any, index: number) => {
-              const imageUri = productItem.main_image?.startsWith("http")
-                ? productItem.main_image
-                : IMAGE_BASE + productItem.main_image;
+              const imageUri = getImageUrl(productItem.main_image);
 
               const theme = getReasonTheme(productItem.main_reason, colors);
               const ReasonIcon = theme.icon;
@@ -1320,9 +1309,7 @@ const ReturnDetails = () => {
                             </Text>
                             <View style={{ flexDirection: "row", gap: spacing(8), flexWrap: "wrap" }}>
                               {productImages.map((img: any, idx: number) => {
-                                const imgUrl = img.image_path?.startsWith("http")
-                                  ? img.image_path
-                                  : IMAGE_BASE + img.image_path;
+                                const imgUrl = getImageUrl(img.image_path);
                                 return (
                                   <TouchableOpacity
                                     key={idx}

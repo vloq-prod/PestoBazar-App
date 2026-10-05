@@ -3,6 +3,7 @@ import React from "react";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useCustomerAlsoBought } from "../../hooks/productDetailsHook";
+import { getImageUrl } from "../../utils/imageUtils";
 import ItemCard from "../comman/ItemCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -56,8 +57,6 @@ interface Props {
   productId: number;
 }
 
-const BASE_URL = "https://static-cdn.pestobazaar.com";
-
 const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
@@ -82,11 +81,7 @@ const CustomerAlsoBoughtProduct = ({ productId }: Props) => {
 
   // Maximum 6 products (3 columns x 2 rows grid like CustomSections)
   const displayProducts = uniqueProducts.slice(0, 6).map((item) => {
-    const s3Path = item.s3_image_path
-      ? item.s3_image_path.startsWith("http")
-        ? item.s3_image_path
-        : `${BASE_URL}${item.s3_image_path}`
-      : null;
+    const s3Path = getImageUrl(item.s3_image_path);
 
     return {
       ...item,

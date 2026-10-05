@@ -164,10 +164,16 @@ const AccordionItem = ({ item, isLast, expanded, onToggle }: any) => {
         <Animated.View style={[bodyStyle, { paddingBottom: spacing(16) }]}>
           <RenderHTML
             contentWidth={width - spacing(32)}
-            source={{ html: item.drop_description || "" }}
+            source={{
+              html: (item.drop_description || "").replace(
+                /<\/?o:p[^>]*>/gi,
+                ""
+              ),
+            }}
             baseStyle={HTML_BASE_STYLE}
             tagsStyles={HTML_TAGS_STYLES}
             enableCSSInlineProcessing={false}
+            ignoredDomTags={["o:p"]}
           />
         </Animated.View>
       )}
