@@ -41,6 +41,7 @@ import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect } from "react";
 import RNOtpVerify from "react-native-otp-verify";
+import { trackLogin, setAnalyticsUserId } from "../../src/lib/analytics";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -270,6 +271,8 @@ export default function Login() {
                   user.email ?? "",
                   user.picture ?? "",
                 );
+                setAnalyticsUserId(data.data.user_id);
+                trackLogin("google");
                 if (redirectTo) {
                   router.replace("/(tabs)");
                   setTimeout(() => router.push(redirectTo as any), 100);

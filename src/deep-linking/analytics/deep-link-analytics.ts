@@ -27,6 +27,7 @@
  */
 
 import type { DeepLinkAnalyticsEvent } from "../types/deep-link.types";
+import { trackEvent } from "../../lib/analytics";
 
 /**
  * Tracks a deep link analytics event.
@@ -51,7 +52,14 @@ import type { DeepLinkAnalyticsEvent } from "../types/deep-link.types";
  *   }
  */
 export function trackDeepLinkEvent(event: DeepLinkAnalyticsEvent): void {
-  // Event tracked - extensible for future analytics backends (e.g. Firebase, Mixpanel)
+  trackEvent(event.eventName, {
+    routeName: event.routeName,
+    source: event.source,
+    utm_source: event.utm?.utm_source,
+    utm_medium: event.utm?.utm_medium,
+    utm_campaign: event.utm?.utm_campaign,
+    isValid: event.isValid,
+  });
 }
 
 /**

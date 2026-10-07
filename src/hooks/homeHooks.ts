@@ -31,6 +31,10 @@ export const useBanner = () => {
   const query = useQuery({
     queryKey: ["banners"],
     queryFn: getBanners,
+    staleTime: 1000 * 60 * 30, // 30 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   return {
@@ -46,6 +50,10 @@ export const useAppHeaderBanner = () => {
   const query = useQuery({
     queryKey: ["app-header-banner"],
     queryFn: getAppHeaderBanner,
+    staleTime: 1000 * 60 * 30, // 30 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   return {
@@ -61,6 +69,10 @@ export const useAppMainBanner = () => {
   const query = useQuery({
     queryKey: ["app-main-banner"],
     queryFn: getAppMainBanner,
+    staleTime: 1000 * 60 * 30, // 30 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   return {
@@ -76,6 +88,10 @@ export const useCategory = (id: number) => {
   const query = useQuery({
     queryKey: ["home-categories", id],
     queryFn: () => getHomeCategories(id),
+    staleTime: 1000 * 60 * 30, // 30 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   return {

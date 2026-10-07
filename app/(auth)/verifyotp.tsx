@@ -20,6 +20,11 @@ import AppNavbar from "../../src/components/comman/AppNavbar";
 import ResendOtpModal from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import RNOtpVerify from "react-native-otp-verify";
+import {
+  trackLogin,
+  trackSignUp,
+  setAnalyticsUserId,
+} from "../../src/lib/analytics";
 
 const OTP_LENGTH = 4;
 
@@ -101,6 +106,12 @@ export default function VerifyOtpScreen() {
         isVerifyingRef.current = false;
 
         await setUser(data.data.user_id, data.data.user_name);
+        setAnalyticsUserId(data.data.user_id);
+        if (isNewUser === "1") {
+          trackSignUp("phone");
+        } else {
+          trackLogin("phone");
+        }
 
         if (redirectTo) {
           // Clear auth stack and go to the intended destination

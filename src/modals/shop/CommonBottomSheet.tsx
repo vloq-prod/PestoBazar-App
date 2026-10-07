@@ -14,6 +14,7 @@ import { X } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { cleanProductDescriptionHtml } from "../../utils/productHelpers";
 
 type Props = {
   visible: boolean;
@@ -88,7 +89,11 @@ const ProductDescriptionModal: React.FC<Props> = ({
     },
   };
 
-  if (!html) return null;
+  const cleanHtml = React.useMemo(() => {
+    return cleanProductDescriptionHtml(html || "").replace(/<\/?o:p[^>]*>/gi, "");
+  }, [html]);
+
+  if (!html || !cleanHtml) return null;
 
   return (
     <Modal
@@ -139,7 +144,7 @@ const ProductDescriptionModal: React.FC<Props> = ({
           >
             <RenderHTML
               contentWidth={width - spacing(32)}
-              source={{ html: (html || "").replace(/<\/?o:p[^>]*>/gi, "") }}
+              source={{ html: cleanHtml }}
               baseStyle={baseStyle}
               tagsStyles={tagStyles}
               enableCSSInlineProcessing={false}

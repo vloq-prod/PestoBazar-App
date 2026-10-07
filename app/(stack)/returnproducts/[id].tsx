@@ -40,7 +40,7 @@ import ReturnProductModal from "../../../src/components/comman/ReturnProductModa
 import RefundDetailsModal from "../../../src/components/comman/RefundDetailsModal";
 import ReturnSuccessModal from "../../../src/components/comman/ReturnSuccessModal";
 import { useToast } from "../../../src/context/ToastContext";
-import { useViewOrder, useUploadReturnVideo, useReturnProduct, useSaveReturnImage } from "../../../src/hooks/orderHooks";
+import { useViewOrder, useUploadReturnVideo, useUploadReturnImage, useReturnProduct, useSaveReturnImage } from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import { getImageUrl } from "../../../src/utils/imageUtils";
@@ -354,6 +354,7 @@ const ReturnProductsScreen = () => {
 
   const returnProductMutation = useReturnProduct();
   const saveReturnImageMutation = useSaveReturnImage();
+  const uploadImageMutation = useUploadReturnImage();
 
   // Return Flow States
   const [checkedProducts, setCheckedProducts] = useState<Record<number, boolean>>({});
@@ -452,6 +453,34 @@ const ReturnProductsScreen = () => {
       setIsSubmitting(true);
       const returnKey = "RET-" + Date.now();
 
+      // 1. Upload unboxing video if selected
+      let serverVideoPath = "";
+      if (videoUri) {
+        const rawName = videoName || videoUri.split("/").pop() || "return_proof.mp4";
+        const cleanName = rawName.replace(/[^a-zA-Z0-9_\-\.]/g, "_");
+        const uploadFileName = `${Date.now()}_${cleanName}`;
+        const vRes = await uploadVideoMutation.mutateAsync({
+          uri: videoUri,
+          name: uploadFileName,
+          type: videoType || "video/mp4",
+        });
+        const rawUploadedName = vRes?.data?.video_name || vRes?.data?.video_path || "";
+        serverVideoPath = rawUploadedName ? rawUploadedName.split("/").pop() || "" : "";
+      }
+
+      // 2. Upload refund proof image (Cheque or UPI QR) if provided
+      let serverBankPath = "";
+      const rawBankImage = refundData.method === "Bank" ? refundData.chequeImage : refundData.upiImage;
+      if (rawBankImage) {
+        if (rawBankImage.startsWith("file://") || rawBankImage.startsWith("content://")) {
+          const bRes = await uploadImageMutation.mutateAsync({ uri: rawBankImage });
+          const rawBankName = bRes?.data?.image_path || "";
+          serverBankPath = rawBankName ? rawBankName.split("/").pop() || "" : "";
+        } else {
+          serverBankPath = rawBankImage.split("/").pop() || "";
+        }
+      }
+
       for (const item of checkedItems) {
         const details = productReturns[item.id];
         const returnPayload: any = {
@@ -465,7 +494,8 @@ const ReturnProductsScreen = () => {
           return_key: returnKey,
           product_variation_id: item.variation_id,
           refund_mode: refundData.method.toLowerCase(),
-          video_path: videoUri || "",
+          video_path: serverVideoPath,
+          bank_path: serverBankPath,
         };
 
         if (refundData.method === "Bank") {
@@ -473,10 +503,8 @@ const ReturnProductsScreen = () => {
           returnPayload.account_number = refundData.accountNo;
           returnPayload.ifsc_code = refundData.ifsc;
           returnPayload.bank_name = refundData.bankName;
-          returnPayload.bank_path = refundData.chequeImage || "";
         } else {
           returnPayload.upi_id = refundData.upiId;
-          returnPayload.bank_path = refundData.upiImage || "";
         }
 
         const res = await returnProductMutation.mutateAsync(returnPayload);
@@ -485,14 +513,26 @@ const ReturnProductsScreen = () => {
         const orderReturnId = res.data?.order_return_id;
         const orderIdVal = res.data?.order_id;
 
+        // 3. Upload each product return photo to server and link its uploaded path
         if (productDetailId && details.images && details.images.length > 0) {
           for (const imgUri of details.images) {
-            await saveReturnImageMutation.mutateAsync({
-              order_return_product_detail_id: Number(productDetailId),
-              order_return_id: Number(orderReturnId),
-              order_id: Number(orderIdVal),
-              image_path: imgUri,
-            });
+            let serverImgPath = imgUri;
+            if (imgUri.startsWith("file://") || imgUri.startsWith("content://")) {
+              const uploadImgRes = await uploadImageMutation.mutateAsync({ uri: imgUri });
+              serverImgPath = uploadImgRes?.data?.image_path || "";
+            }
+
+            if (serverImgPath) {
+              const cleanFileName = serverImgPath.split("/").pop() || "";
+              if (cleanFileName) {
+                await saveReturnImageMutation.mutateAsync({
+                  order_return_product_detail_id: Number(productDetailId),
+                  order_return_id: Number(orderReturnId),
+                  order_id: Number(orderIdVal),
+                  image_path: cleanFileName,
+                });
+              }
+            }
           }
         }
       }
@@ -917,15 +957,35 @@ const ReturnProductsScreen = () => {
                   >
                     <Receipt size={16} color={colors.textSecondary} />
                   </View>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(14),
-                      color: colors.text,
-                    }}
-                  >
-                    Bill Summary
-                  </Text>
+                  <View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(14),
+                        color: colors.text,
+                        includeFontPadding: false,
+                      }}
+                    >
+                      Bill Summary
+                    </Text>
+                    {(orderData?.order?.invoice_no || orderData?.order?.order_no) ? (
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: font(11),
+                          color: colors.textSecondary,
+                          includeFontPadding: false,
+                          marginTop: 2,
+                        }}
+                      >
+                        Invoice: {orderData?.order?.invoice_no
+                          ? (String(orderData.order.invoice_no).startsWith("#")
+                              ? orderData.order.invoice_no
+                              : `#${orderData.order.invoice_no}`)
+                          : `#${orderData?.order?.order_no}`}
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
               </View>
 

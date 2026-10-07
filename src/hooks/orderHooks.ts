@@ -15,7 +15,7 @@ import {
   CancelOrderResponse,
   ReturnReasonResponse,
 } from "../types/order.types";
-import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi, getCancelReasonApi, cancelOrderApi, getCustomerReturnOrder, getReturnHistory, uploadReturnVideo, returnProduct, saveReturnImage, getReturnReasonApi, getOrderDetail } from "../api/order.api";
+import { codSuccessApi, getUserOrderHistoryApi, initiateOrderApi, paymentSuccessApi, viewOrderApi, getCancelReasonApi, cancelOrderApi, getCustomerReturnOrder, getReturnHistory, uploadReturnVideo, uploadReturnImage, returnProduct, saveReturnImage, getReturnReasonApi, getOrderDetail } from "../api/order.api";
 
 export const useCodSuccess = () => {
   const queryClient = useQueryClient();
@@ -178,6 +178,12 @@ export const useReturnProduct = () => {
   });
 };
 
+
+export const useUploadReturnImage = () => {
+  return useMutation({
+    mutationFn: uploadReturnImage,
+  });
+};
 
 export const useSaveReturnImage = () => {
   return useMutation({

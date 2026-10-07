@@ -699,12 +699,12 @@ const ReturnDetails = () => {
           {/* Unboxing Video Proof */}
           {!!returnInfo?.unboxing_video && (
             <UnboxingVideoCard
-              videoUrl={returnInfo.unboxing_video}
+              videoUrl={getImageUrl(returnInfo.unboxing_video) || returnInfo.unboxing_video}
               onPress={() => {
                 setLightboxData([
                   {
                     type: "video",
-                    video: returnInfo.unboxing_video,
+                    video: getImageUrl(returnInfo.unboxing_video) || returnInfo.unboxing_video,
                     image: null,
                   },
                 ]);
@@ -916,6 +916,43 @@ const ReturnDetails = () => {
                       <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12), color: colors.text }}>
                         {bank.upi_id || "N/A"}
                       </Text>
+                    </View>
+                  )}
+
+                  {!!bank.attachment_path && (
+                    <View style={{ marginTop: spacing(8), gap: spacing(4) }}>
+                      <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11), color: colors.textSecondary }}>
+                        Proof Attachment
+                      </Text>
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          setLightboxData([
+                            {
+                              type: "image",
+                              image: getImageUrl(bank.attachment_path) || bank.attachment_path,
+                              video: null,
+                            },
+                          ]);
+                          setLightboxInitialIndex(0);
+                          setLightboxVisible(true);
+                        }}
+                        style={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: 10,
+                          borderWidth: 1.5,
+                          borderColor: colors.border,
+                          backgroundColor: colors.background,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Image
+                          source={{ uri: getImageUrl(bank.attachment_path) }}
+                          style={{ width: "100%", height: "100%" }}
+                          contentFit="cover"
+                        />
+                      </TouchableOpacity>
                     </View>
                   )}
                 </View>

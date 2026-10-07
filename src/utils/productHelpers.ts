@@ -45,3 +45,44 @@ export const formatINR = (amount: number) => {
     maximumFractionDigits: 2,
   }).format(amount);
 };
+
+/**
+ * Strips HTML elements that have inline style `display: none` or `visibility: hidden`,
+ * or a `hidden` attribute (commonly used for SEO keywords).
+ */
+export const cleanProductDescriptionHtml = (html?: string): string => {
+  if (!html) return "";
+  let res = html;
+
+  // Regex matching style attributes with display:none or visibility:hidden
+  const stylePattern =
+    /style\s*=\s*(?:"[^"]*(?:display\s*:\s*none|visibility\s*:\s*hidden)[^"]*"|'[^']*(?:display\s*:\s*none|visibility\s*:\s*hidden)[^']*'|[^\s>]*(?:display\s*:\s*none|visibility\s*:\s*hidden)[^\s>]*)/i
+      .source;
+
+  // Paired tags: e.g. <h2 style="display:none;">...</h2> or <p hidden>...</p>
+  const pairedRegex = new RegExp(
+    "<([a-zA-Z0-9]+)\\b(?:[^>]*\\b" +
+      stylePattern +
+      "[^>]*|[^>]*\\bhidden\\b[^>]*)>[\\s\\S]*?<\\/\\1\\s*>",
+    "gi"
+  );
+
+  // Self closing tags: e.g. <img style="display:none;" />
+  const selfClosingRegex = new RegExp(
+    "<[a-zA-Z0-9]+\\b(?:[^>]*\\b" +
+      stylePattern +
+      "[^>]*|[^>]*\\bhidden\\b[^>]*)\\/?>",
+    "gi"
+  );
+
+  let prev = "";
+  do {
+    prev = res;
+    res = res.replace(pairedRegex, "");
+  } while (res !== prev);
+
+  res = res.replace(selfClosingRegex, "");
+
+  return res.replace(/(\r?\n\s*){2,}/g, "\n").trim();
+};
+

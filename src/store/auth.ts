@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { StorageUtil } from "../utils/storage";
 import { createVisitor } from "../api/auth.api";
+import { resetAnalytics } from "../lib/analytics";
 
 interface AppState {
   // Visitor
@@ -114,6 +115,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   // ── Logout (clears everything) ────────────────────
   logout: async () => {
     await StorageUtil.clearUser();
+    resetAnalytics();
     set({ userId: null, userName: null, userEmail: null, userAvatar: null });
   },
 }));

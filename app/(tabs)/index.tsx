@@ -15,7 +15,9 @@ import {
   FlatList,
   Platform,
   useWindowDimensions,
+  StyleSheet,
 } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
 import { useTheme } from "../../src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, ShoppingCart } from "lucide-react-native";
@@ -56,6 +58,7 @@ import OurServices from "../../src/components/home/OurServices";
 import Diy from "../../src/components/diy/diy";
 import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
+import { useDiyListing } from "../../src/hooks/diyHooks";
 
 import {
   useHomeBanners,
@@ -105,7 +108,7 @@ const IconButton = ({ icon, onPress, badgeCount }: IconButtonProps) => {
               position: "absolute",
               right: -spacing(4),
               top: -spacing(4),
-              backgroundColor: "#FF3B30", // Bright red
+              backgroundColor: "#FF3B30",
               borderRadius: 8,
               minWidth: spacing(14),
               height: spacing(14),
@@ -614,6 +617,7 @@ const CategoryList: React.FC = React.memo(() => {
                     tintColor: "#000000",
                   }}
                   contentFit="contain"
+                  cachePolicy="memory-disk"
                 />
                 {/* Core Black Silhouette Drop Shadow Layer */}
                 <Image
@@ -628,6 +632,7 @@ const CategoryList: React.FC = React.memo(() => {
                     tintColor: "#000000",
                   }}
                   contentFit="contain"
+                  cachePolicy="memory-disk"
                 />
                 {/* Foreground Image */}
                 <Image
@@ -637,6 +642,7 @@ const CategoryList: React.FC = React.memo(() => {
                     height: "100%",
                   }}
                   contentFit="contain"
+                  cachePolicy="memory-disk"
                 />
               </>
             ) : (
@@ -756,22 +762,56 @@ export default function HomeScreen() {
   const { uspList } = useUsp();
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "");
+  const { products: diyProducts } = useDiyListing();
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
   const promoHeight = useSharedValue(0);
 
-  const mainBannerImageUri =
+  const isFocused = useIsFocused();
+
+  const rawMainBannerUri =
     mainBanners?.[0]?.s3_image_url ||
     mainBanners?.[0]?.mobile_banner_url ||
     mainBanners?.[0]?.desktop_banner_url ||
     mainBanners?.[0]?.s3_image_path ||
     "";
 
-  const headerBannerImageUri =
+  const rawHeaderBannerUri =
     headerBanners?.[0]?.s3_image_url ||
     headerBanners?.[0]?.mobile_banner_url ||
     headerBanners?.[0]?.desktop_banner_url ||
     headerBanners?.[0]?.s3_image_path ||
     "";
+
+  // Retain last known valid URLs so returning to screen or re-rendering never loses images
+  const [persistedMainBannerUri, setPersistedMainBannerUri] = useState("");
+  const [persistedHeaderBannerUri, setPersistedHeaderBannerUri] = useState("");
+
+  useEffect(() => {
+    if (rawMainBannerUri && rawMainBannerUri !== persistedMainBannerUri) {
+      setPersistedMainBannerUri(rawMainBannerUri);
+      Image.prefetch(rawMainBannerUri);
+    }
+  }, [rawMainBannerUri, persistedMainBannerUri]);
+
+  useEffect(() => {
+    if (rawHeaderBannerUri && rawHeaderBannerUri !== persistedHeaderBannerUri) {
+      setPersistedHeaderBannerUri(rawHeaderBannerUri);
+      Image.prefetch(rawHeaderBannerUri);
+    }
+  }, [rawHeaderBannerUri, persistedHeaderBannerUri]);
+
+  const mainBannerImageUri = rawMainBannerUri || persistedMainBannerUri;
+  const headerBannerImageUri = rawHeaderBannerUri || persistedHeaderBannerUri;
+
+  const mainBannerSource = useMemo(
+    () => (mainBannerImageUri ? { uri: mainBannerImageUri } : null),
+    [mainBannerImageUri],
+  );
+
+  const headerBannerSource = useMemo(
+    () => (headerBannerImageUri ? { uri: headerBannerImageUri } : null),
+    [headerBannerImageUri],
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -871,7 +911,9 @@ export default function HomeScreen() {
       { id: "home_product", data: homeProducts },
       { id: "custom_sections" },
       { id: "feature_banner_0", data: featureBanners?.[0] },
-      { id: "diy" },
+      ...(diyProducts && diyProducts.length > 0
+        ? [{ id: "diy", data: diyProducts }]
+        : []),
       { id: "deals_of_the_day", data: deals },
       { id: "feature_banner_1", data: featureBanners?.[1] },
       { id: "recently_viewed", data: recentlyViewed },
@@ -892,6 +934,7 @@ export default function HomeScreen() {
       slidingbanners,
       homeProducts,
       featureBanners,
+      diyProducts,
       deals,
       recentlyViewed,
       featured,
@@ -912,7 +955,7 @@ export default function HomeScreen() {
       case "sliding_banners":
         return (
           <View>
-            {!!headerBannerImageUri && (
+            {!!headerBannerSource && (
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => {
@@ -935,11 +978,12 @@ export default function HomeScreen() {
                 }}
               >
                 <Image
-                  source={{ uri: headerBannerImageUri }}
+                  key={`header-banner-${headerBannerImageUri}-${isFocused}`}
+                  source={headerBannerSource}
                   style={{ width: "100%", height: 140, marginTop: -1 }}
                   contentFit="fill"
-                  transition={200}
                   cachePolicy="memory-disk"
+                  priority="high"
                 />
               </TouchableOpacity>
             )}
@@ -957,7 +1001,7 @@ export default function HomeScreen() {
       case "feature_banner_0":
         return <MemoFeatureBanner item={item.data} />;
       case "diy":
-        return <MemoDiy />;
+        return <MemoDiy products={item.data} />;
       case "feature_banner_1":
         return <MemoFeatureBanner item={item.data} />;
       case "recently_viewed":
@@ -977,7 +1021,7 @@ export default function HomeScreen() {
       default:
         return null;
     }
-  }, [headerBannerImageUri]);
+  }, [headerBannerSource, headerBannerImageUri, isFocused, headerBanners]);
 
   if (!isConnected) return <NoInternet />;
 
@@ -1000,21 +1044,23 @@ export default function HomeScreen() {
         ]}
       >
         {/* Full Header Background Image from API */}
-        {!!mainBannerImageUri && (
-          <Image
-            source={{ uri: mainBannerImageUri }}
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              top: 0,
-              left: 0,
-            }}
-            contentFit="cover"
+        {!!mainBannerSource && (
+          <View
             pointerEvents="none"
-            transition={200}
-            cachePolicy="memory-disk"
-          />
+            style={StyleSheet.absoluteFill}
+          >
+            <Image
+              key={`main-banner-${mainBannerImageUri}-${isFocused}`}
+              source={mainBannerSource}
+              style={{
+                width: "100%",
+                height: "100%",
+              }}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              priority="high"
+            />
+          </View>
         )}
 
         {/* Seamless Promo Banner Top Section */}

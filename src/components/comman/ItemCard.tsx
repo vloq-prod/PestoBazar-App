@@ -16,6 +16,7 @@ import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
+import { trackAddToCart } from "../../lib/analytics";
 
 const formatPrice = (price: string | number) => {
   const num = Number(price);
@@ -87,6 +88,14 @@ export default function ItemCard({
   // ── Add to cart action ──────────────────────────────────────
   const handleAddToCart = (e: any) => {
     e.stopPropagation();
+    trackAddToCart(
+      {
+        id: item.id,
+        name: item.product_name,
+        price: item.selling_price,
+      },
+      1,
+    );
     addToCart({
       user_id: userId ?? 0,
       visitor_id: visitorId,
@@ -111,6 +120,14 @@ export default function ItemCard({
   const handleIncrement = (e: any) => {
     e.stopPropagation();
     const nextQty = qty + 1;
+    trackAddToCart(
+      {
+        id: item.id,
+        name: item.product_name,
+        price: item.selling_price,
+      },
+      1,
+    );
     addToCart({
       user_id: userId ?? 0,
       visitor_id: visitorId,

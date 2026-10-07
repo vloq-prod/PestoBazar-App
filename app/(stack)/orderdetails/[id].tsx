@@ -558,15 +558,35 @@ const OrderDetails = () => {
                 >
                   <Receipt size={16} color={colors.textSecondary} />
                 </View>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_600SemiBold",
-                    fontSize: font(14),
-                    color: colors.text,
-                  }}
-                >
-                  Bill Summary
-                </Text>
+                <View>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(14),
+                      color: colors.text,
+                      includeFontPadding: false,
+                    }}
+                  >
+                    Bill Summary
+                  </Text>
+                  {(orderData?.order?.invoice_no || orderData?.order?.order_no) ? (
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(11),
+                        color: colors.textSecondary,
+                        includeFontPadding: false,
+                        marginTop: 2,
+                      }}
+                    >
+                      Invoice: {orderData?.order?.invoice_no
+                        ? (String(orderData.order.invoice_no).startsWith("#")
+                            ? orderData.order.invoice_no
+                            : `#${orderData.order.invoice_no}`)
+                        : `#${orderData?.order?.order_no}`}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
 
               <TouchableOpacity

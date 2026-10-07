@@ -14,6 +14,7 @@ import { ChevronDown } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { LinearGradient } from "expo-linear-gradient";
+import { cleanProductDescriptionHtml } from "../../utils/productHelpers";
 
 const COLLAPSED_HEIGHT = 240;
 
@@ -34,7 +35,8 @@ const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
   const animatedHeight = useSharedValue(COLLAPSED_HEIGHT);
 
   // ─── HTML Processing ──────────────────────────────────────────
-  const headingMatch = html.match(/<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/i);
+  const sanitizedHtml = cleanProductDescriptionHtml(html);
+  const headingMatch = sanitizedHtml.match(/<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/i);
   const headingAttributes = headingMatch?.[2] ?? "";
   const hasVisibleHeading =
     !!headingMatch && !/display\s*:\s*none/i.test(headingAttributes);
@@ -48,16 +50,17 @@ const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
     : "Description";
 
   const bodyHtml = hasVisibleHeading
-    ? html.replace(headingMatch![0], "").trim()
-    : html;
+    ? sanitizedHtml.replace(headingMatch![0], "").trim()
+    : sanitizedHtml;
 
-  const cleanHtml = bodyHtml
+  const cleanHtml = cleanProductDescriptionHtml(bodyHtml)
     ?.replace(/font-size:[^;"]+;?/gi, "")
     ?.replace(/line-height:[^;"]+;?/gi, "")
     ?.replace(/font-family:[^;"]+;?/gi, "")
     ?.replace(/<\/?o:p[^>]*>/gi, "")
     ?.replace(/<span[^>]*>/gi, "")
-    ?.replace(/<\/span>/gi, "");
+    ?.replace(/<\/span>/gi, "")
+    ?.trim();
 
   // ─── Measure ─────────────────────────────────────────────────
   const handleLayout = useCallback((e: any) => {
@@ -129,7 +132,7 @@ const ProductDescription: React.FC<Props> = ({ html, onReadMore }) => {
     },
   };
 
-  if (!html) return null;
+  if (!html || (!cleanHtml && !hasVisibleHeading)) return null;
 
   const renderHTML = (
     <RenderHTML

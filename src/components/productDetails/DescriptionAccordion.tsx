@@ -19,6 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { cleanProductDescriptionHtml } from "../../utils/productHelpers";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -165,10 +166,9 @@ const AccordionItem = ({ item, isLast, expanded, onToggle }: any) => {
           <RenderHTML
             contentWidth={width - spacing(32)}
             source={{
-              html: (item.drop_description || "").replace(
-                /<\/?o:p[^>]*>/gi,
-                ""
-              ),
+              html: cleanProductDescriptionHtml(
+                item.drop_description || ""
+              ).replace(/<\/?o:p[^>]*>/gi, ""),
             }}
             baseStyle={HTML_BASE_STYLE}
             tagsStyles={HTML_TAGS_STYLES}

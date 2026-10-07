@@ -154,8 +154,46 @@ export const uploadReturnVideo = async (
   return data;
 };
 
+export interface UploadReturnImageResponse {
+  status: number;
+  message?: string;
+  data?: {
+    image_path: string;
+  };
+}
 
+export const uploadReturnImage = async (
+  image: {
+    uri: string;
+    name?: string;
+    type?: string;
+  }
+): Promise<UploadReturnImageResponse> => {
+  const formData = new FormData();
+  formData.append("type", "image");
 
+  const ext = (image.uri.split(".").pop() || "jpg").split("?")[0].toLowerCase();
+  const mimeType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+  const fileName = image.name || `return_img_${Date.now()}.${ext}`;
+
+  formData.append("image", {
+    uri: image.uri,
+    name: fileName,
+    type: image.type || mimeType,
+  } as any);
+
+  const { data } = await apiClient.post<UploadReturnImageResponse>(
+    "app-api/v1/upload-return-video",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return data;
+};
 
 export const returnProduct = async (
   payload: ReturnProductRequest

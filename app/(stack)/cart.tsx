@@ -38,6 +38,7 @@ import { useRemovePromoCode } from "../../src/hooks/prompoCouponHooks";
 import { useToast } from "../../src/context/ToastContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCartStore } from "../../src/store/cartStore";
+import { trackCheckout } from "../../src/lib/analytics";
 
 const WavyDivider = ({ color, spacing }: { color: string; spacing: any }) => {
   return (
@@ -308,6 +309,10 @@ export default function CartScreen() {
   };
 
   const handleContinue = () => {
+    trackCheckout({
+      value: cartTotal?.amount_to_pay || cartTotal?.cart_amount,
+      coupon: appliedPromo?.promo_code,
+    });
     if (userId) {
       router.push("/(stack)/checkout");
     } else {

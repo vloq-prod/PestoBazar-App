@@ -9,13 +9,20 @@ import { useRouter } from "expo-router";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-const Diy = () => {
-    const { products, loading } = useDiyListing({});
+interface DiyProps {
+    products?: any[];
+    loading?: boolean;
+}
+
+const Diy: React.FC<DiyProps> = ({ products: propProducts, loading: propLoading }) => {
+    const { products: hookProducts, loading: hookLoading } = useDiyListing({});
+    const products = propProducts !== undefined ? propProducts : hookProducts;
+    const loading = propLoading !== undefined ? propLoading : hookLoading;
     const { colors } = useTheme();
     const { spacing, font } = useResponsive();
     const router = useRouter();
 
-    if (!loading && (!products || products.length === 0)) {
+    if (!products || products.length === 0) {
         return null;
     }
 

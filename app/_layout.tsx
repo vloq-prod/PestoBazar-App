@@ -1,6 +1,6 @@
 import "../global.css";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { Text, TextInput, View } from "react-native";
 
@@ -18,6 +18,11 @@ import { useCartQuantitySync } from "../src/hooks/cartHooks";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { AppUpdateProvider } from "../src/providers/AppUpdateProvider";
 import { useDeepLinking, usePendingNavigation } from "../src/deep-linking";
+import {
+  trackScreen,
+  getTrackedScreenName,
+  setAnalyticsUserId,
+} from "../src/lib/analytics";
 
 function RootLayoutNav() {
   // font scaling fix
@@ -33,11 +38,29 @@ function RootLayoutNav() {
   const [isReady, setIsReady] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
 
-  const { visitorId, token } = useAppVisitorStore();
+  const { visitorId, token, userId } = useAppVisitorStore();
   const { hydratePincode } = useDeliveryStore();
 
   const router = useRouter();
   const segments = useSegments();
+  const lastTrackedScreenRef = useRef<string | null>(null);
+
+  // 📊 Centralized Screen Tracking (for key business journeys only)
+  useEffect(() => {
+    if (!isReady || !splashDone) return;
+    const screenName = getTrackedScreenName(segments);
+    if (screenName && screenName !== lastTrackedScreenRef.current) {
+      lastTrackedScreenRef.current = screenName;
+      trackScreen(screenName);
+    }
+  }, [segments, isReady, splashDone]);
+
+  // 👤 Synchronize User ID with Analytics
+  useEffect(() => {
+    if (userId) {
+      setAnalyticsUserId(userId);
+    }
+  }, [userId]);
 
   // 🔥 INIT (Hydration & Auto Visitor Generation)
   useEffect(() => {

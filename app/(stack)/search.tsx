@@ -18,6 +18,7 @@ import searchEmpty from "../../assets/lottieview/emptySearch.json";
 import SearchItem from "../../src/components/search/SearchItem";
 import { useSearchSuggestions } from "../../src/hooks/searchHooks";
 import SearchItemSkeleton from "../../src/skeleton/SearchItemSkeleton";
+import { trackSearch } from "../../src/lib/analytics";
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -51,6 +52,8 @@ export default function SearchScreen() {
   const showEmptyState =
     !isLoading && !isError && query.trim().length > 0 && !hasResults;
 
+  const lastTrackedSearchRef = useRef<string>("");
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
@@ -58,6 +61,14 @@ export default function SearchScreen() {
 
     return () => clearTimeout(timer);
   }, [query]);
+
+  useEffect(() => {
+    const term = debouncedQuery.trim();
+    if (term.length >= 2 && term.toLowerCase() !== lastTrackedSearchRef.current.toLowerCase()) {
+      lastTrackedSearchRef.current = term;
+      trackSearch(term);
+    }
+  }, [debouncedQuery]);
 
   return (
     <View

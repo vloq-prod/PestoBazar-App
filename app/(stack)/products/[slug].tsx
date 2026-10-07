@@ -52,6 +52,8 @@ import {
 } from "../../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../../src/store/auth";
 import { useResponsive } from "../../../src/utils/useResponsive";
+import { cleanProductDescriptionHtml } from "../../../src/utils/productHelpers";
+import { trackProductView, trackAddToCart } from "../../../src/lib/analytics";
 import type { ProductVariation } from "../../../src/types/productdetails.types";
 import type {
   ActiveCoupon,
@@ -371,7 +373,10 @@ const ProductDetails = () => {
   const hasRating = Number.isFinite(rawRatingValue) && rawRatingValue > 0;
   const ratingValue = hasRating ? rawRatingValue : 0;
   const totalReviews = Number(productInfo?.total_reviews ?? 0);
-  const rawDescriptionHtml = productInfo?.description ?? "";
+  const rawDescriptionHtml = React.useMemo(
+    () => cleanProductDescriptionHtml(productInfo?.description ?? ""),
+    [productInfo?.description],
+  );
 
   const discountPercentage =
     mrpPrice > 0 && sellingPrice > 0 && mrpPrice > sellingPrice
@@ -477,24 +482,42 @@ const ProductDetails = () => {
   // ─── Cart Handlers ──────────────────────────────────────────
   const handleAddToCart = useCallback(() => {
     if (!realProductId) return;
+    trackAddToCart(
+      {
+        id: realProductId,
+        name: productInfo?.product_name,
+        price: selectedVariation?.selling_price ?? undefined,
+        category: productInfo?.category_id ? String(productInfo?.category_id) : undefined,
+      },
+      1,
+    );
     addToCart({
       user_id: userId ?? 0,
       visitor_id: visitorId!,
       product_id: realProductId,
       qty: 1,
     });
-  }, [realProductId, visitorId, addToCart]);
+  }, [realProductId, visitorId, addToCart, productInfo, selectedVariation, userId]);
 
   const handleIncrease = useCallback(() => {
     if (!realProductId) return;
     const nextQty = quantity + 1;
+    trackAddToCart(
+      {
+        id: realProductId,
+        name: productInfo?.product_name,
+        price: selectedVariation?.selling_price ?? undefined,
+        category: productInfo?.category_id ? String(productInfo?.category_id) : undefined,
+      },
+      1,
+    );
     addToCart({
       user_id: userId ?? 0,
       visitor_id: visitorId!,
       product_id: realProductId,
       qty: nextQty,
     });
-  }, [quantity, realProductId, visitorId, addToCart]);
+  }, [quantity, realProductId, visitorId, addToCart, productInfo, selectedVariation, userId]);
 
   const handleDecrease = useCallback(() => {
     if (!realProductId) return;
@@ -551,6 +574,20 @@ const ProductDetails = () => {
   );
 
   // ─── Effects ────────────────────────────────────────────────
+  const hasTrackedViewRef = useRef<string | number | null>(null);
+  useEffect(() => {
+    if (!productInfo || !realProductId) return;
+    if (hasTrackedViewRef.current === realProductId) return;
+    hasTrackedViewRef.current = realProductId;
+
+    trackProductView({
+      id: realProductId,
+      name: productInfo.product_name,
+      price: selectedVariation?.selling_price ?? undefined,
+      category: productInfo.category_id ? String(productInfo.category_id) : undefined,
+    });
+  }, [productInfo, realProductId, selectedVariation]);
+
   useEffect(() => {
     if (!realProductId || !visitorId) return;
     saveRecentlyViewed({ product_id: realProductId, visitor_id: visitorId });

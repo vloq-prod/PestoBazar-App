@@ -89,6 +89,7 @@ import {
   usePaymentSuccess,
 } from "../../src/hooks/orderHooks";
 import { useCartStore } from "../../src/store/cartStore";
+import { trackCheckout } from "../../src/lib/analytics";
 
 const SectionTitle = ({ title, colors, font, spacing, rightElement }: any) => (
   <View
@@ -528,6 +529,10 @@ export default function Checkout() {
       { user_id: userId },
       {
         onSuccess: (data) => {
+          trackCheckout({
+            value: data?.data?.cart?.amount_to_pay || data?.data?.cart?.cart_amount,
+            coupon: data?.data?.cart?.promo_code || data?.data?.cart?.promo_code_details?.promo_code,
+          });
           console.log("✅ [Checkout] Checkout details loaded successfully:", {
             cartId: data?.data?.cart?.cart_id,
             itemCount: data?.data?.cart_details?.length,

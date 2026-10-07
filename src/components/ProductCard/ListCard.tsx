@@ -14,6 +14,7 @@ import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
+import { trackAddToCart } from "../../lib/analytics";
 
 interface Props {
   item: ListingItem;
@@ -74,6 +75,14 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
 
   const handleAddToCart = (e: any) => {
     e.stopPropagation();
+    trackAddToCart(
+      {
+        id: item.id,
+        name: item.product_name,
+        price: item.selling_price,
+      },
+      1,
+    );
     addToCart({
       user_id: userId ?? 0,
       visitor_id: visitorId,
@@ -98,6 +107,14 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
   const handleIncrement = (e: any) => {
     e.stopPropagation();
     const nextQty = qty + 1;
+    trackAddToCart(
+      {
+        id: item.id,
+        name: item.product_name,
+        price: item.selling_price,
+      },
+      1,
+    );
     addToCart({
       user_id: userId ?? 0,
       visitor_id: visitorId,

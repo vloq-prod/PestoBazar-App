@@ -18,6 +18,7 @@ import { ShoppingBag, ArrowRight, Receipt, Download } from "lucide-react-native"
 import Svg, { Path } from "react-native-svg";
 import LottieView from "lottie-react-native";
 import orderConfirmLottie from "../../assets/lottieview/order-confirm.json";
+import { trackPurchase } from "../../src/lib/analytics";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
@@ -60,7 +61,20 @@ export default function OrderSuccess() {
 
   const queryClient = useQueryClient();
 
+  const hasTrackedPurchaseRef = useRef<string | null>(null);
+
   useEffect(() => {
+    if (params.order_id && hasTrackedPurchaseRef.current !== String(params.order_id)) {
+      hasTrackedPurchaseRef.current = String(params.order_id);
+      trackPurchase({
+        orderId: params.order_id,
+        amount: parseSafe(params.amount),
+        shipping: parseSafe(params.shipping),
+        tax: parseSafe(params.gst),
+        paymentMethod: params.payment_method,
+      });
+    }
+
     console.log("🎉 [OrderSuccess] Screen Mounted with Params:", {
       order_id: params.order_id,
       amount: params.amount,
