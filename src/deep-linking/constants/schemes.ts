@@ -72,6 +72,8 @@ export const ALLOWED_SCHEMES: readonly string[] = [
 export const ALLOWED_HOSTS: readonly string[] = [
   DOMAINS.PRODUCTION,
   DOMAINS.STAGING,
+  `www.${DOMAINS.PRODUCTION}`,
+  `www.${DOMAINS.STAGING}`,
 ] as const;
 
 // ─── URL Building ──────────────────────────────────────────────────────────────

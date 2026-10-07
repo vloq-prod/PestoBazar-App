@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React, { useCallback, useEffect } from "react";
+import { View, Text, TouchableOpacity, BackHandler } from "react-native";
 import {
   Search,
   ShoppingCart,
@@ -50,6 +50,29 @@ const AppNavbar = ({
   const ICON_SIZE = spacing(20);
   const ICON_BOX = spacing(36);
 
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (!showBack) return;
+
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+
+    const backSub = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+    return () => backSub.remove();
+  }, [showBack, handleBack]);
+
   return (
     <View
       style={{
@@ -67,13 +90,7 @@ const AppNavbar = ({
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         {showBack && (
           <TouchableOpacity
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("(tabs)/index");
-              }
-            }}
+            onPress={handleBack}
             style={{
               width: ICON_BOX,
               height: ICON_BOX,

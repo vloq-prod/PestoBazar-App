@@ -121,13 +121,17 @@ export const getBranches = async (): Promise<BranchApiResponse> => {
   return response.data;
 };
 
-export const getRecentlyViewed = async (
-  params: GetRecentlyViewedParams,
-): Promise<GetRecentlyViewedResponse> => {
+export const getRecentlyViewed = async ({
+  visitor_id,
+  user_id,
+}: GetRecentlyViewedParams): Promise<GetRecentlyViewedResponse> => {
   const res = await apiClient.get<GetRecentlyViewedResponse>(
     "/app-api/v1/get-recently-viewed",
     {
-      params,
+      params: {
+        visitor_id,
+        user_id,
+      },
     },
   );
 

@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  BackHandler,
   StatusBar,
   StyleSheet,
   Text,
@@ -405,8 +406,25 @@ const ProductDetails = () => {
   }, [productImages]);
 
   const handleBack = useCallback(() => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
   }, [router]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+
+    const backSubscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+    return () => backSubscription.remove();
+  }, [handleBack]);
 
   const handleShare = useCallback(async () => {
     try {
@@ -630,7 +648,7 @@ const ProductDetails = () => {
           <View style={styles.headerLeft}>
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => router.back()}
+              onPress={handleBack}
               style={[styles.iconBtn, { borderColor: colors.border }]}
             >
               <ChevronLeft size={23} color={colors.borderblack} />

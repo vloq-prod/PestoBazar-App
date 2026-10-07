@@ -59,13 +59,13 @@ const RecentlyViewProducts = () => {
   const { visitorId, userId } = useAppVisitorStore((state) => state);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["recently-viewed", visitorId],
+    queryKey: ["recently-viewed", visitorId, userId],
     queryFn: () =>
       getRecentlyViewed({
-        visitor_id: visitorId!,
-        user_id: userId ?? "0",
+        visitor_id: visitorId || "",
+        user_id: userId || "",
       }),
-    enabled: !!visitorId,
+    enabled: !!(visitorId || userId),
     select: (res) => res?.data?.recently_viewed ?? [],
   });
 

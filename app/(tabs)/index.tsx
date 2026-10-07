@@ -753,6 +753,7 @@ export default function HomeScreen() {
 
   const { slidingbanners, featureBanners, homeBottomBanners } =
     useHomeBanners();
+    console.log("slidingbanners",slidingbanners)
   const { banners: mainBanners } = useAppMainBanner();
   const { banners: headerBanners } = useAppHeaderBanner();
   const { sections: homeProducts } = useHomeProduct();
@@ -761,7 +762,7 @@ export default function HomeScreen() {
   const { testimonials } = useTestimonial();
   const { uspList } = useUsp();
   const { branches } = useBranch();
-  const { recentlyViewed } = useRecentlyViewed(visitorId || "");
+  const { recentlyViewed } = useRecentlyViewed(visitorId || "", userId || "");
   const { products: diyProducts } = useDiyListing();
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
   const promoHeight = useSharedValue(0);

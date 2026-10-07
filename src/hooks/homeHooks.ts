@@ -260,17 +260,17 @@ export const useBranch = () => {
   };
 };
 
-export const useRecentlyViewed = (visitorId: string) => {
+export const useRecentlyViewed = (visitorId: string, userId?: string) => {
   const query = useQuery({
-    queryKey: ["recently-viewed", visitorId],
+    queryKey: ["recently-viewed", visitorId, userId],
 
     queryFn: () =>
       getRecentlyViewed({
         visitor_id: visitorId,
-        user_id: "",
+        user_id: userId || "",
       }),
 
-    enabled: !!visitorId,
+    enabled: !!(visitorId || userId),
   });
 
   return {
