@@ -59,8 +59,13 @@ const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
   const [reasonModalVisible, setReasonModalVisible] = useState(false);
 
   const handleSubmit = () => {
-    if (!reasonId || !orderId || !userId) {
+    if (cancelOrderMutation.isPending) return;
+    if (!reasonId) {
       showToast("Please select a cancellation reason", "error");
+      return;
+    }
+    if (!orderId || !userId) {
+      showToast("Unable to cancel order at this time. Please try again.", "error");
       return;
     }
 

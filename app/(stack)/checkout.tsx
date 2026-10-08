@@ -239,6 +239,16 @@ export default function Checkout() {
 
   // ── Place Order handler ─────────────────────────────────────────
   const handlePlaceOrder = () => {
+    if (
+      isValidatingCart ||
+      isValidatingPincode ||
+      isInitiatingOrder ||
+      isCodSuccessPending ||
+      isPaymentSuccessPending
+    ) {
+      return;
+    }
+
     if (!userId || !visitorId || !cartId || !effectiveAddressId) {
       showToast("Please select a delivery address", "warning");
       return;

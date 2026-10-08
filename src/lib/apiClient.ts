@@ -55,3 +55,22 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error),
 );
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url;
+
+    if (status === 401) {
+      console.warn(`🔒 [apiClient] 401 Unauthorized on: ${url}`);
+    } else if (status === 500) {
+      const serverMsg = error.response?.data?.message;
+      console.warn(`⚠️ [apiClient] 500 Server Error on: ${url}${serverMsg ? ` (${serverMsg})` : ""}`);
+    } else if (error.code === "ECONNABORTED" || !error.response) {
+      console.warn(`📡 [apiClient] Network timeout or disconnected on: ${url}`);
+    }
+
+    return Promise.reject(error);
+  },
+);

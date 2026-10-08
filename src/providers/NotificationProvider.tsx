@@ -50,18 +50,68 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       }
     })();
 
+    // 0. Cold-start check (when app is opened directly by tapping a notification while closed)
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        const content = response.notification.request.content as any;
+        console.log("=================================================");
+        console.log("🚀 [COLD START NOTIFICATION RESPONSE]");
+        console.log("📌 Title:", content.title);
+        console.log("📝 Body:", content.body);
+        console.log("📦 Data (Payload):", JSON.stringify(content.data, null, 2));
+        console.log("🖼️ Attachments:", JSON.stringify(content.attachments, null, 2));
+        console.log("🔍 Full Content:", JSON.stringify(content, null, 2));
+        console.log("=================================================");
+        const { data } = response.notification.request.content;
+        resolveNotification(data);
+      }
+    });
+
     // 1. Listen for notification clicks/taps
     // Uses the deep-linking module's resolveNotification() instead of
     // inline switch statement. This ensures notification-driven navigations
     // go through the same pipeline as URL-based deep links (validation,
     // auth guards, pending navigation, analytics tracking).
     const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const content = response.notification.request.content as any;
+      console.log("=================================================");
+      console.log("👆 [NOTIFICATION TAPPED / CLICKED]");
+      console.log("📌 Title:", content.title);
+      console.log("📝 Body:", content.body);
+      console.log("📦 Data (Payload):", JSON.stringify(content.data, null, 2));
+      console.log("🖼️ Attachments:", JSON.stringify(content.attachments, null, 2));
+      console.log("🔍 Full Content:", JSON.stringify(content, null, 2));
+      console.log("=================================================");
       const { data } = response.notification.request.content;
       resolveNotification(data);
     });
 
     // 2. Listen for when a notification is received while the app is in the foreground
     const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
+      const content = notification.request.content as any;
+      console.log("=================================================");
+      console.log("📬 [PUSH NOTIFICATION RECEIVED (FOREGROUND)]");
+      console.log("📌 Title:", content.title);
+      console.log("📝 Body:", content.body);
+      console.log("📦 Data (Payload):", JSON.stringify(content.data, null, 2));
+      console.log("🖼️ Attachments:", JSON.stringify(content.attachments, null, 2));
+
+      const data: any = content.data || {};
+      const img =
+        data.image ||
+        data.imageUrl ||
+        data.image_url ||
+        data.picture ||
+        data.img ||
+        (content.attachments?.[0]?.url);
+
+      if (img) {
+        console.log("🖼️ [Image URL Detected]:", img);
+      } else {
+        console.log("⚠️ [Image Notice]: No direct image URL found in data keys (image, imageUrl, image_url, picture, attachments). Check your backend payload!");
+      }
+      console.log("🔍 Full Request Object:", JSON.stringify(notification.request, null, 2));
+      console.log("=================================================");
     });
 
     return () => {

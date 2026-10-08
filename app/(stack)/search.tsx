@@ -83,8 +83,7 @@ export default function SearchScreen() {
         barStyle="dark-content"
         backgroundColor="transparent"
         translucent
-      />
-
+      /
       {/* ─── Header ─────────────────────────────────────────── */}
       <View
         style={{

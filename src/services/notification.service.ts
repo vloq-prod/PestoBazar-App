@@ -41,12 +41,21 @@ export async function getOrCreateDeviceId(): Promise<string> {
 
 // Configure foreground notifications to display alerts and play sounds
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    console.log("=================================================");
+    console.log("🔔 [FOREGROUND NOTIFICATION HANDLER]");
+    console.log("📌 Title:", notification.request.content.title);
+    console.log("📝 Body:", notification.request.content.body);
+    console.log("📦 Data:", JSON.stringify(notification.request.content.data, null, 2));
+    console.log("🖼️ Attachments:", JSON.stringify((notification.request.content as any).attachments, null, 2));
+    console.log("=================================================");
+    return {
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
 
 // ─── Types ───────────────────────────────────────────────────────────────────

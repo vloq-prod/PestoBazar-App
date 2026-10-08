@@ -8,12 +8,20 @@ import {
   TouchableOpacity,
   Modal,
   StatusBar,
+  Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { useEvent } from "expo";
 import {
   X,
   Play,
+  Pause,
+  RotateCcw,
+  RotateCw,
+  Check,
+  Settings,
   ChevronLeft,
   ChevronRight,
   Video as VideoIcon,
@@ -39,17 +47,75 @@ type Props = {
   title?: string;
 };
 
-// ─── Standard Video Player ───────────────────────────────────
+// ─── Custom Professional Video Player ─────────────────────────
 const LightboxVideo = ({
   uri,
   shouldPlay,
+  accentColor = "#22C55E",
 }: {
   uri: string;
   shouldPlay: boolean;
+  accentColor?: string;
 }) => {
   const player = useVideoPlayer(uri, (p) => {
-    p.loop = true;
+    p.loop = false;
+    p.preservesPitch = true;
+    p.timeUpdateEventInterval = 0.25;
   });
+
+  const playingEvent = useEvent(player, "playingChange");
+  const isPlaying = playingEvent?.isPlaying ?? player.playing;
+
+  const statusEvent = useEvent(player, "statusChange");
+  const status = statusEvent?.status ?? player.status;
+
+  const timeEvent = useEvent(player, "timeUpdate");
+  const currentTime = timeEvent?.currentTime ?? player.currentTime;
+
+  const rateEvent = useEvent(player, "playbackRateChange");
+  const playbackRate = rateEvent?.playbackRate ?? player.playbackRate;
+
+  const [showControls, setShowControls] = useState(true);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubRatio, setScrubRatio] = useState(0);
+  const [trackWidth, setTrackWidth] = useState(0);
+  const dragStartRef = useRef<{ startX: number; startPageX: number }>({
+    startX: 0,
+    startPageX: 0,
+  });
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const duration = player.duration || 0;
+  const currentSpeed = playbackRate || 1.0;
+  const isEnded = duration > 0 && currentTime >= duration - 0.5;
+
+  const resetControlsTimeout = useCallback(() => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    if (isPlaying && !showSettingsMenu) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3500);
+    }
+  }, [isPlaying, showSettingsMenu]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      resetControlsTimeout();
+    } else {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    }
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [isPlaying, resetControlsTimeout]);
 
   useEffect(() => {
     if (!player) return;
@@ -61,13 +127,313 @@ const LightboxVideo = ({
     }
   }, [shouldPlay, player]);
 
+  useEffect(() => {
+    return () => {
+      try {
+        player?.pause();
+      } catch {}
+    };
+  }, [player]);
+
+  const toggleControls = () => {
+    setShowControls((prev) => {
+      const next = !prev;
+      if (next && isPlaying) {
+        resetControlsTimeout();
+      }
+      return next;
+    });
+    if (showSettingsMenu) setShowSettingsMenu(false);
+  };
+
+  const handlePlayPause = () => {
+    if (isEnded) {
+      player.replay();
+    } else if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+    resetControlsTimeout();
+  };
+
+  const handleSeekBackward = () => {
+    player.seekBy(-10);
+    resetControlsTimeout();
+  };
+
+  const handleSeekForward = () => {
+    player.seekBy(10);
+    resetControlsTimeout();
+  };
+
+  const onTrackLayout = (e: any) => {
+    const w = e.nativeEvent.layout.width;
+    if (w > 0) {
+      setTrackWidth(w);
+    }
+  };
+
+  const handleTrackTouchStart = (e: any) => {
+    if (duration <= 0) return;
+    const currentWidth = trackWidth > 0 ? trackWidth : width - 32;
+    const locX = Math.max(
+      0,
+      Math.min(currentWidth, e.nativeEvent.locationX ?? 0)
+    );
+    dragStartRef.current = {
+      startX: locX,
+      startPageX: e.nativeEvent.pageX ?? locX,
+    };
+    const ratio = locX / currentWidth;
+    setScrubRatio(ratio);
+    player.currentTime = ratio * duration;
+  };
+
+  const handleTrackTouchMove = (e: any) => {
+    if (duration <= 0) return;
+    const currentWidth = trackWidth > 0 ? trackWidth : width - 32;
+    const pageX = e.nativeEvent.pageX ?? dragStartRef.current.startPageX;
+    const deltaX = pageX - dragStartRef.current.startPageX;
+    const currentX = Math.max(
+      0,
+      Math.min(currentWidth, dragStartRef.current.startX + deltaX)
+    );
+    const ratio = currentX / currentWidth;
+    setScrubRatio(ratio);
+    player.currentTime = ratio * duration;
+  };
+
+  const handleTrackTouchEnd = (e: any) => {
+    if (duration <= 0) {
+      setIsScrubbing(false);
+      return;
+    }
+    const currentWidth = trackWidth > 0 ? trackWidth : width - 32;
+    const pageX = e.nativeEvent.pageX ?? dragStartRef.current.startPageX;
+    const deltaX = pageX - dragStartRef.current.startPageX;
+    const currentX = Math.max(
+      0,
+      Math.min(currentWidth, dragStartRef.current.startX + deltaX)
+    );
+    const ratio = currentX / currentWidth;
+    setScrubRatio(ratio);
+    player.currentTime = ratio * duration;
+    setIsScrubbing(false);
+    resetControlsTimeout();
+  };
+
+  const effectiveTime = isScrubbing ? scrubRatio * duration : currentTime;
+  const progressPercent =
+    duration > 0
+      ? Math.min(100, Math.max(0, (effectiveTime / duration) * 100))
+      : 0;
+
+  const formatTime = (secs: number) => {
+    if (isNaN(secs) || secs < 0) return "00:00";
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  if (!uri) return null;
+
   return (
-    <VideoView
-      player={player}
-      style={styles.fullscreenMedia}
-      nativeControls={true}
-      contentFit="contain"
-    />
+    <View style={styles.videoPlayerContainer}>
+      <VideoView
+        player={player}
+        style={styles.fullscreenMedia}
+        nativeControls={false}
+        allowsFullscreen={false}
+        contentFit="contain"
+      />
+
+      {/* Tap anywhere to toggle controls */}
+      <Pressable
+        onPress={toggleControls}
+        style={[
+          styles.videoOverlay,
+          showControls && styles.videoOverlayVisible,
+        ]}
+      >
+        {status === "loading" && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+          </View>
+        )}
+
+        {showControls && (
+          <>
+            {/* Center Playback Controls: Compact 10s Rewind/Forward, Hero Play/Pause */}
+            <View style={styles.centerControlsRow}>
+              {/* Rewind 10s */}
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={handleSeekBackward}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.seekBtn}
+              >
+                <RotateCcw size={16} color="#FFFFFF" strokeWidth={2.2} />
+                <Text style={styles.seekBtnText}>10s</Text>
+              </TouchableOpacity>
+
+              {/* Play / Pause / Replay */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handlePlayPause}
+                style={[
+                  styles.centerPlayBtn,
+                  { backgroundColor: "rgba(0, 0, 0, 0.6)" },
+                ]}
+              >
+                {isEnded ? (
+                  <RotateCcw size={26} color="#FFFFFF" strokeWidth={2.4} />
+                ) : isPlaying ? (
+                  <Pause size={26} color="#FFFFFF" fill="#FFFFFF" />
+                ) : (
+                  <Play
+                    size={26}
+                    color="#FFFFFF"
+                    fill="#FFFFFF"
+                    style={{ marginLeft: 2 }}
+                  />
+                )}
+              </TouchableOpacity>
+
+              {/* Forward 10s */}
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={handleSeekForward}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.seekBtn}
+              >
+                <RotateCw size={16} color="#FFFFFF" strokeWidth={2.2} />
+                <Text style={styles.seekBtnText}>10s</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bottom Controls Bar: Progress Bar, Timecodes & Action Icons */}
+            <View style={styles.bottomVideoBar}>
+              {/* Scrubber Progress Bar */}
+              <View
+                style={styles.progressBarWrapper}
+                onLayout={onTrackLayout}
+                onStartShouldSetResponder={() => true}
+                onMoveShouldSetResponder={() => true}
+                onResponderGrant={handleTrackTouchStart}
+                onResponderMove={handleTrackTouchMove}
+                onResponderRelease={handleTrackTouchEnd}
+                onResponderTerminate={() => {
+                  setIsScrubbing(false);
+                }}
+              >
+                <View style={styles.progressTrack} pointerEvents="none">
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${progressPercent}%`,
+                        backgroundColor: accentColor,
+                      },
+                    ]}
+                    pointerEvents="none"
+                  />
+                </View>
+                <View
+                  style={[
+                    styles.scrubberThumb,
+                    {
+                      left: `${progressPercent}%`,
+                      borderColor: accentColor,
+                      transform: [{ scale: isScrubbing ? 1.3 : 1 }],
+                    },
+                  ]}
+                  pointerEvents="none"
+                />
+              </View>
+
+              {/* Bottom Control Info Row */}
+              <View style={styles.bottomControlsRow}>
+                {/* Time Display */}
+                <Text style={styles.timeText}>
+                  {formatTime(effectiveTime)}{" "}
+                  <Text style={styles.timeDurationText}>
+                    / {formatTime(duration)}
+                  </Text>
+                </Text>
+
+                {/* Right Action: Settings ⚙️ */}
+                <View style={styles.bottomRightActions}>
+                  {/* Settings ⚙️ Button */}
+                  <TouchableOpacity
+                    activeOpacity={0.75}
+                    onPress={() => {
+                      setShowSettingsMenu((prev) => !prev);
+                      resetControlsTimeout();
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={[
+                      styles.bottomIconBtn,
+                      showSettingsMenu && {
+                        backgroundColor: "rgba(255, 255, 255, 0.25)",
+                        borderColor: accentColor,
+                      },
+                    ]}
+                  >
+                    <Settings size={16} color="#FFFFFF" strokeWidth={2} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Settings Popover Card: Contains Playback Speed & Zoom Mode */}
+            {showSettingsMenu && (
+              <View style={styles.settingsMenuCard}>
+                {/* Playback Speed Section */}
+                <Text style={styles.settingsSectionTitle}>Playback Speed</Text>
+                {[0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => {
+                  const isSelected = Math.abs(currentSpeed - rate) < 0.05;
+                  return (
+                    <TouchableOpacity
+                      key={rate}
+                      style={[
+                        styles.settingsMenuItem,
+                        isSelected && styles.settingsMenuItemActive,
+                      ]}
+                      onPress={() => {
+                        player.preservesPitch = true;
+                        player.playbackRate = rate;
+                        setShowSettingsMenu(false);
+                        resetControlsTimeout();
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.settingsMenuItemText,
+                          isSelected && {
+                            color: accentColor,
+                            fontFamily: "Poppins_600SemiBold",
+                          },
+                        ]}
+                      >
+                        {rate === 1.0 ? "1.0x (Normal)" : `${rate}x`}
+                      </Text>
+                      {isSelected && (
+                        <Check
+                          size={15}
+                          color={accentColor}
+                          strokeWidth={2.5}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </>
+        )}
+      </Pressable>
+    </View>
   );
 };
 
@@ -146,7 +512,7 @@ const ProductMediaLightbox: React.FC<Props> = ({
     }
   };
 
-  if (!data || data.length === 0) return null;
+  if (!visible || !data || data.length === 0) return null;
 
   return (
     <Modal
@@ -241,7 +607,8 @@ const ProductMediaLightbox: React.FC<Props> = ({
                 ) : (
                   <LightboxVideo
                     uri={item.video || item.image || ""}
-                    shouldPlay={activeIndex === index}
+                    shouldPlay={visible && activeIndex === index}
+                    accentColor={activeAccent}
                   />
                 )}
               </View>
@@ -468,5 +835,179 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.35)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  videoPlayerContainer: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000000",
+  },
+  videoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  videoOverlayVisible: {
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    zIndex: 5,
+  },
+  centerControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 28,
+    zIndex: 20,
+  },
+  seekBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  seekBtnText: {
+    color: "#FFFFFF",
+    fontSize: 8,
+    fontFamily: "Poppins_600SemiBold",
+    marginTop: -2,
+    letterSpacing: 0.2,
+  },
+  centerPlayBtn: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  bottomVideoBar: {
+    position: "absolute",
+    bottom: 24,
+    left: 16,
+    right: 16,
+    zIndex: 25,
+  },
+  progressBarWrapper: {
+    width: "100%",
+    height: 24,
+    justifyContent: "center",
+    marginBottom: 6,
+  },
+  progressTrack: {
+    width: "100%",
+    height: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.28)",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  scrubberThumb: {
+    position: "absolute",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#FFFFFF",
+    marginLeft: -7,
+    borderWidth: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  bottomControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
+  },
+  timeText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Poppins_600SemiBold",
+    letterSpacing: 0.3,
+  },
+  timeDurationText: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontFamily: "Poppins_400Regular",
+  },
+  bottomRightActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  bottomIconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  settingsMenuCard: {
+    position: "absolute",
+    bottom: 72,
+    right: 16,
+    backgroundColor: "rgba(18, 20, 30, 0.96)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    paddingVertical: 8,
+    width: 160,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
+    zIndex: 50,
+  },
+  settingsSectionTitle: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 10,
+    fontFamily: "Poppins_600SemiBold",
+    textTransform: "uppercase",
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 4,
+    letterSpacing: 0.6,
+  },
+  settingsMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  settingsMenuItemActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  },
+  settingsMenuItemText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
   },
 });

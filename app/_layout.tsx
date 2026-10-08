@@ -17,6 +17,7 @@ import { ToastContainer } from "../src/components/Toast/ToastContainer";
 import { useCartQuantitySync } from "../src/hooks/cartHooks";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { AppUpdateProvider } from "../src/providers/AppUpdateProvider";
+import { OfflineBanner } from "../src/components/common/OfflineBanner";
 import { useDeepLinking, usePendingNavigation } from "../src/deep-linking";
 import {
   trackScreen,
@@ -155,6 +156,7 @@ export default function RootLayout() {
             </BottomSheetModalProvider>
           </ThemeProvider>
           <ToastContainer />
+          <OfflineBanner />
         </ToastProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

@@ -343,7 +343,7 @@ export interface GetCartQuantityResponse {
 
 export interface GetCartQuantityParams {
   visitor_id: string;
-  user_id: string;
+  user_id?: string | number;
 }
 
 export interface SubmitRatingRequest {

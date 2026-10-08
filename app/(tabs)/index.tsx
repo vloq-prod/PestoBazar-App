@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import {
   View,
-  StatusBar,
+  StatusBar as RNStatusBar,
   Text,
   TouchableOpacity,
   FlatList,
@@ -17,7 +17,8 @@ import {
   useWindowDimensions,
   StyleSheet,
 } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { useIsFocused, useFocusEffect } from "@react-navigation/native";
 import { useTheme } from "../../src/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bell, ShoppingCart } from "lucide-react-native";
@@ -56,6 +57,7 @@ import Footer from "../../src/components/home/Footer";
 import RecentlyViewProducts from "../../src/components/home/RecentlyViewProducts";
 import OurServices from "../../src/components/home/OurServices";
 import Diy from "../../src/components/diy/diy";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { useDiyListing } from "../../src/hooks/diyHooks";
@@ -699,6 +701,7 @@ const MemoBranches = React.memo(Branches);
 const MemoFooter = React.memo(Footer);
 
 export default function HomeScreen() {
+  const queryClient = useQueryClient();
   const isConnected = useNetworkStatus();
   const insets = useSafeAreaInsets();
   const userId = useAppVisitorStore((state) => state.userId);
@@ -768,6 +771,16 @@ export default function HomeScreen() {
   const promoHeight = useSharedValue(0);
 
   const isFocused = useIsFocused();
+
+  useFocusEffect(
+    useCallback(() => {
+      RNStatusBar.setBarStyle("light-content", true);
+      if (Platform.OS === "android") {
+        RNStatusBar.setBackgroundColor("transparent", true);
+        RNStatusBar.setTranslucent(true);
+      }
+    }, [])
+  );
 
   const rawMainBannerUri =
     mainBanners?.[0]?.s3_image_url ||
@@ -1024,7 +1037,9 @@ export default function HomeScreen() {
     }
   }, [headerBannerSource, headerBannerImageUri, isFocused, headerBanners]);
 
-  if (!isConnected) return <NoInternet />;
+  if (!isConnected) {
+    return <NoInternet onRetry={async () => { await queryClient.refetchQueries(); }} />;
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -1077,11 +1092,20 @@ export default function HomeScreen() {
             flex: 1,
           }}
         >
-          <StatusBar
-            barStyle="light-content"
-            backgroundColor="transparent"
-            translucent
-          />
+          {isFocused && (
+            <>
+              <RNStatusBar
+                barStyle="light-content"
+                backgroundColor="transparent"
+                translucent
+              />
+              <StatusBar
+                style="light"
+                backgroundColor="transparent"
+                translucent
+              />
+            </>
+          )}
 
           {/* Only Animate Navbar Opacity */}
           <Animated.View style={navbarOpacityStyle}>
@@ -1106,7 +1130,7 @@ export default function HomeScreen() {
         overScrollMode="never"
         contentContainerStyle={{
           paddingTop: HEADER_HEIGHT_BASE,
-          paddingBottom: insets.bottom + 20,
+          paddingBottom: 50,
         }}
         ListHeaderComponent={useCallback(() => <Animated.View style={{ height: promoHeight }} />, [promoHeight])}
         ItemSeparatorComponent={useCallback(() => <View style={{ height: 15 }} />, [])}

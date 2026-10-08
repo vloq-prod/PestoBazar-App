@@ -125,12 +125,13 @@ export const getRecentlyViewed = async ({
   visitor_id,
   user_id,
 }: GetRecentlyViewedParams): Promise<GetRecentlyViewedResponse> => {
+  const hasValidUserId = Boolean(user_id && user_id !== "0");
   const res = await apiClient.get<GetRecentlyViewedResponse>(
     "/app-api/v1/get-recently-viewed",
     {
       params: {
         visitor_id,
-        user_id,
+        ...(hasValidUserId ? { user_id } : {}),
       },
     },
   );
@@ -154,12 +155,13 @@ export const getCartQuantity = async ({
   visitor_id,
   user_id,
 }: GetCartQuantityParams): Promise<GetCartQuantityResponse> => {
+  const hasValidUserId = Boolean(user_id && user_id !== "0");
   const { data } = await apiClient.get<GetCartQuantityResponse>(
     "app-api/v1/get-cart-quantity",
     {
       params: {
         visitor_id,
-        user_id,
+        ...(hasValidUserId ? { user_id } : {}),
       },
     },
   );

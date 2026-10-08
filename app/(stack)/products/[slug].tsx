@@ -1,6 +1,8 @@
 import {
   ActivityIndicator,
+  Alert,
   BackHandler,
+  Linking,
   StatusBar,
   StyleSheet,
   Text,
@@ -10,6 +12,9 @@ import {
   Clipboard,
   type LayoutChangeEvent,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { DeepLinkURLBuilder } from "../../../src/deep-linking";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -36,6 +41,12 @@ import {
   BadgePercent,
   Copy,
   Check,
+  FileText,
+  BookOpen,
+  ArrowUpRight,
+  Download,
+  PackageX,
+  RefreshCw,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -138,7 +149,7 @@ const ProductDetails = () => {
     section,
   } = useLocalSearchParams();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
   const { visitorId, userId } = useAppVisitorStore((state) => state);
@@ -193,7 +204,7 @@ const ProductDetails = () => {
   const scrollY = useSharedValue(0);
 
   // ─── API Calls ──────────────────────────────────────────────
-  const { data, isLoading, error } = useProductDetails({
+  const { data, isLoading, error, refetch } = useProductDetails({
     ...(productId ? { product_id: productId } : {}),
     ...(variationId ? { variation_id: variationId } : {}),
     ...(productSlug ? { product_slug: productSlug } : {}),
@@ -207,6 +218,83 @@ const ProductDetails = () => {
 
   // ─── Data Extraction ────────────────────────────────────────
   const productInfo = data?.product;
+  const isComboProduct =
+    productInfo?.listing_type?.toLowerCase() === "combo";
+
+  const getDocUrl = useCallback((file?: string | null) => {
+    if (!file) return null;
+    const trimmed = file.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      return trimmed;
+    }
+    const cleanPath = trimmed.replace(/^\/+/, "");
+    return `https://pestobazaar.com/pestobazaar/uploads/files/${cleanPath}`;
+  }, []);
+
+  const [downloadingDoc, setDownloadingDoc] = useState<string | null>(null);
+
+  const handleDownloadDoc = useCallback(
+    async (file?: string | null, title?: string) => {
+      const url = getDocUrl(file);
+      const docTitle = title || "Document";
+
+      if (!url) {
+        Alert.alert(
+          "Document Not Available",
+          `${docTitle} is not available for this product yet.`
+        );
+        return;
+      }
+
+      try {
+        setDownloadingDoc(docTitle);
+
+        const cleanName = (productInfo?.product_name || "product")
+          .replace(/[^a-zA-Z0-9_-]/g, "_")
+          .slice(0, 30);
+        const filename = `${docTitle}_${cleanName}.pdf`;
+        const dir = FileSystem.documentDirectory?.endsWith("/")
+          ? FileSystem.documentDirectory
+          : `${FileSystem.documentDirectory || ""}/`;
+        const fileUri = `${dir}${filename}`;
+
+        // 1. Download file directly
+        const downloadRes = await FileSystem.downloadAsync(url, fileUri);
+
+        if (downloadRes.status !== 200) {
+          throw new Error(`Download failed with status ${downloadRes.status}`);
+        }
+
+        // 2. Open / Share with native document viewer or share sheet
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadRes.uri, {
+            mimeType: "application/pdf",
+            dialogTitle: `${docTitle} - ${productInfo?.product_name || ""}`,
+            UTI: "com.adobe.pdf",
+          });
+        } else {
+          await WebBrowser.openBrowserAsync(url);
+        }
+      } catch (error) {
+        console.warn("Document download error:", error);
+        // Fallback to browser
+        try {
+          await WebBrowser.openBrowserAsync(url);
+        } catch {
+          try {
+            await Linking.openURL(url);
+          } catch {
+            Alert.alert("Error", `Unable to download ${docTitle}.`);
+          }
+        }
+      } finally {
+        setDownloadingDoc(null);
+      }
+    },
+    [getDocUrl, productInfo?.product_name]
+  );
+
   const productImages = data?.images ?? [];
   const descriptionUi = data?.descriptions ?? [];
   const variationmaster = data?.variationmaster;
@@ -622,9 +710,151 @@ const ProductDetails = () => {
   }, [shouldScrollToReview, isLoading, realProductId, scrollToReviews]);
 
   const HEADER_HEIGHT = insets.top;
-  // ─── Guards ─────────────────────────────────────────────────
   if (isLoading) return <ProductDetailsSkeleton />;
-  if (error) return <Text>Error loading product</Text>;
+  if (error || (!isLoading && !productInfo)) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <StatusBar
+          translucent
+          backgroundColor="transparent"
+          barStyle="dark-content"
+        />
+        <View
+          style={{
+            paddingTop: insets.top,
+            height: insets.top + 56,
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <TouchableOpacity
+            onPress={handleBack}
+            activeOpacity={0.7}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colors.surface,
+            }}
+          >
+            <ChevronLeft size={22} color={colors.text} />
+          </TouchableOpacity>
+          <Text
+            style={{
+              fontSize: font(16),
+              fontWeight: "600",
+              marginLeft: 12,
+              color: colors.text,
+            }}
+          >
+            Product
+          </Text>
+        </View>
+
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 32,
+          }}
+        >
+          <View
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: colors.surface,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 16,
+            }}
+          >
+            <PackageX size={40} color={colors.textTertiary} />
+          </View>
+          <Text
+            style={{
+              fontSize: font(18),
+              fontWeight: "700",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: 8,
+            }}
+          >
+            {error ? "Unable to Load Product" : "Product Not Found"}
+          </Text>
+          <Text
+            style={{
+              fontSize: font(13),
+              color: colors.textSecondary,
+              textAlign: "center",
+              lineHeight: font(20),
+              marginBottom: 24,
+            }}
+          >
+            {error
+              ? "Something went wrong while fetching product details. Please try again."
+              : ""}
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TouchableOpacity
+              onPress={() => refetch()}
+              activeOpacity={0.8}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: 18,
+                paddingVertical: 12,
+                borderRadius: 10,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <RefreshCw size={16} color={colors.text} />
+              <Text
+                style={{
+                  fontSize: font(14),
+                  fontWeight: "600",
+                  color: colors.text,
+                }}
+              >
+                Retry
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.replace("/(tabs)")}
+              activeOpacity={0.8}
+              style={{
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                borderRadius: 10,
+                backgroundColor: colors.primary,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(14),
+                  fontWeight: "600",
+                  color: "#FFFFFF",
+                }}
+              >
+                Explore Products
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   // ─── Render ─────────────────────────────────────────────────
   return (
@@ -1337,6 +1567,125 @@ const ProductDetails = () => {
             variationId={realProductId ?? 0}
             onOpenPincode={openPincodeModal}
           />
+
+          {/* ── MSDS & DFU Buttons ── */}
+          <View
+            style={{
+              flexDirection: "row",
+              gap: spacing(10),
+              marginHorizontal: spacing(16),
+            }}
+          >
+            {/* MSDS Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={downloadingDoc === "MSDS"}
+              onPress={() => handleDownloadDoc(productInfo?.msds_file, "MSDS")}
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: spacing(8),
+                paddingVertical: spacing(11),
+                paddingHorizontal: spacing(10),
+                borderRadius: spacing(10),
+                backgroundColor: colors.cardBackground,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 7,
+                  backgroundColor: isDark
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(95, 22, 233, 0.08)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FileText size={15} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: font(12),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  includeFontPadding: false,
+                }}
+              >
+                MSDS Sheet
+              </Text>
+              {downloadingDoc === "MSDS" ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Download
+                  size={14}
+                  color={colors.textTertiary}
+                  strokeWidth={2}
+                />
+              )}
+            </TouchableOpacity>
+
+            {/* DFU Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={downloadingDoc === "DFU"}
+              onPress={() => handleDownloadDoc(productInfo?.dfu_file, "DFU")}
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: spacing(8),
+                paddingVertical: spacing(11),
+                paddingHorizontal: spacing(10),
+                borderRadius: spacing(10),
+                backgroundColor: colors.cardBackground,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 7,
+                  backgroundColor: isDark
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(95, 22, 233, 0.08)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <BookOpen size={15} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: font(12),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.text,
+                  includeFontPadding: false,
+                }}
+              >
+                DFU Guide
+              </Text>
+              {downloadingDoc === "DFU" ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Download
+                  size={14}
+                  color={colors.textTertiary}
+                  strokeWidth={2}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Description ── */}

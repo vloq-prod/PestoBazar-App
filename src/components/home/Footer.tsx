@@ -7,40 +7,35 @@ const Footer = () => {
   const { colors } = useTheme();
   const { font, scale } = useResponsive();
   return (
-    <View style={{ gap: 20, height: 300 }}>
-      <View
+    <View
+      style={{
+        height: 200,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.backgroundgray,
+        justifyContent: "center",
+        paddingHorizontal: 16,
+      }}
+    >
+      <Text
         style={{
-          height: 200,
-          borderTopWidth: 1,
-          borderBottomWidth: 1,
-          borderColor: colors.border,
-          backgroundColor: colors.backgroundgray,
-         
-          justifyContent: "center",
-          paddingHorizontal: 16,
+          fontSize: 18,
+          fontFamily: "Poppins_700Bold",
+          color: colors.textgray,
         }}
       >
-         <Text
-          style={{
-            fontSize: 18,
-            fontFamily: "Poppins_700Bold",
-            
-            color: colors.textgray,
-          }}
-        >
-          Pestobazaar
-        </Text>
-        <Text
-          style={{
-            fontSize: 30,
-            fontFamily: "Poppins_800ExtraBold",
-            color: colors.textgray,
-          }}
-        >
-          India&apos;s Leading Online Pesticide Hub
-        </Text>
-      </View>
-     
+        Pestobazaar
+      </Text>
+      <Text
+        style={{
+          fontSize: 30,
+          fontFamily: "Poppins_800ExtraBold",
+          color: colors.textgray,
+        }}
+      >
+        India&apos;s Leading Online Pesticide Hub
+      </Text>
     </View>
   );
 };

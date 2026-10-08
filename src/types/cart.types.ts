@@ -150,7 +150,7 @@ export interface CartResponse {
 
 
 export interface GetCartCountParams {
-  user_id: number | string;
+  user_id?: number | string;
   visitor_id: string;
 }
 export interface CartCountResponse {
@@ -164,7 +164,7 @@ export interface CartCountResponse {
 
 
 export interface GetQuickCartParams {
-  user_id: number | string;
+  user_id?: number | string;
   visitor_id: string;
 }
 

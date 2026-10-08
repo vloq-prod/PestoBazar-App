@@ -32,9 +32,14 @@ interface GetCartParams {
 export const getCart = async (
   params: GetCartParams
 ): Promise<CartResponse> => {
+  const hasValidUserId = params.user_id && params.user_id !== 0 && params.user_id !== "0";
+  const cleanParams = {
+    visitor_id: params.visitor_id,
+    ...(hasValidUserId ? { user_id: params.user_id } : {}),
+  };
   const response = await apiClient.get<CartResponse>(
     "/app-api/v1/cart",
-    { params }
+    { params: cleanParams }
   );
 
   return response.data;
@@ -43,8 +48,13 @@ export const getCart = async (
 export const getCartCount = async (
   params: GetCartCountParams,
 ): Promise<CartCountResponse> => {
+  const hasValidUserId = params.user_id && params.user_id !== 0 && params.user_id !== "0";
+  const cleanParams = {
+    visitor_id: params.visitor_id,
+    ...(hasValidUserId ? { user_id: params.user_id } : {}),
+  };
   const response = await apiClient.get("/app-api/v1/cart-count", {
-    params,
+    params: cleanParams,
   });
 
   return response.data;
@@ -53,8 +63,13 @@ export const getCartCount = async (
 export const getQuickCart = async (
   params: GetQuickCartParams,
 ): Promise<QuickCartResponse> => {
+  const hasValidUserId = params.user_id && params.user_id !== 0 && params.user_id !== "0";
+  const cleanParams = {
+    visitor_id: params.visitor_id,
+    ...(hasValidUserId ? { user_id: params.user_id } : {}),
+  };
   const response = await apiClient.get("/app-api/v1/quick-cart", {
-    params,
+    params: cleanParams,
   });
 
   return response.data;
