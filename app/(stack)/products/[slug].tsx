@@ -8,7 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Share,
+  Share as RNShare,
   Clipboard,
   type LayoutChangeEvent,
 } from "react-native";
@@ -33,7 +33,7 @@ import {
   Plus,
   ShoppingCart,
   Star,
-  LucideShare2,
+  Share,
   Gift,
   Tag,
   ChevronDown,
@@ -528,7 +528,7 @@ const ProductDetails = () => {
         fallbackUrl,
       );
 
-      await Share.share({
+      await RNShare.share({
         message,
         url: fallbackUrl, // url is iOS only, but good practice
         title: resolvedProductName, // Android only
@@ -894,17 +894,19 @@ const ProductDetails = () => {
           </View>
 
           <View style={styles.headerRight}>
-            {/* <TouchableOpacity
-              onPress={() => router.push("/search")}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push("/shop")}
               style={[styles.iconBtn, { borderColor: colors.border }]}
             >
-              <Search size={23} color={colors.borderblack} />
-            </TouchableOpacity> */}
+              <Search size={22} color={colors.borderblack} />
+            </TouchableOpacity>
             <TouchableOpacity
+              activeOpacity={0.8}
               onPress={handleShare}
               style={[styles.iconBtn, { borderColor: colors.border }]}
             >
-              <LucideShare2 size={23} color={colors.borderblack} />
+              <Share size={22} color={colors.borderblack} />
             </TouchableOpacity>
           </View>
         </View>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Modal,
   View,
@@ -10,12 +10,14 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  Keyboard,
 } from "react-native";
-import { X, UploadCloud, CreditCard, Landmark } from "lucide-react-native";
+import { X, UploadCloud, Landmark } from "lucide-react-native";
 import { Image } from "expo-image";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useToast } from "../../context/ToastContext";
 
 // Safe Dynamic Import to prevent crash when bundler is not restarted
 let ImagePicker: any = null;
@@ -39,8 +41,31 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
+  const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<"Bank" | "UPI">("Bank");
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setKeyboardHeight(0)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollToField = (y: number) => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y, animated: true });
+    }, 120);
+  };
 
   // Bank Form State
   const [holderName, setHolderName] = useState("");
@@ -50,9 +75,15 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
   const [bankName, setBankName] = useState("");
   const [chequeImage, setChequeImage] = useState<string | null>(null);
 
-  // UPI Form State
-  const [upiId, setUpiId] = useState("");
-  const [upiImage, setUpiImage] = useState<string | null>(null);
+  // Field validation errors state
+  const [errors, setErrors] = useState<{
+    holderName?: string;
+    bankName?: string;
+    accountNo?: string;
+    confirmAccountNo?: string;
+    ifsc?: string;
+    chequeImage?: string;
+  }>({});
 
   const handlePickCheque = async () => {
     if (!ImagePicker) {
@@ -65,74 +96,93 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       quality: 0.8,
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setChequeImage(result.assets[0].uri);
+      if (errors.chequeImage) {
+        setErrors((prev) => ({ ...prev, chequeImage: undefined }));
+      }
     }
   };
 
-  const handlePickUpiQr = async () => {
-    if (!ImagePicker) {
-      Alert.alert("Module Offline", "expo-image-picker not loaded");
-      return;
+  const validate = () => {
+    const newErrors: {
+      holderName?: string;
+      bankName?: string;
+      accountNo?: string;
+      confirmAccountNo?: string;
+      ifsc?: string;
+      chequeImage?: string;
+    } = {};
+
+    if (!holderName.trim()) {
+      newErrors.holderName = "Account holder name is required";
     }
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Gallery permission is required to upload QR code/screenshot");
-      return;
+
+    if (!bankName.trim()) {
+      newErrors.bankName = "Bank name is required";
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setUpiImage(result.assets[0].uri);
+
+    const cleanAccount = accountNo.trim();
+    if (!cleanAccount) {
+      newErrors.accountNo = "Account number is required";
+    } else if (cleanAccount.length < 9) {
+      newErrors.accountNo = "Account number must be at least 9 digits";
     }
+
+    const cleanConfirm = confirmAccountNo.trim();
+    if (!cleanConfirm) {
+      newErrors.confirmAccountNo = "Please confirm your account number";
+    } else if (cleanConfirm !== cleanAccount) {
+      newErrors.confirmAccountNo = "Account numbers do not match";
+    }
+
+    const cleanIfsc = ifsc.trim().toUpperCase();
+    if (!cleanIfsc) {
+      newErrors.ifsc = "IFSC code is required";
+    } else if (cleanIfsc.length !== 11) {
+      newErrors.ifsc = "Enter a valid 11-digit IFSC code";
+    }
+
+    if (!chequeImage) {
+      newErrors.chequeImage = "Please upload passbook or cancelled cheque";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (activeTab === "Bank") {
-      if (!holderName || !accountNo || !confirmAccountNo || !ifsc || !bankName || !chequeImage) {
-        Alert.alert("Error", "Please fill all mandatory fields and upload passbook/cancelled cheque image.");
-        return;
+    if (!validate()) {
+      if (accountNo.trim() && confirmAccountNo.trim() && accountNo.trim() !== confirmAccountNo.trim()) {
+        showToast("Account Number and Confirm Account Number do not match", "error");
+      } else {
+        showToast("Please fill all mandatory fields correctly", "error");
       }
-      if (accountNo !== confirmAccountNo) {
-        Alert.alert("Error", "Account Number and Confirm Account Number do not match.");
-        return;
-      }
-      onSubmit({
-        method: "Bank",
-        holderName,
-        accountNo,
-        ifsc,
-        bankName,
-        chequeImage,
-      });
-    } else {
-      if (!upiId || !upiImage) {
-        Alert.alert("Error", "Please enter UPI ID and upload screenshot/QR code image.");
-        return;
-      }
-      onSubmit({
-        method: "UPI",
-        upiId,
-        upiImage,
-      });
+      return;
     }
+
+    onSubmit({
+      method: "Bank",
+      holderName: holderName.trim(),
+      accountNo: accountNo.trim(),
+      ifsc: ifsc.trim().toUpperCase(),
+      bankName: bankName.trim(),
+      chequeImage,
+    });
   };
 
   const handleClose = () => {
-    // Reset Form states
+    // Reset Form states & errors
     setHolderName("");
     setAccountNo("");
     setConfirmAccountNo("");
     setIfsc("");
     setBankName("");
     setChequeImage(null);
-    setUpiId("");
-    setUpiImage(null);
+    setErrors({});
     onClose();
   };
 
@@ -145,7 +195,7 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         <View
@@ -164,7 +214,8 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
               backgroundColor: colors.background,
               borderTopLeftRadius: 20,
               borderTopRightRadius: 20,
-              maxHeight: "85%",
+              maxHeight: "88%",
+              paddingBottom: Math.max(insets.bottom, 10),
             }}
           >
             {/* Floating Cross */}
@@ -204,392 +255,307 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
             {/* Header */}
             <View
               style={{
-                paddingVertical: spacing(12),
+                paddingVertical: spacing(14),
                 paddingHorizontal: spacing(16),
                 borderBottomWidth: 1,
                 borderBottomColor: colors.border,
               }}
             >
-              <Text
-                style={{
-                  fontSize: font(16),
-                  fontFamily: "Poppins_600SemiBold",
-                  color: colors.text,
-                  includeFontPadding: false,
-                  lineHeight: font(20),
-                }}
-              >
-                Refund Account Details
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(8) }}>
+                <Landmark size={font(18)} color={colors.primary} />
+                <Text
+                  style={{
+                    fontSize: font(16),
+                    fontFamily: "Poppins_600SemiBold",
+                    color: colors.text,
+                    includeFontPadding: false,
+                    lineHeight: font(20),
+                  }}
+                >
+                  Bank Account Details
+                </Text>
+              </View>
               <Text
                 style={{
                   fontSize: font(11.5),
                   fontFamily: "Poppins_400Regular",
                   color: colors.textSecondary,
                   includeFontPadding: false,
-                  marginTop: 2,
+                  marginTop: 3,
                 }}
               >
-                Specify where you want to receive your refund
+                Enter bank details where you want to receive your refund
               </Text>
-            </View>
-
-            {/* Tab Bar */}
-            <View
-              style={{
-                flexDirection: "row",
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
-                backgroundColor: colors.backgroundgray,
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => setActiveTab("Bank")}
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  paddingVertical: 14,
-                  borderBottomWidth: 2,
-                  borderBottomColor: activeTab === "Bank" ? colors.primary : "transparent",
-                }}
-              >
-                <Landmark size={16} color={activeTab === "Bank" ? colors.primary : colors.textSecondary} />
-                <Text
-                  style={{
-                    fontFamily: activeTab === "Bank" ? "Poppins_600SemiBold" : "Poppins_500Medium",
-                    fontSize: font(13),
-                    color: activeTab === "Bank" ? colors.primary : colors.textSecondary,
-                  }}
-                >
-                  Bank Transfer
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setActiveTab("UPI")}
-                style={{
-                  flex: 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  paddingVertical: 14,
-                  borderBottomWidth: 2,
-                  borderBottomColor: activeTab === "UPI" ? colors.primary : "transparent",
-                }}
-              >
-                <CreditCard size={16} color={activeTab === "UPI" ? colors.primary : colors.textSecondary} />
-                <Text
-                  style={{
-                    fontFamily: activeTab === "UPI" ? "Poppins_600SemiBold" : "Poppins_500Medium",
-                    fontSize: font(13),
-                    color: activeTab === "UPI" ? colors.primary : colors.textSecondary,
-                  }}
-                >
-                  UPI ID
-                </Text>
-              </TouchableOpacity>
             </View>
 
             {/* Form Content */}
             <ScrollView
+              ref={scrollViewRef}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               contentContainerStyle={{
                 paddingHorizontal: spacing(16),
                 paddingTop: spacing(16),
-                paddingBottom: Math.max(insets.bottom, spacing(24)),
+                paddingBottom: Math.max(insets.bottom, 16) + (keyboardHeight > 0 ? Math.max(keyboardHeight + 20, 260) : spacing(16)),
               }}
             >
-              {activeTab === "Bank" ? (
-                <View style={{ gap: 12 }}>
-                  {/* Account Holder Name */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      Account Holder Name <Text style={{ color: "#e10320" }}>*</Text>
+              <View style={{ gap: 12 }}>
+                {/* Account Holder Name */}
+                <View>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
+                    Account Holder Name <Text style={{ color: "#e10320" }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={{
+                      height: INPUT_HEIGHT,
+                      borderWidth: 1.2,
+                      borderColor: errors.holderName ? "#e10320" : colors.border,
+                      borderRadius: 12,
+                      backgroundColor: colors.inputBackground ?? colors.surface,
+                      color: colors.text,
+                      fontSize: font(13),
+                      fontFamily: "Poppins_400Regular",
+                      paddingHorizontal: 12,
+                    }}
+                    placeholder="Name on bank account"
+                    placeholderTextColor={colors.textTertiary}
+                    value={holderName}
+                    onFocus={() => scrollToField(0)}
+                    onChangeText={(t) => {
+                      setHolderName(t);
+                      if (errors.holderName) setErrors((prev) => ({ ...prev, holderName: undefined }));
+                    }}
+                  />
+                  {errors.holderName && (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#e10320", marginTop: 4, marginLeft: 2 }}>
+                      {errors.holderName}
                     </Text>
-                    <TextInput
-                      style={{
-                        height: INPUT_HEIGHT,
-                        borderWidth: 1.2,
-                        borderColor: colors.border,
-                        borderRadius: 12,
-                        backgroundColor: colors.inputBackground ?? colors.surface,
-                        color: colors.text,
-                        fontSize: font(13),
-                        fontFamily: "Poppins_400Regular",
-                        paddingHorizontal: 12,
-                      }}
-                      placeholder="Name on bank account"
-                      placeholderTextColor={colors.textTertiary}
-                      value={holderName}
-                      onChangeText={setHolderName}
-                    />
-                  </View>
+                  )}
+                </View>
 
-                  {/* Bank Name */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      Bank Name <Text style={{ color: "#e10320" }}>*</Text>
+                {/* Bank Name */}
+                <View>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
+                    Bank Name <Text style={{ color: "#e10320" }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={{
+                      height: INPUT_HEIGHT,
+                      borderWidth: 1.2,
+                      borderColor: errors.bankName ? "#e10320" : colors.border,
+                      borderRadius: 12,
+                      backgroundColor: colors.inputBackground ?? colors.surface,
+                      color: colors.text,
+                      fontSize: font(13),
+                      fontFamily: "Poppins_400Regular",
+                      paddingHorizontal: 12,
+                    }}
+                    placeholder="E.g., HDFC Bank, SBI, ICICI"
+                    placeholderTextColor={colors.textTertiary}
+                    value={bankName}
+                    onFocus={() => scrollToField(70)}
+                    onChangeText={(t) => {
+                      setBankName(t);
+                      if (errors.bankName) setErrors((prev) => ({ ...prev, bankName: undefined }));
+                    }}
+                  />
+                  {errors.bankName && (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#e10320", marginTop: 4, marginLeft: 2 }}>
+                      {errors.bankName}
                     </Text>
-                    <TextInput
-                      style={{
-                        height: INPUT_HEIGHT,
-                        borderWidth: 1.2,
-                        borderColor: colors.border,
-                        borderRadius: 12,
-                        backgroundColor: colors.inputBackground ?? colors.surface,
-                        color: colors.text,
-                        fontSize: font(13),
-                        fontFamily: "Poppins_400Regular",
-                        paddingHorizontal: 12,
-                      }}
-                      placeholder="E.g., HDFC Bank, SBI"
-                      placeholderTextColor={colors.textTertiary}
-                      value={bankName}
-                      onChangeText={setBankName}
-                    />
-                  </View>
+                  )}
+                </View>
 
-                  {/* Account Number */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      Account Number <Text style={{ color: "#e10320" }}>*</Text>
+                {/* Account Number */}
+                <View>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
+                    Account Number <Text style={{ color: "#e10320" }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={{
+                      height: INPUT_HEIGHT,
+                      borderWidth: 1.2,
+                      borderColor: errors.accountNo ? "#e10320" : colors.border,
+                      borderRadius: 12,
+                      backgroundColor: colors.inputBackground ?? colors.surface,
+                      color: colors.text,
+                      fontSize: font(13),
+                      fontFamily: "Poppins_400Regular",
+                      paddingHorizontal: 12,
+                    }}
+                    placeholder="Enter Bank Account Number"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="numeric"
+                    secureTextEntry
+                    value={accountNo}
+                    onFocus={() => scrollToField(150)}
+                    onChangeText={(t) => {
+                      setAccountNo(t);
+                      if (errors.accountNo) setErrors((prev) => ({ ...prev, accountNo: undefined }));
+                      if (confirmAccountNo) {
+                        if (confirmAccountNo !== t) {
+                          setErrors((prev) => ({ ...prev, confirmAccountNo: "Account numbers do not match" }));
+                        } else {
+                          setErrors((prev) => ({ ...prev, confirmAccountNo: undefined }));
+                        }
+                      }
+                    }}
+                  />
+                  {errors.accountNo && (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#e10320", marginTop: 4, marginLeft: 2 }}>
+                      {errors.accountNo}
                     </Text>
-                    <TextInput
-                      style={{
-                        height: INPUT_HEIGHT,
-                        borderWidth: 1.2,
-                        borderColor: colors.border,
-                        borderRadius: 12,
-                        backgroundColor: colors.inputBackground ?? colors.surface,
-                        color: colors.text,
-                        fontSize: font(13),
-                        fontFamily: "Poppins_400Regular",
-                        paddingHorizontal: 12,
-                      }}
-                      placeholder="Enter Bank Account Number"
-                      placeholderTextColor={colors.textTertiary}
-                      keyboardType="numeric"
-                      secureTextEntry
-                      value={accountNo}
-                      onChangeText={setAccountNo}
-                    />
-                  </View>
+                  )}
+                </View>
 
-                  {/* Confirm Account Number */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      Confirm Account Number <Text style={{ color: "#e10320" }}>*</Text>
+                {/* Confirm Account Number */}
+                <View>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
+                    Confirm Account Number <Text style={{ color: "#e10320" }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={{
+                      height: INPUT_HEIGHT,
+                      borderWidth: 1.2,
+                      borderColor: errors.confirmAccountNo ? "#e10320" : confirmAccountNo && confirmAccountNo === accountNo ? "#10B981" : colors.border,
+                      borderRadius: 12,
+                      backgroundColor: colors.inputBackground ?? colors.surface,
+                      color: colors.text,
+                      fontSize: font(13),
+                      fontFamily: "Poppins_400Regular",
+                      paddingHorizontal: 12,
+                    }}
+                    placeholder="Re-enter Account Number"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="numeric"
+                    value={confirmAccountNo}
+                    onFocus={() => scrollToField(230)}
+                    onChangeText={(t) => {
+                      setConfirmAccountNo(t);
+                      if (accountNo && t && t !== accountNo) {
+                        setErrors((prev) => ({ ...prev, confirmAccountNo: "Account numbers do not match" }));
+                      } else {
+                        setErrors((prev) => ({ ...prev, confirmAccountNo: undefined }));
+                      }
+                    }}
+                  />
+                  {errors.confirmAccountNo ? (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#e10320", marginTop: 4, marginLeft: 2 }}>
+                      {errors.confirmAccountNo}
                     </Text>
-                    <TextInput
-                      style={{
-                        height: INPUT_HEIGHT,
-                        borderWidth: 1.2,
-                        borderColor: colors.border,
-                        borderRadius: 12,
-                        backgroundColor: colors.inputBackground ?? colors.surface,
-                        color: colors.text,
-                        fontSize: font(13),
-                        fontFamily: "Poppins_400Regular",
-                        paddingHorizontal: 12,
-                      }}
-                      placeholder="Re-enter Account Number"
-                      placeholderTextColor={colors.textTertiary}
-                      keyboardType="numeric"
-                      value={confirmAccountNo}
-                      onChangeText={setConfirmAccountNo}
-                    />
-                  </View>
+                  ) : confirmAccountNo && confirmAccountNo === accountNo ? (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#10B981", marginTop: 4, marginLeft: 2 }}>
+                      ✓ Account numbers match
+                    </Text>
+                  ) : null}
+                </View>
 
-                  {/* IFSC */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      IFSC Code <Text style={{ color: "#e10320" }}>*</Text>
+                {/* IFSC */}
+                <View>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
+                    IFSC Code <Text style={{ color: "#e10320" }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={{
+                      height: INPUT_HEIGHT,
+                      borderWidth: 1.2,
+                      borderColor: errors.ifsc ? "#e10320" : colors.border,
+                      borderRadius: 12,
+                      backgroundColor: colors.inputBackground ?? colors.surface,
+                      color: colors.text,
+                      fontSize: font(13),
+                      fontFamily: "Poppins_400Regular",
+                      paddingHorizontal: 12,
+                    }}
+                    placeholder="E.g., HDFC0001234"
+                    placeholderTextColor={colors.textTertiary}
+                    autoCapitalize="characters"
+                    value={ifsc}
+                    onFocus={() => scrollToField(310)}
+                    onChangeText={(t) => {
+                      setIfsc(t.toUpperCase());
+                      if (errors.ifsc) setErrors((prev) => ({ ...prev, ifsc: undefined }));
+                    }}
+                  />
+                  {errors.ifsc && (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#e10320", marginTop: 4, marginLeft: 2 }}>
+                      {errors.ifsc}
                     </Text>
-                    <TextInput
-                      style={{
-                        height: INPUT_HEIGHT,
-                        borderWidth: 1.2,
-                        borderColor: colors.border,
-                        borderRadius: 12,
-                        backgroundColor: colors.inputBackground ?? colors.surface,
-                        color: colors.text,
-                        fontSize: font(13),
-                        fontFamily: "Poppins_400Regular",
-                        paddingHorizontal: 12,
-                      }}
-                      placeholder="E.g., HDFC0001234"
-                      placeholderTextColor={colors.textTertiary}
-                      autoCapitalize="characters"
-                      value={ifsc}
-                      onChangeText={setIfsc}
-                    />
-                  </View>
+                  )}
+                </View>
 
-                  {/* Passbook/Cheque upload */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      Passbook / Cancelled Cheque <Text style={{ color: "#e10320" }}>*</Text>
-                    </Text>
-                    
-                    {chequeImage ? (
-                      <View
-                        style={{
-                          height: 120,
-                          borderRadius: 12,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                          overflow: "hidden",
-                          position: "relative",
-                        }}
-                      >
-                        <Image source={{ uri: chequeImage }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
-                        <TouchableOpacity
-                          onPress={() => setChequeImage(null)}
-                          style={{
-                            position: "absolute",
-                            top: 8,
-                            right: 8,
-                            width: 24,
-                            height: 24,
-                            borderRadius: 12,
-                            backgroundColor: "rgba(0,0,0,0.6)",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <X size={14} color="#fff" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
+                {/* Passbook/Cheque upload */}
+                <View>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
+                    Passbook / Cancelled Cheque <Text style={{ color: "#e10320" }}>*</Text>
+                  </Text>
+                  
+                  {chequeImage ? (
+                    <View
+                      style={{
+                        height: 120,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        overflow: "hidden",
+                        position: "relative",
+                      }}
+                    >
+                      <Image source={{ uri: chequeImage }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
                       <TouchableOpacity
-                        onPress={handlePickCheque}
-                        activeOpacity={0.8}
+                        onPress={() => setChequeImage(null)}
                         style={{
-                          height: 80,
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          width: 24,
+                          height: 24,
                           borderRadius: 12,
-                          borderWidth: 1.2,
-                          borderColor: colors.border,
-                          borderStyle: "dashed",
-                          backgroundColor: colors.backgroundgray,
+                          backgroundColor: "rgba(0,0,0,0.6)",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: 6,
                         }}
                       >
-                        <UploadCloud size={20} color={colors.textSecondary} />
-                        <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: colors.textSecondary }}>
-                          Click to upload cheque image
-                        </Text>
+                        <X size={14} color="#fff" />
                       </TouchableOpacity>
-                    )}
-                  </View>
-
-                  {/* Notice */}
-                  <View style={{ backgroundColor: "#10B98115", padding: 12, borderRadius: 10, marginTop: 4 }}>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: "#059669", textAlign: "center" }}>
-                      Refund in 5–7 business days after pickup.
-                    </Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={{ gap: 12 }}>
-                  {/* UPI ID */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      UPI ID <Text style={{ color: "#e10320" }}>*</Text>
-                    </Text>
-                    <TextInput
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={handlePickCheque}
+                      activeOpacity={0.8}
                       style={{
-                        height: INPUT_HEIGHT,
-                        borderWidth: 1.2,
-                        borderColor: colors.border,
+                        height: 80,
                         borderRadius: 12,
-                        backgroundColor: colors.inputBackground ?? colors.surface,
-                        color: colors.text,
-                        fontSize: font(13),
-                        fontFamily: "Poppins_400Regular",
-                        paddingHorizontal: 12,
+                        borderWidth: 1.2,
+                        borderColor: errors.chequeImage ? "#e10320" : colors.border,
+                        borderStyle: "dashed",
+                        backgroundColor: colors.backgroundgray,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
                       }}
-                      placeholder="E.g., name@okaxis"
-                      placeholderTextColor={colors.textTertiary}
-                      autoCapitalize="none"
-                      value={upiId}
-                      onChangeText={setUpiId}
-                    />
-                  </View>
-
-                  {/* UPI QR / Screenshot Upload */}
-                  <View>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: colors.text, marginBottom: 5 }}>
-                      UPI Screenshot / QR Code <Text style={{ color: "#e10320" }}>*</Text>
+                    >
+                      <UploadCloud size={20} color={errors.chequeImage ? "#e10320" : colors.textSecondary} />
+                      <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: errors.chequeImage ? "#e10320" : colors.textSecondary }}>
+                        Click to upload passbook / cheque image
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {errors.chequeImage && (
+                    <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: "#e10320", marginTop: 4, marginLeft: 2 }}>
+                      {errors.chequeImage}
                     </Text>
-                    
-                    {upiImage ? (
-                      <View
-                        style={{
-                          height: 150,
-                          borderRadius: 12,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                          overflow: "hidden",
-                          position: "relative",
-                        }}
-                      >
-                        <Image source={{ uri: upiImage }} style={{ width: "100%", height: "100%" }} contentFit="contain" />
-                        <TouchableOpacity
-                          onPress={() => setUpiImage(null)}
-                          style={{
-                            position: "absolute",
-                            top: 8,
-                            right: 8,
-                            width: 24,
-                            height: 24,
-                            borderRadius: 12,
-                            backgroundColor: "rgba(0,0,0,0.6)",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <X size={14} color="#fff" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        onPress={handlePickUpiQr}
-                        activeOpacity={0.8}
-                        style={{
-                          height: 100,
-                          borderRadius: 12,
-                          borderWidth: 1.2,
-                          borderColor: colors.border,
-                          borderStyle: "dashed",
-                          backgroundColor: colors.backgroundgray,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <UploadCloud size={20} color={colors.textSecondary} />
-                        <Text style={{ fontFamily: "Poppins_400Regular", fontSize: font(11), color: colors.textSecondary }}>
-                          Click to upload QR code screenshot
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  {/* Notice */}
-                  <View style={{ backgroundColor: "#10B98115", padding: 12, borderRadius: 10, marginTop: 4 }}>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: "#059669", textAlign: "center" }}>
-                      Refund in 5–7 business days after pickup.
-                    </Text>
-                  </View>
+                  )}
                 </View>
-              )}
+
+                {/* Notice */}
+                <View style={{ backgroundColor: "#10B98115", padding: 12, borderRadius: 10, marginTop: 4 }}>
+                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(11.5), color: "#059669", textAlign: "center" }}>
+                    Refund in 5–7 business days after pickup.
+                  </Text>
+                </View>
+              </View>
 
               {/* Action Buttons */}
               <View

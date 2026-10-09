@@ -54,7 +54,7 @@ const AddReviewForm: React.FC<Props> = ({ product_id, onSuccess }) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: type === "image" ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: type === "image" ? ["images"] : ["videos"],
       allowsMultipleSelection: type === "image",
       quality: 0.8,
     });

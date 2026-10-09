@@ -10,16 +10,16 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
-  Linking,
+  ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import GradientDivider from "../../src/components/common/GradientDivider";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Constants from "expo-constants";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Carousel from "react-native-reanimated-carousel";
 import Animated, {
   useSharedValue,
@@ -27,21 +27,20 @@ import Animated, {
   withTiming,
   SharedValue,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import {
   useGoogleAuthCallback,
   useSendOtp,
   useVerifyUser,
 } from "../../src/hooks/useAuthHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
-import { z, ZodError } from "zod";
-
+import { z } from "zod";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
-import { useEffect } from "react";
 import RNOtpVerify from "react-native-otp-verify";
 import { trackLogin, setAnalyticsUserId } from "../../src/lib/analytics";
+import { ChevronDown } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -56,41 +55,32 @@ const androidSchemePrefix = androidClientId.replace(
 
 const GOOGLE_REDIRECT_SCHEME = `com.googleusercontent.apps.${androidSchemePrefix}`;
 
-type SafeParseReturn<T> =
-  | { success: true; data: T }
-  | { success: false; error: ZodError };
-
 const phoneSchema = z.object({
   mobile_no: z.string().regex(/^[0-9]{10}$/, "Enter valid 10 digit number"),
 });
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const INPUT_HEIGHT = 45;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const CAROUSEL_HEIGHT = Math.round(SCREEN_HEIGHT * 0.55);
+const BRAND_RED = "#EF4F5F";
 
-const carouselData = [
-  {
-    id: 1,
-    title: "Fast Pest Control",
-    description: "Get quick and reliable pest control service at your doorstep",
-    image: "https://cdn-icons-png.flaticon.com/512/3595/3595701.png",
-  },
-  {
-    id: 2,
-    title: "Trusted Experts",
-    description:
-      "Verified professionals with years of experience in pest management",
-    image: "https://cdn-icons-png.flaticon.com/512/1533/1533924.png",
-  },
-  {
-    id: 3,
-    title: "100% Safe & Eco-Friendly",
-    description: "Safe pest control solutions for your family and pets",
-    image: "https://cdn-icons-png.flaticon.com/512/3063/3063823.png",
-  },
+const IndiaFlag = () => (
+  <View style={styles.flagContainer}>
+    <View style={[styles.flagStripe, { backgroundColor: "#FF9933" }]} />
+    <View style={[styles.flagStripe, styles.flagMiddle]}>
+      <View style={styles.ashokaChakra} />
+    </View>
+    <View style={[styles.flagStripe, { backgroundColor: "#138808" }]} />
+  </View>
+);
+
+const carouselImages = [
+  require("../../assets/loginimage1.png"),
+  require("../../assets/loginimage2.png"),
+  require("../../assets/loginimage3.png"),
 ];
 
-// ─── Pill Dot ─────────────────────────────────────────────────
-const PillDot = ({
+// ─── Carousel Dot Indicator ──────────────────────────────────
+const CarouselDot = ({
   index,
   progress,
   total,
@@ -103,8 +93,10 @@ const PillDot = ({
     const current = Math.round(progress.value) % total;
     const isActive = current === index;
     return {
-      width: withTiming(38, { duration: 300 }),
-      opacity: withTiming(isActive ? 1 : 0.45, { duration: 300 }),
+      opacity: withTiming(isActive ? 1 : 0.4, { duration: 200 }),
+      transform: [
+        { scale: withTiming(isActive ? 1.25 : 1, { duration: 200 }) },
+      ],
     };
   });
 
@@ -112,9 +104,10 @@ const PillDot = ({
     <Animated.View
       style={[
         {
-          height: 6,
-          borderRadius: 10,
-          backgroundColor: "#fff",
+          width: 5.5,
+          height: 5.5,
+          borderRadius: 3,
+          backgroundColor: "#ffffff",
         },
         animStyle,
       ]}
@@ -122,16 +115,20 @@ const PillDot = ({
   );
 };
 
-// ─── Gradient Divider ─────────────────────────────────────────
-
 export default function Login() {
   const router = useRouter();
   const { redirectTo } = useLocalSearchParams<{ redirectTo?: string }>();
   const progress = useSharedValue(0);
   const { colors } = useTheme();
-  const { font, spacing, hp } = useResponsive();
+  const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const [phone, setPhone] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [error, setError] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const isKeyboardVisible = keyboardHeight > 0;
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -141,6 +138,25 @@ export default function Login() {
         })
         .catch(() => {});
     }
+  }, []);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      },
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
   }, []);
 
   const googleRedirectUri = AuthSession.makeRedirectUri({
@@ -169,6 +185,13 @@ export default function Login() {
     promptAsync().catch(() => {});
   }, [googleRedirectUri, isExpoGo, promptAsync]);
 
+  const handleAppleLogin = useCallback(() => {
+    Alert.alert(
+      "Apple Sign-In",
+      "Apple Sign-In will be available in an upcoming update.",
+    );
+  }, []);
+
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
   const { mutate: sendOtpMutate, isPending: isSendOtpPending } = useSendOtp();
@@ -176,21 +199,9 @@ export default function Login() {
     useGoogleAuthCallback();
 
   const visitorId = useAppVisitorStore((s) => s.visitorId);
-  const setUser = useAppVisitorStore((s) => s.setUser);
   const setGoogleUser = useAppVisitorStore((s) => s.setGoogleUser);
 
-  const [phone, setPhone] = useState("");
-  const [focused, setFocused] = useState(false);
-  const [error, setError] = useState("");
-
   const isLoading = isVerifyPending || isSendOtpPending;
-
-  // Dynamic border color helper
-  const borderColor = error
-    ? "#EF4444"
-    : focused
-      ? colors.primary
-      : colors.border;
 
   const handleSkip = () => router.replace("/(tabs)");
 
@@ -233,7 +244,7 @@ export default function Login() {
         onError: () => setError("Something went wrong. Please try again."),
       },
     );
-  }, [phone]);
+  }, [phone, redirectTo, router, sendOtpMutate, verifyUserMutate]);
 
   useEffect(() => {
     const handleGoogleResponse = async () => {
@@ -294,446 +305,461 @@ export default function Login() {
             "Could not retrieve account details.",
           );
         }
-      } else if (response?.type === "error") {
-        // error handling
       }
     };
 
     handleGoogleResponse();
-  }, [response]);
+  }, [
+    googleCallbackMutate,
+    redirectTo,
+    response,
+    router,
+    setGoogleUser,
+    visitorId,
+  ]);
+
+  const bottomInset = Math.max(insets.bottom, Platform.OS === "android" ? 36 : 16);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* ── Bottom Form Section ── */}
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
-      >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={
-            Platform.OS === "ios" ? "interactive" : "on-drag"
-          }
-          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          alwaysBounceVertical={false}
-          overScrollMode="never"
-        >
-          {/* ── Top Carousel Section ── */}
-          <View
-            style={[
-              styles.topSection,
-              {
-                height: hp(48),
-                backgroundColor: colors.primary,
-                paddingTop: insets.top + spacing(8),
-              },
-            ]}
-          >
-            {/* Skip Button */}
-            <TouchableOpacity
-              onPress={() => {
-                router.replace("/(tabs)");
-              }}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={[
-                styles.skipButton,
-                {
-                  marginRight: spacing(16),
-                  paddingHorizontal: spacing(16),
-                  paddingVertical: spacing(7),
-                  borderRadius: spacing(20),
-                  backgroundColor: "rgba(255,255,255,0.18)",
-                  zIndex: 10,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontSize: font(13),
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                Skip
-              </Text>
-            </TouchableOpacity>
-
-            {/* Carousel */}
-            <View style={{ flex: 1, justifyContent: "center" }}>
-              <Carousel
-                width={SCREEN_WIDTH}
-                height={hp(33)}
-                data={carouselData}
-                loop
-                autoPlay
-                autoPlayInterval={3000}
-                onProgressChange={(_, absoluteProgress) => {
-                  progress.value = absoluteProgress;
-                }}
-                renderItem={({ item }) => (
-                  <View style={styles.slide}>
-                    <Image
-                      source={
-                        typeof item.image === "string"
-                          ? { uri: item.image }
-                          : item.image
-                      }
-                      style={{
-                        width: 140,
-                        height: 140,
-                        resizeMode: "contain",
-                      }}
-                    />
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontSize: font(19),
-                        fontFamily: "Poppins_700Bold",
-                        marginTop: spacing(10),
-                        textAlign: "center",
-                      }}
-                    >
-                      {item.title}
-                    </Text>
-                    <Text
-                      style={{
-                        color: "rgba(255,255,255,0.78)",
-                        fontSize: font(12),
-                        fontFamily: "Poppins_400Regular",
-                        marginTop: spacing(5),
-                        textAlign: "center",
-                        paddingHorizontal: spacing(28),
-                        lineHeight: font(18),
-                      }}
-                    >
-                      {item.description}
-                    </Text>
-                  </View>
-                )}
+      {/* ── Fixed Top Hero Carousel (NEVER moves up!) ── */}
+      <View style={[styles.carouselContainer, { height: CAROUSEL_HEIGHT }]}>
+        <Carousel
+          width={SCREEN_WIDTH}
+          height={CAROUSEL_HEIGHT}
+          data={carouselImages}
+          loop
+          autoPlay={!isKeyboardVisible}
+          autoPlayInterval={3500}
+          onProgressChange={(_, absoluteProgress) => {
+            progress.value = absoluteProgress;
+          }}
+          renderItem={({ item }) => (
+            <View style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT }}>
+              <Image
+                source={item}
+                style={styles.bannerImage}
+                resizeMode="cover"
               />
             </View>
+          )}
+        />
 
-            {/* Dots — pinned inside topSection above curve */}
+        {/* Skip Button */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleSkip}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={[
+            styles.skipButton,
+            { top: Math.max(insets.top, 16) + 8 },
+          ]}
+        >
+          <Text style={styles.skipButtonText}>Skip</Text>
+        </TouchableOpacity>
+
+        {/* Overlay Pagination Dots */}
+        {!isKeyboardVisible && (
+          <View style={styles.paginationPill}>
+            {carouselImages.map((_, i) => (
+              <CarouselDot
+                key={i}
+                index={i}
+                progress={progress}
+                total={carouselImages.length}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* Tapping on top carousel while keyboard is open dismisses the keyboard */}
+        {isKeyboardVisible && (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={Keyboard.dismiss}
+            style={StyleSheet.absoluteFillObject}
+          />
+        )}
+      </View>
+
+      {/* ── Bottom Login Card — Sits directly above keyboard when open, image stays fixed at top ── */}
+      <View
+        style={[
+          styles.bottomSection,
+          {
+            bottom: isKeyboardVisible
+              ? keyboardHeight + (Platform.OS === "android" ? insets.bottom : 0)
+              : 0,
+          },
+          isKeyboardVisible && styles.bottomSectionKeyboard,
+          !isKeyboardVisible && { paddingBottom: bottomInset + 20 },
+        ]}
+      >
+        <View>
+          {/* Title */}
+          <Text style={styles.title}>Log in or sign up</Text>
+
+          {/* Phone Input Row */}
+          <View style={styles.phoneRow}>
+            {/* Country Code Selector Box */}
+            <View style={styles.countryBox}>
+              <IndiaFlag />
+              <ChevronDown size={14} color="#6B7280" strokeWidth={2.2} />
+            </View>
+
+            {/* Phone Input Box */}
             <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 9,
-                marginTop: spacing(15),
-                paddingBottom: spacing(40),
-              }}
+              style={[
+                styles.phoneInputBox,
+                focused && {
+                  borderColor: colors.primary,
+                  borderWidth: 1.5,
+                },
+                !!error && styles.phoneInputBoxError,
+              ]}
             >
-              {carouselData.map((_, i) => (
-                <PillDot
-                  key={i}
-                  index={i}
-                  progress={progress}
-                  total={carouselData.length}
-                />
-              ))}
+              <Text style={styles.prefixText}>+91</Text>
+              <TextInput
+                value={phone}
+                onChangeText={(v) => {
+                  setPhone(v.replace(/[^0-9]/g, "").slice(0, 10));
+                  if (error) setError("");
+                }}
+                placeholder="Enter Phone Number"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="phone-pad"
+                maxLength={10}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                style={styles.textInput}
+              />
             </View>
           </View>
 
-          <View
+          {/* Error Message */}
+          {!!error && <Text style={styles.errorText}>{error}</Text>}
+
+          {/* Continue Button */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleGetOtp}
+            disabled={isLoading}
             style={[
-              styles.bottomSection,
-              {
-                marginTop: -spacing(22),
-                padding: spacing(20),
-                paddingTop: spacing(12),
-                paddingBottom:
-                  Platform.OS === "ios"
-                    ? insets.bottom + spacing(10)
-                    : spacing(20),
-                backgroundColor: colors.background,
-                borderTopLeftRadius: spacing(28),
-                borderTopRightRadius: spacing(28),
-              },
+              styles.continueBtn,
+              { backgroundColor: colors.primary },
+              isLoading && { opacity: 0.75 },
             ]}
           >
-            {/* Title */}
-            <Text
-              style={{
-                textAlign: "center",
-                fontSize: font(20),
-                marginTop: 0,
-                color: colors.text,
-                fontFamily: "Poppins_600SemiBold",
-              }}
-            >
-              Login or Signup
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.continueBtnText}>Continue</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-            {/* ── Phone Input ── */}
-            <View style={{ marginTop: spacing(18), gap: 6 }}>
-              {/* Label */}
-              <Text
-                style={{
-                  fontFamily: "Poppins_500Medium",
-                  fontSize: font(11),
-                  marginLeft: 2,
-                  color: error
-                    ? "#EF4444"
-                    : focused
-                      ? colors.primary
-                      : colors.textSecondary,
-                }}
+        {/* Social Logins & Footer — only shown when keyboard is closed */}
+        {!isKeyboardVisible && (
+          <View>
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Social Logins */}
+            <View style={styles.socialContainer}>
+              {/* Google Button */}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleGoogleLogin}
+                disabled={isGooglePending}
+                style={[
+                  styles.socialButton,
+                  isGooglePending && { opacity: 0.6 },
+                ]}
               >
-                Phone Number
-              </Text>
+                <Image
+                  source={require("../../assets/google.png")}
+                  style={styles.googleIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.socialButtonText}>Continue with Google</Text>
+              </TouchableOpacity>
 
-              {/* Input Row */}
-              <View style={styles.phoneRow}>
-                <View
-                  style={[
-                    styles.inputBox,
-                    {
-                      flex: 1,
-                      height: INPUT_HEIGHT,
-                      backgroundColor: colors.inputBackground ?? colors.surface,
-                      borderColor: borderColor,
-                      borderWidth: error || focused ? 1.8 : 1.2,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{
-                      fontSize: font(14),
-                      fontFamily: "Poppins_600SemiBold",
-                      color: colors.textSecondary,
-                      includeFontPadding: false,
-                    }}
-                  >
-                    +91
-                  </Text>
-
-                  <TextInput
-                    value={phone}
-                    onChangeText={(v) => {
-                      setPhone(v.replace(/[^0-9]/g, "").slice(0, 10));
-                      if (error) setError("");
-                    }}
-                    placeholder="Enter mobile number"
-                    placeholderTextColor={colors.textTertiary}
-                    keyboardType="phone-pad"
-                    onFocus={() => {
-                      setFocused(true);
-                      setTimeout(() => {
-                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                      }, 250);
-                    }}
-                    onBlur={() => setFocused(false)}
-                    maxLength={10}
-                    style={[
-                      styles.textInput,
-                      {
-                        color: colors.text,
-                        fontSize: font(14),
-                        height: INPUT_HEIGHT,
-                        textAlignVertical: "center",
-                      },
-                    ]}
-                  />
-                </View>
-
+              {/* Apple Button (iOS only) */}
+              {Platform.OS === "ios" && (
                 <TouchableOpacity
-                  activeOpacity={0.85}
-                  onPress={handleGetOtp}
-                  disabled={isLoading}
-                  style={[
-                    styles.inlineOtpBtn,
-                    {
-                      backgroundColor: colors.primary,
-                      borderColor: isLoading
-                        ? colors.inputBackground
-                        : colors.surface,
-                      opacity: isLoading ? 0.6 : 1,
-                    },
-                  ]}
+                  activeOpacity={0.7}
+                  onPress={handleAppleLogin}
+                  style={[styles.socialButton, { marginTop: 10 }]}
                 >
-                  <Text
-                    style={{
-                      fontSize: font(13),
-                      fontFamily: "Poppins_600SemiBold",
-                      color: colors.textInverse,
-                    }}
-                  >
-                    {isLoading ? "Sending..." : "Get OTP"}
-                  </Text>
+                  <Ionicons name="logo-apple" size={20} color="#000000" />
+                  <Text style={styles.socialButtonText}>Continue with Apple</Text>
                 </TouchableOpacity>
-              </View>
-
-              {/* Error Text */}
-              {!!error && (
-                <Text
-                  style={{
-                    color: "#EF4444",
-                    fontSize: font(11),
-                    fontFamily: "Poppins_400Regular",
-                    marginLeft: 2,
-                    marginTop: -2,
-                  }}
-                >
-                  {error}
-                </Text>
               )}
             </View>
 
-            {/* Gradient Divider */}
-            <GradientDivider
-              label="or continue with"
-              colors={colors}
-              font={font}
-              spacing={spacing}
-            />
-
-            {/* Google Login Button */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleGoogleLogin}
-              disabled={isGooglePending}
-              style={[
-                styles.googleBtn,
-                {
-                  marginTop: spacing(20),
-                  borderColor: colors.border,
-                  backgroundColor:
-                    colors.background === "#fff" ? "#fff" : colors.surface,
-                  opacity: isExpoGo || isGooglePending ? 0.65 : 1,
-                },
-              ]}
-            >
-              <Image
-                source={require("../../assets/google.png")}
-                style={{ width: 22, height: 22 }}
-                resizeMode="contain"
-              />
-              <Text
-                style={{
-                  fontSize: font(14),
-                  fontFamily: "Poppins_500Medium",
-                  color: colors.text,
-                }}
-              >
-                {isExpoGo
-                  ? "Google Login Requires Dev Build"
-                  : isGooglePending
-                    ? "Signing in..."
-                    : "Continue with Google"}
+            {/* Footer Terms & Policies */}
+            <View style={styles.footerContainer}>
+              <Text style={styles.footerText}>
+                By continuing, you agree to our
               </Text>
-            </TouchableOpacity>
-
-            {/* Terms */}
-            <Text
-              style={{
-                textAlign: "center",
-                fontSize: font(11),
-                fontFamily: "Poppins_400Regular",
-                color: colors.textTertiary,
-                marginTop: spacing(20),
-                lineHeight: font(18),
-                paddingHorizontal: spacing(8),
-              }}
-            >
-              By continuing, you agree to our{" "}
-              <Text
-                onPress={() => router.push("/terms")}
-                style={{
-                  color: colors.primary,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                Terms
-              </Text>
-              {", "}
-              <Text
-                onPress={() => router.push("/returns")}
-                style={{
-                  color: colors.primary,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                Refunds
-              </Text>
-              {" and "}
-              <Text
-                onPress={() => router.push("/privacy")}
-                style={{
-                  color: colors.primary,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                Privacy Policy
-              </Text>
-            </Text>
+              <View style={styles.footerLinksRow}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/terms")}
+                >
+                  <Text style={styles.footerLink}>Terms of Service</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/privacy")}
+                >
+                  <Text style={styles.footerLink}>Privacy Policy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => router.push("/privacy")}
+                >
+                  <Text style={styles.footerLink}>Content Policy</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  topSection: { justifyContent: "flex-start" },
-  bottomSection: { flexGrow: 1 },
-  skipButton: { alignSelf: "flex-end" },
-  slide: { flex: 1, alignItems: "center", justifyContent: "center" },
-  inputBox: {
+  container: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  carouselContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#000000",
+  },
+  bannerImage: {
+    width: "100%",
+    height: "100%",
+  },
+  skipButton: {
+    position: "absolute",
+    right: 16,
+    zIndex: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  skipButtonText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontFamily: "Poppins_500Medium",
+  },
+  paginationPill: {
+    position: "absolute",
+    bottom: 24,
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
-    paddingLeft: 10,
-    paddingRight: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.38)",
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
     borderRadius: 12,
+    gap: 5,
+    zIndex: 10,
+  },
+  bottomSection: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    minHeight: Math.round(SCREEN_HEIGHT * 0.45),
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  bottomSectionKeyboard: {
+    minHeight: undefined,
+    paddingBottom: 16,
+    justifyContent: "flex-start",
+  },
+  title: {
+    textAlign: "center",
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#2D3748",
+    marginBottom: 16,
   },
   phoneRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  textInput: {
-    flex: 1,
-    fontFamily: "Poppins_400Regular",
-    paddingVertical: 0,
-    ...Platform.select({ android: { includeFontPadding: false }, ios: {} }),
-  },
-  inlineOtpBtn: {
-    minWidth: 90,
-    height: INPUT_HEIGHT,
-    borderRadius: 12,
-    borderWidth: 1.2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleBtn: {
+  countryBox: {
+    width: 66,
+    height: 48,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    borderWidth: 1.2,
-    borderRadius: 999,
-    paddingVertical: 14,
+    gap: 6,
+    backgroundColor: "#ffffff",
   },
-  googleLogo: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    backgroundColor: "#fff",
+  flagContainer: {
+    width: 23,
+    height: 15,
+    borderRadius: 2,
+    overflow: "hidden",
+    borderWidth: 0.6,
+    borderColor: "#D1D5DB",
+  },
+  flagStripe: {
+    flex: 1,
+  },
+  flagMiddle: {
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+  },
+  ashokaChakra: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    borderWidth: 0.8,
+    borderColor: "#000080",
+  },
+  phoneInputBox: {
+    flex: 1,
+    height: 48,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    backgroundColor: "#ffffff",
+  },
+  phoneInputBoxError: {
+    borderColor: "#EF4444",
+    borderWidth: 1.5,
+  },
+  prefixText: {
+    fontSize: 15,
+    fontFamily: "Poppins_600SemiBold",
+    color: "#1F2937",
+    marginRight: 8,
+    includeFontPadding: false,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "Poppins_400Regular",
+    color: "#111827",
+    paddingVertical: 0,
+    includeFontPadding: false,
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 11.5,
+    fontFamily: "Poppins_400Regular",
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  continueBtn: {
+    marginTop: 16,
+    height: 48,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  continueBtnText: {
+    color: "#ffffff",
+    fontSize: 15.5,
+    fontFamily: "Poppins_600SemiBold",
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 14,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+  dividerText: {
+    fontSize: 12,
+    fontFamily: "Poppins_400Regular",
+    color: "#9CA3AF",
+    textTransform: "uppercase",
+  },
+  socialContainer: {
+    width: "100%",
+  },
+  socialButton: {
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  socialButtonText: {
+    fontSize: 14,
+    fontFamily: "Poppins_500Medium",
+    color: "#1F2937",
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+  },
+  footerContainer: {
+    alignItems: "center",
+    gap: 5,
+    marginTop: 22,
+  },
+  footerText: {
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  footerLinksRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  footerLink: {
+    fontSize: 11,
+    fontFamily: "Poppins_400Regular",
+    color: "#4B5563",
+    textDecorationLine: "underline",
   },
 });

@@ -15,7 +15,10 @@ export const addressSchema = z.object({
   email: z
     .string()
     .trim()
-    .email("Enter valid email"),
+    .optional()
+    .refine((val) => !val || z.string().email().safeParse(val).success, {
+      message: "Enter valid email",
+    }),
 
   building: z
     .string()

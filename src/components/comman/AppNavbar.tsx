@@ -161,7 +161,7 @@ const AppNavbar = ({
             {showSearch && (
               <TouchableOpacity
                 onPress={() =>
-                  onSearchPress ? onSearchPress() : router.push("/search")
+                  onSearchPress ? onSearchPress() : router.push("/shop")
                 }
                 style={{
                   width: ICON_BOX,

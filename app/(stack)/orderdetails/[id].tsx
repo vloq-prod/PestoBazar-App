@@ -25,6 +25,7 @@ import Svg, { Path } from "react-native-svg";
 // Project Imports
 import AppNavbar from "../../../src/components/comman/AppNavbar";
 import CancelOrderModal from "../../../src/components/comman/CancelOrderModal";
+import RequestCallBackModal from "../../../src/components/comman/RequestCallBackModal";
 import OrderStatusTracker from "../../../src/components/comman/OrderStatusTracker";
 import OrderItemCard from "../../../src/components/order/OrderItemCard";
 import { useViewOrder } from "../../../src/hooks/orderHooks";
@@ -334,6 +335,7 @@ const OrderDetails = () => {
   const { font, spacing } = useResponsive();
 
   const [isCancelModalVisible, setIsCancelModalVisible] = React.useState(false);
+  const [isCallBackModalVisible, setIsCallBackModalVisible] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
 
   const { data, isLoading, error, refetch } = useViewOrder({
@@ -1148,6 +1150,7 @@ const OrderDetails = () => {
                     id,
                     orderNo: orderData?.order?.order_no,
                   });
+                  setIsCallBackModalVisible(true);
                 }}
               >
                 <View
@@ -1200,6 +1203,20 @@ const OrderDetails = () => {
           setIsCancelModalVisible(false);
           refetch();
         }}
+      />
+
+      {/* ── Request Call Back Modal ── */}
+      <RequestCallBackModal
+        visible={isCallBackModalVisible}
+        onClose={() => setIsCallBackModalVisible(false)}
+        productName={
+          orderData?.order?.order_no
+            ? `Order #${orderData.order.order_no}`
+            : id
+            ? `Order #${id}`
+            : undefined
+        }
+        sourceUrl={id ? `https://pestobazaar.com/order/${id}` : undefined}
       />
     </SafeAreaView>
   );

@@ -882,7 +882,7 @@ export default function AddAddress() {
                 colors={colors}
                 font={font}
                 spacing={spacing}
-                required
+                optional
               />
             </View>
           </SectionCard>

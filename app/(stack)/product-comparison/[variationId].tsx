@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -37,6 +37,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useProductComparison } from "../../../src/hooks/productComparison.hooks";
 import { useTheme } from "../../../src/theme";
 import type { ProductComparisonProduct } from "../../../src/types/productComparison.types";
+import { RequestCallBackModal } from "../../../src/components/comman/RequestCallBackModal";
 
 const LABEL_WIDTH = 118;
 const PRODUCT_WIDTH = 176;
@@ -74,6 +75,7 @@ const ProductComparisonScreen = () => {
   const products = comparison?.products ?? [];
   const current = comparison?.current;
   const economical = comparison?.economical_product;
+  const [isCallBackModalVisible, setIsCallBackModalVisible] = useState(false);
 
   const ingredientSummary = useMemo(() => {
     if (!current) return null;
@@ -296,17 +298,28 @@ const ProductComparisonScreen = () => {
             </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={callExpert}
+              onPress={() => setIsCallBackModalVisible(true)}
               style={[styles.callButton, { backgroundColor: colors.primary }]}
             >
               <Phone size={16} color={colors.textOnPrimary} />
-              <Text style={[styles.callButtonText, { color: colors.textOnPrimary }]}>Call Now</Text>
+              <Text style={[styles.callButtonText, { color: colors.textOnPrimary }]}>Request a call back</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {!!comparison.info_message && <Text style={[styles.disclaimer, { color: colors.textSecondary }]}>{comparison.info_message}</Text>}
       </ScrollView>
+
+      <RequestCallBackModal
+        visible={isCallBackModalVisible}
+        onClose={() => setIsCallBackModalVisible(false)}
+        productName={current?.display_name || current?.product_name}
+        sourceUrl={
+          current?.slug
+            ? `https://pestobazaar.com/products/${current.slug}`
+            : undefined
+        }
+      />
     </View>
   );
 };

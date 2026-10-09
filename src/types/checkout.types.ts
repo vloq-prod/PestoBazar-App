@@ -213,7 +213,7 @@ export interface SaveAddressRequest {
   address_name: string;
   full_name: string;
   number: string;
-  email: string;
+  email?: string;
   building: string;
   area: string;
   address: string;

@@ -104,7 +104,6 @@ export default function ShopScreen() {
   const [selectedCategoryName, setSelectedCategoryName] = useState<
     string | null
   >(null);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // 400ms debounce
   useEffect(() => {
@@ -119,19 +118,13 @@ export default function ShopScreen() {
     }
   }, [query]);
 
-  // ── Search Suggestions API ────────────────────
-  const { data: suggestionsData, isLoading: suggestionsLoading } =
-    useSearchSuggestions(debouncedQuery);
+  // ── Category Suggestions (for quick filter chips) ──
+  const { data: suggestionsData } = useSearchSuggestions(debouncedQuery);
 
-  const results = suggestionsData?.data?.result ?? [];
-  const productSuggestions = results.filter(
-    (item: any) => item?.search_type === "product",
-  );
-  const categorySuggestions = results.filter(
-    (item: any) => item?.search_type === "category",
-  );
-  const hasSuggestions =
-    productSuggestions.length > 0 || categorySuggestions.length > 0;
+  const categorySuggestions = useMemo(() => {
+    const results = suggestionsData?.data?.result ?? [];
+    return results.filter((item: any) => item?.search_type === "category");
+  }, [suggestionsData]);
 
   // Filter active when any non-default filter is selected
   const isFilterActive =
@@ -181,9 +174,9 @@ export default function ShopScreen() {
   const CARD_WIDTH =
     Math.floor((width - H_PAD - H_GAP * (COLS - 1)) / COLS) - 1;
 
-  // ── Section list (suggestions + results) ───────────────
+  // ── Section list ───────────────
   type Section =
-    | { type: "suggestions" }
+    | { type: "category_suggestions"; items: any[] }
     | { type: "products_header" }
     | { type: "product_row"; items: ListingItem[] }
     | { type: "loading" }
@@ -191,43 +184,40 @@ export default function ShopScreen() {
     | { type: "footer" };
 
   const listData: Section[] = useMemo(() => {
-    if (!debouncedQuery.trim() && !selectedCategorySlug) return [];
+    if (!debouncedQuery.trim() && !selectedCategorySlug && !isFilterActive) {
+      return [];
+    }
 
     const rows: Section[] = [];
 
-    // Suggestions block
-    if (showSuggestions && !selectedCategorySlug) {
-      if (suggestionsLoading || hasSuggestions) {
-        rows.push({ type: "suggestions" });
-      }
+    // Related category chips at the top if matching categories found
+    if (categorySuggestions.length > 0 && !selectedCategorySlug) {
+      rows.push({ type: "category_suggestions", items: categorySuggestions });
     }
 
     // Results header
-    if (!showSuggestions || selectedCategorySlug) {
-      rows.push({ type: "products_header" });
+    rows.push({ type: "products_header" });
 
-      if (listingLoading) {
-        rows.push({ type: "loading" });
-      } else if (products.length === 0) {
-        rows.push({ type: "empty" });
-      } else {
-        for (let i = 0; i < products.length; i += COLS) {
-          rows.push({
-            type: "product_row",
-            items: products.slice(i, i + COLS),
-          });
-        }
-        if (loadingMore) rows.push({ type: "footer" });
+    if (listingLoading) {
+      rows.push({ type: "loading" });
+    } else if (products.length === 0) {
+      rows.push({ type: "empty" });
+    } else {
+      for (let i = 0; i < products.length; i += COLS) {
+        rows.push({
+          type: "product_row",
+          items: products.slice(i, i + COLS),
+        });
       }
+      if (loadingMore) rows.push({ type: "footer" });
     }
 
     return rows;
   }, [
     debouncedQuery,
     selectedCategorySlug,
-    showSuggestions,
-    suggestionsLoading,
-    hasSuggestions,
+    isFilterActive,
+    categorySuggestions,
     listingLoading,
     products,
     loadingMore,
@@ -238,110 +228,79 @@ export default function ShopScreen() {
 
   // ── Row Renderer ──────────────────────────────
   const renderRow = ({ item }: { item: Section }) => {
-    if (item.type === "suggestions") {
+    if (item.type === "category_suggestions") {
+      const items = (item as any).items || [];
+      if (items.length === 0) return null;
+
       return (
-        <View style={{ paddingBottom: spacing(4) }}>
-          {suggestionsLoading ? (
-            <View
-              style={{ paddingVertical: spacing(16), alignItems: "center" }}
-            >
-              <ActivityIndicator size="small" color={colors.textSecondary} />
-            </View>
-          ) : (
-            <>
-              {/* ── Categories first (e-commerce style rows) ── */}
-              {categorySuggestions.length > 0 && (
-                <View style={{ marginBottom: spacing(8) }}>
-                  {categorySuggestions.map((cat: any, i: number) => (
-                    <TouchableOpacity
-                      key={i}
-                      activeOpacity={0.75}
-                      onPress={() => {
-                        setSelectedCategorySlug(cat.product_url);
-                        setSelectedCategoryName(cat.product_name);
-                        setQuery("");
-                        setShowSuggestions(false);
-                        inputRef.current?.blur();
-                      }}
-                      style={[
-                        styles.categoryRow,
-                        {
-                          paddingVertical: spacing(11),
-                        },
-                      ]}
-                    >
-                      {/* Category image */}
-                      <View
-                        style={{
-                          width: spacing(40),
-                          height: spacing(40),
-                          borderRadius: spacing(10),
-                          backgroundColor: colors.backgroundgray,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <Image
-                          source={{ uri: cat.image_path }}
-                          style={{ width: "80%", height: "80%" }}
-                          resizeMode="contain"
-                        />
-                      </View>
-
-                      {/* Name */}
-                      <Text
-                        numberOfLines={1}
-                        style={{
-                          flex: 1,
-                          fontFamily: "Poppins_500Medium",
-                          fontSize: font(13),
-                          color: colors.text,
-                        }}
-                      >
-                        {cat.product_name}
-                      </Text>
-
-                      {/* Arrow icon */}
-                      <ArrowUpRight
-                        size={spacing(16)}
-                        color={colors.textTertiary}
-                      />
-                    </TouchableOpacity>
-                  ))}
-                  {/* Full width divider after last category */}
-                  <View
+        <View style={{ marginBottom: spacing(10) }}>
+          <Text
+            style={{
+              fontFamily: "Poppins_500Medium",
+              fontSize: font(12),
+              color: colors.textSecondary,
+              marginBottom: spacing(6),
+            }}
+          >
+            Related Categories:
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              gap: spacing(8),
+              paddingVertical: spacing(2),
+            }}
+          >
+            {items.map((cat: any, i: number) => (
+              <TouchableOpacity
+                key={i}
+                activeOpacity={0.75}
+                onPress={() => {
+                  setSelectedCategorySlug(cat.product_url);
+                  setSelectedCategoryName(cat.product_name);
+                  setQuery("");
+                  inputRef.current?.blur();
+                }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: spacing(12),
+                  paddingVertical: spacing(7),
+                  borderRadius: spacing(20),
+                  backgroundColor: colors.surface,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  gap: spacing(6),
+                }}
+              >
+                {cat.image_path ? (
+                  <Image
+                    source={{ uri: cat.image_path }}
                     style={{
-                      height: 1,
-                      backgroundColor: colors.border,
-                      marginHorizontal: -spacing(12),
-                      marginTop: spacing(4),
+                      width: spacing(18),
+                      height: spacing(18),
+                      borderRadius: spacing(4),
                     }}
+                    resizeMode="contain"
                   />
-                </View>
-              )}
-
-              {/* ── Products below categories (3-column grid) ── */}
-              {productSuggestions.length > 0 && (
-                <View style={{ paddingTop: spacing(8) }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      flexWrap: "wrap",
-                      columnGap: H_GAP,
-                      rowGap: V_GAP,
-                    }}
-                  >
-                    {productSuggestions.map((s: any, i: number) => (
-                      <View key={s.id || i} style={{ width: CARD_WIDTH }}>
-                        <ListingGridCard item={s} />
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </>
-          )}
+                ) : null}
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12),
+                    color: colors.text,
+                  }}
+                >
+                  {cat.product_name}
+                </Text>
+                <ArrowUpRight
+                  size={spacing(12)}
+                  color={colors.textTertiary}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       );
     }
@@ -491,10 +450,10 @@ export default function ShopScreen() {
               autoFocus={!initialCategorySlug && !initialQuery}
               onChangeText={(t) => {
                 setQuery(t);
-                setShowSuggestions(true);
               }}
-              onFocus={() => setShowSuggestions(true)}
-              onSubmitEditing={() => setShowSuggestions(false)}
+              onSubmitEditing={() => {
+                inputRef.current?.blur();
+              }}
               returnKeyType="search"
               placeholder="Search products, categories..."
               placeholderTextColor={colors.textTertiary}
@@ -512,7 +471,8 @@ export default function ShopScreen() {
               <TouchableOpacity
                 onPress={() => {
                   setQuery("");
-                  setShowSuggestions(false);
+                  setSelectedCategorySlug(null);
+                  setSelectedCategoryName(null);
                 }}
                 activeOpacity={0.7}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -524,10 +484,9 @@ export default function ShopScreen() {
         </View>
 
         {/* ── Toolbar ── */}
-        {!showSuggestions &&
-          (debouncedQuery.trim().length > 0 ||
-            !!selectedCategorySlug ||
-            isFilterActive) && (
+        {(debouncedQuery.trim().length > 0 ||
+          !!selectedCategorySlug ||
+          isFilterActive) && (
             <View
               style={[
                 styles.toolbar,

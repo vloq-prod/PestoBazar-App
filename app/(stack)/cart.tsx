@@ -201,12 +201,6 @@ export default function CartScreen() {
 
   const handleIncrease = (item: CartItemTypes) => {
     if (item.qty >= item.stock) {
-      showToast(
-        item.stock <= 0
-          ? "This item is out of stock"
-          : `Only ${item.stock} item${item.stock > 1 ? "s" : ""} available in stock`,
-        "warning"
-      );
       return;
     }
 
@@ -267,12 +261,6 @@ export default function CartScreen() {
   const handleChangeQty = (item: CartItemTypes, qty: number) => {
     let finalQty = qty;
     if (finalQty > item.stock) {
-      showToast(
-        item.stock <= 0
-          ? "This item is out of stock"
-          : `Only ${item.stock} item${item.stock > 1 ? "s" : ""} available in stock`,
-        "warning"
-      );
       finalQty = Math.max(1, item.stock);
     }
 
@@ -531,16 +519,26 @@ export default function CartScreen() {
                     <CreditCard size={20} color="#006FEE" />
                   </View>
 
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(12.5),
-                      color: colors.text,
-                      flex: 1,
-                    }}
-                  >
-                    View payment offers
-                  </Text>
+                  <View style={{ flex: 1, gap: 1 }}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12.5),
+                        color: colors.text,
+                      }}
+                    >
+                      Apply coupon & save extra
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(10.5),
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      View available coupons
+                    </Text>
+                  </View>
 
                   <ChevronRight size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
