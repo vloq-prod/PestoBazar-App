@@ -83,6 +83,7 @@ import {
 import DescriptionAccordion from "../../../src/components/productDetails/DescriptionAccordion";
 import ReviewSection from "../../../src/components/productDetails/ReviewSection";
 import ProductDescription from "../../../src/components/productDetails/ProductDescription";
+import WishlistButton from "../../../src/components/comman/WishlistButton";
 import DeliveryInfoCard from "../../../src/components/productDetails/DeliveryInfoCard";
 import CustomerAlsoBoughtProduct from "../../../src/components/productDetails/CustomerAlsoBoughtProduct";
 import ProductCouponCard from "../../../src/components/productDetails/ProductCouponCard";
@@ -488,7 +489,7 @@ const ProductDetails = () => {
   const mediaList = React.useMemo(() => {
     return productImages.map((item) => ({
       type: item.asset_type,
-      image: item.s3_image_path || null,
+      image: item.image_path || item.s3_image_path || null,
       video: item.video_path || null,
     }));
   }, [productImages]);
@@ -908,6 +909,12 @@ const ProductDetails = () => {
             >
               <Share size={22} color={colors.borderblack} />
             </TouchableOpacity>
+            <WishlistButton
+              productId={realProductId}
+              size={20}
+              containerSize={40}
+              style={[styles.iconBtn, { borderColor: colors.border, elevation: 0, shadowOpacity: 0 }]}
+            />
           </View>
         </View>
       </Animated.View>

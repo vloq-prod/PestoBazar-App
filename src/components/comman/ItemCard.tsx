@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 import { trackAddToCart } from "../../lib/analytics";
+import WishlistButton from "./WishlistButton";
 
 const formatPrice = (price: string | number) => {
   const num = Number(price);
@@ -179,6 +180,7 @@ export default function ItemCard({
             borderTopLeftRadius: spacing(9),
             borderTopRightRadius: spacing(9),
             overflow: "hidden",
+            position: "relative",
           }}
         >
           <Image
@@ -188,6 +190,17 @@ export default function ItemCard({
               height: "85%",
             }}
             contentFit="contain"
+          />
+
+          {/* Wishlist Button (Top Right) */}
+          <WishlistButton
+            productId={item.id}
+            size={spacing(17)}
+            style={{
+              position: "absolute",
+              top: spacing(7),
+              right: spacing(7),
+            }}
           />
         </View>
 

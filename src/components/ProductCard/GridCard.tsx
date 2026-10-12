@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 import { trackAddToCart } from "../../lib/analytics";
+import WishlistButton from "../comman/WishlistButton";
 
 interface Props {
   item: ListingItem;
@@ -136,6 +137,7 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
             borderTopLeftRadius: spacing(9),
             borderTopRightRadius: spacing(9),
             overflow: "hidden",
+            position: "relative",
           }}
         >
           <Image
@@ -145,6 +147,17 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
               height: "85%",
             }}
             contentFit="contain"
+          />
+
+          {/* Wishlist Button (Top Right) */}
+          <WishlistButton
+            productId={item.id}
+            size={spacing(17)}
+            style={{
+              position: "absolute",
+              top: spacing(7),
+              right: spacing(7),
+            }}
           />
         </View>
 

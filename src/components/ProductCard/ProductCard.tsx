@@ -9,6 +9,7 @@ import ProductTimer from "./ProductTimer";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { resolveImages } from "../../utils/productHelpers";
+import WishlistButton from "../comman/WishlistButton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, cardWidth, onPress }) =
         },
       ]}
     >
-      <ProductMedia images={images} cardWidth={cardWidth} />
+      <View style={{ position: "relative" }}>
+        <ProductMedia images={images} cardWidth={cardWidth} />
+        <WishlistButton
+          productId={item.id}
+          size={spacing(18)}
+          style={{
+            position: "absolute",
+            top: spacing(10),
+            right: spacing(10),
+          }}
+        />
+      </View>
 
       <View
         style={[

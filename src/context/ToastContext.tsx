@@ -32,11 +32,28 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const showToast = useCallback((message: string, type: ToastType = "info") => {
+  const showToast = useCallback((message: any, type: ToastType = "info") => {
+    let cleanMessage = "";
+    if (typeof message === "string") {
+      cleanMessage = message;
+    } else if (message?.message && typeof message.message === "string") {
+      cleanMessage = message.message;
+    } else if (message && typeof message === "object") {
+      try {
+        cleanMessage = JSON.stringify(message);
+      } catch {
+        cleanMessage = String(message);
+      }
+    } else {
+      cleanMessage = String(message ?? "");
+    }
+
+    if (!cleanMessage.trim()) return;
+
     const id = `toast-${Date.now()}-${counterRef.current++}`;
 
     setToasts((prev) => {
-      const updated = [...prev, { id, message, type }];
+      const updated = [...prev, { id, message: cleanMessage, type }];
       // keep max 3, drop oldest
       return updated.length > MAX_TOASTS
         ? updated.slice(updated.length - MAX_TOASTS)

@@ -36,6 +36,7 @@ const mapCustomProductToListingItem = (
   item: CustomSectionProduct,
 ): ListingItem => {
   const variationId = Number(item.product_variation_id || item.id || item.product_id);
+  const image = item.image_path || item.s3_image_path || "";
   return {
     id: variationId,
     url: item.url,
@@ -44,7 +45,7 @@ const mapCustomProductToListingItem = (
     size: item.size || "",
     unit: item.unit || "",
     product_name: item.product_name,
-    image_path: item.s3_image_path,
+    image_path: image,
     overview: item.overview || null,
     is_new: item.is_new,
     is_best_selling: item.is_best_selling,

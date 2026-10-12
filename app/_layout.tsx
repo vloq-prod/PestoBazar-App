@@ -15,6 +15,7 @@ import { useDeliveryStore } from "../src/store/deliveryStore";
 import { ToastProvider } from "../src/context/ToastContext";
 import { ToastContainer } from "../src/components/Toast/ToastContainer";
 import { useCartQuantitySync } from "../src/hooks/cartHooks";
+import { useWishlistSync } from "../src/hooks/wishlistHooks";
 import { NotificationProvider } from "../src/providers/NotificationProvider";
 import { AppUpdateProvider } from "../src/providers/AppUpdateProvider";
 import { OfflineBanner } from "../src/components/common/OfflineBanner";
@@ -130,8 +131,13 @@ const CartQuantitySyncProvider = ({ children }: { children: React.ReactNode }) =
     visitor_id: visitorId || "",
     user_id: String(userId ?? 0),
   });
+  useWishlistSync({
+    visitor_id: visitorId || "",
+    user_id: userId ? String(userId) : "",
+  });
   return <>{children}</>;
 };
+
 
 
 

@@ -31,24 +31,23 @@ export const useAddToCart = () => {
   const mutation = useMutation({
     mutationFn: async (payload: AddToCartRequest) => {
       const data = await addToCart(payload);
-      if (data.status === 0) {
+      if (data.status === 0 || (data as any).status === "0") {
         throw new Error(data.message || "Failed to update cart");
       }
       return data;
     },
 
     onError: (error: any) => {
-      showToast(error?.message || "Failed to update cart", "error");
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to update cart";
+      const isWarning =
+        /stock|maximum|minimum|limit|allowed|only \d+|reach|moq/i.test(msg);
+      showToast(msg, isWarning ? "warning" : "error");
     },
 
     onSuccess: (data, variables) => {
-      const toastMsg =
-        data?.message ||
-        (variables.qty > 0
-          ? "Item updated in cart"
-          : "Item removed from cart");
-      showToast(toastMsg, "success");
-
       if (variables.product_id !== undefined && variables.qty !== undefined) {
         useCartStore.getState().updateQuantity(variables.product_id, variables.qty);
       }
@@ -273,7 +272,11 @@ export const useRemoveCartItem = () => {
     },
 
     onError: (error: any) => {
-      showToast(error?.message || "Failed to remove item", "error");
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to remove item";
+      showToast(msg, "error");
     },
   });
 };

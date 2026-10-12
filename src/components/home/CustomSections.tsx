@@ -188,7 +188,7 @@ const CustomSections = () => {
             product_name: p.product_name,
             mrp: String(p.mrp),
             selling_price: String(p.selling_price),
-            s3_image_path: p.s3_image_path,
+            s3_image_path: p.s3_image_path || p.image_path,
             avg_rating: String(p.avg_rating || 0),
             slug: slug,
             product_slug: slug || p.url,

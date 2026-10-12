@@ -17,6 +17,7 @@ import {
   Tag,
 } from "lucide-react-native";
 import { ListingItem } from "../../types/shop.types";
+import WishlistButton from "./WishlistButton";
 
 interface Props {
   item: ListingItem;
@@ -211,6 +212,17 @@ const ShopItemCard = ({
               </Text>
             </View>
           )}
+
+          {/* Wishlist Button (Top Right) */}
+          <WishlistButton
+            productId={item.id}
+            size={17}
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+            }}
+          />
         </View>
 
         {/* name and overview */}
@@ -335,6 +347,17 @@ const ShopItemCard = ({
             contentFit="cover"
           />
         </View>
+
+        {/* Wishlist Button (Top Right of image) */}
+        <WishlistButton
+          productId={item.id}
+          size={16}
+          style={{
+            position: "absolute",
+            top: 7,
+            right: 7,
+          }}
+        />
 
         {/* Rating badge */}
         {rating > 0 && (

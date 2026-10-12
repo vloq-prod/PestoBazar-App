@@ -13,7 +13,8 @@ export interface CustomSectionProduct {
   size: string | null;
   unit: string | null;
   product_name: string;
-  s3_image_path: string;  // was image_path — API now returns s3_image_path
+  image_path?: string;
+  s3_image_path?: string;
   is_new: string;
   is_best_selling: string;
   avg_rating: number;

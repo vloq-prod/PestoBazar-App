@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Pestobazaar",
   owner: "vloq",
   slug: "pestobazaar",
-  version: "1.1.2",
+  version: "1.2.2",
   orientation: "default",
 
   // @ts-ignore
