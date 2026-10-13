@@ -487,11 +487,15 @@ const ProductDetails = () => {
       : variationmaster?.[0]?.id;
 
   const mediaList = React.useMemo(() => {
-    return productImages.map((item) => ({
-      type: item.asset_type,
-      image: item.image_path || item.s3_image_path || null,
-      video: item.video_path || null,
-    }));
+    return productImages.map((item) => {
+      const isVideo = item.asset_type === "video";
+
+      return {
+        type: isVideo ? ("video" as const) : ("image" as const),
+        image: item.s3_image_path || null,
+        video: isVideo ? item.video_path || null : null,
+      };
+    });
   }, [productImages]);
 
   const handleBack = useCallback(() => {

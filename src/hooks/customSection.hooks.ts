@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CustomSectionProductsRequest } from "../types/customSection.types";
 import {
+  getCustomCategorySections,
   getCustomSectionProducts,
   getCustomSections,
 } from "../api/customSection.api";
@@ -19,5 +20,12 @@ export const useCustomSections = () => {
   return useQuery({
     queryKey: ["custom-sections"],
     queryFn: getCustomSections,
+  });
+};
+
+export const useCustomCategorySections = () => {
+  return useQuery({
+    queryKey: ["custom-category-sections"],
+    queryFn: getCustomCategorySections,
   });
 };

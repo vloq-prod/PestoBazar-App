@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -55,9 +55,12 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  MessageCircle,
 } from "lucide-react-native";
 import { getStatusConfig } from "../../../src/components/order/OrderCard";
 import Footer from "../../../src/components/home/Footer";
+
+const SUPPORT_NUMBER = "919929929980";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -405,6 +408,36 @@ const OrderDetails = () => {
       },
     });
   };
+
+  const chatWithExpert = useCallback(() => {
+    const rawInvoiceNo = orderData?.order?.invoice_no;
+    const rawOrderNo = orderData?.order?.order_no || id || "";
+
+    const invoiceNo = rawInvoiceNo
+      ? String(rawInvoiceNo).startsWith("#")
+        ? rawInvoiceNo
+        : `#${rawInvoiceNo}`
+      : null;
+
+    const orderNo = rawOrderNo
+      ? String(rawOrderNo).startsWith("#")
+        ? rawOrderNo
+        : `#${rawOrderNo}`
+      : null;
+
+    let message = "Hi, I need assistance with my order.";
+    if (invoiceNo && orderNo) {
+      message = `Hi, I need assistance with my order ${orderNo} (Invoice: ${invoiceNo}).`;
+    } else if (invoiceNo) {
+      message = `Hi, I need assistance regarding Invoice ${invoiceNo}.`;
+    } else if (orderNo) {
+      message = `Hi, I need assistance with my order ${orderNo}.`;
+    }
+
+    Linking.openURL(
+      `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent(message)}`,
+    );
+  }, [orderData?.order?.invoice_no, orderData?.order?.order_no, id]);
 
   if (!id) {
     return (
@@ -1142,6 +1175,42 @@ const OrderDetails = () => {
                   </View>
                 </TouchableOpacity>
               )}
+
+              <TouchableOpacity
+                style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
+                activeOpacity={0.75}
+                onPress={chatWithExpert}
+              >
+                <View
+                  style={{
+                    padding: 8,
+                    backgroundColor: colors.backgroundgray,
+                    borderRadius: 8,
+                  }}
+                >
+                  <MessageCircle size={18} color={colors.text} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(13),
+                      color: colors.text,
+                    }}
+                  >
+                    Chat with Expert
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(10.5),
+                      color: colors.textTertiary,
+                    }}
+                  >
+                    Instant WhatsApp support for your order
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={{ flexDirection: "row", alignItems: "center", gap: 12 }}

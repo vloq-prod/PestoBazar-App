@@ -17,6 +17,8 @@ import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
 
 import SeeAllProductsButton from "../comman/SeeAllProductsButton";
+import { CategorySectionBlock } from "./CategoryCardSection";
+import { CustomSection } from "../../types/customSection.types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -174,73 +176,88 @@ const CustomSections = () => {
 
   return (
     <View style={{ gap: 24, marginVertical: 10 }}>
-      {sections.map((section) => {
-        if (!section.products || section.products.length === 0) return null;
+      {sections.map((section: CustomSection) => {
+        const isCategory =
+          section.type === "category" ||
+          (Array.isArray(section.categories) && section.categories.length > 0);
 
-        // Map section products to ProductItem format expected by ItemCard
-        const mappedProducts = section.products.map((p) => {
-          const productId = Number(p.product_variation_id || p.id || p.product_id);
-          const slug = (p.url ? p.url.split("/").pop() : "") || "";
-          return {
-            id: productId,
-            product_id: productId,
-            product_variation_id: Number(p.product_variation_id || p.id),
-            product_name: p.product_name,
-            mrp: String(p.mrp),
-            selling_price: String(p.selling_price),
-            s3_image_path: p.s3_image_path || p.image_path,
-            avg_rating: String(p.avg_rating || 0),
-            slug: slug,
-            product_slug: slug || p.url,
-            overview: p.overview || "",
-            url: p.url,
-            total_reviews: 0,
-          };
-        });
+        if (isCategory && section.categories && section.categories.length > 0) {
+          return (
+            <CategorySectionBlock
+              key={`cat-sec-${section.section_id}`}
+              section={section}
+            />
+          );
+        }
 
-        // Slice maximum 6 products per section (3 columns x 2 rows)
-        const displayProducts = mappedProducts.slice(0, 6);
-
-        const handleViewAll = () => {
-          router.push({
-            pathname: "/(stack)/viewall/custom/[id]",
-            params: {
-              id: section.section_id,
-              title: section.section_title,
-            },
+        if (section.products && section.products.length > 0) {
+          // Map section products to ProductItem format expected by ItemCard
+          const mappedProducts = section.products.map((p) => {
+            const productId = Number(p.product_variation_id || p.id || p.product_id);
+            const slug = (p.url ? p.url.split("/").pop() : "") || "";
+            return {
+              id: productId,
+              product_id: productId,
+              product_variation_id: Number(p.product_variation_id || p.id),
+              product_name: p.product_name,
+              mrp: String(p.mrp),
+              selling_price: String(p.selling_price),
+              s3_image_path: p.s3_image_path || p.image_path,
+              avg_rating: String(p.avg_rating || 0),
+              slug: slug,
+              product_slug: slug || p.url,
+              overview: p.overview || "",
+              url: p.url,
+              total_reviews: 0,
+            };
           });
-        };
 
-        return (
-          <View key={section.section_id} style={{ gap: 12 }}>
-            <SectionHeader
-              title={section.section_title}
-              description={section.section_description}
-            />
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                paddingHorizontal: PADDING,
-                columnGap: GAP,
-                rowGap: 12,
-              }}
-            >
-              {displayProducts.map((product) => (
-                <View key={product.id} style={{ width: ITEM_WIDTH }}>
-                  <ItemCard item={product as any} />
-                </View>
-              ))}
+          // Slice maximum 6 products per section (3 columns x 2 rows)
+          const displayProducts = mappedProducts.slice(0, 6);
+
+          const handleViewAll = () => {
+            router.push({
+              pathname: "/(stack)/viewall/custom/[id]",
+              params: {
+                id: section.section_id,
+                title: section.section_title,
+              },
+            });
+          };
+
+          return (
+            <View key={`prod-sec-${section.section_id}`} style={{ gap: 12 }}>
+              <SectionHeader
+                title={section.section_title}
+                description={section.section_description}
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  paddingHorizontal: PADDING,
+                  columnGap: GAP,
+                  rowGap: 12,
+                }}
+              >
+                {displayProducts.map((product) => (
+                  <View key={product.id} style={{ width: ITEM_WIDTH }}>
+                    <ItemCard item={product as any} />
+                  </View>
+                ))}
+              </View>
+
+              {/* Zepto style "See all products ▶" button with 3 product avatars */}
+              <SeeAllProductsButton
+                products={section.products}
+                onPress={handleViewAll}
+                style={{ marginTop: 4 }}
+              />
             </View>
+          );
+        }
 
-            {/* Zepto style "See all products ▶" button with 3 product avatars */}
-            <SeeAllProductsButton
-              products={section.products}
-              onPress={handleViewAll}
-              style={{ marginTop: 4 }}
-            />
-          </View>
-        );
+        return null;
       })}
     </View>
   );

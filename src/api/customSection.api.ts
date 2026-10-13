@@ -1,5 +1,10 @@
 import { apiClient } from "../lib/apiClient";
-import { CustomSectionProductsRequest, CustomSectionProductsResponse, GetCustomSectionsResponse } from "../types/customSection.types";
+import {
+  CustomSectionProductsRequest,
+  CustomSectionProductsResponse,
+  GetCustomSectionsResponse,
+  GetCustomCategorySectionsResponse,
+} from "../types/customSection.types";
 
 
 
@@ -20,6 +25,14 @@ export const getCustomSectionProducts = async ({
 export const getCustomSections = async () => {
   const { data } = await apiClient.get<GetCustomSectionsResponse>(
     "/app-api/v1/get-custom-section",
+  );
+
+  return data;
+};
+
+export const getCustomCategorySections = async () => {
+  const { data } = await apiClient.get<GetCustomCategorySectionsResponse>(
+    "/app-api/v1/get-custom-category-section",
   );
 
   return data;

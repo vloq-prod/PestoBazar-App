@@ -29,7 +29,6 @@ import {
   X,
   SlidersHorizontal,
   ArrowDownUp,
-  Tag,
 } from "lucide-react-native";
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
@@ -39,7 +38,7 @@ import { useCartCount } from "../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { ListingItem } from "../../src/types/shop.types";
 import ListingGridCard from "../../src/components/ProductCard/GridCard";
-import SearchItem from "../../src/components/search/SearchItem";
+import { ItemCardSkeleton } from "../../src/components/comman/ItemCard";
 import FilterBottomSheet, {
   FilterBottomSheetRef,
 } from "../../src/modals/shop/FilterBottomSheet";
@@ -98,6 +97,9 @@ export default function ShopScreen() {
   const initialCategorySlug = Array.isArray(category_slug) ? category_slug[0] : (category_slug ?? null);
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const [isSearchSubmitted, setIsSearchSubmitted] = useState<boolean>(
+    Boolean(initialQuery)
+  );
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<
     string | null
   >(initialCategorySlug);
@@ -119,7 +121,8 @@ export default function ShopScreen() {
   }, [query]);
 
   // ── Category Suggestions (for quick filter chips) ──
-  const { data: suggestionsData } = useSearchSuggestions(debouncedQuery);
+  const { data: suggestionsData, isLoading: suggestionsLoading } =
+    useSearchSuggestions(debouncedQuery);
 
   const categorySuggestions = useMemo(() => {
     const results = suggestionsData?.data?.result ?? [];
@@ -164,6 +167,11 @@ export default function ShopScreen() {
     filter_to_price: priceFilter.to,
   });
 
+  const isDebouncing = query.trim().length > 0 && query !== debouncedQuery;
+  const isSearchLoading =
+    query.trim().length > 0 &&
+    (isDebouncing || listingLoading || suggestionsLoading);
+
   // 3 cards per row
   const COLS = 3;
   const H_PAD = spacing(12) * 2;
@@ -184,23 +192,34 @@ export default function ShopScreen() {
     | { type: "footer" };
 
   const listData: Section[] = useMemo(() => {
-    if (!debouncedQuery.trim() && !selectedCategorySlug && !isFilterActive) {
+    if (
+      !debouncedQuery.trim() &&
+      !selectedCategorySlug &&
+      !isFilterActive &&
+      !query.trim()
+    ) {
       return [];
     }
 
     const rows: Section[] = [];
 
-    // Related category chips at the top if matching categories found
-    if (categorySuggestions.length > 0 && !selectedCategorySlug) {
+    // Show center loading while searching and fetching results
+    if (isSearchLoading || listingLoading) {
+      rows.push({ type: "loading" });
+      return rows;
+    }
+
+    // Related category chips at the top if matching categories found (only while typing, hidden once submitted)
+    if (!isSearchSubmitted && categorySuggestions.length > 0 && !selectedCategorySlug) {
       rows.push({ type: "category_suggestions", items: categorySuggestions });
     }
 
     // Results header
-    rows.push({ type: "products_header" });
+    if (isSearchSubmitted || !categorySuggestions.length || selectedCategorySlug) {
+      rows.push({ type: "products_header" });
+    }
 
-    if (listingLoading) {
-      rows.push({ type: "loading" });
-    } else if (products.length === 0) {
+    if (products.length === 0) {
       rows.push({ type: "empty" });
     } else {
       for (let i = 0; i < products.length; i += COLS) {
@@ -215,6 +234,9 @@ export default function ShopScreen() {
     return rows;
   }, [
     debouncedQuery,
+    query,
+    isSearchLoading,
+    isSearchSubmitted,
     selectedCategorySlug,
     isFilterActive,
     categorySuggestions,
@@ -260,6 +282,8 @@ export default function ShopScreen() {
                   setSelectedCategorySlug(cat.product_url);
                   setSelectedCategoryName(cat.product_name);
                   setQuery("");
+                  setDebouncedQuery("");
+                  setIsSearchSubmitted(false);
                   inputRef.current?.blur();
                 }}
                 style={{
@@ -306,6 +330,10 @@ export default function ShopScreen() {
     }
 
     if (item.type === "products_header") {
+      if (!isSearchSubmitted && categorySuggestions.length > 0 && !selectedCategorySlug) {
+        return null;
+      }
+
       let headerText = "Products";
       if (selectedCategorySlug) {
         const formattedSlug = selectedCategorySlug
@@ -313,8 +341,6 @@ export default function ShopScreen() {
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(" ");
         headerText = `Category: '${selectedCategoryName || formattedSlug}'`;
-      } else if (debouncedQuery) {
-        headerText = `Search by text: '${debouncedQuery}'`;
       }
 
       return (
@@ -337,23 +363,52 @@ export default function ShopScreen() {
 
     if (item.type === "loading") {
       return (
-        <View style={styles.center}>
-          <ActivityIndicator size="small" color={colors.textSecondary} />
+        <View style={{ paddingTop: spacing(4) }}>
+          {Array.from({ length: 3 }).map((_, rowIdx) => (
+            <View
+              key={`skeleton-row-${rowIdx}`}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: V_GAP,
+              }}
+            >
+              {Array.from({ length: COLS }).map((_, colIdx) => (
+                <View
+                  key={`skeleton-col-${colIdx}`}
+                  style={{ width: CARD_WIDTH }}
+                >
+                  <ItemCardSkeleton width={CARD_WIDTH} />
+                </View>
+              ))}
+            </View>
+          ))}
         </View>
       );
     }
 
     if (item.type === "empty") {
       return (
-        <View style={styles.center}>
+        <View style={styles.centerLoadingContainer}>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontFamily: "Poppins_600SemiBold",
+              fontSize: font(15),
+              marginBottom: 4,
+            }}
+          >
+            No products found
+          </Text>
           <Text
             style={{
               color: colors.textTertiary,
               fontFamily: "Poppins_400Regular",
-              fontSize: font(13),
+              fontSize: font(12),
+              textAlign: "center",
             }}
           >
-            No products found
+            Try searching with different keywords
           </Text>
         </View>
       );
@@ -448,10 +503,18 @@ export default function ShopScreen() {
               ref={inputRef}
               value={query}
               autoFocus={!initialCategorySlug && !initialQuery}
+              onFocus={() => {
+                setIsSearchSubmitted(false);
+              }}
               onChangeText={(t) => {
                 setQuery(t);
+                setIsSearchSubmitted(false);
               }}
               onSubmitEditing={() => {
+                if (query.trim().length > 0) {
+                  setDebouncedQuery(query.trim());
+                  setIsSearchSubmitted(true);
+                }
                 inputRef.current?.blur();
               }}
               returnKeyType="search"
@@ -471,6 +534,8 @@ export default function ShopScreen() {
               <TouchableOpacity
                 onPress={() => {
                   setQuery("");
+                  setDebouncedQuery("");
+                  setIsSearchSubmitted(false);
                   setSelectedCategorySlug(null);
                   setSelectedCategoryName(null);
                 }}
@@ -483,10 +548,9 @@ export default function ShopScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Toolbar ── */}
-        {(debouncedQuery.trim().length > 0 ||
-          !!selectedCategorySlug ||
-          isFilterActive) && (
+        {/* ── Toolbar (Shown on category browse, active filter, or submitted search) ── */}
+        {((!query.trim() && (!!selectedCategorySlug || isFilterActive)) ||
+          (isSearchSubmitted && query.trim().length > 0)) && (
             <View
               style={[
                 styles.toolbar,
@@ -709,5 +773,12 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     includeFontPadding: false,
     textAlign: "center",
+  },
+  centerLoadingContainer: {
+    flex: 1,
+    minHeight: 340,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
   },
 });

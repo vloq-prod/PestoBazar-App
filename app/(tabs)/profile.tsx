@@ -442,7 +442,7 @@ export default function ProfileScreen() {
                     onPressOverride = handleShare;
                   } else if (
                     !userId &&
-                    ["orders", "wishlist", "address"].includes(item.id)
+                    ["orders", "address"].includes(item.id)
                   ) {
                     onPressOverride = () => router.push("/login");
                   }

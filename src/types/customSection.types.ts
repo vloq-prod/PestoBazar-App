@@ -42,10 +42,15 @@ export interface CustomSection {
   section_description: string | null;
   sequence: number;
   selection_type: string;
+  type?: "category" | "product" | string;
+  timezone?: string;
   start_datetime: string;
-  end_datetime: string;
-  product_count: number;
-  products: CustomSectionProduct[];
+  end_datetime: string | null;
+  product_count?: number;
+  products?: CustomSectionProduct[];
+  category_count?: number;
+  categories?: CustomCategoryItem[];
+  parent_category_id?: number;
 }
 
 export interface CustomSectionProductsData {
@@ -64,4 +69,33 @@ export interface GetCustomSectionsResponse {
   status: boolean;
   message: string;
   data: CustomSection[];
+}
+
+export interface CustomCategoryItem {
+  id: number;
+  category_name: string;
+  slug: string;
+  parent_id: number;
+  category_image: string | null;
+  s3_image_path: string | null;
+  flip_image: string | null;
+  category_bg_color: string | null;
+}
+
+export interface CustomCategorySection {
+  section_id: number;
+  section_title: string;
+  section_description?: string | null;
+  parent_category_id: number;
+  sequence: number;
+  start_datetime: string;
+  end_datetime: string | null;
+  category_count: number;
+  categories: CustomCategoryItem[];
+}
+
+export interface GetCustomCategorySectionsResponse {
+  status: boolean;
+  message: string;
+  data: CustomCategorySection[];
 }

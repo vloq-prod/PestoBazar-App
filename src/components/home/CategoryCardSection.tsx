@@ -10,19 +10,19 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   interpolate,
   Easing,
   Extrapolation,
 } from "react-native-reanimated";
-import { useCategoryWithSubcategories } from "../../hooks/homeHooks";
+import { useCustomCategorySections } from "../../hooks/customSection.hooks";
 import { useTheme } from "../../theme";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
-  CategoryItem,
-  CategoryWithSubcategories,
-} from "../../types/home.types";
+  CustomCategoryItem,
+  CustomCategorySection,
+  CustomSection,
+} from "../../types/customSection.types";
 import { useResponsive } from "../../utils/useResponsive";
 import { ChevronRight } from "lucide-react-native";
 
@@ -30,25 +30,20 @@ const COLUMNS = 4;
 const H_PADDING = 16;
 const GAP = 10;
 
-const getVisibleSubcategories = (subcategories: CategoryItem[]) =>
-  subcategories.filter((item) => item.category_name).slice(0, 8);
-
 // ─── Sub-category Card Item ──────────────────────────────────
-interface SubCategoryCardProps {
-  item: CategoryItem;
+export interface SubCategoryCardProps {
+  item: CustomCategoryItem;
   index: number;
-  mainCategoryId: number;
-  mainCategoryName: string;
-  mainCategoryDisplayImage?: string | null;
+  sectionTitle: string;
+  parentCategoryId?: number;
   cardSize: number;
 }
 
-const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
+export const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   item,
   index,
-  mainCategoryId,
-  mainCategoryName,
-  mainCategoryDisplayImage,
+  sectionTitle,
+  parentCategoryId,
   cardSize,
 }) => {
   const { colors } = useTheme();
@@ -72,12 +67,19 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
   const bgColor = item.category_bg_color || getDynamicLightColor(index, item.id);
 
   const navigateToCategory = () => {
+    const targetParentId =
+      item.parent_id > 0
+        ? item.parent_id
+        : parentCategoryId && parentCategoryId > 0
+        ? parentCategoryId
+        : item.id;
+
     router.push({
       pathname: "/(stack)/category/[slug]",
       params: {
-        slug: String(mainCategoryId),
-        name: mainCategoryName,
-        image: mainCategoryDisplayImage ?? "",
+        slug: String(targetParentId),
+        name: sectionTitle || item.category_name,
+        image: item.category_image || item.s3_image_path || "",
         selectedSubCategoryId: String(item.id),
       },
     });
@@ -89,7 +91,7 @@ const SubCategoryCard: React.FC<SubCategoryCardProps> = ({
     }, 600);
   };
 
-  const imageUrl = item.category_image;
+  const imageUrl = item.category_image || item.s3_image_path;
   const flipImageUrl = item.flip_image;
   const hasFlipImage = !!flipImageUrl;
 
@@ -388,158 +390,129 @@ const SkeletonSection = ({
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────
-const CategoryCardSection = () => {
+// ─── Reusable Category Section Block ─────────────────────────
+export const CategorySectionBlock: React.FC<{
+  section: CustomSection | CustomCategorySection;
+}> = ({ section }) => {
   const { colors } = useTheme();
-  const { spacing, font } = useResponsive();
+  const { spacing } = useResponsive();
   const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
 
-  const { categoriesWithSubcategories, loading, error } =
-    useCategoryWithSubcategories(0);
-
-  // Precise item width
   const itemWidth =
     (screenWidth - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
   const cardSize = itemWidth;
 
-  const visibleCategories = categoriesWithSubcategories.filter(
-    (cat) => getVisibleSubcategories(cat.subcategories).length === 8,
-  );
+  const targetParentId =
+    ((section as any).parent_category_id && (section as any).parent_category_id > 0)
+      ? (section as any).parent_category_id
+      : (section.categories?.[0]?.parent_id && section.categories[0].parent_id > 0
+      ? section.categories[0].parent_id
+      : section.categories?.[0]?.id) ?? 0;
 
-  // ── Sub-category card renderer ─────────────────────────────
-  const createSubCategoryRenderer = (
-    mainCategoryId: number,
-    mainCategoryName: string,
-    mainCategoryDisplayImage?: string | null,
-  ) => {
-    return ({ item, index }: { item: CategoryItem; index: number }) => (
-      <SubCategoryCard
-        item={item}
-        index={index}
-        mainCategoryId={mainCategoryId}
-        mainCategoryName={mainCategoryName}
-        mainCategoryDisplayImage={mainCategoryDisplayImage}
-        cardSize={cardSize}
-      />
-    );
-  };
+  const displayImage =
+    section.categories?.[0]?.category_image ||
+    section.categories?.[0]?.s3_image_path ||
+    "";
 
-  // ── Loading ───────────────────────────────────────────────
-  if (loading) {
-    return (
-      <View style={{ paddingHorizontal: H_PADDING }}>
-        {Array.from({ length: 2 }).map((_, i) => (
-          <SkeletonSection
-            key={`sk-section-${i}`}
-            itemWidth={itemWidth}
-            cardSize={cardSize}
-            spacing={spacing}
-            bgColor={colors.backgroundSkeleton}
-          />
-        ))}
-      </View>
-    );
-  }
+  const categories =
+    section.categories?.filter((cat) => cat.category_name) || [];
 
-  // ── Error ─────────────────────────────────────────────────
-  if (error) {
-    return (
-      <View style={{ paddingHorizontal: H_PADDING }}>
-        <Text
-          style={{
-            fontSize: font(13),
-            color: colors.textSecondary,
-            fontFamily: "Poppins_400Regular",
-          }}
-        >
-          Categories could not be loaded.
-        </Text>
-      </View>
-    );
-  }
+  if (categories.length === 0) return null;
 
-  if (!visibleCategories.length) return null;
-
-  // ── Render ────────────────────────────────────────────────
   return (
-    <View style={{ paddingHorizontal: H_PADDING }}>
-      {visibleCategories.map((category: CategoryWithSubcategories) => (
-        <View key={category.mainCategoryId}>
-          <View
+    <View style={{ marginBottom: spacing(16) }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: H_PADDING,
+          marginBottom: spacing(12),
+        }}
+      >
+        <View style={{ flex: 1, paddingRight: 8 }}>
+          <Text
             style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: spacing(12),
+              fontSize: 16,
+              fontFamily: "Poppins_600SemiBold",
+              color: colors.text,
             }}
           >
+            {section.section_title}
+          </Text>
+          {!!section.section_description && (
             <Text
               style={{
-                fontSize: 16,
-                fontFamily: "Poppins_600SemiBold",
-                color: colors.text,
+                fontSize: 11,
+                lineHeight: 18,
+                color: colors.textSecondary,
+                fontFamily: "Poppins_400Regular",
               }}
             >
-              Shop by problem
+              {section.section_description}
             </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <TouchableOpacity
-                style={{ flexDirection: "row", alignItems: "center" }}
-                onPress={() =>
-                  router.push({
-                    pathname: "/(stack)/category/[slug]",
-                    params: {
-                      slug: String(category.mainCategoryId),
-                      name: category.mainCategoryName,
-                      image:
-                        category.mainCategory?.category_image ||
-                        category.mainCategory?.s3_image_path ||
-                        "",
-                    },
-                  })
-                }
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: colors.primary,
-                    fontFamily: "Poppins_500Medium",
-                  }}
-                >
-                  View All
-                </Text>
-                <ChevronRight size={14} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <FlatList
-            key={`cat-${category.mainCategoryId}`}
-            data={getVisibleSubcategories(category.subcategories)}
-            renderItem={createSubCategoryRenderer(
-              category.mainCategoryId,
-              category.mainCategoryName,
-              category.mainCategory?.category_image ||
-                category.mainCategory?.s3_image_path ||
-                "",
-            )}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={COLUMNS}
-            scrollEnabled={false}
-            columnWrapperStyle={{ gap: GAP }}
-            contentContainerStyle={{ paddingBottom: spacing(4) }}
-          />
+          )}
         </View>
-      ))}
+        <TouchableOpacity
+          style={{ flexDirection: "row", alignItems: "center" }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={() => {
+            if (targetParentId) {
+              router.push({
+                pathname: "/(stack)/category/[slug]",
+                params: {
+                  slug: String(targetParentId),
+                  name: section.section_title,
+                  image: displayImage,
+                },
+              });
+            } else {
+              router.push("/(stack)/shop");
+            }
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 13,
+              color: colors.primary,
+              fontFamily: "Poppins_500Medium",
+            }}
+          >
+            View All
+          </Text>
+          <ChevronRight size={14} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: H_PADDING,
+          columnGap: GAP,
+          rowGap: GAP,
+        }}
+      >
+        {categories.map((cat, index) => (
+          <View key={cat.id} style={{ width: cardSize }}>
+            <SubCategoryCard
+              item={cat}
+              index={index}
+              sectionTitle={section.section_title}
+              parentCategoryId={(section as any).parent_category_id}
+              cardSize={cardSize}
+            />
+          </View>
+        ))}
+      </View>
     </View>
   );
+};
+
+// ─── Main Component (Deprecated / Handled by CustomSections) ──
+const CategoryCardSection = () => {
+  return null;
 };
 
 export default CategoryCardSection;

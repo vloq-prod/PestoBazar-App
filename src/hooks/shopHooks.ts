@@ -64,7 +64,8 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
 
   return {
     products,
-    loading: query.isLoading,
+    loading: query.isLoading || (query.isFetching && !query.isFetchingNextPage),
+    isFetching: query.isFetching,
     totalCount,
     loadingMore: query.isFetchingNextPage,
     hasMore: query.hasNextPage,

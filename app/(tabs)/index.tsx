@@ -921,9 +921,8 @@ export default function HomeScreen() {
   const sections = useMemo(
     () => [
       { id: "sliding_banners", data: slidingbanners },
-      { id: "category_card_section" },
-      { id: "home_product", data: homeProducts },
       { id: "custom_sections" },
+      { id: "home_product", data: homeProducts },
       { id: "feature_banner_0", data: featureBanners?.[0] },
       ...(diyProducts && diyProducts.length > 0
         ? [{ id: "diy", data: diyProducts }]
