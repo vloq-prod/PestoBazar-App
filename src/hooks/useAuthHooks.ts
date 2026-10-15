@@ -1,7 +1,14 @@
 // src/hooks/useVisitor.ts
 
-import { useMutation } from "@tanstack/react-query";
-import { createVisitor, googleAuthCallback, sendOtpApi, verifyOtpApi, verifyUser } from "../api/auth.api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createVisitor,
+  getLoginBanners,
+  googleAuthCallback,
+  sendOtpApi,
+  verifyOtpApi,
+  verifyUser,
+} from "../api/auth.api";
 import {
   GoogleCallbackRequest,
   GoogleCallbackResponse,
@@ -35,8 +42,6 @@ export const useVerifyOtp = () => {
   });
 };
 
-
-
 export const useVerifyUser = () => {
   return useMutation({
     mutationFn: (payload: VerifyUserRequest) =>
@@ -49,5 +54,24 @@ export const useGoogleAuthCallback = () => {
     mutationFn: googleAuthCallback,
   });
 };
+
+export const useLoginBanners = () => {
+  const query = useQuery({
+    queryKey: ["login-banners"],
+    queryFn: getLoginBanners,
+    staleTime: 1000 * 60 * 30, // 30 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  return {
+    banners: query.data?.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
 
 

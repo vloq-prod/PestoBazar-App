@@ -28,6 +28,11 @@ type AppNavbarProps = {
   rightComponent?: React.ReactNode;
 };
 
+const formatBrandTitle = (text?: string): string => {
+  if (!text || typeof text !== "string") return text || "";
+  return text.replace(/\b[pP]esto\s*[bB]aza[ar]*\b/gi, "Pestobazaar");
+};
+
 const AppNavbar = ({
   title = "",
   subtitle,
@@ -46,6 +51,9 @@ const AppNavbar = ({
   const router = useRouter();
   const { colors, toggleTheme, isDark } = useTheme();
   const { spacing, font } = useResponsive();
+
+  const displayTitle = formatBrandTitle(title);
+  const displaySubtitle = formatBrandTitle(subtitle);
 
   const ICON_SIZE = spacing(20);
   const ICON_BOX = spacing(36);
@@ -110,7 +118,7 @@ const AppNavbar = ({
               gap: spacing(0.5),
             }}
           >
-            {!!title && (
+            {!!displayTitle && (
               <Text
                 style={{
                   fontSize: font(16),
@@ -119,11 +127,11 @@ const AppNavbar = ({
                   color: colors.text,
                 }}
               >
-                {title}
+                {displayTitle}
               </Text>
             )}
 
-            {!!subtitle ? (
+            {!!displaySubtitle ? (
               <Text
                 style={{
                   fontSize: font(10.5),
@@ -133,7 +141,7 @@ const AppNavbar = ({
                   color: colors.textSecondary ?? colors.text,
                 }}
               >
-                {subtitle}
+                {displaySubtitle}
               </Text>
             ) : count !== undefined && count !== null ? (
               <Text

@@ -356,11 +356,16 @@ export default function Checkout() {
                       });
                     },
                     onError: (err: any) => {
-                      console.error("❌ [Checkout] COD Order Error:", err);
-                      showToast(
-                        err.message || "Failed to process COD order",
-                        "error",
-                      );
+                      const backendMsg =
+                        err.response?.data?.message ||
+                        err.message ||
+                        "Failed to process COD order";
+                      console.error("❌ [Checkout] COD Order Error:", {
+                        status: err.response?.status,
+                        data: err.response?.data,
+                        message: backendMsg,
+                      });
+                      showToast(backendMsg, "error");
                     },
                   });
                 } else {
@@ -380,7 +385,7 @@ export default function Checkout() {
                     amount:
                       Number(initRes.data?.total_cost) * 100 ||
                       amountToPay * 100,
-                    name: initRes.data?.company_name || "Pesto Bazaar",
+                    name: (initRes.data?.company_name || "Pestobazaar").replace(/\b[pP]esto\s*[bB]aza[ar]*\b/gi, "Pestobazaar"),
                     order_id: initRes.data?.orderId,
                     prefill: {
                       email: initRes.data?.email || "",

@@ -135,7 +135,8 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
           onPress(item);
           return;
         }
-        const productSlug = (item as any).url || (item as any).product_url || "";
+        const productSlug =
+          (item as any).url || (item as any).product_url || "";
         router.push({
           pathname: "/(stack)/products/[slug]",
           params: {

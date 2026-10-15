@@ -10,6 +10,7 @@ import {
   VerifyUserResponse,
   VisitorApiResponse,
   VisitorRequest,
+  LoginBannerApiResponse,
 } from "../types/auth.types";
 
 export const createVisitor = async (
@@ -64,3 +65,12 @@ export const googleAuthCallback = async (
 
   return response.data;
 };
+
+export const getLoginBanners = async (): Promise<LoginBannerApiResponse> => {
+  const response = await apiClient.get<LoginBannerApiResponse>(
+    "/app-api/v1/login-img",
+  );
+
+  return response.data;
+};
+

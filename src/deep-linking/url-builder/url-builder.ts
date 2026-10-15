@@ -181,7 +181,7 @@ export const DeepLinkURLBuilder = {
    * @returns Formatted share message
    */
   createShareMessage(productName: string, url: string): string {
-    return `Check out ${productName} on PestoBazaar:\n\n${url}`;
+    return `Check out ${productName} on Pestobazaar:\n\n${url}`;
   },
 };
 

@@ -44,11 +44,25 @@ const CartItem = ({
     onIncrease(item);
   };
 
+  const parsePrice = (value: string | number | undefined | null): number => {
+    if (typeof value === "number") return value;
+    if (!value) return 0;
+    const cleaned = String(value).replace(/[^0-9.]/g, "");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const formatPrice = (value: string | number) => {
     const num = Number(value);
-    if (Number.isNaN(num)) return value;
+    if (Number.isNaN(num)) return String(value);
     return num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
   };
+
+  const unitPrice = parsePrice(item.price_per_piece);
+  const currentQty =
+    inputQty && Number(inputQty) > 0 ? Number(inputQty) : Number(item.qty) || 1;
+  const totalPrice =
+    unitPrice > 0 ? unitPrice * currentQty : parsePrice(item.total_price);
 
   return (
     <TouchableOpacity
@@ -229,7 +243,7 @@ const CartItem = ({
               color: colors.text,
             }}
           >
-            ₹{formatPrice(item.price_per_piece)}
+            ₹{formatPrice(totalPrice)}
           </Text>
         </View>
       </View>

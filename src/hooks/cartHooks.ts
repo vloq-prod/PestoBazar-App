@@ -164,17 +164,27 @@ export const useCartAction = () => {
           })
           .filter((item) => item.qty > 0);
 
+        const totalCartItemsCount = nextCartDetails.reduce(
+          (sum, item) => sum + Number(item.qty || 0),
+          0,
+        );
+
         queryClient.setQueryData<CartResponse>(cartKey, {
           ...previousCart,
           data: {
             ...previousCart.data,
             cart: {
               ...previousCart.data.cart,
-              cart_count: nextCartDetails.reduce(
-                (sum, item) => sum + Number(item.qty || 0),
-                0,
-              ),
+              cart_count: totalCartItemsCount,
             },
+            ...(previousCart.data.cart_app
+              ? {
+                  cart_app: {
+                    ...previousCart.data.cart_app,
+                    cart_count: totalCartItemsCount,
+                  },
+                }
+              : {}),
             cart_details: nextCartDetails,
           },
         });
@@ -241,7 +251,6 @@ export const useCartAction = () => {
 
 export const useRemoveCartItem = () => {
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
 
   return useMutation({
     mutationFn: async (payload: RemoveCartItemRequest) => {
@@ -252,8 +261,7 @@ export const useRemoveCartItem = () => {
       return data;
     },
 
-    onSuccess: (data) => {
-      showToast(data.message || "Item removed from cart", "success");
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["cart"],
       });
@@ -271,12 +279,8 @@ export const useRemoveCartItem = () => {
       });
     },
 
-    onError: (error: any) => {
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to remove item";
-      showToast(msg, "error");
+    onError: () => {
+      // Toast notification removed
     },
   });
 };

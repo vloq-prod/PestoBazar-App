@@ -19,7 +19,8 @@ import { useResponsive } from "../../src/utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Constants from "expo-constants";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { Image as ExpoImage } from "expo-image";
 import Carousel from "react-native-reanimated-carousel";
 import Animated, {
   useSharedValue,
@@ -29,6 +30,7 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   useGoogleAuthCallback,
+  useLoginBanners,
   useSendOtp,
   useVerifyUser,
 } from "../../src/hooks/useAuthHooks";
@@ -59,8 +61,12 @@ const phoneSchema = z.object({
   mobile_no: z.string().regex(/^[0-9]{10}$/, "Enter valid 10 digit number"),
 });
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const CAROUSEL_HEIGHT = Math.round(SCREEN_HEIGHT * 0.55);
+const { width: WIN_W, height: WIN_H } = Dimensions.get("window");
+const SCREEN_WIDTH = Math.min(WIN_W, WIN_H);
+const SCREEN_HEIGHT = Math.max(WIN_W, WIN_H);
+const CAROUSEL_HEIGHT = Math.round(
+  SCREEN_HEIGHT < 700 ? SCREEN_HEIGHT * 0.52 : SCREEN_HEIGHT * 0.58,
+);
 const BRAND_RED = "#EF4F5F";
 
 const IndiaFlag = () => (
@@ -73,7 +79,11 @@ const IndiaFlag = () => (
   </View>
 );
 
-const carouselImages = [
+type LoginCarouselItem =
+  | { type: "remote"; id: number | string; uri: string }
+  | { type: "local"; id: number | string; source: any };
+
+const defaultCarouselImages = [
   require("../../assets/loginimage1.png"),
   require("../../assets/loginimage2.png"),
   require("../../assets/loginimage3.png"),
@@ -90,7 +100,9 @@ const CarouselDot = ({
   total: number;
 }) => {
   const animStyle = useAnimatedStyle(() => {
-    const current = Math.round(progress.value) % total;
+    const safeTotal = total > 0 ? total : 1;
+    const current =
+      ((Math.round(progress.value) % safeTotal) + safeTotal) % safeTotal;
     const isActive = current === index;
     return {
       opacity: withTiming(isActive ? 1 : 0.4, { duration: 200 }),
@@ -197,6 +209,31 @@ export default function Login() {
   const { mutate: sendOtpMutate, isPending: isSendOtpPending } = useSendOtp();
   const { mutate: googleCallbackMutate, isPending: isGooglePending } =
     useGoogleAuthCallback();
+  const { banners } = useLoginBanners();
+
+  const carouselItems = useMemo<LoginCarouselItem[]>(() => {
+    if (banners && banners.length > 0) {
+      const sorted = [...banners].sort(
+        (a, b) => (a.sequence ?? 0) - (b.sequence ?? 0),
+      );
+      const valid = sorted
+        .map((b) => ({
+          type: "remote" as const,
+          id: b.id,
+          uri: b.mobile_banner_url || b.s3_image_url || b.desktop_banner_url || "",
+        }))
+        .filter((item) => Boolean(item.uri));
+
+      if (valid.length > 0) {
+        return valid;
+      }
+    }
+    return defaultCarouselImages.map((src, index) => ({
+      type: "local" as const,
+      id: `local-${index}`,
+      source: src,
+    }));
+  }, [banners]);
 
   const visitorId = useAppVisitorStore((s) => s.visitorId);
   const setGoogleUser = useAppVisitorStore((s) => s.setGoogleUser);
@@ -329,19 +366,24 @@ export default function Login() {
         <Carousel
           width={SCREEN_WIDTH}
           height={CAROUSEL_HEIGHT}
-          data={carouselImages}
-          loop
-          autoPlay={!isKeyboardVisible}
+          data={carouselItems}
+          loop={carouselItems.length > 1}
+          enabled={carouselItems.length > 1}
+          autoPlay={!isKeyboardVisible && carouselItems.length > 1}
           autoPlayInterval={3500}
           onProgressChange={(_, absoluteProgress) => {
             progress.value = absoluteProgress;
           }}
           renderItem={({ item }) => (
             <View style={{ width: SCREEN_WIDTH, height: CAROUSEL_HEIGHT }}>
-              <Image
-                source={item}
+              <ExpoImage
+                source={
+                  item.type === "remote" ? { uri: item.uri } : item.source
+                }
                 style={styles.bannerImage}
-                resizeMode="cover"
+                contentFit="cover"
+                transition={250}
+                cachePolicy="memory-disk"
               />
             </View>
           )}
@@ -361,14 +403,14 @@ export default function Login() {
         </TouchableOpacity>
 
         {/* Overlay Pagination Dots */}
-        {!isKeyboardVisible && (
+        {!isKeyboardVisible && carouselItems.length > 1 && (
           <View style={styles.paginationPill}>
-            {carouselImages.map((_, i) => (
+            {carouselItems.map((item, i) => (
               <CarouselDot
-                key={i}
+                key={item.id}
                 index={i}
                 progress={progress}
-                total={carouselImages.length}
+                total={carouselItems.length}
               />
             ))}
           </View>
@@ -389,12 +431,13 @@ export default function Login() {
         style={[
           styles.bottomSection,
           {
+            top: isKeyboardVisible ? undefined : CAROUSEL_HEIGHT - 28,
             bottom: isKeyboardVisible
               ? keyboardHeight + (Platform.OS === "android" ? insets.bottom : 0)
               : 0,
           },
           isKeyboardVisible && styles.bottomSectionKeyboard,
-          !isKeyboardVisible && { paddingBottom: bottomInset + 20 },
+          !isKeyboardVisible && { paddingBottom: bottomInset + 16 },
         ]}
       >
         <View>
@@ -568,7 +611,7 @@ const styles = StyleSheet.create({
   },
   paginationPill: {
     position: "absolute",
-    bottom: 24,
+    bottom: 38,
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
@@ -581,24 +624,19 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 18,
-    minHeight: Math.round(SCREEN_HEIGHT * 0.45),
     justifyContent: "space-between",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
   },
   bottomSectionKeyboard: {
-    minHeight: undefined,
     paddingBottom: 16,
     justifyContent: "flex-start",
   },

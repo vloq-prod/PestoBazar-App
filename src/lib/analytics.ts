@@ -17,7 +17,7 @@ import {
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * Centralized Firebase / Google Analytics Utility for PestoBazaar
+ * Centralized Firebase / Google Analytics Utility for Pestobazaar
  * ─────────────────────────────────────────────────────────────────────────────
  * - Lightweight, non-intrusive, production-ready.
  * - Safely handles errors so analytics NEVER breaks the application.

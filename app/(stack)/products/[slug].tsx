@@ -913,12 +913,6 @@ const ProductDetails = () => {
             >
               <Share size={22} color={colors.borderblack} />
             </TouchableOpacity>
-            <WishlistButton
-              productId={realProductId}
-              size={20}
-              containerSize={40}
-              style={[styles.iconBtn, { borderColor: colors.border, elevation: 0, shadowOpacity: 0 }]}
-            />
           </View>
         </View>
       </Animated.View>
@@ -938,7 +932,31 @@ const ProductDetails = () => {
       >
         {/* Carousel — no horizontal padding, full bleed */}
         <View style={{ gap: 10 }}>
-          <ImageVideoCarousel data={mediaList} title={resolvedProductName} />
+          <View style={{ position: "relative" }}>
+            <ImageVideoCarousel data={mediaList} title={resolvedProductName} />
+            {realProductId ? (
+              <WishlistButton
+                productId={realProductId}
+                size={20}
+                containerSize={38}
+                style={{
+                  position: "absolute",
+                  bottom: spacing(12),
+                  right: spacing(14),
+                  zIndex: 25,
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  elevation: 4,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 3,
+                }}
+              />
+            ) : null}
+          </View>
 
           <View style={{ paddingHorizontal: spacing(16), gap: spacing(10) }}>
             <View

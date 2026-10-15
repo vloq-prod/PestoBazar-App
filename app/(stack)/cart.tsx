@@ -26,6 +26,7 @@ import {
 } from "../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import CartItem from "../../src/components/cart/CartItem";
+import CartRecentlyViewed from "../../src/components/cart/CartRecentlyViewed";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { Info, MoveRight, Gift, Tag, ChevronRight, Receipt, BadgePercent, Clock, CreditCard } from "lucide-react-native";
@@ -137,6 +138,16 @@ export default function CartScreen() {
   // const cart = cartData?.data.cart;
   const items = cartData?.data?.cart_details;
   const freeProducts = cartData?.data?.free_products;
+
+  const isCartEmpty = Boolean(
+    !isLoading && !error && cartData && (!items || items.length === 0),
+  );
+
+  React.useEffect(() => {
+    if (isCartEmpty) {
+      router.replace("/(tabs)");
+    }
+  }, [isCartEmpty, router]);
 
   const cartId = cartData?.data?.cart_app?.cart_id || cartData?.data?.cart?.cart_id;
 
@@ -310,6 +321,10 @@ export default function CartScreen() {
       });
     }
   };
+
+  if (isCartEmpty) {
+    return null;
+  }
 
   return (
     <SafeAreaView
@@ -1006,46 +1021,64 @@ export default function CartScreen() {
                 </View>
               </View>
             ) : null}
+
+            {/* ── Recently Viewed Products Box (Max 6 in a grid) ── */}
+            <CartRecentlyViewed />
           </View>
         </ScrollView>
       ) : (
-        <View style={[styles.emptyContainer, { flex: 1 }]}>
-          <LottieView
-            source={require("../../assets/lottieview/Empty Cart.json")}
-            autoPlay
-            loop
-            style={{
-              width: spacing(220),
-              height: spacing(220),
-              marginBottom: spacing(10),
-            }}
-          />
-          <Text
-            style={[
-              styles.emptyTitle,
-              { color: colors.text, fontSize: font(20) },
-            ]}
-          >
-            Your cart is empty
-          </Text>
-          <Text
-            style={[
-              styles.emptySubtitle,
-              { color: colors.textSecondary, fontSize: font(14) },
-            ]}
-          >
-            Looks like you haven&apos;t added anything to your cart yet.
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.replace("/(tabs)")}
-            style={[styles.shopNowBtn, { backgroundColor: colors.primary }]}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.shopNowText, { fontSize: font(15) }]}>
-              Shop Now
+        <ScrollView
+          style={[styles.content, { backgroundColor: colors.backgroundgray }]}
+          contentContainerStyle={{
+            paddingTop: spacing(24),
+            paddingBottom: insets.bottom + 40,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.emptyContainer}>
+            <LottieView
+              source={require("../../assets/lottieview/Empty Cart.json")}
+              autoPlay
+              loop
+              style={{
+                width: spacing(220),
+                height: spacing(220),
+                marginBottom: spacing(10),
+              }}
+            />
+            <Text
+              style={[
+                styles.emptyTitle,
+                { color: colors.text, fontSize: font(20) },
+              ]}
+            >
+              Your cart is empty
             </Text>
-          </TouchableOpacity>
-        </View>
+            <Text
+              style={[
+                styles.emptySubtitle,
+                { color: colors.textSecondary, fontSize: font(14) },
+              ]}
+            >
+              Looks like you haven&apos;t added anything to your cart yet.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.replace("/(tabs)")}
+              style={[styles.shopNowBtn, { backgroundColor: colors.primary }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.shopNowText, { fontSize: font(15) }]}>
+                Shop Now
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Recently Viewed in Empty State ── */}
+          <View style={{ paddingHorizontal: spacing(15), marginTop: spacing(20) }}>
+            <CartRecentlyViewed />
+          </View>
+        </ScrollView>
       )}
 
       {items && items.length > 0 && (

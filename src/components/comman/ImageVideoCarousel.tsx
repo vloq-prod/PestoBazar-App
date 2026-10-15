@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 26,
     left: 12,
-    right: 12,
+    right: 58,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

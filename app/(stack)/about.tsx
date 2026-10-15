@@ -44,7 +44,7 @@ export default function AboutUsScreen() {
           {/* Title + Subtitle */}
           <View style={styles.titleBlock}>
             <Text style={[styles.mainTitle, { color: colors.text }]}>
-              {about?.title || "About Pestobazaar"}
+              {(about?.title || "About Pestobazaar").replace(/\b[pP]esto\s*[bB]aza[ar]*\b/gi, "Pestobazaar")}
             </Text>
             {!!about?.subtitle && (
               <Text style={[styles.subtitle, { color: colors.primary }]}>

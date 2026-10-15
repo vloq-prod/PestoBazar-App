@@ -92,7 +92,8 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
           onPress(item);
           return;
         }
-        const productSlug = (item as any).url || (item as any).product_url || "";
+        const productSlug =
+          (item as any).url || (item as any).product_url || "";
         if (!item.id || isNaN(Number(item.id))) {
           router.push({
             pathname: "/(stack)/products/[slug]",
@@ -186,7 +187,13 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
           {/* Rating (Left) - Single star and rating number */}
           <View style={{ flex: 1 }}>
             {showRating && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(3) }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing(3),
+                }}
+              >
                 <StarIcon
                   size={spacing(10)}
                   color={colors.starColor}
@@ -260,7 +267,11 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                 {loading ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
-                  <Plus size={spacing(14)} color={colors.primary} strokeWidth={3} />
+                  <Plus
+                    size={spacing(14)}
+                    color={colors.primary}
+                    strokeWidth={3}
+                  />
                 )}
               </TouchableOpacity>
             ) : (
@@ -304,7 +315,11 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
                 >
-                  <Minus size={spacing(12)} color={colors.primary} strokeWidth={2.5} />
+                  <Minus
+                    size={spacing(12)}
+                    color={colors.primary}
+                    strokeWidth={2.5}
+                  />
                 </TouchableOpacity>
 
                 {/* Qty input */}
@@ -354,7 +369,11 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
                 >
-                  <Plus size={spacing(12)} color={colors.primary} strokeWidth={2.5} />
+                  <Plus
+                    size={spacing(12)}
+                    color={colors.primary}
+                    strokeWidth={2.5}
+                  />
                 </TouchableOpacity>
               </View>
             )}

@@ -70,4 +70,25 @@ export interface GoogleCallbackRequest {
 
 export type GoogleCallbackResponse = ApiResponse<{ user_id: string; user_name: string }>;
 
+export interface LoginBannerItem {
+  id: number;
+  desktop_banner?: string;
+  mobile_banner?: string;
+  banner_type?: string;
+  sequence?: number;
+  s3_image_path?: string;
+  desktop_banner_url?: string;
+  mobile_banner_url?: string;
+  s3_image_url?: string;
+}
+
+export interface LoginBannerApiResponse {
+  message: string;
+  status: number;
+  data: {
+    data: LoginBannerItem[];
+  };
+}
+
+
 

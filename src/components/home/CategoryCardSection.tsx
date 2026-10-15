@@ -4,8 +4,10 @@ import {
   View,
   FlatList,
   useWindowDimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,9 +26,10 @@ import {
   CustomSection,
 } from "../../types/customSection.types";
 import { useResponsive } from "../../utils/useResponsive";
-import { ChevronRight } from "lucide-react-native";
 
 const COLUMNS = 4;
+const ROWS = 2;
+const ITEMS_PER_PAGE = COLUMNS * ROWS; // 8 items per page (4 cols x 2 rows)
 const H_PADDING = 16;
 const GAP = 10;
 
@@ -397,115 +400,201 @@ export const CategorySectionBlock: React.FC<{
   const { colors } = useTheme();
   const { spacing } = useResponsive();
   const { width: screenWidth } = useWindowDimensions();
-  const router = useRouter();
 
-  const itemWidth =
-    (screenWidth - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS;
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+
+  const sectionId =
+    (section as any).id ?? (section as any).section_id ?? section.section_title;
+
+  const itemWidth = Math.floor(
+    (screenWidth - H_PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS,
+  );
   const cardSize = itemWidth;
 
-  const targetParentId =
-    ((section as any).parent_category_id && (section as any).parent_category_id > 0)
-      ? (section as any).parent_category_id
-      : (section.categories?.[0]?.parent_id && section.categories[0].parent_id > 0
-      ? section.categories[0].parent_id
-      : section.categories?.[0]?.id) ?? 0;
+  const categories = useMemo(
+    () => section.categories?.filter((cat) => cat.category_name) || [],
+    [section.categories],
+  );
 
-  const displayImage =
-    section.categories?.[0]?.category_image ||
-    section.categories?.[0]?.s3_image_path ||
-    "";
+  const pages = useMemo(() => {
+    const chunks: CustomCategoryItem[][] = [];
+    for (let i = 0; i < categories.length; i += ITEMS_PER_PAGE) {
+      chunks.push(categories.slice(i, i + ITEMS_PER_PAGE));
+    }
+    return chunks;
+  }, [categories]);
 
-  const categories =
-    section.categories?.filter((cat) => cat.category_name) || [];
+  useEffect(() => {
+    setActivePageIndex(0);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [sectionId]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetX = event.nativeEvent.contentOffset.x;
+      const index = Math.round(offsetX / screenWidth);
+      if (index >= 0 && index < pages.length && index !== activePageIndex) {
+        setActivePageIndex(index);
+      }
+    },
+    [pages.length, screenWidth, activePageIndex],
+  );
 
   if (categories.length === 0) return null;
+
+  const renderPage = ({
+    item: pageItems,
+    index: pageIndex,
+  }: {
+    item: CustomCategoryItem[];
+    index: number;
+  }) => {
+    const row1 = pageItems.slice(0, COLUMNS);
+    const row2 = pageItems.slice(COLUMNS, ITEMS_PER_PAGE);
+
+    return (
+      <View style={{ width: screenWidth, paddingHorizontal: H_PADDING }}>
+        {/* Row 1 (up to 4 items) */}
+        <View style={{ flexDirection: "row", gap: GAP }}>
+          {row1.map((cat, itemIndex) => (
+            <View key={cat.id} style={{ width: cardSize }}>
+              <SubCategoryCard
+                item={cat}
+                index={pageIndex * ITEMS_PER_PAGE + itemIndex}
+                sectionTitle={section.section_title}
+                parentCategoryId={(section as any).parent_category_id}
+                cardSize={cardSize}
+              />
+            </View>
+          ))}
+        </View>
+
+        {/* Row 2 (up to 4 items, only rendered if present) */}
+        {row2.length > 0 && (
+          <View style={{ flexDirection: "row", gap: GAP }}>
+            {row2.map((cat, itemIndex) => (
+              <View key={cat.id} style={{ width: cardSize }}>
+                <SubCategoryCard
+                  item={cat}
+                  index={pageIndex * ITEMS_PER_PAGE + COLUMNS + itemIndex}
+                  sectionTitle={section.section_title}
+                  parentCategoryId={(section as any).parent_category_id}
+                  cardSize={cardSize}
+                />
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={{ marginBottom: spacing(16) }}>
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
           paddingHorizontal: H_PADDING,
           marginBottom: spacing(12),
         }}
       >
-        <View style={{ flex: 1, paddingRight: 8 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: "Poppins_600SemiBold",
-              color: colors.text,
-            }}
-          >
-            {section.section_title}
-          </Text>
-          {!!section.section_description && (
-            <Text
-              style={{
-                fontSize: 11,
-                lineHeight: 18,
-                color: colors.textSecondary,
-                fontFamily: "Poppins_400Regular",
-              }}
-            >
-              {section.section_description}
-            </Text>
-          )}
-        </View>
-        <TouchableOpacity
-          style={{ flexDirection: "row", alignItems: "center" }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => {
-            if (targetParentId) {
-              router.push({
-                pathname: "/(stack)/category/[slug]",
-                params: {
-                  slug: String(targetParentId),
-                  name: section.section_title,
-                  image: displayImage,
-                },
-              });
-            } else {
-              router.push("/(stack)/shop");
-            }
+        <Text
+          style={{
+            fontSize: 16,
+            fontFamily: "Poppins_600SemiBold",
+            color: colors.text,
           }}
         >
+          {section.section_title}
+        </Text>
+        {!!section.section_description && (
           <Text
             style={{
-              fontSize: 13,
-              color: colors.primary,
-              fontFamily: "Poppins_500Medium",
+              fontSize: 11,
+              lineHeight: 18,
+              color: colors.textSecondary,
+              fontFamily: "Poppins_400Regular",
+              marginTop: 2,
             }}
           >
-            View All
+            {section.section_description}
           </Text>
-          <ChevronRight size={14} color={colors.primary} />
-        </TouchableOpacity>
+        )}
       </View>
 
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          paddingHorizontal: H_PADDING,
-          columnGap: GAP,
-          rowGap: GAP,
-        }}
-      >
-        {categories.map((cat, index) => (
-          <View key={cat.id} style={{ width: cardSize }}>
-            <SubCategoryCard
-              item={cat}
-              index={index}
-              sectionTitle={section.section_title}
-              parentCategoryId={(section as any).parent_category_id}
-              cardSize={cardSize}
-            />
-          </View>
-        ))}
-      </View>
+      {/* ── Category Grid (4 columns x 2 rows per page) ── */}
+      {pages.length > 1 ? (
+        <FlatList
+          ref={flatListRef}
+          data={pages}
+          horizontal
+          pagingEnabled
+          snapToInterval={screenWidth}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
+          onMomentumScrollEnd={handleScroll}
+          keyExtractor={(_, index) => `cat-page-${sectionId}-${index}`}
+          getItemLayout={(_, index) => ({
+            length: screenWidth,
+            offset: screenWidth * index,
+            index,
+          })}
+          onScrollToIndexFailed={(info) => {
+            flatListRef.current?.scrollToOffset({
+              offset: info.index * screenWidth,
+              animated: true,
+            });
+          }}
+          renderItem={renderPage}
+        />
+      ) : (
+        renderPage({ item: pages[0], index: 0 })
+      )}
+
+      {/* ── Pagination Dots (Only if more than 8 categories / > 1 page) ── */}
+      {pages.length > 1 && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            marginTop: spacing(6),
+          }}
+        >
+          {pages.map((_, dotIndex) => {
+            const isActive = activePageIndex === dotIndex;
+            return (
+              <TouchableOpacity
+                key={`dot-${dotIndex}`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.8}
+                onPress={() => {
+                  flatListRef.current?.scrollToIndex({
+                    index: dotIndex,
+                    animated: true,
+                  });
+                  setActivePageIndex(dotIndex);
+                }}
+              >
+                <View
+                  style={{
+                    width: isActive ? 16 : 6,
+                    height: 6,
+                    borderRadius: 999,
+                    backgroundColor: isActive
+                      ? colors.primary
+                      : colors.borderStrong,
+                  }}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 };
