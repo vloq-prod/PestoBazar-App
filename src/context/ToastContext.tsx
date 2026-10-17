@@ -22,7 +22,7 @@ type ToastContextType = {
 
 const ToastContext = createContext<ToastContextType | null>(null);
 
-const MAX_TOASTS = 3;
+const MAX_VISIBLE_TOASTS = 2;
 
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -48,15 +48,21 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       cleanMessage = String(message ?? "");
     }
 
-    if (!cleanMessage.trim()) return;
-
-    const id = `toast-${Date.now()}-${counterRef.current++}`;
+    cleanMessage = cleanMessage.trim();
+    if (!cleanMessage) return;
 
     setToasts((prev) => {
+      // Prevent spamming if the exact same message is already visible
+      if (prev.some((t) => t.message === cleanMessage)) {
+        return prev;
+      }
+
+      const id = `toast-${Date.now()}-${counterRef.current++}`;
       const updated = [...prev, { id, message: cleanMessage, type }];
-      // keep max 3, drop oldest
-      return updated.length > MAX_TOASTS
-        ? updated.slice(updated.length - MAX_TOASTS)
+
+      // Standard mobile UX: keep max 2 at the top so the screen/header isn't cluttered
+      return updated.length > MAX_VISIBLE_TOASTS
+        ? updated.slice(updated.length - MAX_VISIBLE_TOASTS)
         : updated;
     });
   }, []);

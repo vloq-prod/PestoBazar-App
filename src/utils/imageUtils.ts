@@ -51,7 +51,10 @@ export const getImageUrl = (path?: string | null): string | undefined => {
   }
 
   // If it's a bare return video filename like "1777962816919_Screenrecorder-2026-05-02-18-29-56-117.mp4"
-  if (!cleanPath.includes("/") && /\.(mp4|mov|avi|mkv|webm)$/i.test(cleanPath)) {
+  if (
+    !cleanPath.includes("/") &&
+    /\.(mp4|mov|avi|mkv|webm)$/i.test(cleanPath)
+  ) {
     cleanPath = `uploads/return-videos/${cleanPath}`;
     return `${cleanServerBase}${cleanPath}`;
   }
@@ -64,6 +67,41 @@ export const getImageUrl = (path?: string | null): string | undefined => {
 
   const base = isDynamicAsset ? cleanServerBase : cleanCdnBase;
   return `${base}${cleanPath}`;
+};
+
+/**
+ * Resolves the best image URL for banners.
+ * Prioritizes optimized raster formats (webp, png, jpg) from s3_image_url / s3_image_path,
+ * avoiding extremely heavy or unsupported desktop SVG files when a raster alternative is available.
+ */
+export const getBannerImageUrl = (item?: {
+  s3_image_url?: string | null;
+  s3_image_path?: string | null;
+  mobile_banner_url?: string | null;
+  desktop_banner_url?: string | null;
+} | null): string | undefined => {
+  if (!item) return undefined;
+
+  const rawCandidates = [
+    item.s3_image_url,
+    item.s3_image_path,
+    item.mobile_banner_url,
+    item.desktop_banner_url,
+  ];
+
+  const validCandidates = rawCandidates.filter(
+    (url): url is string => typeof url === "string" && url.trim().length > 0,
+  );
+
+  if (validCandidates.length === 0) return undefined;
+
+  // Prefer optimized raster images (webp, png, jpg) over heavy desktop SVGs
+  const nonSvg = validCandidates.find(
+    (url) => !url.toLowerCase().split("?")[0].endsWith(".svg"),
+  );
+
+  const selected = nonSvg || validCandidates[0];
+  return getImageUrl(selected);
 };
 
 export default getImageUrl;

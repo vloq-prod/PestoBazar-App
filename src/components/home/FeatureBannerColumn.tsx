@@ -1,8 +1,10 @@
 import React from "react";
-import { View, TouchableOpacity, Image } from "react-native";
+import { View, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
+import { getBannerImageUrl } from "../../utils/imageUtils";
 
 interface Props {
   item?: BannerItem;
@@ -48,6 +50,9 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
   // ✅ No Data
   if (!item) return null;
 
+  const imageUri = getBannerImageUrl(item);
+  if (!imageUri) return null;
+
   const handleBannerNavigation = ({
     app_redirect_key,
     app_redirect_value,
@@ -65,7 +70,6 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
       return;
     }
 
- 
     if (app_redirect_key === "categories") {
       router.push({
         pathname: "/(stack)/shop",
@@ -76,11 +80,15 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
       return;
     }
   };
+
   return (
     <View className="px-4">
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() => handleBannerNavigation(item)}
+        onPress={() => {
+          onPress?.(item);
+          handleBannerNavigation(item);
+        }}
         className="rounded-2xl overflow-hidden"
         style={{
           width: "100%",
@@ -92,10 +100,11 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
         }}
       >
         <Image
-          source={{ uri: item.mobile_banner_url || item.s3_image_url || item.s3_image_path }}
-          style={{ width: "100%", height: "100%" }}
-          resizeMode="cover"
-          className="rounded-xl"
+          source={{ uri: imageUri }}
+          style={{ width: "100%", height: "100%", borderRadius: 12 }}
+          contentFit="cover"
+          transition={250}
+          cachePolicy="memory-disk"
         />
       </TouchableOpacity>
     </View>

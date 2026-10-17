@@ -19,6 +19,7 @@ import { LayoutGrid, List } from "lucide-react-native";
 import { ProductItem } from "../../../src/types/home.types";
 import { ListingItem } from "../../../src/types/shop.types";
 import ProductCard from "../../../src/components/ProductCard";
+import AddToCartPreview from "../../../src/components/cart/AddToCartPreview";
 
 const { width } = Dimensions.get("window");
 
@@ -119,6 +120,7 @@ const AllProducts = () => {
           title={title}
           showBack
           showSearch
+          count={loading ? undefined : products.length}
           rightComponent={
             <TouchableOpacity
               onPress={toggleGridMode}
@@ -149,7 +151,7 @@ const AllProducts = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: PADDING,
-          paddingBottom: insets.bottom + 20,
+          paddingBottom: insets.bottom + 80,
           paddingTop: 10,
         }}
         columnWrapperStyle={
@@ -181,6 +183,11 @@ const AllProducts = () => {
             />
           );
         }}
+      />
+
+      <AddToCartPreview
+        pbandroid={Math.max(insets.bottom, 16) + 10}
+        pbios={insets.bottom + 15}
       />
     </View>
   );

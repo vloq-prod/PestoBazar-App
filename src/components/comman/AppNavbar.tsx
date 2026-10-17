@@ -95,7 +95,14 @@ const AppNavbar = ({
       }}
     >
       {/* LEFT */}
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          flex: 1,
+          marginRight: spacing(8),
+        }}
+      >
         {showBack && (
           <TouchableOpacity
             onPress={handleBack}
@@ -104,7 +111,8 @@ const AppNavbar = ({
               height: ICON_BOX,
               alignItems: "center",
               justifyContent: "center",
-              marginRight: spacing(10),
+              marginRight: spacing(8),
+              flexShrink: 0,
             }}
           >
             <ArrowLeft size={ICON_SIZE} color={colors.text} />
@@ -116,10 +124,13 @@ const AppNavbar = ({
             style={{
               justifyContent: "center",
               gap: spacing(0.5),
+              flex: 1,
             }}
           >
             {!!displayTitle && (
               <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
                 style={{
                   fontSize: font(16),
                   lineHeight: font(20),
@@ -133,6 +144,8 @@ const AppNavbar = ({
 
             {!!displaySubtitle ? (
               <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
                 style={{
                   fontSize: font(10.5),
                   lineHeight: font(12),
@@ -145,6 +158,7 @@ const AppNavbar = ({
               </Text>
             ) : count !== undefined && count !== null ? (
               <Text
+                numberOfLines={1}
                 style={{
                   fontSize: font(10.5),
                   lineHeight: font(12),
@@ -162,7 +176,12 @@ const AppNavbar = ({
 
       {/* RIGHT */}
       <View
-        style={{ flexDirection: "row", alignItems: "center", gap: spacing(4) }}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing(4),
+          flexShrink: 0,
+        }}
       >
         {rightComponent ?? (
           <>

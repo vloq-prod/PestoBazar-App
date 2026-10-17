@@ -5,9 +5,9 @@ import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import TopImage from "../../../assets/Top_banner.svg"
+import TopImage from "../../../assets/Top_banner.svg";
 
-const SIDE_PADDING = 16 ;
+const SIDE_PADDING = 16;
 const ASPECT_RATIO = 0.5;
 
 interface Props {
@@ -76,7 +76,7 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
   return (
     <View style={{ gap: 8 }}>
       <Carousel
-        width={SCREEN_WIDTH}           // ← full width scroll unit
+        width={SCREEN_WIDTH} // ← full width scroll unit
         height={IMAGE_HEIGHT}
         data={data}
         loop
@@ -84,10 +84,8 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
         autoPlayInterval={3500}
         scrollAnimationDuration={500}
         onSnapToItem={setActiveIndex}
-        onConfigurePanGesture={gesture => {
-          gesture
-            .activeOffsetX([-10, 10])
-            .failOffsetY([-5, 5]);
+        onConfigurePanGesture={(gesture) => {
+          gesture.activeOffsetX([-10, 10]).failOffsetY([-5, 5]);
         }}
         renderItem={({ item }) => (
           // paddingHorizontal yahan — image chhota, scroll full width

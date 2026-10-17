@@ -6,40 +6,28 @@ import Animated, {
   withTiming,
   runOnJS,
   Easing,
+  LinearTransition,
 } from "react-native-reanimated";
 import { Gesture, GestureDetector, TouchableOpacity } from "react-native-gesture-handler";
 import {
   CheckCircle,
-  XCircle,
   AlertCircle,
+  AlertTriangle,
   Info,
   X,
 } from "lucide-react-native";
 import { Toast, ToastType } from "../../context/ToastContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const TOAST_WIDTH = SCREEN_WIDTH * 0.88;
-const ENTER_DURATION = 200;
+const TOAST_WIDTH = Math.min(SCREEN_WIDTH * 0.92, 420);
+const ENTER_DURATION = 220;
 const EXIT_DURATION = 180;
+const AUTO_DISMISS_DURATION = 3000; // 3 seconds auto-dismiss
 
-const DURATION: Record<ToastType, number> = {
-  success: 2600,
-  warning: 3000,
-  info: 2600,
-  error: 3500,
-};
-
-const ACCENT: Record<ToastType, string> = {
-  success: "#22c55e",
-  error: "#ef4444",
-  warning: "#f59e0b",
-  info: "#6366f1",
-};
-
-const ICONS: Record<ToastType, any> = {
+const ICONS: Record<ToastType, React.ComponentType<any>> = {
   success: CheckCircle,
-  error: XCircle,
-  warning: AlertCircle,
+  error: AlertCircle,
+  warning: AlertTriangle,
   info: Info,
 };
 
@@ -47,18 +35,16 @@ type Props = { toast: Toast; onRemove: (id: string) => void };
 
 export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
   const { type, message, id } = toast;
-  const duration = DURATION[type];
-  const accentColor = ACCENT[type];
-  const Icon = ICONS[type];
+  const Icon = ICONS[type] || Info;
 
   const translateX = useSharedValue(0);
-  const translateY = useSharedValue(8);
-  const scale = useSharedValue(0.92);
+  const translateY = useSharedValue(-20);
+  const scale = useSharedValue(0.96);
   const opacity = useSharedValue(0);
   const dismissed = useRef(false);
 
   const dismiss = useCallback(
-    (direction: "fade" | "right" = "fade") => {
+    (direction: "up" | "right" | "left" = "up") => {
       if (dismissed.current) return;
       dismissed.current = true;
 
@@ -70,14 +56,26 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
         opacity.value = withTiming(0, { duration: EXIT_DURATION }, (done) => {
           if (done) runOnJS(onRemove)(id);
         });
+      } else if (direction === "left") {
+        translateX.value = withTiming(-SCREEN_WIDTH, {
+          duration: EXIT_DURATION,
+          easing: Easing.out(Easing.cubic),
+        });
+        opacity.value = withTiming(0, { duration: EXIT_DURATION }, (done) => {
+          if (done) runOnJS(onRemove)(id);
+        });
       } else {
+        translateY.value = withTiming(-24, {
+          duration: EXIT_DURATION,
+          easing: Easing.in(Easing.cubic),
+        });
         opacity.value = withTiming(0, { duration: EXIT_DURATION });
-        scale.value = withTiming(0.92, { duration: EXIT_DURATION }, (done) => {
+        scale.value = withTiming(0.96, { duration: EXIT_DURATION }, (done) => {
           if (done) runOnJS(onRemove)(id);
         });
       }
     },
-    [id, onRemove, opacity, scale, translateX],
+    [id, onRemove, opacity, scale, translateX, translateY],
   );
 
   useEffect(() => {
@@ -88,24 +86,33 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
     });
     translateY.value = withTiming(0, {
       duration: ENTER_DURATION,
-      easing: Easing.out(Easing.quad),
+      easing: Easing.out(Easing.cubic),
     });
 
-    const t = setTimeout(() => dismiss("fade"), duration);
+    const t = setTimeout(() => dismiss("up"), AUTO_DISMISS_DURATION);
     return () => clearTimeout(t);
-  }, []);
+  }, [dismiss]);
 
   const swipeGesture = Gesture.Pan()
     .onUpdate((e) => {
-      if (e.translationX > 0) {
+      // Allow swiping up to dismiss top toast
+      if (e.translationY < 0) {
+        translateY.value = e.translationY;
+        opacity.value = Math.max(0, 1 - Math.abs(e.translationY) / 60);
+      } else if (Math.abs(e.translationX) > 0) {
         translateX.value = e.translationX;
-        opacity.value = Math.max(0, 1 - e.translationX / (SCREEN_WIDTH * 0.5));
+        opacity.value = Math.max(0, 1 - Math.abs(e.translationX) / (SCREEN_WIDTH * 0.5));
       }
     })
     .onEnd((e) => {
-      if (e.translationX > 40 || e.velocityX > 400) {
+      if (e.translationY < -20 || e.velocityY < -300) {
+        runOnJS(dismiss)("up");
+      } else if (e.translationX > 40 || e.velocityX > 400) {
         runOnJS(dismiss)("right");
+      } else if (e.translationX < -40 || e.velocityX < -400) {
+        runOnJS(dismiss)("left");
       } else {
+        translateY.value = withTiming(0, { duration: 150 });
         translateX.value = withTiming(0, { duration: 150 });
         opacity.value = withTiming(1, { duration: 150 });
       }
@@ -123,6 +130,7 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
   return (
     <GestureDetector gesture={swipeGesture}>
       <Animated.View
+        layout={LinearTransition.duration(200)}
         style={[
           styles.container,
           { width: TOAST_WIDTH },
@@ -131,7 +139,7 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
       >
         <View style={styles.row}>
           <View style={styles.iconContainer}>
-            <Icon size={20} color={accentColor} strokeWidth={2.2} />
+            <Icon size={19} color="#FFFFFF" strokeWidth={2.2} />
           </View>
 
           <Text style={styles.message} numberOfLines={2}>
@@ -139,12 +147,12 @@ export const ToastItem = React.memo(({ toast, onRemove }: Props) => {
           </Text>
 
           <TouchableOpacity
-            onPressIn={() => dismiss()}
+            onPressIn={() => dismiss("up")}
             activeOpacity={0.7}
             style={styles.closeBtn}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <X size={20} color="rgba(255, 255, 255, 0.75)" strokeWidth={2.2} />
+            <X size={18} color="rgba(255, 255, 255, 0.75)" strokeWidth={2.2} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -156,36 +164,40 @@ ToastItem.displayName = "ToastItem";
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#18181B",
-    borderRadius: 10,
+    backgroundColor: "#323236",
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    overflow: "hidden",
+    borderColor: "rgba(255, 255, 255, 0.14)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 8,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
   },
   iconContainer: {
-    marginRight: 8,
+    marginRight: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   message: {
     flex: 1,
     color: "#FFFFFF",
-    fontSize: 12.5,
+    fontSize: 13,
     fontFamily: "Poppins_500Medium",
-    lineHeight: 16,
+    lineHeight: 18,
     includeFontPadding: false,
     letterSpacing: 0.1,
   },
   closeBtn: {
-    marginLeft: 6,
-    width: 26,
-    height: 26,
+    marginLeft: 8,
+    width: 24,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
   },

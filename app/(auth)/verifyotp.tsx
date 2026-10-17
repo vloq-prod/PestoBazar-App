@@ -3,7 +3,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-
+  ActivityIndicator,
   Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -320,38 +320,22 @@ export default function VerifyOtpScreen() {
           )}
         </View>
 
-        {/* ── Verify Button ── */}
+        {/* ── Verify Button (login.tsx style) ── */}
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => handleVerify()}
           disabled={isVerifying || !otpFilled}
           style={[
-            styles.verifyBtn,
-            {
-              marginTop: spacing(32),
-              height: 56,
-              backgroundColor:
-                !otpFilled || isVerifying
-                  ? colors.primary + "60"
-                  : colors.primary,
-              shadowColor: colors.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: otpFilled ? 0.28 : 0,
-              shadowRadius: 10,
-              elevation: otpFilled ? 6 : 0,
-            },
+            styles.continueBtn,
+            { backgroundColor: colors.primary },
+            (!otpFilled || isVerifying) && { opacity: 0.75 },
           ]}
         >
-          <Text
-            style={{
-              fontSize: font(15),
-              fontFamily: "Poppins_700Bold",
-              color: "#fff",
-              letterSpacing: 1,
-            }}
-          >
-            {isVerifying ? "VERIFYING..." : "VERIFY OTP"}
-          </Text>
+          {isVerifying ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Text style={styles.continueBtnText}>Verify OTP</Text>
+          )}
         </TouchableOpacity>
 
         {/* ── Go Back ── */}
@@ -410,11 +394,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   resendRow: { flexDirection: "row", alignItems: "center" },
-  verifyBtn: {
-    width: "100%",
-    borderRadius: 999,
+  continueBtn: {
+    marginTop: 32,
+    height: 48,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  continueBtnText: {
+    color: "#ffffff",
+    fontSize: 15.5,
+    fontFamily: "Poppins_600SemiBold",
   },
   goBackBtn: {
     flexDirection: "row",

@@ -19,7 +19,6 @@ export default function HomeBottomBanner({ item }: Props) {
   const handlePress = () => {
     const { app_redirect_key, app_redirect_value } = item;
 
-
     if (app_redirect_key === "products") {
       const isNumeric = !isNaN(Number(app_redirect_value));
       router.push({
@@ -56,7 +55,10 @@ export default function HomeBottomBanner({ item }: Props) {
         }}
       >
         <Image
-          source={{ uri: item.mobile_banner_url || item.s3_image_url || item.s3_image_path }}
+          source={{
+            uri:
+              item.mobile_banner_url || item.s3_image_url || item.s3_image_path,
+          }}
           style={{
             width: "100%",
             borderRadius: spacing(12),

@@ -16,7 +16,10 @@ import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { UNIVERSAL_LINK_BASE_URL } from "../../src/deep-linking/constants/schemes";
-import { getAppBuildDetails, checkAppUpdateApi } from "../../src/api/appVersion.api";
+import {
+  getAppBuildDetails,
+  checkAppUpdateApi,
+} from "../../src/api/appVersion.api";
 import { useAppUpdate } from "../../src/providers/AppUpdateProvider";
 import { useToast } from "../../src/context/ToastContext";
 

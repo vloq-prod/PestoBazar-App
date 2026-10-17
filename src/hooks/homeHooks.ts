@@ -314,4 +314,3 @@ export const useAppMenuCategories = () => {
     refetch: query.refetch,
   };
 };
-

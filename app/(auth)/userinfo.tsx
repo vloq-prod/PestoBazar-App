@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../../src/theme";
@@ -250,28 +251,22 @@ export default function UserInfo() {
             )}
           </View>
 
-          {/* ── Save Button ── */}
+          {/* ── Continue Button (login.tsx style) ── */}
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={handleSave}
             disabled={isPending}
             style={[
-              styles.saveBtn,
-              {
-                marginTop: spacing(32),
-                height: INPUT_HEIGHT,
-                backgroundColor: isPending ? colors.primary + "99" : colors.primary,
-                shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: isPending ? 0 : 0.28,
-                shadowRadius: 10,
-                elevation: isPending ? 0 : 6,
-              },
+              styles.continueBtn,
+              { backgroundColor: colors.primary },
+              isPending && { opacity: 0.75 },
             ]}
           >
-            <Text style={{ fontSize: font(15), fontFamily: "Poppins_600SemiBold", color: "#fff" }}>
-              {isPending ? "Sending OTP..." : "Save & Continue"}
-            </Text>
+            {isPending ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.continueBtnText}>Continue</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -295,11 +290,18 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     ...Platform.select({ android: { includeFontPadding: false }, ios: {} }),
   },
-  saveBtn: {
+  continueBtn: {
     width: "100%",
-    borderRadius: 999,
+    marginTop: 32,
+    height: 48,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  continueBtnText: {
+    color: "#ffffff",
+    fontSize: 15.5,
+    fontFamily: "Poppins_600SemiBold",
   },
   errorText: {
     color: "#EF4444",

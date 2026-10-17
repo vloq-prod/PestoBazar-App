@@ -30,8 +30,7 @@ import { Feather } from "@expo/vector-icons";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
 import HomeProduct from "../../src/components/home/HomeProduct";
 import CustomSections from "../../src/components/home/CustomSections";
-import DealsOfTheDay from "../../src/components/home/DealsOfTheDay";
-import FeaturedProducts from "../../src/components/home/FeaturedProducts";
+
 
 import Animated, {
   useSharedValue,
@@ -483,7 +482,6 @@ const formatCategoryDisplayName = (name: string) => {
   return formatted;
 };
 
-
 const SkeletonRow = () => {
   const { colors } = useTheme();
   const { spacing } = useResponsive();
@@ -700,6 +698,9 @@ const MemoDiy = React.memo(Diy);
 const MemoBranches = React.memo(Branches);
 const MemoFooter = React.memo(Footer);
 
+const sectionKeyExtractor = (item: any) => item.id;
+const SectionSeparator = () => <View style={{ height: 15 }} />;
+
 export default function HomeScreen() {
   const queryClient = useQueryClient();
   const isConnected = useNetworkStatus();
@@ -756,7 +757,7 @@ export default function HomeScreen() {
 
   const { slidingbanners, featureBanners, homeBottomBanners } =
     useHomeBanners();
-    console.log("slidingbanners",slidingbanners)
+  console.log("slidingbanners", slidingbanners);
   const { banners: mainBanners } = useAppMainBanner();
   const { banners: headerBanners } = useAppHeaderBanner();
   const { sections: homeProducts } = useHomeProduct();
@@ -779,7 +780,7 @@ export default function HomeScreen() {
         RNStatusBar.setBackgroundColor("transparent", true);
         RNStatusBar.setTranslucent(true);
       }
-    }, [])
+    }, []),
   );
 
   const rawMainBannerUri =
@@ -963,81 +964,95 @@ export default function HomeScreen() {
     [sections, visibleSectionsCount],
   );
 
-  const renderItem = useCallback(({ item }: any) => {
-    switch (item.id) {
-      case "sliding_banners":
-        return (
-          <View>
-            {!!headerBannerSource && (
-              <TouchableOpacity
-                activeOpacity={0.9}
-                onPress={() => {
-                  const headerBanner = headerBanners?.[0];
-                  if (!headerBanner) return;
-                  if (headerBanner.banner_type === "products") {
-                    const isNumeric = !isNaN(Number(headerBanner.redirect));
-                    router.push({
-                      pathname: "/(stack)/products/[slug]",
-                      params: isNumeric
-                        ? { id: headerBanner.redirect, slug: "product" }
-                        : { slug: headerBanner.redirect, id: "slug" },
-                    });
-                  } else if (headerBanner.banner_type === "categories") {
-                    router.push({
-                      pathname: "/(stack)/shop",
-                      params: { category_slug: headerBanner.redirect },
-                    });
-                  }
-                }}
-              >
-                <Image
-                  key={`header-banner-${headerBannerImageUri}-${isFocused}`}
-                  source={headerBannerSource}
-                  style={{ width: "100%", height: 140, marginTop: -1 }}
-                  contentFit="fill"
-                  cachePolicy="memory-disk"
-                  priority="high"
-                />
-              </TouchableOpacity>
-            )}
-            <View style={{ marginTop: 15 }}>
-              <MemoSlidingBanners data={item.data} />
+  const renderItem = useCallback(
+    ({ item }: any) => {
+      switch (item.id) {
+        case "sliding_banners":
+          return (
+            <View>
+              {!!headerBannerSource && (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => {
+                    const headerBanner = headerBanners?.[0];
+                    if (!headerBanner) return;
+                    if (headerBanner.banner_type === "products") {
+                      const isNumeric = !isNaN(Number(headerBanner.redirect));
+                      router.push({
+                        pathname: "/(stack)/products/[slug]",
+                        params: isNumeric
+                          ? { id: headerBanner.redirect, slug: "product" }
+                          : { slug: headerBanner.redirect, id: "slug" },
+                      });
+                    } else if (headerBanner.banner_type === "categories") {
+                      router.push({
+                        pathname: "/(stack)/shop",
+                        params: { category_slug: headerBanner.redirect },
+                      });
+                    }
+                  }}
+                >
+                  <Image
+                    key={`header-banner-${headerBannerImageUri}-${isFocused}`}
+                    source={headerBannerSource}
+                    style={{ width: "100%", height: 140, marginTop: -1 }}
+                    contentFit="fill"
+                    cachePolicy="memory-disk"
+                    priority="high"
+                  />
+                </TouchableOpacity>
+              )}
+              <View style={{ marginTop: 15 }}>
+                <MemoSlidingBanners data={item.data} />
+              </View>
             </View>
-          </View>
-        );
-      case "category_card_section":
-        return <MemoCategoryCardSection />;
-      case "home_product":
-        return <MemoHomeProduct />;
-      case "custom_sections":
-        return <MemoCustomSections />;
-      case "feature_banner_0":
-        return <MemoFeatureBanner item={item.data} />;
-      case "diy":
-        return <MemoDiy products={item.data} />;
-      case "feature_banner_1":
-        return <MemoFeatureBanner item={item.data} />;
-      case "recently_viewed":
-        return <MemoRecentlyViewProducts />;
-      case "home_bottom_carousel":
-        return <MemoHomeBottomCarousel item={item.data} />;
-      case "testimonial":
-        return <MemoTestimonial />;
-      case "home_usp":
-        return <MemoHomeUsp />;
-      case "our_services":
-        return <MemoOurServices />;
-      case "branches":
-        return <MemoBranches />;
-      case "footer":
-        return <MemoFooter />;
-      default:
-        return null;
-    }
-  }, [headerBannerSource, headerBannerImageUri, isFocused, headerBanners]);
+          );
+        case "category_card_section":
+          return <MemoCategoryCardSection />;
+        case "home_product":
+          return <MemoHomeProduct />;
+        case "custom_sections":
+          return <MemoCustomSections />;
+        case "feature_banner_0":
+          return <MemoFeatureBanner item={item.data} />;
+        case "diy":
+          return <MemoDiy products={item.data} />;
+        case "feature_banner_1":
+          return <MemoFeatureBanner item={item.data} />;
+        case "recently_viewed":
+          return <MemoRecentlyViewProducts />;
+        case "home_bottom_carousel":
+          return <MemoHomeBottomCarousel item={item.data} />;
+        case "testimonial":
+          return <MemoTestimonial />;
+        case "home_usp":
+          return <MemoHomeUsp />;
+        case "our_services":
+          return <MemoOurServices />;
+        case "branches":
+          return <MemoBranches />;
+        case "footer":
+          return <MemoFooter />;
+        default:
+          return null;
+      }
+    },
+    [headerBannerSource, headerBannerImageUri, isFocused, headerBanners],
+  );
+
+  const renderListHeader = useCallback(
+    () => <Animated.View style={{ height: promoHeight }} />,
+    [promoHeight],
+  );
 
   if (!isConnected) {
-    return <NoInternet onRetry={async () => { await queryClient.refetchQueries(); }} />;
+    return (
+      <NoInternet
+        onRetry={async () => {
+          await queryClient.refetchQueries();
+        }}
+      />
+    );
   }
 
   return (
@@ -1060,10 +1075,7 @@ export default function HomeScreen() {
       >
         {/* Full Header Background Image from API */}
         {!!mainBannerSource && (
-          <View
-            pointerEvents="none"
-            style={StyleSheet.absoluteFill}
-          >
+          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
             <Image
               key={`main-banner-${mainBannerImageUri}-${isFocused}`}
               source={mainBannerSource}
@@ -1120,7 +1132,7 @@ export default function HomeScreen() {
       {/* CONTENT */}
       <Animated.FlatList
         data={visibleSections}
-        keyExtractor={useCallback((item: any) => item.id, [])}
+        keyExtractor={sectionKeyExtractor}
         renderItem={renderItem}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
@@ -1131,13 +1143,13 @@ export default function HomeScreen() {
           paddingTop: HEADER_HEIGHT_BASE,
           paddingBottom: 50,
         }}
-        ListHeaderComponent={useCallback(() => <Animated.View style={{ height: promoHeight }} />, [promoHeight])}
-        ItemSeparatorComponent={useCallback(() => <View style={{ height: 15 }} />, [])}
+        ListHeaderComponent={renderListHeader}
+        ItemSeparatorComponent={SectionSeparator}
         initialNumToRender={5}
         maxToRenderPerBatch={5}
         windowSize={5}
         updateCellsBatchingPeriod={50}
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={Platform.OS === "android"}
       />
 
       {/* FLOATING ELEMENTS (Animations Preserved) */}

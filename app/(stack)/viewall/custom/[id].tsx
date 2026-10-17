@@ -22,6 +22,7 @@ import { CustomSectionProduct } from "../../../../src/types/customSection.types"
 import { ListingItem } from "../../../../src/types/shop.types";
 import ProductCard from "../../../../src/components/ProductCard";
 import { useResponsive } from "../../../../src/utils/useResponsive";
+import AddToCartPreview from "../../../../src/components/cart/AddToCartPreview";
 
 const { width } = Dimensions.get("window");
 
@@ -224,6 +225,10 @@ const CustomSectionAllProducts = () => {
   });
 
   const title = res?.data?.section?.section_title || "Products";
+  const productCount =
+    res?.data?.pagination?.total ??
+    res?.data?.section?.product_count ??
+    (allProducts.length > 0 ? allProducts.length : undefined);
 
   React.useEffect(() => {
     if (res?.data?.products) {
@@ -279,6 +284,7 @@ const CustomSectionAllProducts = () => {
           title={title}
           showBack
           showSearch
+          count={showSkeleton ? undefined : productCount}
           rightComponent={
             <TouchableOpacity
               onPress={toggleGridMode}
@@ -314,7 +320,7 @@ const CustomSectionAllProducts = () => {
           onEndReachedThreshold={0.5}
           contentContainerStyle={{
             paddingHorizontal: PADDING,
-            paddingBottom: insets.bottom + 20,
+            paddingBottom: insets.bottom + 80,
             paddingTop: 10,
           }}
           columnWrapperStyle={
@@ -400,6 +406,11 @@ const CustomSectionAllProducts = () => {
           }}
         />
       )}
+
+      <AddToCartPreview
+        pbandroid={Math.max(insets.bottom, 16) + 10}
+        pbios={insets.bottom + 15}
+      />
     </View>
   );
 };
