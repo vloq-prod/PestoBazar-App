@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Pestobazaar",
   owner: "vloq",
   slug: "pestobazaar",
-  version: "1.2.2",
+  version: "1.3.0",
   orientation: "default",
 
   // @ts-ignore
@@ -29,7 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     color: "#6C63FF",
   },
 
-  icon: "./app/AppIcons/playstore.png",
+  icon: "./assets/test-logo-icon.png",
 
   splash: {
     image: "./assets/icon.png",
@@ -52,7 +52,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
 
   ios: {
-    buildNumber: "1",
+    buildNumber: "2",
     bundleIdentifier: "com.pestobazaar.app",
 
     // iOS Universal Links — all deep-linkable paths
@@ -64,7 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: "com.pestobazaar.app",
-    versionCode: 10,
+    versionCode: 11,
 
     permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
 
