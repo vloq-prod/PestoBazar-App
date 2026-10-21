@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import dealsimage from "../../assets/deal.png";
+import dealsimage from "../../assets/deal2.png";
 
 type TabCfg = {
   label: string;
