@@ -13,7 +13,7 @@
     "@avasapp/react-native-otp-autofill": "^1.0.2",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
-    "@expo/config": "^55.0.15",
+    "@expo/config": "~12.0.12",
     "@expo/vector-icons": "^15.0.3",
     "@gorhom/bottom-sheet": "^5.2.8",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -22,21 +22,21 @@
     "@react-native-firebase/app": "^26.4.0",
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.6",
-    "expo": "~54.0.34",
+    "expo": "~54.0.37",
     "expo-auth-session": "~7.0.11",
-    "expo-constants": "~18.0.13",
+    "expo-constants": "~18.0.14",
     "expo-crypto": "~15.0.9",
     "expo-dev-client": "~6.0.21",
     "expo-device": "~8.0.10",
     "expo-file-system": "~19.0.24",
-    "expo-font": "~14.0.11",
+    "expo-font": "~14.0.12",
     "expo-image": "~3.0.11",
     "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
     "expo-location": "~19.0.8",
     "expo-notifications": "~0.32.17",
-    "expo-router": "~6.0.23",
+    "expo-router": "~6.0.24",
     "expo-secure-store": "~15.0.8",
     "expo-sharing": "~14.0.8",
     "expo-splash-screen": "~31.0.13",
@@ -70,6 +70,22 @@
     "eslint": "^9.0.0",
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
+  },
+  "resolutions": {
+    "expo-constants": "~18.0.14"
+  },
+  "overrides": {
+    "expo-constants": "~18.0.14"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-otp-verify",
+          "react-native-render-html"
+        ]
+      }
+    }
   },
   "private": true
 }

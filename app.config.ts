@@ -41,6 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-router",
     "expo-dev-client",
     "expo-notifications",
+    "expo-font",
 
     [
       "expo-location",
