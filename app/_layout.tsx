@@ -142,10 +142,10 @@ const CartQuantitySyncProvider = ({ children }: { children: React.ReactNode }) =
 
 
 export default function RootLayout() {
-  const { fontsLoaded } = useFonts();
+  const { fontsLoaded, fontError } = useFonts();
   const [queryClient] = useState(() => new QueryClient());
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

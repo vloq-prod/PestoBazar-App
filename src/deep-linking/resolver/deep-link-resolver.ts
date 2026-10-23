@@ -47,27 +47,32 @@ const DEDUP_WINDOW_MS = 3000; // 3 seconds
 // ─── Public API ────────────────────────────────────────────────────────────────
 
 export async function resolveUrl(rawUrl: string): Promise<void> {
+  console.log("🔗 [DeepLink Received]:", rawUrl);
   if (!rawUrl || typeof rawUrl !== "string") {
     return;
   }
 
   // Step 0: Bypass route validation for Google OAuth redirect callbacks
   if (isGoogleOAuthRedirect(rawUrl)) {
+    console.log("🔗 [DeepLink] Google OAuth callback detected, bypassing resolver");
     return;
   }
 
   // Filter out internal Expo development connection links
   if (isExpoDevelopmentUrl(rawUrl)) {
+    console.log("🔗 [DeepLink] Expo internal dev link, bypassing resolver");
     return;
   }
 
   // Deduplication — prevent processing the same link twice in rapid succession
   if (isDuplicate(rawUrl)) {
+    console.log("🔗 [DeepLink] Duplicate link ignored:", rawUrl);
     return;
   }
 
   // Step 1: Parse
   const payload = parseDeepLinkUrl(rawUrl);
+  console.log("🔗 [DeepLink Parsed Payload]:", JSON.stringify(payload));
   if (!payload) {
     trackDeepLinkEvent({
       eventName: "deep_link_failed",

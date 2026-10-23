@@ -16,10 +16,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: [
     "pestobazaar",
     "com.googleusercontent.apps.147081453519-lap730k31jgsjlk2d0ovb6ok4p9rn8tr",
+    "com.googleusercontent.apps.147081453519-il1blpe3btouncujaemet7q3bokt447a",
     "com.googleusercontent.apps.147081453519-o44pc2pd7vj224gdq1q5atc992lsrrvh",
     ...(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
       ? [
           `com.googleusercontent.apps.${process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID.replace(/\.apps\.googleusercontent\.com$/, "")}`,
+        ]
+      : []),
+    ...(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+      ? [
+          `com.googleusercontent.apps.${process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.replace(/\.apps\.googleusercontent\.com$/, "")}`,
         ]
       : []),
   ],
@@ -55,6 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     buildNumber: "4",
     bundleIdentifier: "com.pestobazaar.app",
+    googleServicesFile: "./GoogleService-Info.plist",
 
     // iOS Universal Links — all deep-linkable paths
     associatedDomains: [

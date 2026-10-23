@@ -14,7 +14,7 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type OtpChannel = "sms" | "whatsapp" | "both";
+export type OtpChannel = "sms" | "whatsapp" | "both";
 
 type Props = {
   visible: boolean;

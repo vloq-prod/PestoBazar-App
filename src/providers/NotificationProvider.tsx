@@ -9,7 +9,7 @@ import { useAppVisitorStore } from "../store/auth";
 import { AppConfigUtil } from "../utils/appConfig";
 import { resolveNotification } from "../deep-linking";
 
-import OtpVerify from "react-native-otp-verify";
+import OtpVerify from "../utils/otpVerify";
 
 interface NotificationProviderProps {
   children: React.ReactNode;

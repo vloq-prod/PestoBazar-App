@@ -17,9 +17,9 @@ import { useVerifyOtp, useSendOtp } from "../../src/hooks/useAuthHooks";
 import { ArrowLeft } from "lucide-react-native";
 import { useAppVisitorStore } from "../../src/store/auth";
 import AppNavbar from "../../src/components/comman/AppNavbar";
-import ResendOtpModal from "../../src/modals/auth/ResendOtpModal";
+import ResendOtpModal, { OtpChannel } from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
-import RNOtpVerify from "react-native-otp-verify";
+import RNOtpVerify from "../../src/utils/otpVerify";
 import {
   trackLogin,
   trackSignUp,
@@ -359,7 +359,7 @@ export default function VerifyOtpScreen() {
       <ResendOtpModal
         visible={showModal}
         onClose={() => setShowModal(false)}
-        onSelect={(type) => {
+        onSelect={(type: OtpChannel) => {
           setShowModal(false);
           resendOtpMutate(
             { mobile_no: mobile, otp_channel: type },

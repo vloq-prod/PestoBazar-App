@@ -39,7 +39,7 @@ import { z } from "zod";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
-import RNOtpVerify from "react-native-otp-verify";
+import RNOtpVerify from "../../src/utils/otpVerify";
 import { trackLogin, setAnalyticsUserId } from "../../src/lib/analytics";
 import { ChevronDown } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -50,12 +50,23 @@ const androidClientId =
   process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
   "147081453519-lap730k31jgsjlk2d0ovb6ok4p9rn8tr.apps.googleusercontent.com";
 
-const androidSchemePrefix = androidClientId.replace(
+const iosClientId =
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+  "147081453519-il1blpe3btouncujaemet7q3bokt447a.apps.googleusercontent.com";
+
+const webClientId =
+  process.env.EXPO_PUBLIC_WEB_CLIENT_ID ||
+  "147081453519-1ntui45a8b4ek7pg1pqa7vloljln1mkb.apps.googleusercontent.com";
+
+const activeClientId =
+  Platform.OS === "ios" ? iosClientId : androidClientId;
+
+const schemePrefix = activeClientId.replace(
   /\.apps\.googleusercontent\.com$/,
   "",
 );
 
-const GOOGLE_REDIRECT_SCHEME = `com.googleusercontent.apps.${androidSchemePrefix}`;
+const GOOGLE_REDIRECT_SCHEME = `com.googleusercontent.apps.${schemePrefix}`;
 
 const phoneSchema = z.object({
   mobile_no: z.string().regex(/^[0-9]{10}$/, "Enter valid 10 digit number"),
@@ -171,15 +182,26 @@ export default function Login() {
     };
   }, []);
 
-  const googleRedirectUri = AuthSession.makeRedirectUri({
-    native: `${GOOGLE_REDIRECT_SCHEME}:/oauth2redirect`,
-  });
+  const googleRedirectUri =
+    Platform.OS === "web"
+      ? AuthSession.makeRedirectUri()
+      : `${GOOGLE_REDIRECT_SCHEME}:/oauth2redirect`;
+
+  console.log(
+    "🔑 [Google Auth] Platform:",
+    Platform.OS,
+    "| ClientId:",
+    Platform.OS === "ios" ? iosClientId : androidClientId,
+    "| RedirectURI:",
+    googleRedirectUri,
+  );
+
   const isExpoGo = Constants.executionEnvironment === "storeClient";
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "",
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
-    webClientId: process.env.EXPO_PUBLIC_WEB_CLIENT_ID || "",
+    androidClientId,
+    iosClientId,
+    webClientId,
     redirectUri: googleRedirectUri,
     scopes: ["openid", "profile", "email"],
     selectAccount: true,
