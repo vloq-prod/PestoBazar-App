@@ -31,11 +31,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
 
   notification: {
-    icon: "./assets/pestoicon.png",
+    icon: "./assets/icon-android.png",
     color: "#5f16e9",
   },
 
-  icon: "./assets/pestoicon.png",
+  icon: "./assets/icon-ios.png",
 
   splash: {
     image: "./assets/icon.png",
@@ -48,6 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-dev-client",
     "expo-notifications",
     "expo-font",
+    "expo-apple-authentication",
 
     [
       "expo-location",
@@ -59,9 +60,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
 
   ios: {
+    icon: "./assets/icon-ios.png",
     buildNumber: "4",
     bundleIdentifier: "com.pestobazaar.app",
+    usesAppleSignIn: true,
     googleServicesFile: "./GoogleService-Info.plist",
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
 
     // iOS Universal Links — all deep-linkable paths
     associatedDomains: [
@@ -93,7 +99,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
 
     adaptiveIcon: {
-      foregroundImage: "./app/AppIcons/android/adaptive-foreground.png",
+      foregroundImage: "./assets/icon-android.png",
       backgroundColor: "#5f16e9",
     },
 

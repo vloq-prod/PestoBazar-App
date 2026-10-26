@@ -296,12 +296,13 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
           shadowOpacity: 0.2,
           shadowRadius: 9,
           elevation: 8,
+          overflow: "hidden",
         }}
       >
         <Image
-          style={{ width: 42, height: 42 }}
+          style={{ width: "100%", height: "100%", borderRadius: 999 }}
           source={dealsimage}
-          contentFit="contain"
+          contentFit="cover"
         />
       </Pressable>
     </View>
@@ -395,12 +396,13 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
             borderColor: colors.border,
             alignItems: "center",
             justifyContent: "center",
+            overflow: "hidden",
           }}
         >
           <Image
             source={dealsimage}
-            contentFit="contain"
-            style={{ width: 38, height: 38 }}
+            contentFit="cover"
+            style={{ width: "100%", height: "100%", borderRadius: 26 }}
           />
         </Pressable>
       </View>

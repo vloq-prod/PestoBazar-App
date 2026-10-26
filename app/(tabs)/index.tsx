@@ -40,6 +40,7 @@ import Animated, {
   withDelay,
   interpolate,
   Extrapolation,
+  runOnJS,
 } from "react-native-reanimated";
 
 import HomeBottomCarousel from "../../src/components/home/HomeBottomCarousel";
@@ -49,7 +50,10 @@ import HomeUsp from "../../src/components/home/HomeUsp";
 import Branches from "../../src/components/home/Branches";
 import CategoryCardSection from "../../src/components/home/CategoryCardSection";
 import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
-import PromoBanner from "../../src/components/home/PromoBanner";
+import PromoBanner, {
+  getPromoBannerHeight,
+  PROMO_WAVE_HEIGHT,
+} from "../../src/components/home/PromoBanner";
 import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import Footer from "../../src/components/home/Footer";
@@ -770,17 +774,24 @@ export default function HomeScreen() {
   const { products: diyProducts } = useDiyListing();
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
   const promoHeight = useSharedValue(0);
+  const [isPromoVisible, setIsPromoVisible] = useState(false);
+
+  const statusBarHeight =
+    Platform.OS === "android"
+      ? (RNStatusBar.currentHeight ?? insets.top ?? 24)
+      : insets.top;
+  const promoTotalHeight = getPromoBannerHeight(statusBarHeight);
 
   const isFocused = useIsFocused();
 
   useFocusEffect(
     useCallback(() => {
-      RNStatusBar.setBarStyle("light-content", true);
+      RNStatusBar.setBarStyle(isPromoVisible ? "dark-content" : "light-content", true);
       if (Platform.OS === "android") {
         RNStatusBar.setBackgroundColor("transparent", true);
         RNStatusBar.setTranslucent(true);
       }
-    }, []),
+    }, [isPromoVisible]),
   );
 
   const rawMainBannerUri =
@@ -838,15 +849,17 @@ export default function HomeScreen() {
   // Show promo banner smoothly after 1 second
   useEffect(() => {
     const timer = setTimeout(() => {
-      promoHeight.value = withTiming(106, { duration: 800 });
+      setIsPromoVisible(true);
+      promoHeight.value = withTiming(promoTotalHeight, { duration: 800 });
     }, 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [promoTotalHeight]);
 
   // Smoothly hide promo banner after 6 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       if (promoHeight.value > 0) {
+        setIsPromoVisible(false);
         promoHeight.value = withTiming(0, { duration: 1000 });
       }
     }, 6000);
@@ -864,6 +877,7 @@ export default function HomeScreen() {
       // Hide promo banner as soon as user scrolls
       if (currentY > 5 && promoHeight.value > 0) {
         promoHeight.value = withTiming(0, { duration: 300 });
+        runOnJS(setIsPromoVisible)(false);
       }
 
       // Hide FAB on scroll down, show on scroll up
@@ -1075,7 +1089,16 @@ export default function HomeScreen() {
       >
         {/* Full Header Background Image from API */}
         {!!mainBannerSource && (
-          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: HEADER_HEIGHT_BASE + PROMO_WAVE_HEIGHT,
+            }}
+          >
             <Image
               key={`main-banner-${mainBannerImageUri}-${isFocused}`}
               source={mainBannerSource}
@@ -1083,7 +1106,7 @@ export default function HomeScreen() {
                 width: "100%",
                 height: "100%",
               }}
-              contentFit="cover"
+              contentFit="fill"
               cachePolicy="memory-disk"
               priority="high"
             />
@@ -1106,12 +1129,12 @@ export default function HomeScreen() {
           {isFocused && (
             <>
               <RNStatusBar
-                barStyle="light-content"
+                barStyle={isPromoVisible ? "dark-content" : "light-content"}
                 backgroundColor="transparent"
                 translucent
               />
               <StatusBar
-                style="light"
+                style={isPromoVisible ? "dark" : "light"}
                 backgroundColor="transparent"
                 translucent
               />
