@@ -5,6 +5,7 @@ import {
   createVisitor,
   getLoginBanners,
   googleAuthCallback,
+  appleAuthCallback,
   sendOtpApi,
   verifyOtpApi,
   verifyUser,
@@ -12,6 +13,8 @@ import {
 import {
   GoogleCallbackRequest,
   GoogleCallbackResponse,
+  AppleCallbackRequest,
+  AppleCallbackResponse,
   SendOtpRequest,
   SendOtpResponse,
   VerifyOtpRequest,
@@ -52,6 +55,12 @@ export const useVerifyUser = () => {
 export const useGoogleAuthCallback = () => {
   return useMutation<GoogleCallbackResponse, Error, GoogleCallbackRequest>({
     mutationFn: googleAuthCallback,
+  });
+};
+
+export const useAppleAuthCallback = () => {
+  return useMutation<AppleCallbackResponse, Error, AppleCallbackRequest>({
+    mutationFn: appleAuthCallback,
   });
 };
 

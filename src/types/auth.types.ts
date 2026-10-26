@@ -70,6 +70,20 @@ export interface GoogleCallbackRequest {
 
 export type GoogleCallbackResponse = ApiResponse<{ user_id: string; user_name: string }>;
 
+export interface AppleCallbackRequest {
+  apple_id: string;
+  email?: string;
+  user_name?: string;
+  visitor_id?: string;
+  identity_token?: string;
+}
+
+export type AppleCallbackResponse = ApiResponse<{
+  user_id: string;
+  user_name: string;
+  email?: string;
+}>;
+
 export interface LoginBannerItem {
   id: number;
   desktop_banner?: string;

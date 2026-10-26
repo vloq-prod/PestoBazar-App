@@ -30,6 +30,7 @@ import Animated, {
 } from "react-native-reanimated";
 import {
   useGoogleAuthCallback,
+  useAppleAuthCallback,
   useLoginBanners,
   useSendOtp,
   useVerifyUser,
@@ -39,6 +40,7 @@ import { z } from "zod";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
+import * as AppleAuthentication from "expo-apple-authentication";
 import RNOtpVerify from "../../src/utils/otpVerify";
 import { trackLogin, setAnalyticsUserId } from "../../src/lib/analytics";
 import { ChevronDown } from "lucide-react-native";
@@ -219,18 +221,13 @@ export default function Login() {
     promptAsync().catch(() => {});
   }, [googleRedirectUri, isExpoGo, promptAsync]);
 
-  const handleAppleLogin = useCallback(() => {
-    Alert.alert(
-      "Apple Sign-In",
-      "Apple Sign-In will be available in an upcoming update.",
-    );
-  }, []);
-
   const { mutate: verifyUserMutate, isPending: isVerifyPending } =
     useVerifyUser();
   const { mutate: sendOtpMutate, isPending: isSendOtpPending } = useSendOtp();
   const { mutate: googleCallbackMutate, isPending: isGooglePending } =
     useGoogleAuthCallback();
+  const { mutate: appleCallbackMutate, isPending: isApplePending } =
+    useAppleAuthCallback();
   const { banners } = useLoginBanners();
 
   const carouselItems = useMemo<LoginCarouselItem[]>(() => {
@@ -259,6 +256,91 @@ export default function Login() {
 
   const visitorId = useAppVisitorStore((s) => s.visitorId);
   const setGoogleUser = useAppVisitorStore((s) => s.setGoogleUser);
+  const setUser = useAppVisitorStore((s) => s.setUser);
+
+  const handleAppleLogin = useCallback(async () => {
+    try {
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert(
+          "Apple Sign-In Unavailable",
+          "Apple Sign-In is not supported on this device.",
+        );
+        return;
+      }
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const fullName = [
+        credential.fullName?.givenName,
+        credential.fullName?.familyName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+      appleCallbackMutate(
+        {
+          apple_id: credential.user,
+          email: credential.email || undefined,
+          user_name: fullName || undefined,
+          identity_token: credential.identityToken || undefined,
+          visitor_id: visitorId ?? "",
+        },
+        {
+          onSuccess: async (data) => {
+            if (data.status === 0) {
+              Alert.alert(
+                "Apple Sign-In Failed",
+                data.message || "Something went wrong.",
+              );
+              return;
+            }
+            await setUser(
+              data.data.user_id,
+              data.data.user_name,
+              data.data.email ?? credential.email ?? "",
+              "",
+            );
+            setAnalyticsUserId(data.data.user_id);
+            trackLogin("apple");
+
+            if (redirectTo) {
+              router.replace("/(tabs)");
+              setTimeout(() => router.push(redirectTo as any), 100);
+            } else {
+              router.replace("/(tabs)");
+            }
+          },
+          onError: () => {
+            Alert.alert(
+              "Apple Sign-In Failed",
+              "Could not sign in with Apple. Please try again.",
+            );
+          },
+        },
+      );
+    } catch (e: any) {
+      if (e?.code === "ERR_REQUEST_CANCELED") {
+        return;
+      }
+      Alert.alert(
+        "Apple Sign-In Error",
+        e?.message || "Could not complete sign in with Apple.",
+      );
+    }
+  }, [
+    appleCallbackMutate,
+    redirectTo,
+    router,
+    setUser,
+    visitorId,
+  ]);
 
   const isLoading = isVerifyPending || isSendOtpPending;
 
@@ -560,10 +642,21 @@ export default function Login() {
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onPress={handleAppleLogin}
-                  style={[styles.socialButton, { marginTop: 10 }]}
+                  disabled={isApplePending}
+                  style={[
+                    styles.socialButton,
+                    { marginTop: 10 },
+                    isApplePending && { opacity: 0.6 },
+                  ]}
                 >
-                  <Ionicons name="logo-apple" size={20} color="#000000" />
-                  <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                  {isApplePending ? (
+                    <ActivityIndicator size="small" color="#000000" />
+                  ) : (
+                    <>
+                      <Ionicons name="logo-apple" size={20} color="#000000" />
+                      <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
             </View>

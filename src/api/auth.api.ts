@@ -2,6 +2,8 @@ import { apiClient } from "../lib/apiClient";
 import {
   GoogleCallbackRequest,
   GoogleCallbackResponse,
+  AppleCallbackRequest,
+  AppleCallbackResponse,
   SendOtpRequest,
   SendOtpResponse,
   VerifyOtpRequest,
@@ -60,6 +62,17 @@ export const googleAuthCallback = async (
 ): Promise<GoogleCallbackResponse> => {
   const response = await apiClient.post<GoogleCallbackResponse>(
     "/app-api/v1/auth/google/callback",
+    payload,
+  );
+
+  return response.data;
+};
+
+export const appleAuthCallback = async (
+  payload: AppleCallbackRequest,
+): Promise<AppleCallbackResponse> => {
+  const response = await apiClient.post<AppleCallbackResponse>(
+    "/app-api/v1/auth/apple/callback",
     payload,
   );
 
