@@ -21,11 +21,7 @@ import {
   User,
   Mail,
   Phone,
-  Lock,
-  Eye,
-  EyeOff,
   Camera,
-  ShieldCheck,
 } from "lucide-react-native";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useAppVisitorStore } from "../../src/store/auth";
@@ -126,93 +122,7 @@ const ProfileField = React.memo(
 );
 ProfileField.displayName = "ProfileField";
 
-// ─── Password Field ───────────────────────────────────────────────────────────
-const PasswordField = React.memo(
-  ({
-    value,
-    onChange,
-    colors,
-    font,
-  }: {
-    value: string;
-    onChange: (v: string) => void;
-    colors: any;
-    font: (n: number) => number;
-  }) => {
-    const [focused, setFocused] = useState(false);
-    const [show, setShow] = useState(false);
 
-    return (
-      <View style={styles.fieldWrap}>
-        <Text
-          style={[
-            styles.fieldLabel,
-            {
-              color: focused ? colors.primary : colors.textSecondary,
-              fontSize: font(12.5),
-            },
-          ]}
-        >
-          Change Password
-        </Text>
-
-        <View
-          style={[
-            styles.inputBox,
-            {
-              height: INPUT_HEIGHT,
-              backgroundColor: colors.inputBackground ?? "#F5F5F5",
-              borderColor: focused ? colors.primary : colors.border,
-              borderWidth: focused ? 1.6 : 1,
-            },
-          ]}
-        >
-          <Lock
-            size={18}
-            color={focused ? colors.primary : colors.textSecondary}
-            strokeWidth={1.8}
-          />
-
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Enter new password"
-            placeholderTextColor={colors.textTertiary ?? colors.textSecondary}
-            secureTextEntry={!show}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            style={[
-              styles.textInput,
-              {
-                color: colors.text,
-                fontSize: font(13.5),
-                height: INPUT_HEIGHT,
-                textAlignVertical: "center",
-              },
-            ]}
-          />
-
-          <TouchableOpacity
-            onPress={() => setShow((p) => !p)}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {show ? (
-              <EyeOff
-                size={18}
-                color={colors.textSecondary}
-                strokeWidth={1.8}
-              />
-            ) : (
-              <Eye size={18} color={colors.textSecondary} strokeWidth={1.8} />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  },
-);
-PasswordField.displayName = "PasswordField";
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function UserProfile() {
@@ -241,7 +151,6 @@ export default function UserProfile() {
     fullName: userName || "",
     email: userEmail || "",
     phone: "",
-    password: "",
   });
 
   const setField = useCallback(
@@ -446,38 +355,6 @@ export default function UserProfile() {
             </View>
           </View>
 
-          {/* ── Section 2: Account Security ── */}
-          <View style={styles.menuSection}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colors.textSecondary, fontSize: font(17) },
-              ]}
-            >
-              Account Security
-            </Text>
-
-            <View style={{ gap: spacing(10) }}>
-              <PasswordField
-                value={form.password}
-                onChange={setField("password")}
-                colors={colors}
-                font={font}
-              />
-
-              <View style={styles.securityNote}>
-                <ShieldCheck size={14} color={colors.textSecondary} />
-                <Text
-                  style={[
-                    styles.securityNoteText,
-                    { color: colors.textSecondary, fontSize: font(12) },
-                  ]}
-                >
-                  Leave blank if you don't want to change your password.
-                </Text>
-              </View>
-            </View>
-          </View>
         </ScrollView>
 
         {/* ── Footer Action Button ── */}
@@ -635,18 +512,7 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // ── Security Note ───────────────────────────────────────────────────────────
-  securityNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 2,
-    paddingHorizontal: 2,
-  },
-  securityNoteText: {
-    fontFamily: "Poppins_400Regular",
-    flex: 1,
-  },
+
 
   // ── Footer ──────────────────────────────────────────────────────────────────
   footer: {
