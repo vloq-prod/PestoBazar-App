@@ -1,10 +1,14 @@
 import * as SecureStore from "expo-secure-store";
 
+const ENV_SUFFIX = (
+  process.env.EXPO_PUBLIC_ENVIRONMENT?.toLowerCase() ?? "production"
+);
+
 export const StorageKeys = {
-  VISITOR_ID: "visitor_id",
-  TOKEN: "visitor_token",
+  VISITOR_ID: `visitor_id_${ENV_SUFFIX}`,
+  TOKEN: `visitor_token_${ENV_SUFFIX}`,
   PINCODE: "user_pincode",
-  USER_ID: "user_id",
+  USER_ID: `user_id_${ENV_SUFFIX}`,
   USER_NAME: "user_name",
   USER_EMAIL: "user_email",
   USER_AVATAR: "user_avatar",

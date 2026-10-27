@@ -64,6 +64,13 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       console.warn(`🔒 [apiClient] 401 Unauthorized on: ${url}`);
+      const serverMsg = error.response?.data?.message;
+      if (typeof serverMsg === "string" && /invalid visitor/i.test(serverMsg)) {
+        try {
+          const { useAppVisitorStore } = await import("../store/auth");
+          await useAppVisitorStore.getState().resetVisitor();
+        } catch (_) {}
+      }
     } else if (status === 500) {
       const serverMsg = error.response?.data?.message;
       console.warn(`⚠️ [apiClient] 500 Server Error on: ${url}${serverMsg ? ` (${serverMsg})` : ""}`);

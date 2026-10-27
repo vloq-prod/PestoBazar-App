@@ -19,6 +19,7 @@ interface AppState {
   clearVisitor: () => Promise<void>;
   hydrateVisitor: () => Promise<void>;
   ensureVisitor: () => Promise<void>;
+  resetVisitor: () => Promise<string | null>;
 
   // User actions
   setUser: (
@@ -69,21 +70,36 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     let visitorId = await StorageUtil.getVisitorId();
     let token = await StorageUtil.getToken();
 
-    if (!visitorId || !token) {
-      try {
-        const res = await createVisitor({ visitor_id: "" });
-        if (res && res.visitor_id && res.token) {
-          visitorId = res.visitor_id;
-          token = res.token;
-          await StorageUtil.setVisitor(visitorId, token);
-        }
-      } catch (error) {
+    try {
+      const res = await createVisitor({ visitor_id: visitorId || "" });
+      if (res && res.visitor_id && res.token) {
+        visitorId = res.visitor_id;
+        token = res.token;
+        await StorageUtil.setVisitor(visitorId, token);
       }
+    } catch (error) {
+      // If offline or request fails, keep whatever is in local storage
     }
 
     if (visitorId && token) {
       set({ visitorId, token });
     }
+  },
+
+  resetVisitor: async () => {
+    await StorageUtil.clearVisitor();
+    set({ visitorId: null, token: null });
+    try {
+      const res = await createVisitor({ visitor_id: "" });
+      if (res && res.visitor_id && res.token) {
+        await StorageUtil.setVisitor(res.visitor_id, res.token);
+        set({ visitorId: res.visitor_id, token: res.token });
+        return res.visitor_id;
+      }
+    } catch (e) {
+      console.warn("Failed to reset visitor:", e);
+    }
+    return null;
   },
 
   // ── User ─────────────────────────────────────────

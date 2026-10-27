@@ -605,87 +605,115 @@ export default function Login() {
               <Text style={styles.continueBtnText}>Continue</Text>
             )}
           </TouchableOpacity>
-        </View>
 
-        {/* Social Logins & Footer — only shown when keyboard is closed */}
-        {!isKeyboardVisible && (
-          <View>
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
+          {/* Social Logins — only shown when keyboard is closed */}
+          {!isKeyboardVisible && (
+            <>
+              {/* Divider */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-            {/* Social Logins */}
-            <View style={styles.socialContainer}>
-              {/* Google Button */}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={handleGoogleLogin}
-                disabled={isGooglePending}
+              {/* Social Logins */}
+              <View
                 style={[
-                  styles.socialButton,
-                  isGooglePending && { opacity: 0.6 },
+                  styles.socialContainer,
+                  Platform.OS === "ios" && styles.socialContainerRow,
                 ]}
               >
-                <Image
-                  source={require("../../assets/google.png")}
-                  style={styles.googleIcon}
-                  resizeMode="contain"
-                />
-                <Text style={styles.socialButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
-
-              {/* Apple Button (iOS only) */}
-              {Platform.OS === "ios" && (
+                {/* Google Button */}
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={handleAppleLogin}
-                  disabled={isApplePending}
+                  onPress={handleGoogleLogin}
+                  disabled={isGooglePending || isApplePending}
                   style={[
                     styles.socialButton,
-                    { marginTop: 10 },
-                    isApplePending && { opacity: 0.6 },
+                    Platform.OS === "ios" && styles.socialButtonHalf,
+                    isGooglePending && { opacity: 0.6 },
                   ]}
                 >
-                  {isApplePending ? (
+                  {isGooglePending ? (
                     <ActivityIndicator size="small" color="#000000" />
                   ) : (
                     <>
-                      <Ionicons name="logo-apple" size={20} color="#000000" />
-                      <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                      <Image
+                        source={require("../../assets/google.png")}
+                        style={styles.googleIcon}
+                        resizeMode="contain"
+                      />
+                      <Text
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.85}
+                        style={styles.socialButtonText}
+                      >
+                        Sign in with Google
+                      </Text>
                     </>
                   )}
                 </TouchableOpacity>
-              )}
-            </View>
 
-            {/* Footer Terms & Policies */}
-            <View style={styles.footerContainer}>
-              <Text style={styles.footerText}>
-                By continuing, you agree to our
-              </Text>
-              <View style={styles.footerLinksRow}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => router.push("/terms")}
-                >
-                  <Text style={styles.footerLink}>Terms of Service</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => router.push("/privacy")}
-                >
-                  <Text style={styles.footerLink}>Privacy Policy</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => router.push("/privacy")}
-                >
-                  <Text style={styles.footerLink}>Content Policy</Text>
-                </TouchableOpacity>
+                {/* Apple Button (iOS only) */}
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={handleAppleLogin}
+                    disabled={isApplePending || isGooglePending}
+                    style={[
+                      styles.socialButton,
+                      styles.socialButtonHalf,
+                      isApplePending && { opacity: 0.6 },
+                    ]}
+                  >
+                    {isApplePending ? (
+                      <ActivityIndicator size="small" color="#000000" />
+                    ) : (
+                      <>
+                        <Ionicons name="logo-apple" size={19} color="#000000" />
+                        <Text
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.85}
+                          style={styles.socialButtonText}
+                        >
+                          Sign in with Apple
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
+            </>
+          )}
+        </View>
+
+        {/* Footer Terms & Policies — only shown when keyboard is closed, pinned to bottom */}
+        {!isKeyboardVisible && (
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>
+              By continuing, you agree to our
+            </Text>
+            <View style={styles.footerLinksRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push("/terms")}
+              >
+                <Text style={styles.footerLink}>Terms of Service</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push("/privacy")}
+              >
+                <Text style={styles.footerLink}>Privacy Policy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => router.push("/privacy")}
+              >
+                <Text style={styles.footerLink}>Content Policy</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -760,7 +788,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
     color: "#2D3748",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   phoneRow: {
     flexDirection: "row",
@@ -840,7 +868,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   continueBtn: {
-    marginTop: 16,
+    marginTop: 12,
     height: 48,
     borderRadius: 10,
     alignItems: "center",
@@ -854,7 +882,8 @@ const styles = StyleSheet.create({
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 14,
+    marginTop: 14,
+    marginBottom: 14,
     gap: 12,
   },
   dividerLine: {
@@ -871,6 +900,11 @@ const styles = StyleSheet.create({
   socialContainer: {
     width: "100%",
   },
+  socialContainerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   socialButton: {
     height: 48,
     borderRadius: 10,
@@ -880,21 +914,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
+    paddingHorizontal: 8,
+    width: "100%",
+  },
+  socialButtonHalf: {
+    flex: 1,
+    width: undefined,
   },
   socialButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Poppins_500Medium",
     color: "#1F2937",
   },
   googleIcon: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
   },
   footerContainer: {
     alignItems: "center",
     gap: 5,
-    marginTop: 22,
+    marginTop: 16,
   },
   footerText: {
     fontSize: 11,

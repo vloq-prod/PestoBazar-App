@@ -23,6 +23,7 @@ import {
   GetCartQuantityResponse,
 } from "../types/home.types";
 import { useCartStore } from "../store/cartStore";
+import { useAppVisitorStore } from "../store/auth";
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
@@ -37,11 +38,18 @@ export const useAddToCart = () => {
       return data;
     },
 
-    onError: (error: any) => {
+    onError: async (error: any) => {
       const msg =
         error?.response?.data?.message ||
         error?.message ||
         "Failed to update cart";
+
+      if (/invalid visitor/i.test(msg)) {
+        await useAppVisitorStore.getState().resetVisitor();
+        showToast("Session refreshed. Please tap add to cart again.", "info");
+        return;
+      }
+
       const isWarning =
         /stock|maximum|minimum|limit|allowed|only \d+|reach|moq/i.test(msg);
       showToast(msg, isWarning ? "warning" : "error");
