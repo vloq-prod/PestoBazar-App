@@ -64,34 +64,120 @@ export interface PolicyData {
 // ABOUT US
 // ======================================================
 
-export interface AboutSection {
-  title: string;
-  description: string[];
-}
-
-export interface ValuesSection {
-  title: string;
-  values: ValueItem[];
+export interface AboutCta {
+  label: string;
+  url: string;
 }
 
 export interface WelcomeSection {
   title: string;
+  heading?: string;
   description: string[];
-  cta: CTA;
+  highlight?: string;
+  cta?: AboutCta;
+}
+
+export interface WhoWeAreSection {
+  title: string;
+  description: string[];
+  image?: string;
+}
+
+export interface MissionSection {
+  title: string;
+  description: string[];
+}
+
+export interface VisionSection {
+  title: string;
+  description: string[];
+}
+
+export interface OfferCategory {
+  title: string;
+  description: string;
+}
+
+export interface OfferSection {
+  title: string;
+  description: string[];
+  categories?: OfferCategory[];
+}
+
+export interface ValuesSection {
+  title: string;
+  description?: string[];
+  image?: string;
+  values: ValueItem[];
+}
+
+export interface CustomerItem {
+  title: string;
+  description: string;
+}
+
+export interface CustomersSection {
+  title: string;
+  description: string[];
+  customers: CustomerItem[];
+}
+
+export interface ResponsiblePestManagementSection {
+  title: string;
+  description: string[];
+}
+
+export interface MarketplaceSection {
+  title: string;
+  description: string[];
+  image?: string;
+}
+
+export interface AboutFaqQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface AboutFaqSection {
+  title: string;
+  description?: string[];
+  questions: AboutFaqQuestion[];
+}
+
+export interface AboutCtaButton {
+  label: string;
+  url: string;
+}
+
+export interface AboutCtaSection {
+  title: string;
+  description: string[];
+  buttons: AboutCtaButton[];
+}
+
+export interface FulfillmentCentersSection {
+  title: string;
+  heading?: string;
+  api_url?: string;
 }
 
 export interface AboutUsData {
   title: string;
   subtitle: string;
-  image: string;
+  image?: string;
 
-  welcome_section: WelcomeSection;
-
-  mission_section: AboutSection;
-
-  offer_section: AboutSection;
-
-  values_section: ValuesSection;
+  welcome_section?: WelcomeSection;
+  who_we_are_section?: WhoWeAreSection;
+  mission_section?: MissionSection;
+  vision_section?: VisionSection;
+  offer_section?: OfferSection;
+  values_section?: ValuesSection;
+  customers_section?: CustomersSection;
+  responsible_pest_management_section?: ResponsiblePestManagementSection;
+  marketplace_section?: MarketplaceSection;
+  faq_section?: AboutFaqSection;
+  cta_section?: AboutCtaSection;
+  fulfillment_centers_section?: FulfillmentCentersSection;
 }
 
 // ======================================================

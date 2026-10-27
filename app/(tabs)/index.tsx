@@ -431,7 +431,7 @@ const AppSearchBar = React.memo(({ onPress }: any) => {
           }}
         >
           <Image
-            source={require("../../app/AppIcons/playstore.png")}
+            source={require("../../assets/pestoicon.png")}
             style={{
               width: "78%",
               height: "78%",

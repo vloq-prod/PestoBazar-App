@@ -111,8 +111,13 @@ const BranchCard = ({ item, index }: { item: BranchItem; index: number }) => {
   );
 };
 
+interface BranchesProps {
+  title?: string;
+  subtitle?: string;
+}
+
 // ─── Main ────────────────────────────────────────────────
-const Branches = () => {
+const Branches: React.FC<BranchesProps> = ({ title, subtitle }) => {
   const { branches, loading, error } = useBranch();
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
@@ -132,10 +137,10 @@ const Branches = () => {
   );
 
   return (
-    <View  style={{gap: 25}}>
+    <View style={{ gap: 20 }}>
       <View style={{ paddingHorizontal: spacing(16) }}>
         <GradientDivider
-          label="We Deliver From Near You"
+          label={title || "We Deliver From Near You"}
           colors={colors}
           font={font}
           spacing={spacing}
@@ -144,6 +149,19 @@ const Branches = () => {
           textColor={colors.text}
           fontFamily="Poppins_700Bold"
         />
+        {!!subtitle && (
+          <Text
+            style={{
+              fontFamily: "Poppins_400Regular",
+              fontSize: 12,
+              color: colors.textSecondary,
+              textAlign: "center",
+              marginTop: 6,
+            }}
+          >
+            {subtitle}
+          </Text>
+        )}
       </View>
 
       <FlatList

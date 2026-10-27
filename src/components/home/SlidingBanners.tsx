@@ -5,7 +5,6 @@ import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import TopImage from "../../../assets/Top_banner.svg";
 
 const SIDE_PADDING = 16;
 const ASPECT_RATIO = 0.5;
@@ -105,20 +104,14 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
               }}
             >
               <Image
-                source={
-                  item.mobile_banner_url ||
-                  item.s3_image_url ||
-                  item.s3_image_path ||
-                  item.desktop_banner_url
-                    ? {
-                        uri:
-                          item.mobile_banner_url ||
-                          item.s3_image_url ||
-                          item.s3_image_path ||
-                          item.desktop_banner_url,
-                      }
-                    : TopImage
-                }
+                source={{
+                  uri:
+                    item.mobile_banner_url ||
+                    item.s3_image_url ||
+                    item.s3_image_path ||
+                    item.desktop_banner_url ||
+                    "",
+                }}
                 style={{ width: "100%", height: "100%" }}
                 contentFit="cover"
                 transition={200}

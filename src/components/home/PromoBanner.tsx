@@ -111,7 +111,7 @@ const PromoBanner = () => {
         {/* Top Header Row */}
         <View style={[styles.messageRow, { gap: 8 }]}>
           <Image
-            source={require("../../../app/AppIcons/playstore.png")}
+            source={require("../../../assets/pestoicon.png")}
             style={{ width: 22, height: 22 }}
             contentFit="contain"
           />
