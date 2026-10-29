@@ -1,7 +1,8 @@
-  import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Platform, Pressable, View, LayoutChangeEvent } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Home, LayoutGrid, User } from "lucide-react-native";
+import { Home, LayoutGrid, User, Briefcase } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -123,20 +124,20 @@ function AndroidTabItem({
         minWidth: 0,
         alignItems: "center",
         justifyContent: "center",
-        paddingTop: 10,
+        paddingTop: 8,
         paddingBottom: 6,
-        gap: 4,
+        gap: 3,
       }}
     >
       {/* Top indicator bar */}
       <Animated.View
         className="absolute top-0 h-[2.5px] rounded-b-sm"
         style={[
-          { left: "10%", right: "10%", backgroundColor: activeColor },
+          { left: "15%", right: "15%", backgroundColor: activeColor },
           borderStyle,
         ]}
       />
-      <cfg.Icon size={22} color={isFocused ? activeColor : inactiveColor} />
+      <cfg.Icon size={21} color={isFocused ? activeColor : inactiveColor} />
       <Animated.Text
         numberOfLines={1}
         style={{
@@ -224,7 +225,8 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
       <View
         style={{
           flex: 1,
-          paddingHorizontal: 16,
+          paddingLeft: 12,
+          paddingRight: 6,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.2,
@@ -281,30 +283,84 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
         </View>
       </View>
 
-      <Pressable
-        onPress={() => router.push("/(stack)/deals")}
+      <View
         style={{
-          width: 64,
-          height: 64,
-          marginRight: 16,
-          backgroundColor: colors.background,
-          borderRadius: 999,
+          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 9,
-          elevation: 8,
-          overflow: "hidden",
+          gap: 10,
+          marginRight: 14,
         }}
       >
-        <Image
-          style={{ width: "100%", height: "100%", borderRadius: 999 }}
-          source={dealsimage}
-          contentFit="cover"
-        />
-      </Pressable>
+        {/* Deals circle button */}
+        <Pressable
+          onPress={() => router.push("/(stack)/deals")}
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 999,
+            backgroundColor: colors.background,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.2,
+            shadowRadius: 9,
+            elevation: 8,
+            overflow: "hidden",
+          }}
+        >
+          <Image
+            style={{ width: "100%", height: "100%", borderRadius: 999 }}
+            source={dealsimage}
+            contentFit="cover"
+          />
+        </Pressable>
+
+        {/* B2B circle button */}
+        <Pressable
+          onPress={() => router.push("/b2b")}
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: 999,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.2,
+            shadowRadius: 9,
+            elevation: 8,
+            overflow: "hidden",
+          }}
+        >
+          <LinearGradient
+            colors={["#20086b", "#5f16e9"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+            }}
+          >
+            <Briefcase size={22} color="#ffffff" strokeWidth={2.2} />
+            <Animated.Text
+              style={{
+                fontFamily: "Poppins_700Bold",
+                fontSize: 11,
+                lineHeight: 14,
+                color: "#ffffff",
+                letterSpacing: 0.5,
+                textAlign: "center",
+              }}
+            >
+              B2B
+            </Animated.Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -363,14 +419,15 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
         );
       })}
 
-      {/* ── Deals — vertical left divider + full circle ── */}
+      {/* ── Deals & B2B — vertical left divider + circular buttons ── */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
           paddingTop: 6,
           paddingBottom: 4,
-          paddingRight: 12,
+          paddingRight: 10,
+          gap: 8,
         }}
       >
         {/* Straight vertical divider */}
@@ -379,7 +436,7 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
             width: 1,
             height: 38,
             backgroundColor: colors.border,
-            marginRight: 14,
+            marginRight: 4,
           }}
         />
 
@@ -404,6 +461,48 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
             contentFit="cover"
             style={{ width: "100%", height: "100%", borderRadius: 26 }}
           />
+        </Pressable>
+
+        {/* B2B circle button */}
+        <Pressable
+          android_ripple={null}
+          onPress={() => router.push("/b2b")}
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 26,
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            backgroundColor: colors.primary,
+          }}
+        >
+          <LinearGradient
+            colors={["#20086b", "#5f16e9"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: "100%",
+              height: "100%",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+            }}
+          >
+            <Briefcase size={18} color="#ffffff" strokeWidth={2.2} />
+            <Animated.Text
+              style={{
+                fontFamily: "Poppins_700Bold",
+                fontSize: 10,
+                lineHeight: 12,
+                color: "#ffffff",
+                letterSpacing: 0.5,
+                textAlign: "center",
+              }}
+            >
+              B2B
+            </Animated.Text>
+          </LinearGradient>
         </Pressable>
       </View>
     </View>

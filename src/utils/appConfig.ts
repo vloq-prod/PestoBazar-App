@@ -12,7 +12,18 @@ const extra = Constants.expoConfig?.extra as AppConfig;
 
 export const AppConfigUtil = {
   appName: Platform.OS,
-  appVersion: extra?.app_version || "1.0.0",
-  appCode: extra?.app_code || 1,
-  fullVersion: `${extra?.app_version || "1.0.0"} (${extra?.app_code || 1})`,
+  appVersion: extra?.app_version || Constants.expoConfig?.version || "1.3.3",
+  appCode:
+    extra?.app_code ||
+    (Platform.OS === "android"
+      ? Constants.expoConfig?.android?.versionCode
+      : Number(Constants.expoConfig?.ios?.buildNumber)) ||
+    14,
+  fullVersion: `${extra?.app_version || Constants.expoConfig?.version || "1.3.3"} (${
+    extra?.app_code ||
+    (Platform.OS === "android"
+      ? Constants.expoConfig?.android?.versionCode
+      : Constants.expoConfig?.ios?.buildNumber) ||
+    14
+  })`,
 };

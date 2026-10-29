@@ -1,0 +1,408 @@
+{
+	"info": {
+		"_postman_id": "b2b-registration-collection-pestobazaar",
+		"name": "PestoBazaar - B2B Dealer Registration API",
+		"description": "Complete collection of APIs for B2B Dealer Registration on PestoBazaar (Step 1 to Step 5). Includes automatic test scripts to capture public_id and tracking_token.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Save Basic Details (Step 1)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var res = pm.response.json();",
+							"if (res.data && res.data.public_id) {",
+							"    pm.collectionVariables.set(\"public_id\", res.data.public_id);",
+							"    console.log(\"Saved public_id:\", res.data.public_id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"owner_name\": \"Rahul Sharma\",\n  \"mobile\": \"9876543210\",\n  \"alternate_mobile\": \"9876543211\",\n  \"email\": \"rahul.sharma@example.com\",\n  \"terms_accepted\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-save-basic-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-save-basic-details"
+					]
+				},
+				"description": "Step 1: Save basic dealer contact details. Generates public_id and sends 4-digit OTP to mobile."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Verify OTP (Step 1.2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var res = pm.response.json();",
+							"if (res.data && res.data.redirect_url) {",
+							"    var match = res.data.redirect_url.match(/[?&]token=([^&]+)/);",
+							"    if (match && match[1]) {",
+							"        pm.collectionVariables.set(\"tracking_token\", decodeURIComponent(match[1]));",
+							"        console.log(\"Saved tracking_token:\", decodeURIComponent(match[1]));",
+							"    }",
+							"}",
+							"if (res.data && res.data.public_id) {",
+							"    pm.collectionVariables.set(\"public_id\", res.data.public_id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"otp\": \"1234\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-verify-otp",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-verify-otp"
+					]
+				},
+				"description": "Step 1.2: Verify mobile OTP. On success, generates tracking token (returned in redirect_url) and user ID."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Resend OTP",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"otp_channel\": \"sms\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-resend-otp",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-resend-otp"
+					]
+				},
+				"description": "Resends OTP to the user. Allowed otp_channel: 'sms', 'whatsapp', or 'both'."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Verify GSTIN (Optional Helper)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"gst_number\": \"24ABCDE1234F1Z5\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-verify-gst",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-verify-gst"
+					]
+				},
+				"description": "Fetches verified GST details (Trade Name, Legal Name, Address, PAN, State, suggested Business Type & Category)."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Validate Referral / Sales Code (Optional Helper)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"referral_code\": \"PB100\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-validate-referral-code",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-validate-referral-code"
+					]
+				},
+				"description": "Validates sales executive referral code. Leave referral_code empty or omit if not applicable."
+			},
+			"response": []
+		},
+		{
+			"name": "6. Save Business Details (Step 2)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"tracking_token\": \"{{tracking_token}}\",\n  \"business_name\": \"Sharma Agro & Pest Controls\",\n  \"business_type_id\": 1,\n  \"dealer_category_id\": 1,\n  \"years_in_business\": \"3–5 years\",\n  \"referral_code\": null,\n  \"gst_number\": \"24ABCDE1234F1Z5\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-save-business-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-save-business-details"
+					]
+				},
+				"description": "Step 2: Saves business details, GSTIN, and moves the application to Step 3 (Address Details).\n\n- business_type_id: 1 (Sole Proprietorship), 2 (Partnership), 3 (LLP), 4 (Private Limited), etc.\n- dealer_category_id: 1 (Retailer), 2 (Dealer), 3 (Distributor), 5 (Wholesaler), 10 (Pest Control), etc."
+			},
+			"response": []
+		},
+		{
+			"name": "7. Save Address Details (Step 3)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"tracking_token\": \"{{tracking_token}}\",\n  \"business_address\": \"Shop No 14, Agro Commercial Complex, Near Main Station\",\n  \"business_city\": \"Ahmedabad\",\n  \"business_state_id\": 12,\n  \"business_pincode\": \"380001\",\n  \"delivery_same_as_business\": \"Yes\",\n  \"delivery_address\": null,\n  \"delivery_city\": null,\n  \"delivery_state_id\": null,\n  \"delivery_pincode\": null,\n  \"warehouse_same\": \"Yes\",\n  \"warehouse_address\": null,\n  \"warehouse_city\": null,\n  \"warehouse_state_id\": null,\n  \"warehouse_pincode\": null\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-save-address-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-save-address-details"
+					]
+				},
+				"description": "Step 3: Saves billing address, delivery address, and warehouse address. Advances to Step 4 (KYC)."
+			},
+			"response": []
+		},
+		{
+			"name": "8. Save KYC Details (Step 4 - Upload Documents)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "public_id",
+							"value": "{{public_id}}",
+							"type": "text"
+						},
+						{
+							"key": "tracking_token",
+							"value": "{{tracking_token}}",
+							"type": "text"
+						},
+						{
+							"key": "legal_business_name",
+							"value": "Sharma Agro & Pest Controls",
+							"type": "text"
+						},
+						{
+							"key": "pan_number",
+							"value": "ABCDE1234F",
+							"type": "text"
+						},
+						{
+							"key": "pan_name",
+							"value": "Rahul Sharma",
+							"type": "text"
+						},
+						{
+							"key": "aadhaar_holder_name",
+							"value": "Rahul Sharma",
+							"type": "text"
+						},
+						{
+							"key": "business_proof_type",
+							"value": "Pest Control Licence",
+							"description": "Options: 'Insecticide Licence', 'Pest Control Licence', 'Shop & Establishment Licence', 'Other'",
+							"type": "text"
+						},
+						{
+							"key": "gst_certificate",
+							"description": "Attach file (pdf, jpg, jpeg, png - max 5MB)",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "pan_card",
+							"description": "Attach file (pdf, jpg, jpeg, png - max 5MB)",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "aadhaar_card",
+							"description": "Attach file (pdf, jpg, jpeg, png - max 5MB)",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "business_proof_document",
+							"description": "Attach file (pdf, jpg, jpeg, png, webp - max 5MB)",
+							"type": "file",
+							"src": ""
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-save-kyc-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-save-kyc-details"
+					]
+				},
+				"description": "Step 4: Uploads KYC documents and business proof. Must be multipart/form-data. Saves files and moves application to Review page."
+			},
+			"response": []
+		},
+		{
+			"name": "9. Submit KYC Details (Step 5 - Final Submission)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"tracking_token\": \"{{tracking_token}}\",\n  \"final_confirmation\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/b2b-submit-kyc-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"b2b-submit-kyc-details"
+					]
+				},
+				"description": "Step 5: Final submission of B2B application after reviewing saved details. Status changes to 'Submitted for Approval' and triggers admin notifications."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://pestobazaar.com",
+			"type": "string"
+		},
+		{
+			"key": "public_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "tracking_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

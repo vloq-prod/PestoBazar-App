@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Pestobazaar",
   owner: "vloq",
   slug: "pestobazaar",
-  version: "1.3.2",
+  version: "1.3.3",
   orientation: "default",
 
   // @ts-ignore
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   ios: {
     icon: "./assets/icon-ios.png",
-    buildNumber: "4",
+    buildNumber: "5",
     bundleIdentifier: "com.pestobazaar.app",
     usesAppleSignIn: true,
     googleServicesFile: "./GoogleService-Info.plist",
@@ -78,7 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: "com.pestobazaar.app",
-    versionCode: 13,
+    versionCode: 14,
 
     permissions: ["INTERNET", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
 
@@ -114,5 +114,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: {
       projectId: "2ea7e59d-1026-4072-9292-9d1b8acf2fab",
     },
+    app_version: "1.3.3",
+    app_code: 14,
   },
 });

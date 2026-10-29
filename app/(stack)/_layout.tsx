@@ -28,6 +28,7 @@ export default function StackLayout() {
 
       <Stack.Screen name="category/[slug]" />
       <Stack.Screen name="faq" />
+      <Stack.Screen name="b2b" />
     </Stack>
   );
 }
