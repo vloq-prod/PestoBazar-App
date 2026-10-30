@@ -146,7 +146,7 @@ export const ROUTE_REGISTRY: readonly RouteConfig[] = [
     requiresAuth: false,
     pathPatterns: ["shop", "listing", "browse"],
     requiredParams: [],
-    optionalParams: ["search", "category_slug"],
+    optionalParams: ["search", "category_slug", "brand_slug"],
   },
   {
     name: DEEP_LINK_ROUTE_NAMES.SEARCH,

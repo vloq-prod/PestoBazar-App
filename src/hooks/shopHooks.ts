@@ -13,7 +13,10 @@ import {
 
 const PAGE_SIZE = 16;
 
-export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
+export const useListing = (
+  baseParams: Omit<ListingParams, "page_no">,
+  options?: { enabled?: boolean },
+) => {
   const query = useInfiniteQuery<
     ListingApiResponse,
     Error,
@@ -23,6 +26,7 @@ export const useListing = (baseParams: Omit<ListingParams, "page_no">) => {
   >({
     queryKey: ["listing", baseParams],
     initialPageParam: 1,
+    enabled: options?.enabled ?? true,
 
     queryFn: ({ pageParam }) =>
       getListing({ ...baseParams, page_no: pageParam }),
