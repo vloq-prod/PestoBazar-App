@@ -4,15 +4,18 @@ import axios from "axios";
 import { getAppHeaders } from "../utils/appHeaders";
 
 const ENVIRONMENT =
-  process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "PRODUCTION";
+  process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "LOCAL";
 
 const BASE_URLS = {
+  LOCAL: "http://192.168.1.101:8000/",
   STAGING: "https://pestobazaar.vloq.com/",
   PRODUCTION: "https://pestobazaar.com/",
 };
 
 export const BASE_URL =
-  BASE_URLS[ENVIRONMENT as keyof typeof BASE_URLS] || BASE_URLS.PRODUCTION;
+  process.env.EXPO_PUBLIC_BASE_URL ||
+  BASE_URLS[ENVIRONMENT as keyof typeof BASE_URLS] ||
+  BASE_URLS.LOCAL;
 
 const baseURL = BASE_URL;
 
@@ -37,6 +40,18 @@ apiClient.interceptors.request.use(
         }
       }
     });
+
+    // If body is FormData, ensure multipart/form-data header and bypass Axios JSON serialization
+    const isFormData =
+      config.data instanceof FormData ||
+      (config.data &&
+        (typeof (config.data as any).append === "function" ||
+          (config.data as any)._parts !== undefined));
+
+    if (isFormData) {
+      config.headers?.set("Content-Type", "multipart/form-data");
+      config.transformRequest = [(data) => data];
+    }
 
     // Ensure cache-busting headers are always present
     config.headers?.set("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -75,7 +90,8 @@ apiClient.interceptors.response.use(
       const serverMsg = error.response?.data?.message;
       console.warn(`⚠️ [apiClient] 500 Server Error on: ${url}${serverMsg ? ` (${serverMsg})` : ""}`);
     } else if (error.code === "ECONNABORTED" || !error.response) {
-      console.warn(`📡 [apiClient] Network timeout or disconnected on: ${url}`);
+      const errDetail = error.message || error.code || "unknown";
+      console.warn(`📡 [apiClient] Network timeout or disconnected on: ${url} (${errDetail})`);
     }
 
     return Promise.reject(error);

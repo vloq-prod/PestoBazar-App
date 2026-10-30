@@ -12,6 +12,9 @@ export const StorageKeys = {
   USER_NAME: "user_name",
   USER_EMAIL: "user_email",
   USER_AVATAR: "user_avatar",
+  B2B_PUBLIC_ID: `b2b_public_id_${ENV_SUFFIX}`,
+  B2B_TRACKING_TOKEN: `b2b_tracking_token_${ENV_SUFFIX}`,
+  B2B_MOBILE: `b2b_mobile_${ENV_SUFFIX}`,
 };
 
 export const StorageUtil = {
@@ -50,4 +53,22 @@ export const StorageUtil = {
     SecureStore.setItemAsync(StorageKeys.PINCODE, pincode),
   getPincode: async () => SecureStore.getItemAsync(StorageKeys.PINCODE),
   clearPincode: async () => SecureStore.deleteItemAsync(StorageKeys.PINCODE),
+
+  // ── B2B Dealer Session ───────────────────────────
+  setB2BSession: async (publicId: string, trackingToken?: string, mobile?: string) => {
+    if (publicId) await SecureStore.setItemAsync(StorageKeys.B2B_PUBLIC_ID, publicId);
+    if (trackingToken) await SecureStore.setItemAsync(StorageKeys.B2B_TRACKING_TOKEN, trackingToken);
+    if (mobile) await SecureStore.setItemAsync(StorageKeys.B2B_MOBILE, mobile);
+  },
+  getB2BSession: async () => {
+    const publicId = await SecureStore.getItemAsync(StorageKeys.B2B_PUBLIC_ID);
+    const trackingToken = await SecureStore.getItemAsync(StorageKeys.B2B_TRACKING_TOKEN);
+    const mobile = await SecureStore.getItemAsync(StorageKeys.B2B_MOBILE);
+    return { publicId, trackingToken, mobile };
+  },
+  clearB2BSession: async () => {
+    await SecureStore.deleteItemAsync(StorageKeys.B2B_PUBLIC_ID);
+    await SecureStore.deleteItemAsync(StorageKeys.B2B_TRACKING_TOKEN);
+    await SecureStore.deleteItemAsync(StorageKeys.B2B_MOBILE);
+  },
 };

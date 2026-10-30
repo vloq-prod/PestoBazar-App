@@ -1,0 +1,406 @@
+{
+	"info": {
+		"_postman_id": "b2b-app-registration-api-v1",
+		"name": "PestoBazaar - B2B Mobile App APIs",
+		"description": "Complete collection for PestoBazaar B2B Dealer Registration Mobile App APIs.\n\nAll endpoints are prefixed with `/app-api/v1/`.\n\nAutomatic Variables:\n- `public_id` is automatically captured when running API #1 (Save Basic Details).\n- `tracking_token` is automatically captured when running API #2 (Verify OTP).\n- All subsequent APIs automatically use `{{public_id}}` and `{{tracking_token}}`.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Save Basic Details (Step 1)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var res = pm.response.json();",
+							"if (res.data && res.data.public_id) {",
+							"    pm.collectionVariables.set(\"public_id\", res.data.public_id);",
+							"    console.log(\"Saved public_id:\", res.data.public_id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"owner_name\": \"Ramesh Patel\",\n  \"mobile\": \"9876543210\",\n  \"alternate_mobile\": \"9876543211\",\n  \"email\": \"ramesh.patel@example.com\",\n  \"terms_accepted\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-save-basic-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-save-basic-details"
+					]
+				},
+				"description": "Step 1: Save basic dealer contact details. Generates public_id and sends 4-digit App OTP via SMS/DLT template with SMS retriever code."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Verify OTP (Step 1.2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var res = pm.response.json();",
+							"if (res.data && res.data.tracking_token) {",
+							"    pm.collectionVariables.set(\"tracking_token\", res.data.tracking_token);",
+							"    console.log(\"Saved tracking_token:\", res.data.tracking_token);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"otp\": \"1234\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-verify-otp",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-verify-otp"
+					]
+				},
+				"description": "Step 1.2: Verify mobile OTP. Returns tracking_token directly in response data for native mobile app state storage."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Resend OTP",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"channel\": \"sms\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-resend-otp",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-resend-otp"
+					]
+				},
+				"description": "Resend registration OTP via SMS or WhatsApp with 60-second cooldown protection."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Validate Sales Referral Code",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"referral_code\": \"PESTO2024\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-validate-referral-code",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-validate-referral-code"
+					]
+				},
+				"description": "Check if an employee/distributor sales referral code is valid before saving business details."
+			},
+			"response": []
+		},
+		{
+			"name": "5. Verify GSTIN",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"gstin\": \"27AABCU9603R1ZM\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-verify-gst",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-verify-gst"
+					]
+				},
+				"description": "Verify GSTIN via Cashfree/Gov API and fetch legal business name & registered address."
+			},
+			"response": []
+		},
+		{
+			"name": "6. Save Business Details (Step 2)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"tracking_token\": \"{{tracking_token}}\",\n  \"business_name\": \"Kisan Krishi Kendra\",\n  \"business_type\": \"Proprietorship\",\n  \"years_in_business\": 5,\n  \"annual_turnover\": \"₹50 Lakh - ₹1 Crore\",\n  \"gstin\": \"27AABCU9603R1ZM\",\n  \"sales_referral_code\": \"\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-save-business-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-save-business-details"
+					]
+				},
+				"description": "Step 2: Save business profile, organization type, turnover, and GSTIN."
+			},
+			"response": []
+		},
+		{
+			"name": "7. Save Address Details (Step 3)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"tracking_token\": \"{{tracking_token}}\",\n  \"business_address\": \"Shop No 14, APMC Market Yard\",\n  \"business_city\": \"Pune\",\n  \"business_state_id\": 22,\n  \"business_pincode\": \"411037\",\n  \"delivery_same_as_business\": \"Yes\",\n  \"warehouse_same\": \"Yes\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-save-address-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-save-address-details"
+					]
+				},
+				"description": "Step 3: Save registered business address, delivery address, and warehouse location."
+			},
+			"response": []
+		},
+		{
+			"name": "8. Save KYC Documents (Step 4)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "public_id",
+							"value": "{{public_id}}",
+							"type": "text"
+						},
+						{
+							"key": "tracking_token",
+							"value": "{{tracking_token}}",
+							"type": "text"
+						},
+						{
+							"key": "legal_business_name",
+							"value": "Kisan Krishi Kendra",
+							"type": "text"
+						},
+						{
+							"key": "pan_number",
+							"value": "ABCDE1234F",
+							"type": "text"
+						},
+						{
+							"key": "pan_name",
+							"value": "Ramesh Patel",
+							"type": "text"
+						},
+						{
+							"key": "aadhaar_holder_name",
+							"value": "Ramesh Patel",
+							"type": "text"
+						},
+						{
+							"key": "business_proof_type",
+							"value": "Insecticide Licence",
+							"type": "text"
+						},
+						{
+							"key": "gst_certificate",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "pan_card",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "aadhaar_card",
+							"type": "file",
+							"src": ""
+						},
+						{
+							"key": "business_proof_document",
+							"type": "file",
+							"src": ""
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-save-kyc-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-save-kyc-details"
+					]
+				},
+				"description": "Step 4: Upload KYC documents (GST Certificate, PAN Card, Aadhaar Card, Business Proof document: Insecticide Licence / Pest Control Licence / Shop & Establishment Licence / Other)."
+			},
+			"response": []
+		},
+		{
+			"name": "9. Submit Application (Step 5)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"public_id\": \"{{public_id}}\",\n  \"tracking_token\": \"{{tracking_token}}\",\n  \"final_confirmation\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/app-api/v1/b2b-submit-kyc-details",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"app-api",
+						"v1",
+						"b2b-submit-kyc-details"
+					]
+				},
+				"description": "Step 5: Final submission of B2B application after reviewing saved details. Status changes to 'Submitted for Approval'."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://192.168.1.105:8000",
+			"type": "string"
+		},
+		{
+			"key": "public_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "tracking_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
