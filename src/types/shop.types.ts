@@ -9,6 +9,7 @@ export interface ListingParams {
   filter_from_price?: number;
   filter_to_price?: number;
   category_slug?: string;
+  brand_slug?: string;
 }
 
 // 🔹 Product Item

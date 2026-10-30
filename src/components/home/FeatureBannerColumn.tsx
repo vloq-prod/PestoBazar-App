@@ -70,11 +70,24 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
       return;
     }
 
-    if (app_redirect_key === "categories") {
+    if (
+      app_redirect_key === "categories" ||
+      app_redirect_key === "category"
+    ) {
       router.push({
         pathname: "/(stack)/shop",
         params: {
           category_slug: app_redirect_value,
+        },
+      });
+      return;
+    }
+
+    if (app_redirect_key === "brands" || app_redirect_key === "brand") {
+      router.push({
+        pathname: "/(stack)/shop",
+        params: {
+          brand_slug: app_redirect_value,
         },
       });
       return;

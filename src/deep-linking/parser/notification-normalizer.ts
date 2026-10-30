@@ -150,6 +150,8 @@ function normalizeRedirectType(type: string): string {
   const normalizations: Record<string, string> = {
     products: "product",
     categories: "category",
+    brands: "brand",
+    brand: "brand",
     order_details: "orderdetails",
     order_detail: "orderdetails",
     custom_section: "section",
@@ -234,6 +236,18 @@ function extractParamsForType(
         "action_value",
       ]);
       return { slug: slug || undefined };
+    }
+
+    case "brand": {
+      const slug = coalesce(data as Record<string, unknown>, [
+        "brand_slug",
+        "slug",
+        "action_value",
+      ]);
+      return {
+        slug: slug || undefined,
+        queryParams: slug ? { brand_slug: slug } : undefined,
+      };
     }
 
     case "section": {

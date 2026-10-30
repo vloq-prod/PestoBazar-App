@@ -33,7 +33,7 @@ import {
 import { useTheme } from "../../src/theme";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useSearchSuggestions } from "../../src/hooks/searchHooks";
-import { useListing } from "../../src/hooks/shopHooks";
+import { useListing, useFilterData } from "../../src/hooks/shopHooks";
 import { useCartCount } from "../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { ListingItem } from "../../src/types/shop.types";
@@ -50,7 +50,7 @@ import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
 const DEFAULT_PRICE = { from: 200, to: 50000 };
 
 export default function ShopScreen() {
-  const { search, category_slug } = useLocalSearchParams();
+  const { search, category_slug, brand_slug } = useLocalSearchParams();
   const router = useRouter();
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
@@ -95,6 +95,7 @@ export default function ShopScreen() {
 
   const initialQuery = Array.isArray(search) ? search[0] : (search ?? "");
   const initialCategorySlug = Array.isArray(category_slug) ? category_slug[0] : (category_slug ?? null);
+  const initialBrandSlug = Array.isArray(brand_slug) ? brand_slug[0] : (brand_slug ?? null);
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [isSearchSubmitted, setIsSearchSubmitted] = useState<boolean>(
@@ -106,6 +107,43 @@ export default function ShopScreen() {
   const [selectedCategoryName, setSelectedCategoryName] = useState<
     string | null
   >(null);
+  const [selectedBrandSlug, setSelectedBrandSlug] = useState<
+    string | null
+  >(initialBrandSlug);
+
+  // ── Filter Data (resolves brand slug / url to brand id & name) ──
+  const { data: filterData, isLoading: filterLoading } = useFilterData();
+
+  const matchedBrand = useMemo(() => {
+    if (!selectedBrandSlug) return null;
+    const target = selectedBrandSlug.trim().toLowerCase();
+    const brands = filterData?.data?.brand ?? [];
+    return (
+      brands.find((b: any) => {
+        const name = (b.brand_name || "").trim().toLowerCase();
+        const slugName = name.replace(/\s+/g, "-");
+        return (
+          name === target ||
+          slugName === target ||
+          name.replace(/-/g, " ") === target.replace(/-/g, " ") ||
+          String(b.id) === target
+        );
+      }) ?? null
+    );
+  }, [selectedBrandSlug, filterData]);
+
+  const isNumericBrand = Boolean(
+    selectedBrandSlug && !isNaN(Number(selectedBrandSlug))
+  );
+  const resolvedBrandId = matchedBrand
+    ? String(matchedBrand.id)
+    : isNumericBrand
+      ? String(selectedBrandSlug)
+      : undefined;
+
+  const isBrandResolving = Boolean(
+    selectedBrandSlug && !resolvedBrandId && filterLoading
+  );
 
   // 400ms debounce
   useEffect(() => {
@@ -113,10 +151,11 @@ export default function ShopScreen() {
     return () => clearTimeout(t);
   }, [query]);
 
-  // Reset category if user starts typing a new search
+  // Reset category & brand if user starts typing a new search
   useEffect(() => {
     if (query.trim().length > 0) {
       setSelectedCategorySlug(null);
+      setSelectedBrandSlug(null);
     }
   }, [query]);
 
@@ -137,7 +176,7 @@ export default function ShopScreen() {
     priceFilter.to !== DEFAULT_PRICE.to;
 
   // ── Listing API ────────────────
-  // Priority: filters > category > search
+  // Priority: filters > brand > category > search
   const {
     products,
     loading: listingLoading,
@@ -145,27 +184,42 @@ export default function ShopScreen() {
     loadingMore,
     allLoaded,
     loadMore,
-  } = useListing({
-    sort_by: sortBy,
-    type: isFilterActive
-      ? "filter"
-      : selectedCategorySlug
-        ? ""
-        : debouncedQuery || "",
-    category_slug: isFilterActive
-      ? undefined
-      : (selectedCategorySlug ?? undefined),
-    filter_category_id:
-      appliedFilters.categories.length > 0
-        ? appliedFilters.categories.join(",")
-        : undefined,
-    filter_brand_id:
-      appliedFilters.brands.length > 0
-        ? appliedFilters.brands.join(",")
-        : undefined,
-    filter_from_price: priceFilter.from,
-    filter_to_price: priceFilter.to,
-  });
+  } = useListing(
+    {
+      sort_by: sortBy,
+      type: isFilterActive
+        ? "filter"
+        : selectedBrandSlug
+          ? "brand"
+          : selectedCategorySlug
+            ? "category"
+            : debouncedQuery || "",
+      category_id: isFilterActive
+        ? undefined
+        : selectedBrandSlug
+          ? resolvedBrandId
+          : undefined,
+      category_slug: isFilterActive
+        ? undefined
+        : (selectedCategorySlug ?? undefined),
+      brand_slug: isFilterActive
+        ? undefined
+        : (selectedBrandSlug ?? undefined),
+      filter_category_id:
+        appliedFilters.categories.length > 0
+          ? appliedFilters.categories.join(",")
+          : undefined,
+      filter_brand_id:
+        appliedFilters.brands.length > 0
+          ? appliedFilters.brands.join(",")
+          : undefined,
+      filter_from_price: priceFilter.from,
+      filter_to_price: priceFilter.to,
+    },
+    {
+      enabled: !isBrandResolving,
+    }
+  );
 
   const isDebouncing = query.trim().length > 0 && query !== debouncedQuery;
   const isSearchLoading =
@@ -195,6 +249,7 @@ export default function ShopScreen() {
     if (
       !debouncedQuery.trim() &&
       !selectedCategorySlug &&
+      !selectedBrandSlug &&
       !isFilterActive &&
       !query.trim()
     ) {
@@ -204,18 +259,28 @@ export default function ShopScreen() {
     const rows: Section[] = [];
 
     // Show center loading while searching and fetching results
-    if (isSearchLoading || listingLoading) {
+    if (isSearchLoading || listingLoading || isBrandResolving) {
       rows.push({ type: "loading" });
       return rows;
     }
 
     // Related category chips at the top if matching categories found (only while typing, hidden once submitted)
-    if (!isSearchSubmitted && categorySuggestions.length > 0 && !selectedCategorySlug) {
+    if (
+      !isSearchSubmitted &&
+      categorySuggestions.length > 0 &&
+      !selectedCategorySlug &&
+      !selectedBrandSlug
+    ) {
       rows.push({ type: "category_suggestions", items: categorySuggestions });
     }
 
     // Results header
-    if (isSearchSubmitted || !categorySuggestions.length || selectedCategorySlug) {
+    if (
+      isSearchSubmitted ||
+      !categorySuggestions.length ||
+      selectedCategorySlug ||
+      selectedBrandSlug
+    ) {
       rows.push({ type: "products_header" });
     }
 
@@ -238,6 +303,8 @@ export default function ShopScreen() {
     isSearchLoading,
     isSearchSubmitted,
     selectedCategorySlug,
+    selectedBrandSlug,
+    isBrandResolving,
     isFilterActive,
     categorySuggestions,
     listingLoading,
@@ -330,7 +397,12 @@ export default function ShopScreen() {
     }
 
     if (item.type === "products_header") {
-      if (!isSearchSubmitted && categorySuggestions.length > 0 && !selectedCategorySlug) {
+      if (
+        !isSearchSubmitted &&
+        categorySuggestions.length > 0 &&
+        !selectedCategorySlug &&
+        !selectedBrandSlug
+      ) {
         return null;
       }
 
@@ -341,6 +413,12 @@ export default function ShopScreen() {
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(" ");
         headerText = `Category: '${selectedCategoryName || formattedSlug}'`;
+      } else if (selectedBrandSlug) {
+        const formattedSlug = selectedBrandSlug
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        headerText = `Brand: '${matchedBrand?.brand_name || formattedSlug}'`;
       }
 
       return (
@@ -502,7 +580,7 @@ export default function ShopScreen() {
             <TextInput
               ref={inputRef}
               value={query}
-              autoFocus={!initialCategorySlug && !initialQuery}
+              autoFocus={!initialCategorySlug && !initialBrandSlug && !initialQuery}
               onFocus={() => {
                 setIsSearchSubmitted(false);
               }}
@@ -538,6 +616,7 @@ export default function ShopScreen() {
                   setIsSearchSubmitted(false);
                   setSelectedCategorySlug(null);
                   setSelectedCategoryName(null);
+                  setSelectedBrandSlug(null);
                 }}
                 activeOpacity={0.7}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -548,8 +627,8 @@ export default function ShopScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Toolbar (Shown on category browse, active filter, or submitted search) ── */}
-        {((!query.trim() && (!!selectedCategorySlug || isFilterActive)) ||
+        {/* ── Toolbar (Shown on category/brand browse, active filter, or submitted search) ── */}
+        {((!query.trim() && (!!selectedCategorySlug || !!selectedBrandSlug || isFilterActive)) ||
           (isSearchSubmitted && query.trim().length > 0)) && (
             <View
               style={[

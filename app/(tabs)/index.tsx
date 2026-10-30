@@ -998,10 +998,21 @@ export default function HomeScreen() {
                           ? { id: headerBanner.redirect, slug: "product" }
                           : { slug: headerBanner.redirect, id: "slug" },
                       });
-                    } else if (headerBanner.banner_type === "categories") {
+                    } else if (
+                      headerBanner.banner_type === "categories" ||
+                      headerBanner.banner_type === "category"
+                    ) {
                       router.push({
                         pathname: "/(stack)/shop",
                         params: { category_slug: headerBanner.redirect },
+                      });
+                    } else if (
+                      headerBanner.banner_type === "brands" ||
+                      headerBanner.banner_type === "brand"
+                    ) {
+                      router.push({
+                        pathname: "/(stack)/shop",
+                        params: { brand_slug: headerBanner.redirect },
                       });
                     }
                   }}
