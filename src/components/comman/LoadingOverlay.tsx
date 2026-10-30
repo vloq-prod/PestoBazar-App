@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet, Modal } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 
@@ -15,16 +15,21 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ visible, message = "Pro
   if (!visible) return null;
 
   return (
-    <Modal transparent animationType="fade" visible={visible}>
-      <View style={[styles.overlay, { backgroundColor: "rgba(0,0,0,0.6)" }]}>
-        <View style={[styles.card, { backgroundColor: colors.background, borderRadius: spacing(16) }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.text, { color: colors.text, fontSize: font(14), marginTop: spacing(12) }]}>
-            {message}
-          </Text>
-        </View>
+    <View
+      style={[
+        StyleSheet.absoluteFillObject,
+        styles.overlay,
+        { backgroundColor: "rgba(0,0,0,0.6)", zIndex: 9999, elevation: 9999 },
+      ]}
+      pointerEvents={visible ? "auto" : "none"}
+    >
+      <View style={[styles.card, { backgroundColor: colors.background, borderRadius: spacing(16) }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.text, { color: colors.text, fontSize: font(14), marginTop: spacing(12) }]}>
+          {message}
+        </Text>
       </View>
-    </Modal>
+    </View>
   );
 };
 

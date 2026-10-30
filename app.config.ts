@@ -67,6 +67,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     googleServicesFile: "./GoogleService-Info.plist",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      LSApplicationQueriesSchemes: [
+        "tez",
+        "phonepe",
+        "paytmmp",
+        "bhim",
+        "credpay",
+      ],
     },
 
     // iOS Universal Links — all deep-linkable paths

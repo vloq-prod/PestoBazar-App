@@ -7,12 +7,15 @@ const ENVIRONMENT =
   process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "PRODUCTION";
 
 const BASE_URLS = {
+  LOCAL: process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.1.101:8000/",
   STAGING: "https://pestobazaar.vloq.com/",
   PRODUCTION: "https://pestobazaar.com/",
 };
 
 export const BASE_URL =
-  BASE_URLS[ENVIRONMENT as keyof typeof BASE_URLS] || BASE_URLS.PRODUCTION;
+  process.env.EXPO_PUBLIC_BASE_URL ||
+  BASE_URLS[ENVIRONMENT as keyof typeof BASE_URLS] ||
+  BASE_URLS.PRODUCTION;
 
 const baseURL = BASE_URL;
 

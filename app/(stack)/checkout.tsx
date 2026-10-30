@@ -370,30 +370,40 @@ export default function Checkout() {
                   });
                 } else {
                   // Logic for online payment (Razorpay)
-                  const cleanBaseUrl = BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`;
                   const activeRazorpayKey =
                     initRes.data?.key ||
                     razorpayKey ||
                     process.env.EXPO_PUBLIC_RAZORPAY_KEY ||
                     "rzp_test_S9hH56T4ntHqvV";
 
-                  const options = {
+                  // Guarantee integer paise for Razorpay SDK (prevents float mismatch on iOS)
+                  const amountInPaise = Math.round(
+                    (Number(initRes.data?.total_cost) || amountToPay) * 100
+                  );
+
+                  // Extract clean 10-digit contact number
+                  const rawContact = initRes.data?.mobile || "";
+                  const cleanContact = rawContact.replace(/\D/g, "").slice(-10);
+
+                  const options: any = {
                     description: "Payment for Order",
-                    image: `${cleanBaseUrl}images/logo.png`,
+                    // Use verified HTTPS logo to prevent iOS App Transport Security (ATS) block / 404 failure
+                    image: "https://pestobazaar.com/assets/img/logo/logo.png",
                     currency: "INR",
                     key: activeRazorpayKey,
-                    amount:
-                      Number(initRes.data?.total_cost) * 100 ||
-                      amountToPay * 100,
+                    amount: amountInPaise,
                     name: (initRes.data?.company_name || "Pestobazaar").replace(/\b[pP]esto\s*[bB]aza[ar]*\b/gi, "Pestobazaar"),
-                    order_id: initRes.data?.orderId,
                     prefill: {
                       email: initRes.data?.email || "",
-                      contact: initRes.data?.mobile || "",
+                      contact: cleanContact,
                       name: initRes.data?.first_name || "",
                     },
                     theme: { color: colors.primary },
                   };
+
+                  if (initRes.data?.orderId) {
+                    options.order_id = initRes.data.orderId;
+                  }
 
                   console.log("💳 [Checkout] Opening Razorpay SDK with options:", {
                     key: options.key,
@@ -401,60 +411,71 @@ export default function Checkout() {
                     amount: options.amount,
                     currency: options.currency,
                     name: options.name,
-                    email: options.prefill.email,
-                    contact: options.prefill.contact,
+                    email: options.prefill?.email,
+                    contact: options.prefill?.contact,
                   });
 
-                  RazorpayCheckout.open(options)
-                    .then((paymentRes: any) => {
-                      console.log("🎉 [Checkout] Razorpay Payment Success from SDK:", paymentRes);
-                      showToast("Payment Successful!", "success");
+                  // Small timeout ensures UIKit has completely settled after mutation state update on iOS
+                  setTimeout(() => {
+                    RazorpayCheckout.open(options)
+                      .then((paymentRes: any) => {
+                        console.log("🎉 [Checkout] Razorpay Payment Success from SDK:", paymentRes);
+                        showToast("Payment Successful!", "success");
 
-                      // Step 5: Inform Backend about Success
-                      const successPayload = {
-                        razorpay_order_id: paymentRes.razorpay_order_id,
-                        razorpay_payment_id: paymentRes.razorpay_payment_id,
-                        razorpay_signature: paymentRes.razorpay_signature,
-                      };
+                        // Step 5: Inform Backend about Success
+                        const successPayload = {
+                          razorpay_order_id: paymentRes.razorpay_order_id,
+                          razorpay_payment_id: paymentRes.razorpay_payment_id,
+                          razorpay_signature: paymentRes.razorpay_signature,
+                        };
 
-                      console.log("📤 [Checkout] Step 5: Verifying Payment with backend:", successPayload);
+                        console.log("📤 [Checkout] Step 5: Verifying Payment with backend:", successPayload);
 
-                      paymentSuccessMutate(successPayload, {
-                        onSuccess: (res) => {
-                          console.log("🎉 [Checkout] Backend Payment Verification Success:", res);
-                          clearCart();
-                          queryClient.invalidateQueries({ queryKey: ["cart"] });
-                          queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-                          queryClient.invalidateQueries({ queryKey: ["cart-quantity"] });
-                          router.replace({
-                            pathname: "/ordersuccess",
-                            params: {
-                              order_id:
-                                res.order_id ||
-                                res.data?.order_id ||
-                                initRes.data?.orderId,
-                              amount: String(amountToPay),
-                              subtotal: String(cart?.cart_amount || 0),
-                              shipping: String(shippingCharge),
-                              gst: String(gstAmount || 0),
-                              cod: "0",
-                              payment_method: "Online",
-                            },
-                          });
-                        },
-                        onError: (err) => {
-                          console.error("❌ [Checkout] Payment verification error:", err);
-                          showToast(
-                            "Payment recorded but verification failed. Please contact support.",
-                            "warning",
-                          );
-                        },
+                        paymentSuccessMutate(successPayload, {
+                          onSuccess: (res) => {
+                            console.log("🎉 [Checkout] Backend Payment Verification Success:", res);
+                            clearCart();
+                            queryClient.invalidateQueries({ queryKey: ["cart"] });
+                            queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+                            queryClient.invalidateQueries({ queryKey: ["cart-quantity"] });
+                            router.replace({
+                              pathname: "/ordersuccess",
+                              params: {
+                                order_id:
+                                  res.order_id ||
+                                  res.data?.order_id ||
+                                  initRes.data?.orderId,
+                                amount: String(amountToPay),
+                                subtotal: String(cart?.cart_amount || 0),
+                                shipping: String(shippingCharge),
+                                gst: String(gstAmount || 0),
+                                cod: "0",
+                                payment_method: "Online",
+                              },
+                            });
+                          },
+                          onError: (err) => {
+                            console.error("❌ [Checkout] Payment verification error:", err);
+                            showToast(
+                              "Payment recorded but verification failed. Please contact support.",
+                              "warning",
+                            );
+                          },
+                        });
+                      })
+                      .catch((error: any) => {
+                        console.warn("⚠️ [Checkout] Razorpay Payment Dismissed or Failed:", error);
+                        const isCancelled =
+                          error?.code === 0 ||
+                          String(error?.description || "").toLowerCase().includes("cancel") ||
+                          String(error?.description || "").toLowerCase().includes("dismiss");
+                        const errorMsg =
+                          error?.description ||
+                          error?.message ||
+                          (isCancelled ? "Payment cancelled." : "Payment failed.");
+                        showToast(errorMsg, isCancelled ? "warning" : "error");
                       });
-                    })
-                    .catch((error: any) => {
-                      console.warn("⚠️ [Checkout] Razorpay Payment Dismissed or Failed:", error);
-                      showToast("Payment cancelled or failed.", "error");
-                    });
+                  }, 120);
                 }
               },
               onError: (err: any) => {
