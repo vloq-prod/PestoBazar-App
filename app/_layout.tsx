@@ -9,6 +9,9 @@ import { useFonts } from "../src/hooks/useFonts";
 import { SplashScreen } from "../src/components/SplashScreen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAppVisitorStore } from "../src/store/auth";
+import { useCartStore } from "../src/store/cartStore";
+import { useWishlistStore } from "../src/store/wishlistStore";
+import { StorageUtil } from "../src/utils/storage";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useDeliveryStore } from "../src/store/deliveryStore";
@@ -79,6 +82,45 @@ function RootLayoutNav() {
 
     initApp();
   }, []);
+
+  // 📦 Console log store / Redux-equivalent state on hydration or user change
+  useEffect(() => {
+    if (!isReady) return;
+
+    const logStores = async () => {
+      const auth = useAppVisitorStore.getState();
+      const b2bSession = await StorageUtil.getB2BSession();
+      const cart = useCartStore.getState();
+      const wishlist = useWishlistStore.getState();
+      const delivery = useDeliveryStore.getState();
+
+      console.log("\n============================================================");
+      console.log("📦 [FRONTEND STORE STATE (Zustand / Redux)]");
+      console.log("============================================================");
+      console.log("👤 USER / AUTH STORE (useAppVisitorStore):", {
+        userId: auth.userId,
+        userName: auth.userName,
+        userEmail: auth.userEmail,
+        userAvatar: auth.userAvatar,
+        visitorId: auth.visitorId,
+        token: auth.token,
+      });
+      console.log("🏢 B2B SECURE STORAGE SESSION:", b2bSession);
+      console.log("🛒 CART STORE (useCartStore):", {
+        itemsCount: Object.keys(cart.items || {}).length,
+        items: cart.items,
+        couponSuccessCode: cart.couponSuccessCode,
+      });
+      console.log("❤️ WISHLIST STORE (useWishlistStore):", {
+        count: wishlist.count,
+        wishlistIds: wishlist.wishlistIds,
+      });
+      console.log("📍 DELIVERY STORE (useDeliveryStore):", delivery);
+      console.log("============================================================\n");
+    };
+
+    logStores();
+  }, [isReady, userId, visitorId]);
 
   // 🔗 DEEP LINKING — handles cold start URLs, warm start URLs, and router registration
   useDeepLinking({ isReady: isReady && splashDone });

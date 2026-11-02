@@ -14,6 +14,8 @@ import {
   Modal,
   FlatList,
   Switch,
+  Image as RNImage,
+  Linking,
 } from "react-native";
 import {
   SafeAreaView,
@@ -63,6 +65,8 @@ import {
   Square,
   Camera,
   Image as ImageIcon,
+  ExternalLink,
+  ChevronRight,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 
@@ -71,9 +75,12 @@ import { useResponsive } from "../../src/utils/useResponsive";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useToast } from "../../src/context/ToastContext";
 import { StorageUtil } from "../../src/utils/storage";
+import { useAppVisitorStore } from "../../src/store/auth";
+import { setAnalyticsUserId } from "../../src/lib/analytics";
 import ResendOtpModal, { OtpChannel } from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import {
+  useB2BMasterData,
   useB2BGetRegistrationDetails,
   useB2BSaveBasicDetails,
   useB2BVerifyOtp,
@@ -89,112 +96,50 @@ import {
   B2BSaveBusinessDetailsPayload,
   B2BSaveAddressDetailsPayload,
 } from "../../src/types/b2b.types";
+import { apiClient, BASE_URL } from "../../src/lib/apiClient";
+import { useAddress } from "../../src/hooks/CheckoutHooks";
+import { StateItem } from "../../src/types/checkout.types";
 
-// Master Data: Business Types (from MySQL b2b_business_type_master)
-const BUSINESS_TYPES = [
-  { id: 11, name: "Sole Proprietorship" },
-  { id: 12, name: "Partnership Firm" },
-  { id: 13, name: "Limited Liability Partnership — LLP" },
-  { id: 14, name: "Private Limited Company" },
-  { id: 15, name: "Public Limited Company" },
-  { id: 16, name: "Hindu Undivided Family — HUF" },
-  { id: 17, name: "Cooperative Society" },
-  { id: 18, name: "Farmer Producer Organisation — FPO" },
-  { id: 19, name: "Trust / Society" },
-  { id: 20, name: "Government / Institution" },
-];
+// Helper icon resolver for dealer categories dynamically loaded from DB
+const getDealerCategoryIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("retail")) return Store;
+  if (
+    lower.includes("distribut") ||
+    lower.includes("whole") ||
+    lower.includes("dealer") ||
+    lower.includes("stockist")
+  )
+    return Truck;
+  if (lower.includes("institut") || lower.includes("buyer")) return Building;
+  if (lower.includes("coop") || lower.includes("fpo")) return Users;
+  if (lower.includes("pest")) return Bug;
+  return Store;
+};
 
-// Master Data: Dealer Categories (from MySQL b2b_dealer_category_master)
-const DEALER_CATEGORIES = [
-  {
-    id: 11,
-    name: "Retailer",
-    desc: "Local retail shop selling to farmers & consumers",
-    icon: Store,
-  },
-  {
-    id: 13,
-    name: "Distributor",
-    desc: "Wholesale distributor supplying to dealers & retailers",
-    icon: Truck,
-  },
-  {
-    id: 17,
-    name: "Institutional Buyer",
-    desc: "Corporate, commercial farms, or institutions",
-    icon: Building,
-  },
-  {
-    id: 19,
-    name: "Cooperative / FPO",
-    desc: "Farmer Producer Org or Co-op society",
-    icon: Users,
-  },
-  {
-    id: 20,
-    name: "Pest Control",
-    desc: "PCO service operator & professional applicator",
-    icon: Bug,
-  },
-];
+// Helper description resolver for dealer categories dynamically loaded from DB
+const getDealerCategoryDesc = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("retail"))
+    return "Local retail shop selling to farmers & consumers";
+  if (lower.includes("distribut") || lower.includes("sub-distribut"))
+    return "Wholesale distributor supplying to dealers & retailers";
+  if (
+    lower.includes("wholesal") ||
+    lower.includes("dealer") ||
+    lower.includes("stockist")
+  )
+    return "Wholesale dealer / distributor supplying goods";
+  if (lower.includes("institut") || lower.includes("bulk"))
+    return "Corporate, commercial farms, or institutions";
+  if (lower.includes("coop") || lower.includes("fpo"))
+    return "Farmer Producer Org or Co-op society";
+  if (lower.includes("pest"))
+    return "PCO service operator & professional applicator";
+  return "Registered commercial business";
+};
 
-// Years in Business Options (exact match with Web)
-const YEARS_IN_BUSINESS_OPTIONS = [
-  "Less than 1 year",
-  "1 - 3 years",
-  "3 - 5 years",
-  "5 - 10 years",
-  "10 - 20 years",
-  "More than 20 years",
-];
 
-// Business Proof Types (exact match with Web)
-const BUSINESS_PROOF_TYPES = [
-  "Insecticide Licence",
-  "Pest Control Licence",
-  "Shop & Establishment Licence",
-  "Other",
-];
-
-// 36 Indian States & Union Territories (from MySQL state table)
-const INDIAN_STATES = [
-  { id: 1, name: "Andaman & Nicobar Islands" },
-  { id: 2, name: "Andhra Pradesh" },
-  { id: 3, name: "Arunachal Pradesh" },
-  { id: 4, name: "Assam" },
-  { id: 5, name: "Bihar" },
-  { id: 6, name: "Chandigarh" },
-  { id: 7, name: "Chhattisgarh" },
-  { id: 8, name: "Dadra & Nagar Haveli" },
-  { id: 9, name: "Daman & Diu" },
-  { id: 10, name: "Delhi" },
-  { id: 11, name: "Goa" },
-  { id: 12, name: "Gujarat" },
-  { id: 13, name: "Haryana" },
-  { id: 14, name: "Himachal Pradesh" },
-  { id: 15, name: "Jammu & Kashmir" },
-  { id: 16, name: "Jharkhand" },
-  { id: 17, name: "Karnataka" },
-  { id: 18, name: "Kerala" },
-  { id: 19, name: "Lakshadweep" },
-  { id: 20, name: "Madhya Pradesh" },
-  { id: 21, name: "Maharashtra" },
-  { id: 22, name: "Manipur" },
-  { id: 23, name: "Meghalaya" },
-  { id: 24, name: "Mizoram" },
-  { id: 25, name: "Nagaland" },
-  { id: 26, name: "Odisha" },
-  { id: 27, name: "Puducherry" },
-  { id: 28, name: "Punjab" },
-  { id: 29, name: "Rajasthan" },
-  { id: 30, name: "Sikkim" },
-  { id: 31, name: "Tamil Nadu" },
-  { id: 32, name: "Telangana" },
-  { id: 33, name: "Tripura" },
-  { id: 34, name: "Uttar Pradesh" },
-  { id: 35, name: "Uttarakhand" },
-  { id: 36, name: "West Bengal" },
-];
 
 const INPUT_HEIGHT = 48;
 
@@ -209,6 +154,40 @@ const B2B_STEPS: Array<{
   { step: 4, stepLabel: "Step 4", title: "KYC Documents" },
   { step: 5, stepLabel: "Step 5", title: "Review & Submit" },
 ];
+
+const STEP_NAMES: Record<number, string> = {
+  1: "Basic Details",
+  2: "Business Details",
+  3: "Address Details",
+  4: "KYC Documents",
+  5: "Review & Submit",
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  owner_name: "Owner / Full Name",
+  mobile: "Mobile Number",
+  alternate_mobile: "Alternate Mobile",
+  email: "Email Address",
+  business_name: "Business / Firm Name",
+  business_type_id: "Business Type",
+  dealer_category_id: "Dealer Category",
+  years_in_business: "Years in Business",
+  gst_number: "GSTIN Number",
+  referral_code: "Referral Code",
+  business_address: "Business Address",
+  business_city: "City",
+  business_state_id: "State",
+  business_pincode: "Pincode",
+  legal_business_name: "Legal Business Name",
+  pan_number: "PAN Number",
+  pan_name: "Name on PAN",
+  aadhaar_holder_name: "Aadhaar Holder Name",
+  business_proof_type: "Business Proof Type",
+  gst_certificate: "GST Certificate",
+  pan_card: "PAN Card Document",
+  aadhaar_card: "Aadhaar Card Document",
+  business_proof_document: "Business Proof Document",
+};
 
 // ── Standard App Form Input (Matching addaddress.tsx) ─────────
 interface AppInputFieldProps {
@@ -231,6 +210,7 @@ interface AppInputFieldProps {
   numberOfLines?: number;
   letterSpacing?: number;
   inputStyle?: any;
+  isRejected?: boolean;
   colors: any;
   font: (n: number) => number;
   spacing: (n: number) => number;
@@ -256,51 +236,70 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
   numberOfLines,
   letterSpacing,
   inputStyle,
+  isRejected = false,
   colors,
   font,
   spacing,
 }) => {
   const [focused, setFocused] = useState(false);
-  const borderColor = error
-    ? colors.error
-    : focused
-      ? colors.primary
-      : colors.border;
+  const [modified, setModified] = useState(false);
+  const showRejected = isRejected && !modified;
+
+  const borderColor = showRejected
+    ? "#DC2626"
+    : error
+      ? colors.error
+      : focused
+        ? colors.primary
+        : colors.border;
+  const bgColor = showRejected
+    ? (colors.isDark ? "#2A1414" : "#FEF2F2")
+    : (colors.inputBackground ?? colors.surface);
 
   return (
     <View style={{ gap: 5 }}>
       {/* Label */}
-      <Text
+      <View
         style={{
-          fontFamily: "Poppins_500Medium",
-          fontSize: font(11),
-          color: error
-            ? colors.error
-            : focused
-              ? colors.primary
-              : colors.textSecondary,
-          marginLeft: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        {label}
-        {required && (
-          <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
-            {" "}
-            *
-          </Text>
-        )}
-        {optional && (
-          <Text
-            style={{
-              color: colors.textTertiary,
-              fontFamily: "Poppins_400Regular",
-            }}
-          >
-            {" "}
-            (Optional)
-          </Text>
-        )}
-      </Text>
+        <Text
+          style={{
+            fontFamily: "Poppins_500Medium",
+            fontSize: font(11),
+            color: showRejected
+              ? "#DC2626"
+              : error
+                ? colors.error
+                : focused
+                  ? colors.primary
+                  : colors.textSecondary,
+            marginLeft: 1,
+          }}
+        >
+          {label}
+          {required && (
+            <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
+              {" "}
+              *
+            </Text>
+          )}
+          {optional && (
+            <Text
+              style={{
+                color: colors.textTertiary,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {" "}
+              (Optional)
+            </Text>
+          )}
+        </Text>
+      </View>
 
       {/* Input box */}
       <View
@@ -311,10 +310,10 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
               ? numberOfLines * 22 + 20
               : 74
             : undefined,
-          borderWidth: focused || !!error ? 1.8 : 1.2,
+          borderWidth: showRejected ? 2 : (focused || !!error ? 1.8 : 1.2),
           borderColor,
           borderRadius: 12,
-          backgroundColor: colors.inputBackground ?? colors.surface,
+          backgroundColor: bgColor,
           paddingHorizontal: spacing(12),
           paddingVertical: multiline ? spacing(10) : 0,
           flexDirection: "row",
@@ -348,7 +347,10 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
         )}
         <TextInput
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={(t) => {
+            setModified(true);
+            onChangeText?.(t);
+          }}
           placeholder={placeholder}
           placeholderTextColor={colors.textTertiary}
           keyboardType={keyboardType}
@@ -389,7 +391,28 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
         )}
       </View>
 
-      {!!error ? (
+      {showRejected ? (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+            marginLeft: 1,
+            marginTop: 2,
+          }}
+        >
+          <AlertCircle size={12} color="#DC2626" />
+          <Text
+            style={{
+              fontFamily: "Poppins_500Medium",
+              fontSize: font(11),
+              color: "#DC2626",
+            }}
+          >
+            {error || "Admin requested correction for this field"}
+          </Text>
+        </View>
+      ) : !!error ? (
         <Text
           style={{
             fontFamily: "Poppins_400Regular",
@@ -429,6 +452,7 @@ interface AppDropdownPickerProps<T> {
   prefixIcon?: React.ReactNode;
   onSelect: (item: T) => void;
   error?: string;
+  isRejected?: boolean;
   required?: boolean;
   optional?: boolean;
   modalTitle: string;
@@ -450,6 +474,7 @@ function AppDropdownPicker<T>({
   prefixIcon,
   onSelect,
   error,
+  isRejected = false,
   required,
   optional,
   modalTitle,
@@ -460,6 +485,7 @@ function AppDropdownPicker<T>({
 }: AppDropdownPickerProps<T>) {
   const [modalVisible, setModalVisible] = useState(false);
   const [search, setSearch] = useState("");
+  const [modified, setModified] = useState(false);
   const insets = useSafeAreaInsets();
 
   const handleClose = () => {
@@ -477,56 +503,73 @@ function AppDropdownPicker<T>({
     });
   }, [items, search, getItemLabel, getItemSubLabel]);
 
-  const borderColor = error
-    ? colors.error
-    : selectedText
-      ? colors.primary
-      : colors.border;
+  const showRejected = isRejected && !modified;
+
+  const borderColor = showRejected
+    ? "#DC2626"
+    : error
+      ? colors.error
+      : selectedText
+        ? colors.primary
+        : colors.border;
+  const bgColor = showRejected
+    ? (colors.isDark ? "#2A1414" : "#FEF2F2")
+    : (colors.inputBackground ?? colors.surface);
 
   return (
     <>
       <View style={{ gap: 5 }}>
-        <Text
+        <View
           style={{
-            fontFamily: "Poppins_500Medium",
-            fontSize: font(11),
-            color: error
-              ? colors.error
-              : selectedText
-                ? colors.primary
-                : colors.textSecondary,
-            marginLeft: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {label}
-          {required && (
-            <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
-              {" "}
-              *
-            </Text>
-          )}
-          {optional && (
-            <Text
-              style={{
-                color: colors.textTertiary,
-                fontFamily: "Poppins_400Regular",
-              }}
-            >
-              {" "}
-              (Optional)
-            </Text>
-          )}
-        </Text>
+          <Text
+            style={{
+              fontFamily: "Poppins_500Medium",
+              fontSize: font(11),
+              color: showRejected
+                ? "#DC2626"
+                : error
+                  ? colors.error
+                  : selectedText
+                    ? colors.primary
+                    : colors.textSecondary,
+              marginLeft: 1,
+            }}
+          >
+            {label}
+            {required && (
+              <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
+                {" "}
+                *
+              </Text>
+            )}
+            {optional && (
+              <Text
+                style={{
+                  color: colors.textTertiary,
+                  fontFamily: "Poppins_400Regular",
+                }}
+              >
+                {" "}
+                (Optional)
+              </Text>
+            )}
+          </Text>
+        </View>
 
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => setModalVisible(true)}
           style={{
             height: INPUT_HEIGHT,
-            borderWidth: selectedText || !!error ? 1.8 : 1.2,
+            borderWidth: showRejected ? 2 : (selectedText || !!error ? 1.8 : 1.2),
             borderColor,
             borderRadius: 12,
-            backgroundColor: colors.inputBackground ?? colors.surface,
+            backgroundColor: bgColor,
             paddingHorizontal: spacing(12),
             flexDirection: "row",
             alignItems: "center",
@@ -564,7 +607,28 @@ function AppDropdownPicker<T>({
           />
         </TouchableOpacity>
 
-        {!!error && (
+        {showRejected ? (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              marginLeft: 1,
+              marginTop: 2,
+            }}
+          >
+            <AlertCircle size={12} color="#DC2626" />
+            <Text
+              style={{
+                fontFamily: "Poppins_500Medium",
+                fontSize: font(11),
+                color: "#DC2626",
+              }}
+            >
+              {error || "Admin requested correction for this field"}
+            </Text>
+          </View>
+        ) : !!error ? (
           <Text
             style={{
               fontFamily: "Poppins_400Regular",
@@ -575,7 +639,7 @@ function AppDropdownPicker<T>({
           >
             {error}
           </Text>
-        )}
+        ) : null}
       </View>
 
       <Modal
@@ -704,6 +768,7 @@ function AppDropdownPicker<T>({
                     <TouchableOpacity
                       activeOpacity={0.7}
                       onPress={() => {
+                        setModified(true);
                         onSelect(item);
                         handleClose();
                       }}
@@ -804,6 +869,7 @@ interface AppDocumentUploadCardProps {
   documentUrl?: string | null;
   onPress: () => void;
   error?: string;
+  isRejected?: boolean;
   helperText?: string;
   colors: any;
   font: (n: number) => number;
@@ -817,11 +883,13 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
   documentUrl,
   onPress,
   error,
+  isRejected = false,
   helperText,
   colors,
   font,
   spacing,
 }) => {
+  const isNewlyAttached = !!document;
   const isAttached = !!document || !!documentUrl;
   const fileName = document
     ? document.name
@@ -829,25 +897,53 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
       ? documentUrl.split("/").pop() || "Document Attached"
       : "";
 
+  // If rejected, but user has uploaded/attached a replacement document, do NOT show as rejected!
+  const showAsRejected = isRejected && !isNewlyAttached;
+
+  const borderColor = showAsRejected
+    ? "#DC2626"
+    : error
+      ? "#EF4444"
+      : isAttached
+        ? "#10B981"
+        : colors.border;
+  const bgColor = showAsRejected
+    ? (colors.isDark ? "#2A1414" : "#FEF2F2")
+    : isAttached
+      ? "#10B9810A"
+      : colors.surface;
+
   return (
     <View style={{ gap: 5 }}>
       {/* Label */}
-      <Text
+      <View
         style={{
-          fontFamily: "Poppins_500Medium",
-          fontSize: font(11),
-          color: error ? colors.error : colors.textSecondary,
-          marginLeft: 1,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        {label}
-        {required && (
-          <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
-            {" "}
-            *
-          </Text>
-        )}
-      </Text>
+        <Text
+          style={{
+            fontFamily: "Poppins_500Medium",
+            fontSize: font(11),
+            color: showAsRejected
+              ? "#DC2626"
+              : error
+                ? colors.error
+                : colors.textSecondary,
+            marginLeft: 1,
+          }}
+        >
+          {label}
+          {required && (
+            <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
+              {" "}
+              *
+            </Text>
+          )}
+        </Text>
+      </View>
 
       {/* Upload button container */}
       <TouchableOpacity
@@ -855,16 +951,10 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
         onPress={onPress}
         style={{
           borderRadius: 12,
-          borderWidth: 1.2,
+          borderWidth: showAsRejected ? 2 : 1.2,
           borderStyle: isAttached ? "solid" : "dashed",
-          borderColor: error
-            ? "#EF4444"
-            : isAttached
-              ? "#10B981"
-              : colors.border,
-          backgroundColor: isAttached
-            ? "#10B9810A"
-            : colors.surface,
+          borderColor,
+          backgroundColor: bgColor,
           paddingHorizontal: spacing(14),
           paddingVertical: spacing(12),
         }}
@@ -882,14 +972,18 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
               width: 38,
               height: 38,
               borderRadius: 10,
-              backgroundColor: isAttached
-                ? "#10B9811C"
-                : colors.primary + "14",
+              backgroundColor: showAsRejected
+                ? "#FEE2E2"
+                : isAttached
+                  ? "#10B9811C"
+                  : colors.primary + "14",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            {isAttached ? (
+            {showAsRejected ? (
+              <AlertCircle size={20} color="#DC2626" />
+            ) : isAttached ? (
               <CheckCircle2 size={20} color="#10B981" />
             ) : (
               <UploadCloud size={20} color={colors.primary} />
@@ -902,7 +996,7 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
               style={{
                 fontFamily: "Poppins_600SemiBold",
                 fontSize: font(12.5),
-                color: colors.text,
+                color: showAsRejected ? "#DC2626" : colors.text,
               }}
               numberOfLines={1}
             >
@@ -912,13 +1006,19 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
               style={{
                 fontFamily: "Poppins_400Regular",
                 fontSize: font(11),
-                color: isAttached ? "#10B981" : colors.textSecondary,
+                color: showAsRejected
+                  ? "#DC2626"
+                  : isAttached
+                    ? "#10B981"
+                    : colors.textSecondary,
                 marginTop: 1,
               }}
             >
-              {isAttached
-                ? "Tap to re-capture or select new file"
-                : "Camera photo or Gallery file (up to 5 MB)"}
+              {showAsRejected
+                ? "Re-upload required by Admin"
+                : isAttached
+                  ? "Tap to re-capture or select new file"
+                  : "Camera photo or Gallery file (up to 5 MB)"}
             </Text>
           </View>
 
@@ -928,26 +1028,53 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
               paddingHorizontal: 10,
               paddingVertical: 5,
               borderRadius: 8,
-              backgroundColor: isAttached
-                ? "#10B98118"
-                : colors.primary + "10",
+              backgroundColor: showAsRejected
+                ? "#FEE2E2"
+                : isAttached
+                  ? "#10B98118"
+                  : colors.primary + "10",
             }}
           >
             <Text
               style={{
                 fontFamily: "Poppins_600SemiBold",
                 fontSize: font(11),
-                color: isAttached ? "#10B981" : colors.primary,
+                color: showAsRejected
+                  ? "#DC2626"
+                  : isAttached
+                    ? "#10B981"
+                    : colors.primary,
               }}
             >
-              {isAttached ? "Change" : "Upload"}
+              {showAsRejected ? "Re-upload" : isAttached ? "Change" : "Upload"}
             </Text>
           </View>
         </View>
       </TouchableOpacity>
 
       {/* Error / Helper */}
-      {!!error ? (
+      {showAsRejected ? (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+            marginLeft: 1,
+            marginTop: 2,
+          }}
+        >
+          <AlertCircle size={12} color="#DC2626" />
+          <Text
+            style={{
+              fontFamily: "Poppins_500Medium",
+              fontSize: font(11),
+              color: "#DC2626",
+            }}
+          >
+            {error || "Admin rejected this document. Please re-upload."}
+          </Text>
+        </View>
+      ) : !!error ? (
         <Text
           style={{
             fontFamily: "Poppins_400Regular",
@@ -980,6 +1107,109 @@ export default function B2BScreen() {
   const { font, spacing } = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
+  const setUser = useAppVisitorStore((s) => s.setUser);
+  const visitorUserId = useAppVisitorStore((s) => s.userId);
+  const [storedUserId, setStoredUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    StorageUtil.getUserId().then((id) => {
+      if (id) setStoredUserId(id);
+    });
+  }, []);
+
+  const effectiveUserId = visitorUserId || storedUserId || "";
+  // Fetch address & state master (same API as addaddress.tsx)
+  const { data: addressData } = useAddress({ user_id: effectiveUserId });
+
+  // Fetch B2B Master Data dynamically from DB tables (b2b_business_type_master, b2b_dealer_category_master, state)
+  const { data: masterDataRes } = useB2BMasterData();
+  const masterData = masterDataRes?.data;
+
+  // Fallback direct state list from /api/get-state if user_id is not yet set
+  const [directApiStates, setDirectApiStates] = useState<StateItem[]>([]);
+
+  useEffect(() => {
+    if (addressData?.data?.state_master && addressData.data.state_master.length > 0) {
+      return;
+    }
+    let isMounted = true;
+    apiClient
+      .get("/api/get-state")
+      .then((res) => {
+        if (!isMounted) return;
+        const list = res.data?.data?.state || res.data?.data?.state_master || [];
+        if (Array.isArray(list) && list.length > 0) {
+          setDirectApiStates(list);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [addressData]);
+
+  // Master State List fetched dynamically from DB (no frontend hardcoding)
+  const stateList: StateItem[] = useMemo(() => {
+    if (masterData?.states && masterData.states.length > 0) {
+      return masterData.states.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        state_no: s.state_no ?? null,
+      }));
+    }
+    if (addressData?.data?.state_master && addressData.data.state_master.length > 0) {
+      return addressData.data.state_master;
+    }
+    return directApiStates;
+  }, [masterData?.states, addressData?.data?.state_master, directApiStates]);
+
+  // Business Types dynamically fetched from DB (b2b_business_type_master)
+  const businessTypes = useMemo(() => {
+    const list = masterData?.business_types || [];
+    return list.map((b: any) => ({
+      id: b.id,
+      name: b.business_type_name || b.name,
+      requires_registration_document: b.requires_registration_document || "Yes",
+    }));
+  }, [masterData?.business_types]);
+
+  // Dealer Categories dynamically fetched from DB (b2b_dealer_category_master)
+  const dealerCategories = useMemo(() => {
+    const list = masterData?.dealer_categories || [];
+    return list.map((c: any) => ({
+      id: c.id,
+      name: c.dealer_category_name || c.name,
+      desc: getDealerCategoryDesc(c.dealer_category_name || c.name),
+      icon: getDealerCategoryIcon(c.dealer_category_name || c.name),
+    }));
+  }, [masterData?.dealer_categories]);
+
+  // Years in business options dynamically fetched from API
+  const yearsInBusinessOptions = useMemo(() => {
+    return (
+      masterData?.years_in_business_options || [
+        "Less than 1 year",
+        "1 - 3 years",
+        "3 - 5 years",
+        "5 - 10 years",
+        "10 - 20 years",
+        "More than 20 years",
+      ]
+    );
+  }, [masterData?.years_in_business_options]);
+
+  // Business Proof Types dynamically fetched from API
+  const businessProofTypes = useMemo(() => {
+    return (
+      masterData?.business_proof_types || [
+        "Insecticide Licence",
+        "Pest Control Licence",
+        "Shop & Establishment Licence",
+        "Other",
+      ]
+    );
+  }, [masterData?.business_proof_types]);
 
   // Multi-step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -993,6 +1223,13 @@ export default function B2BScreen() {
   // Application Overall Status
   const [applicationStatus, setApplicationStatus] = useState<string>("Draft");
   const [lastAdminRemark, setLastAdminRemark] = useState<string>("");
+  const [correctionStep, setCorrectionStep] = useState<number | null>(null);
+  const [correctionFields, setCorrectionFields] = useState<{ [key: string]: string[] } | null>(null);
+  const [correctedFields, setCorrectedFields] = useState<Record<string, boolean>>({});
+
+  const markFieldCorrected = (fieldKey: string) => {
+    setCorrectedFields((prev) => ({ ...prev, [fieldKey]: true }));
+  };
   const [showReviewInStatus, setShowReviewInStatus] = useState(false);
 
   // -------------------------------------------------------------
@@ -1102,6 +1339,19 @@ export default function B2BScreen() {
   const [showYearsModal, setShowYearsModal] = useState(false);
   const [showStatusScreen, setShowStatusScreen] = useState(false);
 
+  // Step 5: Document Preview Modal State
+  const [previewDocModal, setPreviewDocModal] = useState<{
+    visible: boolean;
+    title: string;
+    uri: string;
+    name: string;
+  }>({
+    visible: false,
+    title: "",
+    uri: "",
+    name: "",
+  });
+
   // -------------------------------------------------------------
   // Step 5: Review & Final Confirmation State
   // -------------------------------------------------------------
@@ -1159,6 +1409,16 @@ export default function B2BScreen() {
 
           if (res.status === 1 && res.data) {
             const d = res.data;
+            console.log("🏢 [B2B SCREEN RESTORE SESSION]:", {
+              storedUserId: userId,
+              session,
+              public_id: d.public_id,
+              application_status: d.status,
+              is_b2b_user: d.is_b2b_user,
+              mobile_verified: d.mobile_verified,
+              business_name: d.business_details?.business_name,
+              gst_number: d.business_details?.gst_number,
+            });
             setPublicId(d.public_id);
             if (d.tracking_token) {
               setTrackingToken(d.tracking_token);
@@ -1171,6 +1431,12 @@ export default function B2BScreen() {
             }
             if (d.last_admin_remark) {
               setLastAdminRemark(d.last_admin_remark);
+            }
+            if (d.correction_step) {
+              setCorrectionStep(Number(d.correction_step));
+            }
+            if (d.correction_fields) {
+              setCorrectionFields(d.correction_fields);
             }
 
             // Populate Step 1 Basic Details
@@ -1251,13 +1517,26 @@ export default function B2BScreen() {
             if (
               [
                 "Submitted for Approval",
+                "Pending",
                 "Under Review",
+                "Review In Progress",
+                "Submitted",
                 "Approved",
                 "Correction Required",
               ].includes(d.status)
             ) {
               setShowStatusScreen(true);
-              setCurrentStep(5);
+              if (d.status === "Correction Required") {
+                const target =
+                  d.correction_step &&
+                  Number(d.correction_step) >= 1 &&
+                  Number(d.correction_step) <= 4
+                    ? (Number(d.correction_step) as 1 | 2 | 3 | 4)
+                    : 1;
+                setCurrentStep(target);
+              } else {
+                setCurrentStep(5);
+              }
             } else if (d.current_step >= 5 || completedStep >= 4) {
               setCurrentStep(5);
             } else if (d.current_step === 4 || completedStep >= 3) {
@@ -1404,6 +1683,7 @@ export default function B2BScreen() {
     try {
       const response = await saveBasicDetails({
         public_id: publicId || undefined,
+        tracking_token: trackingToken || undefined,
         owner_name: ownerName.trim(),
         mobile: mobile.trim(),
         alternate_mobile: alternateMobile.trim() || null,
@@ -1413,11 +1693,32 @@ export default function B2BScreen() {
 
       if (response.status === 1 && response.data?.public_id) {
         setPublicId(response.data.public_id);
+        if (response.data.status) {
+          setApplicationStatus(response.data.status);
+        }
         await StorageUtil.setB2BSession(
           response.data.public_id,
-          "",
+          response.data.tracking_token || trackingToken || "",
           mobile.trim(),
         );
+
+        // If show_otp is false (e.g. correction flow where mobile was already verified)
+        if (response.data.show_otp === false) {
+          setIsVerified(true);
+          setLastCompletedStep((prev) => Math.max(prev, 1));
+          markFieldCorrected("owner_name");
+          markFieldCorrected("mobile");
+          markFieldCorrected("alternate_mobile");
+          markFieldCorrected("email");
+          showToast(
+            response.message || "Basic details updated successfully!",
+            "success",
+          );
+          const nextStep = getNextStepInFlow(1);
+          setCurrentStep(nextStep);
+          return;
+        }
+
         setShowOtpScreen(true);
         setResendTimer(60);
         setOtpCode("");
@@ -1445,20 +1746,229 @@ export default function B2BScreen() {
         otp: fullOtp,
       });
 
-      if (response.status === 1 && response.data?.tracking_token) {
-        setTrackingToken(response.data.tracking_token);
+      if (response.status === 1 && response.data) {
+        const d = response.data;
+        const currentToken = d.tracking_token || trackingToken || "";
+        const activePublicId = d.public_id || publicId;
+        const uId = d.user_id
+          ? String(d.user_id)
+          : d.raw_user_id
+            ? String(d.raw_user_id)
+            : "";
+        const uName = d.user_name || ownerName.trim() || "B2B User";
+
+        // 1. Log user into the app session
+        if (uId) {
+          try {
+            await setUser(uId, uName, email.trim() || undefined);
+            setAnalyticsUserId(uId);
+          } catch (e) {
+            console.log("Failed to persist user in auth store", e);
+          }
+        }
+
+        // 2. Persist B2B session
+        if (currentToken) {
+          setTrackingToken(currentToken);
+        }
+        if (activePublicId) {
+          setPublicId(activePublicId);
+        }
         setIsVerified(true);
         setLastCompletedStep((prev) => Math.max(prev, 1));
         await StorageUtil.setB2BSession(
-          publicId,
-          response.data.tracking_token,
-          mobile,
+          activePublicId,
+          currentToken,
+          mobile.trim(),
         );
-        showToast("Mobile Number Verified Successfully!", "success");
 
-        setTimeout(() => {
-          setCurrentStep(2);
-        }, 400);
+        // 3. Fetch full registration details to restore existing data (business, KYC, addresses, status)
+        let resolvedStatus = d.status || applicationStatus || "Draft";
+        let resolvedStep = Number(d.current_step) || 2;
+        let loadedFullData: any = null;
+        setApplicationStatus(resolvedStatus);
+        try {
+          const details = await getRegistrationDetails({
+            public_id: activePublicId,
+            tracking_token: currentToken || undefined,
+            mobile: mobile.trim(),
+            user_id: uId || undefined,
+          });
+
+          if (details.status === 1 && details.data) {
+            const fullData = details.data;
+            loadedFullData = fullData;
+            if (fullData.status) {
+              resolvedStatus = fullData.status;
+              setApplicationStatus(fullData.status);
+            }
+            if (fullData.last_admin_remark) {
+              setLastAdminRemark(fullData.last_admin_remark);
+            }
+            if (fullData.correction_step) {
+              setCorrectionStep(Number(fullData.correction_step));
+            }
+            if (fullData.correction_fields) {
+              setCorrectionFields(fullData.correction_fields);
+            }
+            if (fullData.current_step) {
+              resolvedStep = Number(fullData.current_step);
+            }
+            const completedStep = Number(fullData.last_completed_step) || 0;
+            setLastCompletedStep(completedStep);
+
+            // Populate Step 1 Basic Details
+            if (fullData.basic_details) {
+              setOwnerName(fullData.basic_details.owner_name || ownerName);
+              setMobile(fullData.basic_details.mobile || mobile);
+              setAlternateMobile(
+                fullData.basic_details.alternate_mobile || alternateMobile,
+              );
+              setEmail(fullData.basic_details.email || email);
+            }
+
+            // Populate Step 2 Business Details
+            if (fullData.business_details) {
+              setGstNumber(fullData.business_details.gst_number || "");
+              setBusinessName(fullData.business_details.business_name || "");
+              setBusinessTypeId(
+                fullData.business_details.business_type_id || null,
+              );
+              setDealerCategoryId(
+                fullData.business_details.dealer_category_id || null,
+              );
+              setYearsInBusiness(
+                fullData.business_details.years_in_business || "1 - 3 years",
+              );
+              setReferralCode(fullData.business_details.referral_code || "");
+              if (fullData.business_details.gst_number) {
+                setIsGstVerified(true);
+              }
+            }
+
+            // Populate Step 3 Address Details
+            if (fullData.address_details) {
+              setBusinessAddress(
+                fullData.address_details.business_address || "",
+              );
+              setBusinessCity(fullData.address_details.business_city || "");
+              setBusinessStateId(
+                fullData.address_details.business_state_id || null,
+              );
+              setBusinessPincode(
+                fullData.address_details.business_pincode || "",
+              );
+              setDeliverySame(
+                fullData.address_details.delivery_same_as_business || "Yes",
+              );
+              setDeliveryAddress(
+                fullData.address_details.delivery_address || "",
+              );
+              setDeliveryCity(fullData.address_details.delivery_city || "");
+              setDeliveryStateId(
+                fullData.address_details.delivery_state_id || null,
+              );
+              setDeliveryPincode(
+                fullData.address_details.delivery_pincode || "",
+              );
+              setWarehouseSame(
+                fullData.address_details.warehouse_same || "Yes",
+              );
+              setWarehouseAddress(
+                fullData.address_details.warehouse_address || "",
+              );
+              setWarehouseCity(fullData.address_details.warehouse_city || "");
+              setWarehouseStateId(
+                fullData.address_details.warehouse_state_id || null,
+              );
+              setWarehousePincode(
+                fullData.address_details.warehouse_pincode || "",
+              );
+            }
+
+            // Populate Step 4 KYC Details
+            if (fullData.kyc_details) {
+              setLegalBusinessName(
+                fullData.kyc_details.legal_business_name ||
+                  fullData.business_details?.legal_business_name ||
+                  "",
+              );
+              setPanNumber(
+                fullData.kyc_details.pan_number ||
+                  fullData.business_details?.pan_number ||
+                  "",
+              );
+              setPanName(
+                fullData.kyc_details.pan_name ||
+                  fullData.business_details?.pan_name ||
+                  "",
+              );
+              setAadhaarHolderName(
+                fullData.kyc_details.aadhaar_holder_name || "",
+              );
+              if (fullData.kyc_details.business_proof_type) {
+                setBusinessProofType(fullData.kyc_details.business_proof_type);
+              }
+              setGstCertificateUrl(
+                fullData.kyc_details.gst_certificate_path || "",
+              );
+              setPanCardUrl(fullData.kyc_details.pan_card_path || "");
+              setAadhaarCardUrl(fullData.kyc_details.aadhaar_card_path || "");
+              setBusinessProofUrl(
+                fullData.kyc_details.business_proof_path || "",
+              );
+            }
+          }
+        } catch (detailErr) {
+          console.log("Error loading full registration details:", detailErr);
+        }
+
+        setShowOtpScreen(false);
+
+        // 4. Navigate appropriately based on application status
+        const isApproved =
+          resolvedStatus === "Approved" || d.is_b2b_user === "Yes";
+        const isPendingReview = [
+          "Submitted for Approval",
+          "Pending",
+          "Under Review",
+          "Review In Progress",
+          "Submitted",
+        ].includes(resolvedStatus);
+
+        if (isApproved) {
+          showToast(
+            "Your B2B account is approved! Welcome to PestoBazaar.",
+            "success",
+          );
+          setTimeout(() => {
+            router.replace("/(tabs)");
+          }, 500);
+        } else if (isPendingReview) {
+          showToast(
+            "Application submitted. Waiting for admin review.",
+            "info",
+          );
+          setShowStatusScreen(true);
+          setCurrentStep(5);
+        } else if (resolvedStatus === "Correction Required") {
+          showToast(
+            "Admin requested corrections in your application.",
+            "warning",
+          );
+          const target =
+            loadedFullData?.correction_step &&
+            Number(loadedFullData.correction_step) >= 1 &&
+            Number(loadedFullData.correction_step) <= 4
+              ? (Number(loadedFullData.correction_step) as 1 | 2 | 3 | 4)
+              : 1;
+          setShowStatusScreen(true);
+          setCurrentStep(target);
+        } else {
+          showToast("Mobile Number Verified Successfully!", "success");
+          setShowStatusScreen(false);
+          setCurrentStep(resolvedStep >= 2 ? (resolvedStep as any) : 2);
+        }
       } else {
         showToast(response.message || "Invalid OTP entered.", "error");
       }
@@ -1729,12 +2239,19 @@ export default function B2BScreen() {
 
       if (response.status === 1) {
         setLastCompletedStep((prev) => Math.max(prev, 2));
+        markFieldCorrected("business_name");
+        markFieldCorrected("business_type_id");
+        markFieldCorrected("dealer_category_id");
+        markFieldCorrected("years_in_business");
+        markFieldCorrected("gst_number");
+        markFieldCorrected("referral_code");
         await StorageUtil.setB2BSession(publicId, trackingToken, mobile);
         showToast(
           response.message || "Business details saved successfully!",
           "success",
         );
-        setCurrentStep(3);
+        const nextStep = getNextStepInFlow(2);
+        setCurrentStep(nextStep);
       } else {
         showToast(
           response.message || "Failed to save business details.",
@@ -1796,12 +2313,17 @@ export default function B2BScreen() {
 
       if (response.status === 1) {
         setLastCompletedStep((prev) => Math.max(prev, 3));
+        markFieldCorrected("business_address");
+        markFieldCorrected("business_city");
+        markFieldCorrected("business_pincode");
+        markFieldCorrected("business_state_id");
         await StorageUtil.setB2BSession(publicId, trackingToken, mobile);
         showToast(
           response.message || "Address details saved successfully!",
           "success",
         );
-        setCurrentStep(4);
+        const nextStep = getNextStepInFlow(3);
+        setCurrentStep(nextStep);
       } else {
         showToast(
           response.message || "Failed to save address details.",
@@ -1843,35 +2365,35 @@ export default function B2BScreen() {
 
   const getStateName = (id: number | null) => {
     if (!id) return "Select State...";
-    const found = INDIAN_STATES.find((s) => s.id === id);
+    const found = stateList.find((s) => s.id === id);
     return found ? found.name : "Select State...";
   };
 
   const getBusinessTypeName = (id: number | null) => {
     if (!id) return "Not specified";
-    const found = BUSINESS_TYPES.find((b) => b.id === id);
+    const found = businessTypes.find((b) => b.id === id);
     return found ? found.name : "Not specified";
   };
 
   const getDealerCategoryName = (id: number | null) => {
     if (!id) return "Not specified";
-    const found = DEALER_CATEGORIES.find((c) => c.id === id);
+    const found = dealerCategories.find((c) => c.id === id);
     return found ? found.name : "Not specified";
   };
 
-  const filteredStates = INDIAN_STATES.filter((s) =>
+  const filteredStates = stateList.filter((s) =>
     s.name.toLowerCase().includes(stateSearch.toLowerCase()),
   );
 
-  const selectedBusinessType = BUSINESS_TYPES.find(
+  const selectedBusinessType = businessTypes.find(
     (b) => b.id === businessTypeId,
   );
 
-  const selectedDealerCategory = DEALER_CATEGORIES.find(
+  const selectedDealerCategory = dealerCategories.find(
     (c) => c.id === dealerCategoryId,
   );
 
-  const filteredBusinessTypes = BUSINESS_TYPES.filter((item) =>
+  const filteredBusinessTypes = businessTypes.filter((item) =>
     item.name.toLowerCase().includes(businessTypeSearch.toLowerCase()),
   );
 
@@ -1918,18 +2440,22 @@ export default function B2BScreen() {
               };
               if (field === "gst") {
                 setGstCertificate(fileObj);
+                markFieldCorrected("gst_certificate");
                 if (errors.gstCertificate)
                   setErrors((prev) => ({ ...prev, gstCertificate: "" }));
               } else if (field === "pan") {
                 setPanCard(fileObj);
+                markFieldCorrected("pan_card");
                 if (errors.panCard)
                   setErrors((prev) => ({ ...prev, panCard: "" }));
               } else if (field === "aadhaar") {
                 setAadhaarCard(fileObj);
+                markFieldCorrected("aadhaar_card");
                 if (errors.aadhaarCard)
                   setErrors((prev) => ({ ...prev, aadhaarCard: "" }));
               } else if (field === "proof") {
                 setBusinessProofDocument(fileObj);
+                markFieldCorrected("business_proof_document");
                 if (errors.businessProofDocument)
                   setErrors((prev) => ({ ...prev, businessProofDocument: "" }));
               }
@@ -1981,18 +2507,22 @@ export default function B2BScreen() {
               };
               if (field === "gst") {
                 setGstCertificate(fileObj);
+                markFieldCorrected("gst_certificate");
                 if (errors.gstCertificate)
                   setErrors((prev) => ({ ...prev, gstCertificate: "" }));
               } else if (field === "pan") {
                 setPanCard(fileObj);
+                markFieldCorrected("pan_card");
                 if (errors.panCard)
                   setErrors((prev) => ({ ...prev, panCard: "" }));
               } else if (field === "aadhaar") {
                 setAadhaarCard(fileObj);
+                markFieldCorrected("aadhaar_card");
                 if (errors.aadhaarCard)
                   setErrors((prev) => ({ ...prev, aadhaarCard: "" }));
               } else if (field === "proof") {
                 setBusinessProofDocument(fileObj);
+                markFieldCorrected("business_proof_document");
                 if (errors.businessProofDocument)
                   setErrors((prev) => ({ ...prev, businessProofDocument: "" }));
               }
@@ -2005,6 +2535,33 @@ export default function B2BScreen() {
       },
       { text: "Cancel", style: "cancel" },
     ]);
+  };
+
+  // -------------------------------------------------------------
+  // Step 5: Document View / Preview Handler
+  // -------------------------------------------------------------
+  const handleOpenDocumentPreview = (
+    title: string,
+    localUri?: string | null,
+    remoteUrl?: string | null,
+    fileName?: string | null,
+  ) => {
+    let resolvedUri = localUri || remoteUrl || "";
+    if (!resolvedUri) {
+      showToast("No document attached to view.", "info");
+      return;
+    }
+    if (resolvedUri.startsWith("/")) {
+      const cleanedBase = BASE_URL.replace(/\/$/, "");
+      resolvedUri = `${cleanedBase}${resolvedUri}`;
+    }
+
+    setPreviewDocModal({
+      visible: true,
+      title,
+      uri: resolvedUri,
+      name: fileName || resolvedUri.split("/").pop()?.split("?")[0] || title,
+    });
   };
 
   // -------------------------------------------------------------
@@ -2121,6 +2678,15 @@ export default function B2BScreen() {
 
       if (response.status === 1) {
         setLastCompletedStep((prev) => Math.max(prev, 4));
+        markFieldCorrected("legal_business_name");
+        markFieldCorrected("gst_certificate");
+        markFieldCorrected("pan_number");
+        markFieldCorrected("pan_name");
+        markFieldCorrected("pan_card");
+        markFieldCorrected("aadhaar_holder_name");
+        markFieldCorrected("aadhaar_card");
+        markFieldCorrected("business_proof_type");
+        markFieldCorrected("business_proof_document");
         await StorageUtil.setB2BSession(publicId, trackingToken, mobile);
         showToast(
           response.message ||
@@ -2193,8 +2759,58 @@ export default function B2BScreen() {
     }
   };
 
-  // Stepper Clickability (Allowed if step already unlocked)
+  // Helper to determine lowest rejected step
+  const getCorrectionTargetStep = (): 1 | 2 | 3 | 4 => {
+    if (correctionStep && correctionStep >= 1 && correctionStep <= 4) {
+      return correctionStep as 1 | 2 | 3 | 4;
+    }
+    if (correctionFields && typeof correctionFields === "object") {
+      const stepKeys = Object.keys(correctionFields)
+        .map(Number)
+        .filter((n) => n >= 1 && n <= 4)
+        .sort((a, b) => a - b);
+      if (stepKeys.length > 0) {
+        return stepKeys[0] as 1 | 2 | 3 | 4;
+      }
+    }
+    return 1;
+  };
+
+  const isFieldRejected = (fieldKey: string, stepNum?: number) => {
+    if (applicationStatus !== "Correction Required" || !correctionFields) {
+      return false;
+    }
+    if (correctedFields[fieldKey]) {
+      return false;
+    }
+    const targetStep = stepNum || currentStep;
+    const stepFields = (correctionFields as any)[String(targetStep)];
+    return Array.isArray(stepFields) && stepFields.includes(fieldKey);
+  };
+
+  // Helper to determine the next step in flow:
+  // In Correction Required mode, if subsequent steps are NOT rejected, jumps directly to Step 5 (Review & Submit)!
+  const getNextStepInFlow = (current: 1 | 2 | 3 | 4): 2 | 3 | 4 | 5 => {
+    if (applicationStatus === "Correction Required") {
+      if (correctionFields && typeof correctionFields === "object") {
+        for (let s = (current + 1); s <= 4; s++) {
+          const fields = (correctionFields as any)[String(s)];
+          if (Array.isArray(fields) && fields.length > 0) {
+            return s as 2 | 3 | 4;
+          }
+        }
+      }
+      // No remaining steps require correction -> Go straight to Step 5 (Review & Submit)
+      return 5;
+    }
+    return (current + 1) as 2 | 3 | 4 | 5;
+  };
+
+  // Stepper Clickability (Allowed if step already unlocked or in correction mode)
   const canGoToStep = (stepNumber: 1 | 2 | 3 | 4 | 5) => {
+    if (applicationStatus === "Correction Required") {
+      return true;
+    }
     if (stepNumber === 1) return true;
     if (stepNumber === 2) return isVerified || lastCompletedStep >= 1;
     if (stepNumber === 3) return lastCompletedStep >= 2;
@@ -2248,10 +2864,17 @@ export default function B2BScreen() {
           contentContainerStyle={[
             styles.scrollContent,
             { paddingBottom: insets.bottom + spacing(40) },
+            showStatusScreen && {
+              flexGrow: 1,
+              paddingTop: spacing(12),
+              alignItems: "stretch",
+            },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {!showStatusScreen && (
+            <>
           {/* Header Title & Description */}
           <View
             style={{
@@ -2422,45 +3045,47 @@ export default function B2BScreen() {
                       <Text
                         style={{
                           fontFamily: "Poppins_600SemiBold",
-                          fontSize: font(9),
-                          color: isDone
-                            ? "#10B981"
-                            : isCurrent
-                              ? colors.primary
-                              : colors.textTertiary,
-                          textTransform: "uppercase",
-                          letterSpacing: 0.3,
-                        }}
-                      >
-                        {s.stepLabel}
-                      </Text>
-                      <Text
-                        numberOfLines={2}
-                        style={{
-                          fontFamily: isCurrent
-                            ? "Poppins_600SemiBold"
-                            : isDone
-                              ? "Poppins_500Medium"
-                              : "Poppins_400Regular",
-                          fontSize: font(10),
-                          color: isCurrent
-                            ? colors.text
-                            : isDone
+                            fontSize: font(9),
+                            color: isDone
+                              ? "#10B981"
+                              : isCurrent
+                                ? colors.primary
+                                : colors.textTertiary,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.3,
+                          }}
+                        >
+                          {s.stepLabel}
+                        </Text>
+                        <Text
+                          numberOfLines={2}
+                          style={{
+                            fontFamily: isCurrent
+                              ? "Poppins_600SemiBold"
+                              : isDone
+                                ? "Poppins_500Medium"
+                                : "Poppins_400Regular",
+                            fontSize: font(10),
+                            color: isCurrent
                               ? colors.text
-                              : colors.textTertiary,
-                          textAlign: "center",
-                          lineHeight: font(13),
-                          marginTop: 1,
-                        }}
-                      >
-                        {s.title}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
+                              : isDone
+                                ? colors.text
+                                : colors.textTertiary,
+                            textAlign: "center",
+                            lineHeight: font(13),
+                            marginTop: 1,
+                          }}
+                        >
+                          {s.title}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
-          </View>
+              </>
+          )}
 
           {/* Correction Notice (if review team requested correction) */}
           {applicationStatus === "Correction Required" && !showStatusScreen && (
@@ -2491,200 +3116,561 @@ export default function B2BScreen() {
           {/* ========================================================= */}
           {/* APPLICATION STATUS SCREEN (WHEN SUBMITTED / IN REVIEW)    */}
           {/* ========================================================= */}
-          {showStatusScreen &&
-            applicationStatus &&
-            applicationStatus !== "Draft" && (
+          {showStatusScreen && (
+            <View
+              style={{
+                width: "100%",
+                alignItems: "center",
+                paddingVertical: spacing(8),
+              }}
+            >
+              {/* Status Icon Illustration */}
               <View
-                style={[
-                  styles.formCard,
-                  {
-                    backgroundColor: colors.surfaceElevated,
-                    borderColor: colors.border,
-                    paddingVertical: 28,
-                    alignItems: "center",
-                  },
-                ]}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor:
+                    applicationStatus === "Approved"
+                      ? "#DCFCE7"
+                      : applicationStatus === "Correction Required"
+                        ? "#FEE2E2"
+                        : "#FEF3C7",
+                  borderWidth: 4,
+                  borderColor:
+                    applicationStatus === "Approved"
+                      ? "#F0FDF4"
+                      : applicationStatus === "Correction Required"
+                        ? "#FFF1F2"
+                        : "#FFFBEB",
+                  marginBottom: spacing(12),
+                }}
               >
-                <View style={styles.statusBadgeRow}>
-                  <View
-                    style={[
-                      styles.statusPill,
+                {applicationStatus === "Approved" ? (
+                  <CheckCircle2 size={32} color="#16A34A" strokeWidth={2.2} />
+                ) : applicationStatus === "Correction Required" ? (
+                  <AlertCircle size={32} color="#DC2626" strokeWidth={2.2} />
+                ) : (
+                  <Clock size={32} color="#D97706" strokeWidth={2.2} />
+                )}
+              </View>
+
+              {/* Status Pill Badge */}
+              <View
+                style={{
+                  paddingHorizontal: spacing(12),
+                  paddingVertical: spacing(4),
+                  borderRadius: 20,
+                  backgroundColor:
+                    applicationStatus === "Approved"
+                      ? "#ECFDF5"
+                      : applicationStatus === "Correction Required"
+                        ? "#FEF2F2"
+                        : "#FFFBEB",
+                  borderWidth: 1,
+                  borderColor:
+                    applicationStatus === "Approved"
+                      ? "#A7F3D0"
+                      : applicationStatus === "Correction Required"
+                        ? "#FECACA"
+                        : "#FDE68A",
+                  marginBottom: spacing(10),
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(11.5),
+                    color:
                       applicationStatus === "Approved"
-                        ? styles.statusPillSuccess
+                        ? "#059669"
                         : applicationStatus === "Correction Required"
-                          ? styles.statusPillError
-                          : styles.statusPillWarning,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusPillText,
-                        applicationStatus === "Approved"
-                          ? { color: "#027A48" }
-                          : applicationStatus === "Correction Required"
-                            ? { color: "#B42318" }
-                            : { color: "#B54708" },
-                      ]}
-                    >
-                      Application Status: {applicationStatus}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={[styles.statusHeroTitle, { color: colors.text }]}>
-                  Bulk Buyer Application
+                          ? "#DC2626"
+                          : "#D97706",
+                  }}
+                >
+                  {applicationStatus === "Pending" ||
+                  !applicationStatus ||
+                  applicationStatus === "Draft"
+                    ? "Status: Under Admin Review"
+                    : `Application Status: ${applicationStatus}`}
                 </Text>
+              </View>
 
-                {publicId ? (
-                  <Text
-                    style={[
-                      styles.statusAppId,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    Reference ID:{" "}
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_600SemiBold",
-                        color: colors.text,
-                      }}
-                    >
-                      {publicId}
-                    </Text>
-                  </Text>
-                ) : null}
+              {/* Hero Title */}
+              <Text
+                style={{
+                  fontFamily: "Poppins_700Bold",
+                  fontSize: font(20),
+                  color: colors.text,
+                  textAlign: "center",
+                  marginBottom: spacing(6),
+                }}
+              >
+                Bulk Buyer Application
+              </Text>
 
-                {applicationStatus === "Submitted for Approval" && (
-                  <Text
-                    style={[
-                      styles.statusHeroDesc,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    Your application has been submitted successfully and is
-                    waiting for admin review. Our verification team will review
-                    your business and KYC documents shortly.
-                  </Text>
-                )}
+              {/* Hero Description */}
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(12.5),
+                  color: colors.textSecondary,
+                  textAlign: "center",
+                  lineHeight: font(19),
+                  maxWidth: 320,
+                  marginBottom: spacing(16),
+                }}
+              >
+                {applicationStatus === "Correction Required"
+                  ? "Admin has reviewed your application and requested corrections before it can be approved."
+                  : applicationStatus === "Approved"
+                    ? "Your Bulk Buyer application is approved. You now have full access to wholesale bulk pricing."
+                    : "Your application has been received and is waiting for admin verification."}
+              </Text>
 
-                {applicationStatus === "Under Review" && (
-                  <Text
-                    style={[
-                      styles.statusHeroDesc,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    The admin team is reviewing your profile and submitted KYC
-                    documents. You will receive an update once the verification
-                    is complete.
-                  </Text>
-                )}
+              {/* CORRECTION REQUIRED CONTENT */}
+              {applicationStatus === "Correction Required" && (() => {
+                const targetStep = getCorrectionTargetStep();
+                const targetStepName = STEP_NAMES[targetStep] || "Details";
 
-                {applicationStatus === "Correction Required" && (
-                  <View style={{ width: "100%", marginVertical: 12 }}>
-                    <Text
-                      style={[
-                        styles.statusHeroDesc,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      The admin has requested corrections in your application.
-                    </Text>
+                return (
+                  <View style={{ width: "100%" }}>
+                    {/* Admin Remark Box */}
                     {lastAdminRemark ? (
-                      <View style={styles.correctionRemarkContainer}>
-                        <Text style={styles.correctionRemarkLabel}>
-                          Correction Remark:
-                        </Text>
-                        <Text style={styles.correctionRemarkText}>
-                          {lastAdminRemark}
-                        </Text>
+                      <View
+                        style={{
+                          width: "100%",
+                          backgroundColor: isDark ? "#241414" : "#FFF7F7",
+                          borderWidth: 1,
+                          borderColor: isDark ? "#5C1D1D" : "#FECACA",
+                          borderRadius: 14,
+                          padding: spacing(14),
+                          marginBottom: spacing(16),
+                        }}
+                      >
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 7,
+                            marginBottom: 8,
+                          }}
+                        >
+                          <AlertCircle size={16} color="#DC2626" />
+                          <Text
+                            style={{
+                              color: "#DC2626",
+                              fontSize: font(12.5),
+                              fontFamily: "Poppins_600SemiBold",
+                            }}
+                          >
+                            Admin Feedback / Reason:
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            backgroundColor: isDark ? "#1C1010" : "#FFFFFF",
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: isDark ? "#4B1B1B" : "#FEE2E2",
+                            paddingHorizontal: spacing(12),
+                            paddingVertical: spacing(10),
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: isDark ? "#FCA5A5" : "#1F2937",
+                              fontSize: font(13),
+                              fontFamily: "Poppins_500Medium",
+                              lineHeight: font(19),
+                            }}
+                          >
+                            {lastAdminRemark}
+                          </Text>
+                        </View>
                       </View>
                     ) : null}
+
+                    {/* Rejected Sections Breakdown */}
+                    {correctionFields &&
+                      Object.keys(correctionFields).length > 0 && (
+                        <View
+                          style={{
+                            width: "100%",
+                            marginBottom: spacing(14),
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginBottom: spacing(10),
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_600SemiBold",
+                                fontSize: font(13),
+                                color: colors.text,
+                              }}
+                            >
+                              Sections Needing Attention
+                            </Text>
+                            <View
+                              style={{
+                                backgroundColor: isDark ? "#451A1A" : "#FEE2E2",
+                                paddingHorizontal: 8,
+                                paddingVertical: 2,
+                                borderRadius: 10,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(11),
+                                  color: "#DC2626",
+                                }}
+                              >
+                                {Object.keys(correctionFields).length}{" "}
+                                {Object.keys(correctionFields).length === 1
+                                  ? "Section"
+                                  : "Sections"}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {Object.entries(correctionFields).map(
+                            ([stepKey, fields]) => {
+                              const stepNum = (Number(stepKey) >= 1 &&
+                              Number(stepKey) <= 5
+                                ? Number(stepKey)
+                                : 1) as 1 | 2 | 3 | 4 | 5;
+                              const stepName =
+                                STEP_NAMES[stepNum] || `Step ${stepNum}`;
+                              const fieldList = Array.isArray(fields)
+                                ? fields
+                                : [];
+
+                              return (
+                                <TouchableOpacity
+                                  key={stepKey}
+                                  activeOpacity={0.75}
+                                  onPress={() => {
+                                    setShowStatusScreen(false);
+                                    setCurrentStep(stepNum);
+                                  }}
+                                  style={{
+                                    backgroundColor: colors.surface,
+                                    borderWidth: 1.5,
+                                    borderColor: isDark ? "#5C1D1D" : "#FECACA",
+                                    borderRadius: 14,
+                                    padding: spacing(14),
+                                    marginBottom: spacing(10),
+                                  }}
+                                >
+                                  {/* Top Row: Step badge, Title, and Action button */}
+                                  <View
+                                    style={{
+                                      flexDirection: "row",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                    }}
+                                  >
+                                    <View
+                                      style={{
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        gap: 8,
+                                        flex: 1,
+                                      }}
+                                    >
+                                      <View
+                                        style={{
+                                          backgroundColor: "#DC2626",
+                                          borderRadius: 6,
+                                          paddingHorizontal: 8,
+                                          paddingVertical: 2,
+                                        }}
+                                      >
+                                        <Text
+                                          style={{
+                                            color: "#ffffff",
+                                            fontFamily: "Poppins_700Bold",
+                                            fontSize: font(10.5),
+                                          }}
+                                        >
+                                          Step {stepKey}
+                                        </Text>
+                                      </View>
+                                      <Text
+                                        numberOfLines={1}
+                                        style={{
+                                          fontFamily: "Poppins_600SemiBold",
+                                          fontSize: font(13.5),
+                                          color: colors.text,
+                                          flex: 1,
+                                        }}
+                                      >
+                                        {stepName}
+                                      </Text>
+                                    </View>
+
+                                    <View
+                                      style={{
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        gap: 4,
+                                        backgroundColor: isDark
+                                          ? "#451A1A"
+                                          : "#FEF2F2",
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 4.5,
+                                        borderRadius: 8,
+                                      }}
+                                    >
+                                      <Text
+                                        style={{
+                                          fontFamily: "Poppins_600SemiBold",
+                                          fontSize: font(11.5),
+                                          color: "#DC2626",
+                                        }}
+                                      >
+                                        Fix Now
+                                      </Text>
+                                      <ChevronRight size={13} color="#DC2626" />
+                                    </View>
+                                  </View>
+
+                                  {/* Flagged Fields list */}
+                                  {fieldList.length > 0 && (
+                                    <View
+                                      style={{
+                                        marginTop: spacing(10),
+                                        paddingTop: spacing(8),
+                                        borderTopWidth: 1,
+                                        borderTopColor: isDark
+                                          ? "#2D3748"
+                                          : "#F3F4F6",
+                                      }}
+                                    >
+                                      <Text
+                                        style={{
+                                          fontFamily: "Poppins_500Medium",
+                                          fontSize: font(11),
+                                          color: colors.textTertiary,
+                                          marginBottom: 6,
+                                        }}
+                                      >
+                                        Fields needing attention:
+                                      </Text>
+                                      <View
+                                        style={{
+                                          flexDirection: "row",
+                                          flexWrap: "wrap",
+                                          gap: 6,
+                                        }}
+                                      >
+                                        {fieldList.map((f) => (
+                                          <View
+                                            key={f}
+                                            style={{
+                                              backgroundColor: isDark
+                                                ? "#2D1D1D"
+                                                : "#FFF1F2",
+                                              borderWidth: 1,
+                                              borderColor: isDark
+                                                ? "#612222"
+                                                : "#FFE4E6",
+                                              borderRadius: 6,
+                                              paddingHorizontal: 8,
+                                              paddingVertical: 2.5,
+                                            }}
+                                          >
+                                            <Text
+                                              style={{
+                                                fontFamily: "Poppins_500Medium",
+                                                fontSize: font(11),
+                                                color: "#BE123C",
+                                              }}
+                                            >
+                                              {FIELD_LABELS[f] ||
+                                                f.replace(/_/g, " ")}
+                                            </Text>
+                                          </View>
+                                        ))}
+                                      </View>
+                                    </View>
+                                  )}
+                                </TouchableOpacity>
+                              );
+                            },
+                          )}
+                        </View>
+                      )}
+
+                    {/* Primary Dynamic Button: Full width, perfectly styled */}
                     <TouchableOpacity
                       activeOpacity={0.85}
                       onPress={() => {
                         setShowStatusScreen(false);
-                        setCurrentStep(4);
+                        setCurrentStep(targetStep);
                       }}
-                      style={[
-                        styles.saveStepButton,
-                        { backgroundColor: colors.primary, marginTop: 16 },
-                      ]}
+                      style={{
+                        width: "100%",
+                        height: 50,
+                        backgroundColor: colors.primary,
+                        borderRadius: 14,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 10,
+                        marginTop: spacing(8),
+                      }}
                     >
-                      <Text style={styles.submitButtonText}>
-                        Correct and Resubmit
+                      <Text
+                        style={{
+                          color: "#ffffff",
+                          fontSize: font(13.5),
+                          fontFamily: "Poppins_600SemiBold",
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {`Fix ${targetStepName} (Step ${targetStep})`}
                       </Text>
                       <ArrowRight size={18} color="#ffffff" />
                     </TouchableOpacity>
-                  </View>
-                )}
 
-                {applicationStatus === "Approved" && (
-                  <View
+                    {/* Secondary Link to View All Details */}
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        setShowStatusScreen(false);
+                        setCurrentStep(5);
+                      }}
+                      style={{
+                        width: "100%",
+                        paddingVertical: spacing(12),
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: spacing(4),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: colors.primary,
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(12.5),
+                        }}
+                      >
+                        Review Full Application
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })()}
+
+              {/* APPROVED ACTION BUTTON */}
+              {applicationStatus === "Approved" && (
+                <View style={{ width: "100%", marginTop: spacing(16) }}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => router.replace("/(tabs)")}
                     style={{
                       width: "100%",
-                      marginVertical: 12,
+                      height: 50,
+                      backgroundColor: "#10B981",
+                      borderRadius: 14,
+                      flexDirection: "row",
                       alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
                     }}
                   >
                     <Text
-                      style={[
-                        styles.statusHeroDesc,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        color: "#ffffff",
+                        fontSize: font(13.5),
+                        fontFamily: "Poppins_600SemiBold",
+                        letterSpacing: 0.4,
+                      }}
                     >
-                      Your Bulk Buyer application is approved. You now have full
-                      access to wholesale bulk pricing.
+                      START SHOPPING
                     </Text>
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => router.push("/(tabs)")}
-                      style={[
-                        styles.saveStepButton,
-                        { backgroundColor: "#10B981", marginTop: 16 },
-                      ]}
-                    >
-                      <Text style={styles.submitButtonText}>
-                        START SHOPPING
-                      </Text>
-                      <ArrowRight size={18} color="#ffffff" />
-                    </TouchableOpacity>
-                  </View>
-                )}
+                    <ArrowRight size={18} color="#ffffff" />
+                  </TouchableOpacity>
+                </View>
+              )}
 
-                {applicationStatus !== "Correction Required" &&
-                  applicationStatus !== "Approved" && (
-                    <View style={{ width: "100%", marginTop: 20 }}>
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => {
-                          setShowStatusScreen(false);
-                          setCurrentStep(5);
-                        }}
-                        style={[
-                          styles.backStepButton,
-                          {
-                            borderColor: colors.border,
-                            backgroundColor: colors.surface,
-                            width: "100%",
-                            justifyContent: "center",
-                          },
-                        ]}
-                      >
-                        <Eye size={16} color={colors.text} />
-                        <Text
-                          style={[
-                            styles.backStepText,
-                            { color: colors.text, marginLeft: 8 },
-                          ]}
-                        >
-                          View Submitted Application
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-              </View>
-            )}
+              {/* PENDING / DRAFT ACTION BUTTONS */}
+              {(applicationStatus === "Pending" ||
+                !applicationStatus ||
+                applicationStatus === "Draft") && (
+                <View
+                  style={{
+                    width: "100%",
+                    marginTop: spacing(16),
+                    gap: spacing(10),
+                  }}
+                >
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setShowStatusScreen(false);
+                      setCurrentStep(5);
+                    }}
+                    style={{
+                      width: "100%",
+                      height: 50,
+                      backgroundColor: colors.primary,
+                      borderRadius: 14,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Eye size={18} color="#ffffff" />
+                    <Text
+                      style={{
+                        color: "#ffffff",
+                        fontSize: font(13.5),
+                        fontFamily: "Poppins_600SemiBold",
+                      }}
+                    >
+                      View Submitted Application
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => router.replace("/(tabs)")}
+                    style={{
+                      width: "100%",
+                      height: 48,
+                      backgroundColor: isDark ? "#1F2937" : "#F3F4F6",
+                      borderRadius: 14,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colors.text,
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13),
+                      }}
+                    >
+                      Back to Home
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* ========================================================= */}
           {/* STEP 1: BASIC DETAILS                                     */}
@@ -2723,9 +3709,11 @@ export default function B2BScreen() {
                 value={ownerName}
                 onChangeText={(val) => {
                   setOwnerName(val);
+                  markFieldCorrected("owner_name");
                   if (errors.ownerName) setErrors({ ...errors, ownerName: "" });
                 }}
                 error={errors.ownerName}
+                isRejected={isFieldRejected("owner_name", 1)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -2742,10 +3730,12 @@ export default function B2BScreen() {
                 value={mobile}
                 onChangeText={(val) => {
                   setMobile(val.replace(/[^0-9]/g, ""));
+                  markFieldCorrected("mobile");
                   if (errors.mobile) setErrors({ ...errors, mobile: "" });
                 }}
                 helperText="OTP verification will be sent to this mobile number"
                 error={errors.mobile}
+                isRejected={isFieldRejected("mobile", 1)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -2762,10 +3752,12 @@ export default function B2BScreen() {
                 value={alternateMobile}
                 onChangeText={(val) => {
                   setAlternateMobile(val.replace(/[^0-9]/g, ""));
+                  markFieldCorrected("alternate_mobile");
                   if (errors.alternateMobile)
                     setErrors({ ...errors, alternateMobile: "" });
                 }}
                 error={errors.alternateMobile}
+                isRejected={isFieldRejected("alternate_mobile", 1)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -2781,9 +3773,11 @@ export default function B2BScreen() {
                 value={email}
                 onChangeText={(val) => {
                   setEmail(val);
+                  markFieldCorrected("email");
                   if (errors.email) setErrors({ ...errors, email: "" });
                 }}
                 error={errors.email}
+                isRejected={isFieldRejected("email", 1)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -2892,7 +3886,9 @@ export default function B2BScreen() {
                         fontSize: font(14),
                       }}
                     >
-                      Sending OTP...
+                      {applicationStatus === "Correction Required"
+                        ? "Saving Changes..."
+                        : "Sending OTP..."}
                     </Text>
                   </View>
                 ) : (
@@ -2910,7 +3906,9 @@ export default function B2BScreen() {
                         fontSize: font(14),
                       }}
                     >
-                      Send Verification OTP
+                      {applicationStatus === "Correction Required" || isVerified
+                        ? "Save & Continue"
+                        : "Send Verification OTP"}
                     </Text>
                     <ArrowRight size={17} color="#ffffff" />
                   </View>
@@ -3262,10 +4260,12 @@ export default function B2BScreen() {
                 onChangeText={(val) => {
                   const formatted = val.toUpperCase().trim();
                   setGstNumber(formatted);
+                  markFieldCorrected("gst_number");
                   if (errors.gstNumber)
                     setErrors((prev) => ({ ...prev, gstNumber: "" }));
                 }}
                 error={errors.gstNumber}
+                isRejected={isFieldRejected("gst_number", 2)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3281,10 +4281,12 @@ export default function B2BScreen() {
                 value={businessName}
                 onChangeText={(val) => {
                   setBusinessName(val);
+                  markFieldCorrected("business_name");
                   if (errors.businessName)
                     setErrors({ ...errors, businessName: "" });
                 }}
                 error={errors.businessName}
+                isRejected={isFieldRejected("business_name", 2)}
                 helperText={
                   isGstVerified
                     ? "Verified with GST registry records"
@@ -3303,16 +4305,18 @@ export default function B2BScreen() {
                 placeholder="Select Business Constitution..."
                 modalTitle="Select Business Constitution"
                 searchPlaceholder="Search constitution type..."
-                items={BUSINESS_TYPES}
+                items={businessTypes}
                 getItemLabel={(item) => item.name}
                 getItemKey={(item) => item.id}
                 selectedText={selectedBusinessType?.name}
                 onSelect={(item) => {
                   setBusinessTypeId(item.id);
+                  markFieldCorrected("business_type_id");
                   if (errors.businessType)
                     setErrors({ ...errors, businessType: "" });
                 }}
                 error={errors.businessType}
+                isRejected={isFieldRejected("business_type_id", 2)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3326,7 +4330,7 @@ export default function B2BScreen() {
                 placeholder="Select Dealer Category..."
                 modalTitle="Select Dealer Category"
                 searchPlaceholder="Search category..."
-                items={DEALER_CATEGORIES}
+                items={dealerCategories}
                 getItemLabel={(cat) => cat.name}
                 getItemKey={(cat) => cat.id}
                 getItemSubLabel={(cat) => cat.desc}
@@ -3334,10 +4338,12 @@ export default function B2BScreen() {
                 selectedText={selectedDealerCategory?.name}
                 onSelect={(cat) => {
                   setDealerCategoryId(cat.id);
+                  markFieldCorrected("dealer_category_id");
                   if (errors.dealerCategory)
                     setErrors({ ...errors, dealerCategory: "" });
                 }}
                 error={errors.dealerCategory}
+                isRejected={isFieldRejected("dealer_category_id", 2)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3351,11 +4357,15 @@ export default function B2BScreen() {
                 placeholder="Select Years in Business..."
                 modalTitle="Select Years in Business"
                 searchPlaceholder="Search years..."
-                items={YEARS_IN_BUSINESS_OPTIONS}
+                items={yearsInBusinessOptions}
                 getItemLabel={(yr) => yr}
                 getItemKey={(yr) => yr}
                 selectedText={yearsInBusiness || null}
-                onSelect={(yr) => setYearsInBusiness(yr)}
+                onSelect={(yr) => {
+                  setYearsInBusiness(yr);
+                  markFieldCorrected("years_in_business");
+                }}
+                isRejected={isFieldRejected("years_in_business", 2)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3371,10 +4381,12 @@ export default function B2BScreen() {
                 value={referralCode}
                 onChangeText={(val) => {
                   setReferralCode(val.trim());
+                  markFieldCorrected("referral_code");
                   if (errors.referralCode)
                     setErrors((prev) => ({ ...prev, referralCode: "" }));
                 }}
                 error={errors.referralCode}
+                isRejected={isFieldRejected("referral_code", 2)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3515,10 +4527,12 @@ export default function B2BScreen() {
                 value={businessAddress}
                 onChangeText={(val) => {
                   setBusinessAddress(val);
+                  markFieldCorrected("business_address");
                   if (errors.businessAddress)
                     setErrors((prev) => ({ ...prev, businessAddress: "" }));
                 }}
                 error={errors.businessAddress}
+                isRejected={isFieldRejected("business_address", 3)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3534,10 +4548,12 @@ export default function B2BScreen() {
                     value={businessCity}
                     onChangeText={(val) => {
                       setBusinessCity(val);
+                      markFieldCorrected("business_city");
                       if (errors.businessCity)
                         setErrors((prev) => ({ ...prev, businessCity: "" }));
                     }}
                     error={errors.businessCity}
+                    isRejected={isFieldRejected("business_city", 3)}
                     colors={colors}
                     font={font}
                     spacing={spacing}
@@ -3553,6 +4569,7 @@ export default function B2BScreen() {
                     value={businessPincode}
                     onChangeText={(val) => {
                       setBusinessPincode(val.replace(/[^0-9]/g, ""));
+                      markFieldCorrected("business_pincode");
                       if (errors.businessPincode)
                         setErrors((prev) => ({
                           ...prev,
@@ -3560,6 +4577,7 @@ export default function B2BScreen() {
                         }));
                     }}
                     error={errors.businessPincode}
+                    isRejected={isFieldRejected("business_pincode", 3)}
                     colors={colors}
                     font={font}
                     spacing={spacing}
@@ -3575,18 +4593,20 @@ export default function B2BScreen() {
                 placeholder="Select State..."
                 modalTitle="Select State"
                 searchPlaceholder="Search state..."
-                items={INDIAN_STATES}
+                items={stateList}
                 getItemLabel={(s) => s.name}
                 getItemKey={(s) => s.id}
                 selectedText={
-                  INDIAN_STATES.find((s) => s.id === businessStateId)?.name
+                  stateList.find((s) => s.id === businessStateId)?.name
                 }
                 onSelect={(s) => {
                   setBusinessStateId(s.id);
+                  markFieldCorrected("business_state_id");
                   if (errors.businessStateId)
                     setErrors((prev) => ({ ...prev, businessStateId: "" }));
                 }}
                 error={errors.businessStateId}
+                isRejected={isFieldRejected("business_state_id", 3)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3717,6 +4737,234 @@ export default function B2BScreen() {
                 </Text>
               </View>
 
+              {/* ── Registration Summary Card ── */}
+              <View
+                style={{
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  padding: spacing(14),
+                  gap: spacing(10),
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBottom: spacing(8),
+                    borderBottomWidth: StyleSheet.hairlineWidth,
+                    borderBottomColor: colors.border,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <View
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 7,
+                        backgroundColor: colors.primary + "14",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CheckCircle2 size={15} color={colors.primary} />
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13.5),
+                        color: colors.text,
+                      }}
+                    >
+                      Registration Summary
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setCurrentStep(1)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                      backgroundColor: colors.primary + "10",
+                    }}
+                  >
+                    <Edit2 size={11} color={colors.primary} />
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(11),
+                        color: colors.primary,
+                      }}
+                    >
+                      Edit
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Summary Rows */}
+                <View style={{ gap: spacing(8) }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      Business / Firm
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12.5),
+                        color: colors.text,
+                        maxWidth: "60%",
+                        textAlign: "right",
+                      }}
+                      numberOfLines={1}
+                    >
+                      {businessName || legalBusinessName || "Not provided"}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      Owner / Contact
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(12.5),
+                        color: colors.text,
+                      }}
+                    >
+                      {ownerName || "Not provided"}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      Mobile & Email
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(12),
+                        color: colors.text,
+                      }}
+                    >
+                      {[mobile, email].filter(Boolean).join(" • ") || "Not provided"}
+                    </Text>
+                  </View>
+
+                  {gstNumber ? (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: font(12),
+                          color: colors.textSecondary,
+                        }}
+                      >
+                        GSTIN
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(12),
+                          color: colors.primary,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        {gstNumber}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {(businessAddress || businessCity || businessPincode) ? (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: font(12),
+                          color: colors.textSecondary,
+                        }}
+                      >
+                        Address
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: font(11.5),
+                          color: colors.text,
+                          maxWidth: "60%",
+                          textAlign: "right",
+                        }}
+                        numberOfLines={2}
+                      >
+                        {[
+                          businessAddress,
+                          businessCity,
+                          getStateName(businessStateId),
+                          businessPincode,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+
               {/* --------------------------------------------------------- */}
               {/* SECTION 1: GST CERTIFICATE                                */}
               {/* --------------------------------------------------------- */}
@@ -3730,15 +4978,23 @@ export default function B2BScreen() {
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     borderRadius: 8,
-                    backgroundColor: colors.primary + "14",
+                    backgroundColor: colors.primary + "18",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <Building2 size={17} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(13.5),
+                      color: colors.primary,
+                    }}
+                  >
+                    1
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -3771,10 +5027,12 @@ export default function B2BScreen() {
                 value={legalBusinessName}
                 onChangeText={(text) => {
                   setLegalBusinessName(text);
+                  markFieldCorrected("legal_business_name");
                   if (errors.legalBusinessName)
                     setErrors((prev) => ({ ...prev, legalBusinessName: "" }));
                 }}
                 error={errors.legalBusinessName}
+                isRejected={isFieldRejected("legal_business_name", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3785,6 +5043,7 @@ export default function B2BScreen() {
                 prefixIcon={<FileCheck2 size={16} color={colors.textSecondary} />}
                 value={gstNumber}
                 editable={false}
+                isRejected={isFieldRejected("gst_number", 2) || isFieldRejected("gst_number", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3797,6 +5056,7 @@ export default function B2BScreen() {
                 documentUrl={gstCertificateUrl}
                 onPress={() => handlePickDocument("gst")}
                 error={errors.gstCertificate}
+                isRejected={isFieldRejected("gst_certificate", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3815,15 +5075,23 @@ export default function B2BScreen() {
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     borderRadius: 8,
-                    backgroundColor: colors.primary + "14",
+                    backgroundColor: colors.primary + "18",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <FileText size={17} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(13.5),
+                      color: colors.primary,
+                    }}
+                  >
+                    2
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -3859,10 +5127,12 @@ export default function B2BScreen() {
                 onChangeText={(text) => {
                   const upper = text.toUpperCase();
                   setPanNumber(upper);
+                  markFieldCorrected("pan_number");
                   if (errors.panNumber)
                     setErrors((prev) => ({ ...prev, panNumber: "" }));
                 }}
                 error={errors.panNumber}
+                isRejected={isFieldRejected("pan_number", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3876,10 +5146,12 @@ export default function B2BScreen() {
                 value={panName}
                 onChangeText={(text) => {
                   setPanName(text);
+                  markFieldCorrected("pan_name");
                   if (errors.panName)
                     setErrors((prev) => ({ ...prev, panName: "" }));
                 }}
                 error={errors.panName}
+                isRejected={isFieldRejected("pan_name", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3892,6 +5164,7 @@ export default function B2BScreen() {
                 documentUrl={panCardUrl}
                 onPress={() => handlePickDocument("pan")}
                 error={errors.panCard}
+                isRejected={isFieldRejected("pan_card", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3910,15 +5183,23 @@ export default function B2BScreen() {
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     borderRadius: 8,
-                    backgroundColor: colors.primary + "14",
+                    backgroundColor: colors.primary + "18",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <User size={17} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(13.5),
+                      color: colors.primary,
+                    }}
+                  >
+                    3
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -3951,6 +5232,7 @@ export default function B2BScreen() {
                 value={aadhaarHolderName}
                 onChangeText={(text) => {
                   setAadhaarHolderName(text);
+                  markFieldCorrected("aadhaar_holder_name");
                   if (errors.aadhaarHolderName)
                     setErrors((prev) => ({
                       ...prev,
@@ -3958,6 +5240,7 @@ export default function B2BScreen() {
                     }));
                 }}
                 error={errors.aadhaarHolderName}
+                isRejected={isFieldRejected("aadhaar_holder_name", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3970,6 +5253,7 @@ export default function B2BScreen() {
                 documentUrl={aadhaarCardUrl}
                 onPress={() => handlePickDocument("aadhaar")}
                 error={errors.aadhaarCard}
+                isRejected={isFieldRejected("aadhaar_card", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3988,15 +5272,23 @@ export default function B2BScreen() {
               >
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     borderRadius: 8,
-                    backgroundColor: colors.primary + "14",
+                    backgroundColor: colors.primary + "18",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <Store size={17} color={colors.primary} />
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(13.5),
+                      color: colors.primary,
+                    }}
+                  >
+                    4
+                  </Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
@@ -4028,16 +5320,18 @@ export default function B2BScreen() {
                 placeholder="Select business proof type..."
                 modalTitle="Select Business Proof Type"
                 searchPlaceholder="Search proof type..."
-                items={BUSINESS_PROOF_TYPES}
+                items={businessProofTypes}
                 getItemLabel={(t) => t}
                 getItemKey={(t) => t}
                 selectedText={businessProofType}
                 onSelect={(t) => {
                   setBusinessProofType(t);
+                  markFieldCorrected("business_proof_type");
                   if (errors.businessProofType)
                     setErrors((prev) => ({ ...prev, businessProofType: "" }));
                 }}
                 error={errors.businessProofType}
+                isRejected={isFieldRejected("business_proof_type", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4050,6 +5344,7 @@ export default function B2BScreen() {
                 documentUrl={businessProofUrl}
                 onPress={() => handlePickDocument("proof")}
                 error={errors.businessProofDocument}
+                isRejected={isFieldRejected("business_proof_document", 4)}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4155,347 +5450,699 @@ export default function B2BScreen() {
           {/* STEP 5: REVIEW & SUBMIT APPLICATION                       */}
           {/* ========================================================= */}
           {!showStatusScreen && currentStep === 5 && (
-            <View
-              style={[
-                styles.formCard,
-                {
-                  backgroundColor: colors.surfaceElevated,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <View style={styles.formHeader}>
-                <View
-                  style={[
-                    styles.formHeaderIcon,
-                    { backgroundColor: colors.primary + "18" },
-                  ]}
+            <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
+              {/* Step Header */}
+              <View>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(17),
+                    color: colors.text,
+                  }}
                 >
-                  <FileBadge size={20} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.formTitle, { color: colors.text }]}>
-                    Step 5: Review Application
-                  </Text>
-                  <Text
-                    style={[
-                      styles.formSubtitle,
-                      { color: colors.textSecondary },
-                    ]}
-                  >
-                    Check details and documents before final submission.
-                  </Text>
-                </View>
+                  Review Application
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(12),
+                    color: colors.textSecondary,
+                    marginTop: 2,
+                  }}
+                >
+                  Check all details and uploaded documents before final submission.
+                </Text>
               </View>
 
-              {/* Section 1: Basic Details */}
+              {/* ── Section 1: Basic Details Card ── */}
               <View
-                style={[
-                  styles.reviewSection,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
+                style={{
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  padding: spacing(14),
+                  gap: spacing(10),
+                }}
               >
                 <View
-                  style={[
-                    styles.reviewSectionHeader,
-                    { borderBottomColor: colors.border + "80" },
-                  ]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBottom: spacing(10),
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border + "80",
+                  }}
                 >
-                  <Text
-                    style={[styles.reviewSectionTitle, { color: colors.text }]}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing(8),
+                    }}
                   >
-                    1. Basic Details
-                  </Text>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: colors.primary + "18",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_700Bold",
+                          fontSize: 11,
+                          color: colors.primary,
+                        }}
+                      >
+                        1
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13.5),
+                        color: colors.text,
+                      }}
+                    >
+                      Basic Details
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => setCurrentStep(1)}
-                    style={[
-                      styles.reviewEditBtn,
-                      {
-                        borderColor: colors.border,
-                        backgroundColor: colors.surfaceElevated,
-                      },
-                    ]}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: spacing(10),
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    }}
                   >
                     <Edit2 size={12} color={colors.primary} />
                     <Text
-                      style={[styles.reviewEditText, { color: colors.primary }]}
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(11),
+                        color: colors.primary,
+                      }}
                     >
                       Edit
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.reviewGrid}>
-                  <View style={styles.reviewRow}>
+                <View style={{ gap: spacing(8) }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Owner / Contact Person
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {ownerName || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Mobile Number
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {mobile || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Alternate Mobile
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {alternateMobile || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Email Address
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {email || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      paddingTop: 2,
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
-                      Mobile Verified
+                      Mobile Verification
                     </Text>
-                    <Text
-                      style={[
-                        styles.reviewValue,
-                        { color: "#10B981", fontFamily: "Poppins_600SemiBold" },
-                      ]}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                        backgroundColor: isVerified
+                          ? "#10B98118"
+                          : "#F59E0B18",
+                        paddingHorizontal: spacing(8),
+                        paddingVertical: 3,
+                        borderRadius: 6,
+                      }}
                     >
-                      {isVerified ? "Yes (Verified via OTP)" : "Pending"}
-                    </Text>
+                      {isVerified ? (
+                        <CheckCircle2 size={12} color="#10B981" />
+                      ) : (
+                        <AlertCircle size={12} color="#F59E0B" />
+                      )}
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(11),
+                          color: isVerified ? "#10B981" : "#F59E0B",
+                        }}
+                      >
+                        {isVerified ? "Verified (OTP)" : "Pending"}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
 
-              {/* Section 2: Business Details */}
+              {/* ── Section 2: Business Details Card ── */}
               <View
-                style={[
-                  styles.reviewSection,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
+                style={{
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  padding: spacing(14),
+                  gap: spacing(10),
+                }}
               >
                 <View
-                  style={[
-                    styles.reviewSectionHeader,
-                    { borderBottomColor: colors.border + "80" },
-                  ]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBottom: spacing(10),
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border + "80",
+                  }}
                 >
-                  <Text
-                    style={[styles.reviewSectionTitle, { color: colors.text }]}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing(8),
+                    }}
                   >
-                    2. Business Details
-                  </Text>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: colors.primary + "18",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_700Bold",
+                          fontSize: 11,
+                          color: colors.primary,
+                        }}
+                      >
+                        2
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13.5),
+                        color: colors.text,
+                      }}
+                    >
+                      Business Details
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => setCurrentStep(2)}
-                    style={[
-                      styles.reviewEditBtn,
-                      {
-                        borderColor: colors.border,
-                        backgroundColor: colors.surfaceElevated,
-                      },
-                    ]}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: spacing(10),
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    }}
                   >
                     <Edit2 size={12} color={colors.primary} />
                     <Text
-                      style={[styles.reviewEditText, { color: colors.primary }]}
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(11),
+                        color: colors.primary,
+                      }}
                     >
                       Edit
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.reviewGrid}>
-                  <View style={styles.reviewRow}>
+                <View style={{ gap: spacing(8) }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Business Name
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {businessName || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Business Type
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {getBusinessTypeName(businessTypeId)}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Dealer Category
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {getDealerCategoryName(dealerCategoryId)}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Years in Business
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {yearsInBusiness || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       GSTIN
                     </Text>
                     <Text
-                      style={[
-                        styles.reviewValue,
-                        {
-                          color: colors.primary,
-                          fontFamily: "Poppins_600SemiBold",
-                        },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.primary,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
                     >
                       {gstNumber || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Referral Code
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.2,
+                        textAlign: "right",
+                      }}
+                    >
                       {referralCode || "Not provided"}
                     </Text>
                   </View>
                 </View>
               </View>
 
-              {/* Section 3: Address Details */}
+              {/* ── Section 3: Address Details Card ── */}
               <View
-                style={[
-                  styles.reviewSection,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
+                style={{
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  padding: spacing(14),
+                  gap: spacing(10),
+                }}
               >
                 <View
-                  style={[
-                    styles.reviewSectionHeader,
-                    { borderBottomColor: colors.border + "80" },
-                  ]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBottom: spacing(10),
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border + "80",
+                  }}
                 >
-                  <Text
-                    style={[styles.reviewSectionTitle, { color: colors.text }]}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing(8),
+                    }}
                   >
-                    3. Address Details
-                  </Text>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: colors.primary + "18",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_700Bold",
+                          fontSize: 11,
+                          color: colors.primary,
+                        }}
+                      >
+                        3
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13.5),
+                        color: colors.text,
+                      }}
+                    >
+                      Address Details
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => setCurrentStep(3)}
-                    style={[
-                      styles.reviewEditBtn,
-                      {
-                        borderColor: colors.border,
-                        backgroundColor: colors.surfaceElevated,
-                      },
-                    ]}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: spacing(10),
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    }}
                   >
                     <Edit2 size={12} color={colors.primary} />
                     <Text
-                      style={[styles.reviewEditText, { color: colors.primary }]}
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(11),
+                        color: colors.primary,
+                      }}
                     >
                       Edit
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.reviewGrid}>
-                  <View style={styles.reviewRow}>
+                <View style={{ gap: spacing(8) }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Business Address
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.4,
+                        textAlign: "right",
+                      }}
+                    >
                       {businessAddress || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       City, State & Pincode
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.4,
+                        textAlign: "right",
+                      }}
+                    >
                       {[
                         businessCity,
                         getStateName(businessStateId),
@@ -4505,211 +6152,782 @@ export default function B2BScreen() {
                         .join(", ") || "Not provided"}
                     </Text>
                   </View>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
+                    >
+                      Delivery Address
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.4,
+                        textAlign: "right",
+                      }}
+                    >
+                      {deliverySame === "Yes"
+                        ? "Same as Business Address"
+                        : [
+                            deliveryAddress,
+                            deliveryCity,
+                            getStateName(deliveryStateId),
+                            deliveryPincode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "Not provided"}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
+                    >
+                      Warehouse Address
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.4,
+                        textAlign: "right",
+                      }}
+                    >
+                      {warehouseSame === "Yes"
+                        ? "Same as Business Address"
+                        : [
+                            warehouseAddress,
+                            warehouseCity,
+                            getStateName(warehouseStateId),
+                            warehousePincode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "Not provided"}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Section 4: KYC Documents */}
+              {/* ── Section 4: KYC Documents Card ── */}
               <View
-                style={[
-                  styles.reviewSection,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
+                style={{
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  padding: spacing(14),
+                  gap: spacing(12),
+                }}
               >
                 <View
-                  style={[
-                    styles.reviewSectionHeader,
-                    { borderBottomColor: colors.border + "80" },
-                  ]}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBottom: spacing(10),
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border + "80",
+                  }}
                 >
-                  <Text
-                    style={[styles.reviewSectionTitle, { color: colors.text }]}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing(8),
+                    }}
                   >
-                    4. KYC Documents
-                  </Text>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: colors.primary + "18",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_700Bold",
+                          fontSize: 11,
+                          color: colors.primary,
+                        }}
+                      >
+                        4
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13.5),
+                        color: colors.text,
+                      }}
+                    >
+                      KYC Documents
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => setCurrentStep(4)}
-                    style={[
-                      styles.reviewEditBtn,
-                      {
-                        borderColor: colors.border,
-                        backgroundColor: colors.surfaceElevated,
-                      },
-                    ]}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: spacing(10),
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    }}
                   >
                     <Edit2 size={12} color={colors.primary} />
                     <Text
-                      style={[styles.reviewEditText, { color: colors.primary }]}
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(11),
+                        color: colors.primary,
+                      }}
                     >
                       Edit
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.reviewGrid}>
-                  <View style={styles.reviewRow}>
+                {/* Identity Information Details */}
+                <View style={{ gap: spacing(8) }}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Legal Business Name
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.3,
+                        textAlign: "right",
+                      }}
+                    >
                       {legalBusinessName || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       PAN Number & Name
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
-                      {panNumber ? `${panNumber} (${panName})` : "Not provided"}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.3,
+                        textAlign: "right",
+                      }}
+                    >
+                      {panNumber
+                        ? `${panNumber} (${panName || "—"})`
+                        : "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Aadhaar Holder
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.3,
+                        textAlign: "right",
+                      }}
+                    >
                       {aadhaarHolderName || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(12),
+                        color: colors.textSecondary,
+                        flex: 1,
+                      }}
                     >
                       Business Proof Type
                     </Text>
-                    <Text style={[styles.reviewValue, { color: colors.text }]}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12),
+                        color: colors.text,
+                        flex: 1.3,
+                        textAlign: "right",
+                      }}
+                    >
                       {businessProofType || "Not provided"}
                     </Text>
                   </View>
-                  <View style={styles.reviewRow}>
-                    <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      GST Certificate File
-                    </Text>
-                    <Text
-                      style={[
-                        styles.reviewValue,
-                        {
-                          color:
-                            gstCertificate || gstCertificateUrl
-                              ? "#10B981"
-                              : "#EF4444",
-                        },
-                      ]}
-                    >
-                      {gstCertificate
-                        ? gstCertificate.name
-                        : gstCertificateUrl
-                          ? "Uploaded ✓"
-                          : "Not uploaded"}
-                    </Text>
-                  </View>
-                  <View style={styles.reviewRow}>
-                    <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      PAN Card File
-                    </Text>
-                    <Text
-                      style={[
-                        styles.reviewValue,
-                        {
-                          color: panCard || panCardUrl ? "#10B981" : "#EF4444",
-                        },
-                      ]}
-                    >
-                      {panCard
-                        ? panCard.name
-                        : panCardUrl
-                          ? "Uploaded ✓"
-                          : "Not uploaded"}
-                    </Text>
-                  </View>
-                  <View style={styles.reviewRow}>
-                    <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Aadhaar Card File
-                    </Text>
-                    <Text
-                      style={[
-                        styles.reviewValue,
-                        {
-                          color:
-                            aadhaarCard || aadhaarCardUrl
-                              ? "#10B981"
-                              : "#EF4444",
-                        },
-                      ]}
-                    >
-                      {aadhaarCard
-                        ? aadhaarCard.name
-                        : aadhaarCardUrl
-                          ? "Uploaded ✓"
-                          : "Not uploaded"}
-                    </Text>
-                  </View>
-                  <View style={styles.reviewRow}>
-                    <Text
-                      style={[
-                        styles.reviewLabel,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      Business Proof Document
-                    </Text>
-                    <Text
-                      style={[
-                        styles.reviewValue,
-                        {
-                          color:
-                            businessProofDocument || businessProofUrl
-                              ? "#10B981"
-                              : "#EF4444",
-                        },
-                      ]}
-                    >
-                      {businessProofDocument
-                        ? businessProofDocument.name
-                        : businessProofUrl
-                          ? "Uploaded ✓"
-                          : "Not uploaded"}
-                    </Text>
+                </View>
+
+                {/* Sub-header for Attached Documents */}
+                <View
+                  style={{
+                    paddingTop: spacing(8),
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border + "80",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12),
+                      color: colors.textSecondary,
+                      marginBottom: spacing(8),
+                    }}
+                  >
+                    Attached Document Files
+                  </Text>
+
+                  {/* 4 Document Rows with Document View button */}
+                  <View style={{ gap: spacing(8) }}>
+                    {/* 1. GST Certificate */}
+                    {(() => {
+                      const isAttached = !!gstCertificate || !!gstCertificateUrl;
+                      const fileName =
+                        gstCertificate?.name ||
+                        (gstCertificateUrl
+                          ? gstCertificateUrl.split("/").pop()?.split("?")[0]
+                          : "");
+                      return (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            backgroundColor: colors.surface,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            paddingHorizontal: spacing(12),
+                            paddingVertical: spacing(9),
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 10,
+                              flex: 1,
+                              marginRight: spacing(8),
+                            }}
+                          >
+                            <View
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                backgroundColor: isAttached
+                                  ? "#10B98114"
+                                  : colors.border + "50",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <FileCheck2
+                                size={18}
+                                color={isAttached ? "#10B981" : colors.textSecondary}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(12),
+                                  color: colors.text,
+                                }}
+                                numberOfLines={1}
+                              >
+                                GST Certificate
+                              </Text>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_400Regular",
+                                  fontSize: font(10.5),
+                                  color: isAttached ? "#10B981" : "#EF4444",
+                                  marginTop: 1,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {isAttached
+                                  ? fileName || "Uploaded ✓"
+                                  : "Not uploaded"}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {isAttached && (
+                            <TouchableOpacity
+                              activeOpacity={0.7}
+                              onPress={() =>
+                                handleOpenDocumentPreview(
+                                  "GST Certificate",
+                                  gstCertificate?.uri,
+                                  gstCertificateUrl,
+                                  gstCertificate?.name
+                                )
+                              }
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 4,
+                                backgroundColor: colors.primary + "14",
+                                borderWidth: 1,
+                                borderColor: colors.primary + "35",
+                                paddingHorizontal: spacing(10),
+                                paddingVertical: 5,
+                                borderRadius: 7,
+                              }}
+                            >
+                              <Eye size={13} color={colors.primary} />
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(11),
+                                  color: colors.primary,
+                                }}
+                              >
+                                View
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      );
+                    })()}
+
+                    {/* 2. PAN Card */}
+                    {(() => {
+                      const isAttached = !!panCard || !!panCardUrl;
+                      const fileName =
+                        panCard?.name ||
+                        (panCardUrl
+                          ? panCardUrl.split("/").pop()?.split("?")[0]
+                          : "");
+                      return (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            backgroundColor: colors.surface,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            paddingHorizontal: spacing(12),
+                            paddingVertical: spacing(9),
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 10,
+                              flex: 1,
+                              marginRight: spacing(8),
+                            }}
+                          >
+                            <View
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                backgroundColor: isAttached
+                                  ? "#10B98114"
+                                  : colors.border + "50",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <FileCheck2
+                                size={18}
+                                color={isAttached ? "#10B981" : colors.textSecondary}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(12),
+                                  color: colors.text,
+                                }}
+                                numberOfLines={1}
+                              >
+                                PAN Card
+                              </Text>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_400Regular",
+                                  fontSize: font(10.5),
+                                  color: isAttached ? "#10B981" : "#EF4444",
+                                  marginTop: 1,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {isAttached
+                                  ? fileName || "Uploaded ✓"
+                                  : "Not uploaded"}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {isAttached && (
+                            <TouchableOpacity
+                              activeOpacity={0.7}
+                              onPress={() =>
+                                handleOpenDocumentPreview(
+                                  "PAN Card",
+                                  panCard?.uri,
+                                  panCardUrl,
+                                  panCard?.name
+                                )
+                              }
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 4,
+                                backgroundColor: colors.primary + "14",
+                                borderWidth: 1,
+                                borderColor: colors.primary + "35",
+                                paddingHorizontal: spacing(10),
+                                paddingVertical: 5,
+                                borderRadius: 7,
+                              }}
+                            >
+                              <Eye size={13} color={colors.primary} />
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(11),
+                                  color: colors.primary,
+                                }}
+                              >
+                                View
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      );
+                    })()}
+
+                    {/* 3. Aadhaar Card */}
+                    {(() => {
+                      const isAttached = !!aadhaarCard || !!aadhaarCardUrl;
+                      const fileName =
+                        aadhaarCard?.name ||
+                        (aadhaarCardUrl
+                          ? aadhaarCardUrl.split("/").pop()?.split("?")[0]
+                          : "");
+                      return (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            backgroundColor: colors.surface,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            paddingHorizontal: spacing(12),
+                            paddingVertical: spacing(9),
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 10,
+                              flex: 1,
+                              marginRight: spacing(8),
+                            }}
+                          >
+                            <View
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                backgroundColor: isAttached
+                                  ? "#10B98114"
+                                  : colors.border + "50",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <FileCheck2
+                                size={18}
+                                color={isAttached ? "#10B981" : colors.textSecondary}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(12),
+                                  color: colors.text,
+                                }}
+                                numberOfLines={1}
+                              >
+                                Aadhaar Card
+                              </Text>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_400Regular",
+                                  fontSize: font(10.5),
+                                  color: isAttached ? "#10B981" : "#EF4444",
+                                  marginTop: 1,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {isAttached
+                                  ? fileName || "Uploaded ✓"
+                                  : "Not uploaded"}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {isAttached && (
+                            <TouchableOpacity
+                              activeOpacity={0.7}
+                              onPress={() =>
+                                handleOpenDocumentPreview(
+                                  "Aadhaar Card",
+                                  aadhaarCard?.uri,
+                                  aadhaarCardUrl,
+                                  aadhaarCard?.name
+                                )
+                              }
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 4,
+                                backgroundColor: colors.primary + "14",
+                                borderWidth: 1,
+                                borderColor: colors.primary + "35",
+                                paddingHorizontal: spacing(10),
+                                paddingVertical: 5,
+                                borderRadius: 7,
+                              }}
+                            >
+                              <Eye size={13} color={colors.primary} />
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(11),
+                                  color: colors.primary,
+                                }}
+                              >
+                                View
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      );
+                    })()}
+
+                    {/* 4. Business Proof Document */}
+                    {(() => {
+                      const isAttached =
+                        !!businessProofDocument || !!businessProofUrl;
+                      const fileName =
+                        businessProofDocument?.name ||
+                        (businessProofUrl
+                          ? businessProofUrl.split("/").pop()?.split("?")[0]
+                          : "");
+                      const proofLabel =
+                        businessProofType || "Business Proof Document";
+                      return (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            backgroundColor: colors.surface,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            paddingHorizontal: spacing(12),
+                            paddingVertical: spacing(9),
+                          }}
+                        >
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 10,
+                              flex: 1,
+                              marginRight: spacing(8),
+                            }}
+                          >
+                            <View
+                              style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 8,
+                                backgroundColor: isAttached
+                                  ? "#10B98114"
+                                  : colors.border + "50",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <FileCheck2
+                                size={18}
+                                color={isAttached ? "#10B981" : colors.textSecondary}
+                              />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(12),
+                                  color: colors.text,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {proofLabel}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_400Regular",
+                                  fontSize: font(10.5),
+                                  color: isAttached ? "#10B981" : "#EF4444",
+                                  marginTop: 1,
+                                }}
+                                numberOfLines={1}
+                              >
+                                {isAttached
+                                  ? fileName || "Uploaded ✓"
+                                  : "Not uploaded"}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {isAttached && (
+                            <TouchableOpacity
+                              activeOpacity={0.7}
+                              onPress={() =>
+                                handleOpenDocumentPreview(
+                                  proofLabel,
+                                  businessProofDocument?.uri,
+                                  businessProofUrl,
+                                  businessProofDocument?.name
+                                )
+                              }
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 4,
+                                backgroundColor: colors.primary + "14",
+                                borderWidth: 1,
+                                borderColor: colors.primary + "35",
+                                paddingHorizontal: spacing(10),
+                                paddingVertical: 5,
+                                borderRadius: 7,
+                              }}
+                            >
+                              <Eye size={13} color={colors.primary} />
+                              <Text
+                                style={{
+                                  fontFamily: "Poppins_600SemiBold",
+                                  fontSize: font(11),
+                                  color: colors.primary,
+                                }}
+                              >
+                                View
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      );
+                    })()}
                   </View>
                 </View>
               </View>
 
-              {/* Final Confirmation Checkbox */}
+              {/* ── Final Confirmation Checkbox Card ── */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {
@@ -4721,32 +6939,51 @@ export default function B2BScreen() {
                     }));
                   }
                 }}
-                style={[
-                  styles.declarationCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: errors.finalConfirmation
-                      ? "#EF4444"
-                      : finalConfirmation
-                        ? colors.primary
-                        : colors.border,
-                  },
-                ]}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  backgroundColor: colors.surfaceElevated,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: errors.finalConfirmation
+                    ? "#EF4444"
+                    : finalConfirmation
+                      ? colors.primary
+                      : colors.border,
+                  padding: spacing(14),
+                  gap: spacing(12),
+                }}
               >
                 <View
-                  style={[
-                    styles.checkboxSquare,
-                    finalConfirmation && {
-                      backgroundColor: colors.primary,
-                      borderColor: colors.primary,
-                    },
-                  ]}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 6,
+                    borderWidth: 1.5,
+                    borderColor: finalConfirmation
+                      ? colors.primary
+                      : colors.textSecondary + "80",
+                    backgroundColor: finalConfirmation
+                      ? colors.primary
+                      : "transparent",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: 2,
+                  }}
                 >
                   {finalConfirmation && (
                     <Check size={14} color="#ffffff" strokeWidth={3} />
                   )}
                 </View>
-                <Text style={[styles.declarationText, { color: colors.text }]}>
+                <Text
+                  style={{
+                    flex: 1,
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(12),
+                    color: colors.text,
+                    lineHeight: 19,
+                  }}
+                >
                   I confirm that all information and documents in this
                   application are complete, current and correct. I understand
                   that the application will be reviewed before approval.
@@ -4754,27 +6991,49 @@ export default function B2BScreen() {
               </TouchableOpacity>
               {errors.finalConfirmation ? (
                 <Text
-                  style={[styles.fieldError, { marginTop: 4, marginBottom: 8 }]}
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: "#EF4444",
+                    marginLeft: 4,
+                  }}
                 >
                   {errors.finalConfirmation}
                 </Text>
               ) : null}
 
-              {/* Action Buttons */}
-              <View style={styles.actionButtonsRow}>
+              {/* ── Action Buttons Row ── */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: spacing(12),
+                  marginTop: spacing(6),
+                }}
+              >
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => setCurrentStep(4)}
-                  style={[
-                    styles.backStepButton,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                    },
-                  ]}
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    height: 48,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    backgroundColor: colors.surfaceElevated,
+                  }}
                 >
                   <ArrowLeft size={16} color={colors.text} />
-                  <Text style={[styles.backStepText, { color: colors.text }]}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(13),
+                      color: colors.text,
+                    }}
+                  >
                     Back to KYC
                   </Text>
                 </TouchableOpacity>
@@ -4783,29 +7042,56 @@ export default function B2BScreen() {
                   activeOpacity={0.85}
                   disabled={isSubmittingApproval}
                   onPress={handleSubmitApplication}
-                  style={[
-                    styles.saveStepButton,
-                    {
-                      backgroundColor: colors.primary,
-                      opacity: isSubmittingApproval ? 0.7 : 1,
-                    },
-                  ]}
+                  style={{
+                    flex: 1.6,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: 48,
+                    borderRadius: 12,
+                    backgroundColor: colors.primary,
+                    opacity: isSubmittingApproval ? 0.7 : 1,
+                  }}
                 >
                   {isSubmittingApproval ? (
-                    <View style={styles.loadingRow}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
                       <ActivityIndicator size="small" color="#ffffff" />
-                      <Text style={styles.submitButtonText}>
-                        Submitting Application...
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(13),
+                          color: "#ffffff",
+                        }}
+                      >
+                        Submitting...
                       </Text>
                     </View>
                   ) : (
-                    <View style={styles.loadingRow}>
-                      <Text style={styles.submitButtonText}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(13),
+                          color: "#ffffff",
+                        }}
+                      >
                         {applicationStatus === "Correction Required"
-                          ? "Resubmit for Approval"
+                          ? "Resubmit Application"
                           : "Submit for Approval"}
                       </Text>
-                      <ArrowRight size={18} color="#ffffff" />
+                      <ArrowRight size={16} color="#ffffff" />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -4817,14 +7103,14 @@ export default function B2BScreen() {
                   onPress={() => setShowStatusScreen(true)}
                   style={{
                     alignItems: "center",
-                    marginTop: 16,
-                    paddingVertical: 8,
+                    marginTop: spacing(10),
+                    paddingVertical: spacing(8),
                   }}
                 >
                   <Text
                     style={{
                       color: colors.primary,
-                      fontSize: 12.5,
+                      fontSize: font(12.5),
                       fontFamily: "Poppins_600SemiBold",
                     }}
                   >
@@ -5101,7 +7387,7 @@ export default function B2BScreen() {
             </View>
 
             <View style={{ paddingVertical: 8 }}>
-              {BUSINESS_PROOF_TYPES.map((type) => {
+              {businessProofTypes.map((type) => {
                 const isSelected = businessProofType === type;
                 return (
                   <TouchableOpacity
@@ -5145,6 +7431,250 @@ export default function B2BScreen() {
                   </TouchableOpacity>
                 );
               })}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========================================================= */}
+      {/* MODAL: DOCUMENT PREVIEW                                   */}
+      {/* ========================================================= */}
+      <Modal
+        visible={previewDocModal.visible}
+        animationType="fade"
+        transparent
+        onRequestClose={() =>
+          setPreviewDocModal((prev) => ({ ...prev, visible: false }))
+        }
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: spacing(16),
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              maxHeight: "85%",
+              backgroundColor: colors.surfaceElevated,
+              borderRadius: 20,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            {/* Modal Header */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: spacing(16),
+                paddingVertical: spacing(14),
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: colors.border,
+              }}
+            >
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(15),
+                    color: colors.text,
+                  }}
+                  numberOfLines={1}
+                >
+                  {previewDocModal.title || "Document Preview"}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: colors.textSecondary,
+                  }}
+                  numberOfLines={1}
+                >
+                  {previewDocModal.name}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() =>
+                  setPreviewDocModal((prev) => ({ ...prev, visible: false }))
+                }
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: colors.surface,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={18} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Modal Body / Image / Document View */}
+            <View
+              style={{
+                padding: spacing(16),
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 260,
+                backgroundColor: colors.background,
+              }}
+            >
+              {previewDocModal.uri ? (
+                previewDocModal.uri.toLowerCase().endsWith(".pdf") ? (
+                  <View
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      paddingVertical: spacing(24),
+                      gap: 12,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 64,
+                        height: 64,
+                        borderRadius: 32,
+                        backgroundColor: colors.primary + "18",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <FileText size={32} color={colors.primary} />
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(13.5),
+                        color: colors.text,
+                        textAlign: "center",
+                      }}
+                    >
+                      PDF Document Attached
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(11.5),
+                        color: colors.textSecondary,
+                        textAlign: "center",
+                        paddingHorizontal: 16,
+                      }}
+                    >
+                      Tap "Open Full File" below to view this PDF in your browser or reader.
+                    </Text>
+                  </View>
+                ) : (
+                  <RNImage
+                    source={{ uri: previewDocModal.uri }}
+                    style={{
+                      width: "100%",
+                      height: 300,
+                      borderRadius: 10,
+                    }}
+                    resizeMode="contain"
+                  />
+                )
+              ) : (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(12),
+                    color: colors.textSecondary,
+                  }}
+                >
+                  No preview available
+                </Text>
+              )}
+            </View>
+
+            {/* Modal Footer Actions */}
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 10,
+                padding: spacing(14),
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderTopColor: colors.border,
+                backgroundColor: colors.surfaceElevated,
+              }}
+            >
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={async () => {
+                  try {
+                    const supported = await Linking.canOpenURL(previewDocModal.uri);
+                    if (supported) {
+                      await Linking.openURL(previewDocModal.uri);
+                    } else {
+                      Alert.alert("Notice", "Cannot open this file URL directly.");
+                    }
+                  } catch (e) {
+                    Linking.openURL(previewDocModal.uri).catch(() => {
+                      showToast("Failed to open document URL", "error");
+                    });
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  height: 44,
+                  borderRadius: 10,
+                  backgroundColor: colors.primary,
+                }}
+              >
+                <ExternalLink size={15} color="#ffffff" />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(12.5),
+                    color: "#ffffff",
+                  }}
+                >
+                  Open Full File
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() =>
+                  setPreviewDocModal((prev) => ({ ...prev, visible: false }))
+                }
+                style={{
+                  paddingHorizontal: spacing(18),
+                  height: 44,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  Close
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -5884,12 +8414,10 @@ const styles = StyleSheet.create({
   // Correction notice box
   correctionNoticeBox: {
     marginVertical: 14,
-    borderWidth: 1,
-    borderColor: "#f0c3bf",
-    borderLeftWidth: 4,
-    borderLeftColor: "#d92d20",
-    borderRadius: 10,
-    backgroundColor: "#fff8f7",
+    borderWidth: 1.5,
+    borderColor: "#FECACA",
+    borderRadius: 14,
+    backgroundColor: "#FFF8F8",
     padding: 14,
     width: "100%",
   },

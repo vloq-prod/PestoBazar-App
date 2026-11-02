@@ -7,7 +7,7 @@ const ENVIRONMENT =
   process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "LOCAL";
 
 const BASE_URLS = {
-  LOCAL: process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.1.101:8000/",
+  LOCAL: process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.1.104:8000/",
   STAGING: "https://pestobazaar.vloq.com/",
   PRODUCTION: "https://pestobazaar.com/",
 };

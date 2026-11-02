@@ -27,6 +27,7 @@ export const useProductDetails = (params: ProductDetailsParams) => {
       params.product_id,
       params.variation_id,
       params.product_slug,
+      params.user_id,
     ],
     queryFn: () => getProductDetails(params),
 
@@ -60,6 +61,23 @@ export const useProductDetails = (params: ProductDetailsParams) => {
 
         importInfo: data?.import_info,
         unitPrice: data?.unit_selling_price,
+
+        // B2B Pricing
+        isB2bUser: (() => {
+          const isB2b = data?.is_b2b_user === "Yes" || selectedVariation?.is_b2b_user === "Yes";
+          console.log("🛍️ [PRODUCT DETAILS B2B STATUS]:", {
+            isB2bUser: isB2b,
+            api_is_b2b_user: data?.is_b2b_user,
+            variation_is_b2b_user: selectedVariation?.is_b2b_user,
+            b2bPriceInclusiveGst: data?.b2b_price_inclusive_gst ?? selectedVariation?.b2b_price_inclusive_gst ?? 0,
+            b2bPriceExclusiveGst: data?.b2b_price_exclusive_gst ?? selectedVariation?.b2b_price_exclusive_gst ?? 0,
+            gstPercent: data?.gst_percent ?? selectedVariation?.gst_percent ?? 0,
+          });
+          return isB2b;
+        })(),
+        b2bPriceInclusiveGst: data?.b2b_price_inclusive_gst ?? selectedVariation?.b2b_price_inclusive_gst ?? 0,
+        b2bPriceExclusiveGst: data?.b2b_price_exclusive_gst ?? selectedVariation?.b2b_price_exclusive_gst ?? 0,
+        gstPercent: data?.gst_percent ?? selectedVariation?.gst_percent ?? 0,
       };
     },
   });

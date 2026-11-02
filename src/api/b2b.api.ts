@@ -22,7 +22,19 @@ import {
   B2BSaveKycDetailsResponse,
   B2BSubmitKycDetailsPayload,
   B2BSubmitKycDetailsResponse,
+  B2BMasterDataResponse,
 } from "../types/b2b.types";
+
+/**
+ * Fetch B2B Master Data (Business Types, Dealer Categories, States, etc. from DB)
+ * Endpoint: GET /app-api/v1/b2b-master-data
+ */
+export const b2bGetMasterDataApi = async (): Promise<B2BMasterDataResponse> => {
+  const { data } = await apiClient.get<B2BMasterDataResponse>(
+    "/app-api/v1/b2b-master-data",
+  );
+  return data;
+};
 
 /**
  * 0. Get Registration Details / Resume (Checks session, mobile, or public_id)

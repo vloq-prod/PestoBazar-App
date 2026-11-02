@@ -209,6 +209,7 @@ const ProductDetails = () => {
     ...(productId ? { product_id: productId } : {}),
     ...(variationId ? { variation_id: variationId } : {}),
     ...(productSlug ? { product_slug: productSlug } : {}),
+    ...(userId ? { user_id: userId } : {}),
   });
   const { addToCart, loading: isCartLoading } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();

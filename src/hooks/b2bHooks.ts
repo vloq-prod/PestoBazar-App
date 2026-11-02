@@ -1,8 +1,7 @@
-// src/hooks/b2bHooks.ts
-
-import { useMutation, UseMutationOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, UseMutationOptions } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import {
+  b2bGetMasterDataApi,
   b2bGetRegistrationDetailsApi,
   b2bSaveBasicDetailsApi,
   b2bVerifyOtpApi,
@@ -36,6 +35,17 @@ import {
   B2BSubmitKycDetailsPayload,
   B2BSubmitKycDetailsResponse,
 } from "../types/b2b.types";
+
+/**
+ * Master Data Hook: Fetches business types, dealer categories, states from DB
+ */
+export const useB2BMasterData = () => {
+  return useQuery({
+    queryKey: ["b2b-master-data"],
+    queryFn: b2bGetMasterDataApi,
+    staleTime: 1000 * 60 * 30, // 30 minutes cache
+  });
+};
 
 /**
  * 0. Hook: Get Registration Details / Resume

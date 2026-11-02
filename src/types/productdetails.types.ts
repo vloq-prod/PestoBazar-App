@@ -2,6 +2,7 @@ export interface ProductDetailsParams {
   product_id?: number;
   variation_id?: number;
   product_slug?: string;
+  user_id?: number | string;
 }
 
 /* ---------- PRODUCT MASTER ---------- */
@@ -80,6 +81,12 @@ export interface SelectedVariation {
   actual_weight: string | null;
   unit_of_measure: string | null;
   product_visibility: string;
+  is_b2b_user?: string;
+  b2b_price_inclusive_gst?: number;
+  b2b_price_exclusive_gst?: number;
+  selling_price_inclusive_gst?: number;
+  selling_price_exclusive_gst?: number;
+  gst_percent?: number;
 }
 
 /* ---------- IMAGES ---------- */
@@ -160,6 +167,10 @@ export interface ProductDetailsResponse {
     unit_selling_price: string;
     product_combo_variation: ProductCombo[];
     selected_combo_variation: ProductCombo[];
+    is_b2b_user?: string;
+    b2b_price_inclusive_gst?: number;
+    b2b_price_exclusive_gst?: number;
+    gst_percent?: number;
   };
 }
 

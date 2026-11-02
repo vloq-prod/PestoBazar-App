@@ -80,7 +80,10 @@ export interface B2BRegistrationDetailsData {
   current_step: number;
   last_completed_step: number;
   mobile_verified: "Yes" | "No";
+  is_b2b_user?: "Yes" | "No";
   last_admin_remark?: string;
+  correction_step?: number | null;
+  correction_fields?: { [step: string]: string[] } | null;
   basic_details: B2BRegistrationBasicDetails;
   business_details: B2BRegistrationBusinessDetails;
   address_details: B2BRegistrationAddressDetails;
@@ -93,6 +96,26 @@ export interface B2BRegistrationDetailsData {
 }
 
 export type B2BGetRegistrationDetailsResponse = B2BApiResponse<B2BRegistrationDetailsData>;
+
+export interface B2BMasterData {
+  business_types: Array<{
+    id: number;
+    business_type_name: string;
+    requires_registration_document?: "Yes" | "No";
+  }>;
+  dealer_categories: Array<{
+    id: number;
+    dealer_category_name: string;
+  }>;
+  states: Array<{
+    id: number;
+    name: string;
+  }>;
+  years_in_business_options: string[];
+  business_proof_types: string[];
+}
+
+export type B2BMasterDataResponse = B2BApiResponse<B2BMasterData>;
 
 // -------------------------------------------------------------
 // 1. Save Basic Details (Step 1)
@@ -109,6 +132,7 @@ export interface B2BSaveBasicDetailsPayload {
 
 export interface B2BSaveBasicDetailsData {
   public_id: string;
+  tracking_token?: string;
   status: string;
   current_step: number;
   show_otp: boolean;
@@ -127,10 +151,18 @@ export interface B2BVerifyOtpPayload {
 
 export interface B2BVerifyOtpData {
   public_id: string;
-  tracking_token: string;
-  current_step: number;
-  last_completed_step: number;
-  mobile_verified: "Yes";
+  tracking_token?: string;
+  user_id?: string;
+  raw_user_id?: number;
+  user_name?: string;
+  current_step?: number;
+  last_completed_step?: number;
+  status?: string;
+  correction_step?: number | null;
+  correction_fields?: { [step: string]: string[] } | null;
+  last_admin_remark?: string;
+  is_b2b_user?: "Yes" | "No";
+  mobile_verified?: "Yes" | "No";
   redirect_url?: string;
 }
 

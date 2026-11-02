@@ -105,16 +105,19 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   // ── User ─────────────────────────────────────────
   setUser: async (userId, userName, email, avatar) => {
     await StorageUtil.setUser(userId, userName, email, avatar);
+    console.log("📦 [AUTH STORE setUser]:", { userId, userName, email, avatar });
     set({ userId, userName, userEmail: email, userAvatar: avatar });
   },
 
   setGoogleUser: async (userId, userName, email, avatar) => {
     await StorageUtil.setUser(userId, userName, email, avatar);
+    console.log("📦 [AUTH STORE setGoogleUser]:", { userId, userName, email, avatar });
     set({ userId, userName, userEmail: email, userAvatar: avatar });
   },
 
   clearUser: async () => {
     await StorageUtil.clearUser();
+    console.log("📦 [AUTH STORE clearUser]: cleared");
     set({ userId: null, userName: null, userEmail: null, userAvatar: null });
   },
 
@@ -123,6 +126,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     const userName = await StorageUtil.getUserName();
     const email = await StorageUtil.getUserEmail();
     const avatar = await StorageUtil.getUserAvatar();
+    console.log("📦 [AUTH STORE hydrateUser]:", { userId, userName, email, avatar });
     if (userId && userName) {
       set({ userId, userName, userEmail: email, userAvatar: avatar });
     }
@@ -132,6 +136,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   logout: async () => {
     await StorageUtil.clearUser();
     resetAnalytics();
+    console.log("📦 [AUTH STORE logout]: logged out");
     set({ userId: null, userName: null, userEmail: null, userAvatar: null });
   },
 }));
