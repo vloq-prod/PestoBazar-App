@@ -186,6 +186,7 @@ function buildKycFormData(payload: B2BSaveKycDetailsPayload): FormData {
 export const b2bSaveKycDetailsApi = async (
   payload: FormData | B2BSaveKycDetailsPayload,
 ): Promise<B2BSaveKycDetailsResponse> => {
+  console.log("🌐 [b2bSaveKycDetailsApi] Starting KYC upload request...");
   const isFd =
     payload instanceof FormData ||
     (payload &&
@@ -195,18 +196,35 @@ export const b2bSaveKycDetailsApi = async (
     ? (payload as FormData)
     : buildKycFormData(payload as B2BSaveKycDetailsPayload);
 
-  const { data } = await apiClient.post<B2BSaveKycDetailsResponse>(
-    "/app-api/v1/b2b-save-kyc-details",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
+  if ((formData as any)._parts) {
+    console.log("📦 [b2bSaveKycDetailsApi] FormData _parts keys:", (formData as any)._parts.map((p: any) => p[0]));
+  }
+
+  try {
+    const { data } = await apiClient.post<B2BSaveKycDetailsResponse>(
+      "/app-api/v1/b2b-save-kyc-details",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        transformRequest: [(d) => d],
+        timeout: 120000,
       },
-      transformRequest: [(d) => d],
-      timeout: 120000,
-    },
-  );
-  return data;
+    );
+    console.log("✅ [b2bSaveKycDetailsApi] Success response:", JSON.stringify(data, null, 2));
+    return data;
+  } catch (err: any) {
+    console.error("❌ [b2bSaveKycDetailsApi] Request FAILED:", {
+      message: err?.message,
+      code: err?.code,
+      status: err?.response?.status,
+      statusText: err?.response?.statusText,
+      data: err?.response?.data,
+      url: err?.config?.url,
+    });
+    throw err;
+  }
 };
 
 /**

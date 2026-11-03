@@ -1,3 +1,5 @@
+import { B2BCartDiscount, OrderSummary } from "./cart.types";
+
 // ======================================================
 // REQUEST
 // ======================================================
@@ -33,6 +35,9 @@ export interface CartSummary {
   applied_promo_code?: string;
   promo_discount_amount?: string | number;
   promo_code_details?: PromoCodeDetails;
+  is_b2b?: boolean | string;
+  b2b_cart_discount?: B2BCartDiscount;
+  b2b_gst_no?: string;
 }
 
 // ======================================================
@@ -130,6 +135,7 @@ export interface CheckoutResponse {
     cart_app: CartSummary;
     razorpay: RazorpayConfig;
     free_products: FreeProductCheckoutItem[];
+    order_summary?: OrderSummary;
   };
 }
 // 🔹 Request Params
@@ -263,6 +269,7 @@ export interface ShippingCart {
   free_shipping_message: string;
   free_shipping: string;
   cod_charges?: string;
+  order_summary?: OrderSummary;
 }
 
 // 🔹 Response

@@ -22,6 +22,10 @@ export interface ProductCardItem {
   expiry_date: string;
   s3_image_path?: string;
   images?: string[];
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 interface ProductCardProps {
@@ -93,6 +97,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, cardWidth, onPress }) =
           overview={item.overview}
           mrp={item.mrp}
           sellingPrice={item.selling_price}
+          isB2bUser={item.is_b2b_user === "Yes"}
+          exclusivePrice={item.selling_price_exclusive_gst}
+          inclusivePrice={item.selling_price_inclusive_gst}
         />
 
         <ProductTimer expiryDate={item.expiry_date} onPress={handlePress} />

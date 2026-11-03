@@ -460,6 +460,20 @@ const ProductDetails = () => {
   const sellingPrice = Number(pricing?.selling_price ?? 0);
   const mrpPrice = Number(pricing?.mrp ?? 0);
 
+  const isB2bUser = Boolean(data?.isB2bUser);
+  const b2bExclusivePrice = Number(
+    data?.b2bPriceExclusiveGst ||
+      selectedVariation?.selling_price_exclusive_gst ||
+      selectedVariation?.b2b_price_exclusive_gst ||
+      sellingPrice,
+  );
+  const b2bInclusivePrice = Number(
+    data?.b2bPriceInclusiveGst ||
+      selectedVariation?.selling_price_inclusive_gst ||
+      selectedVariation?.b2b_price_inclusive_gst ||
+      sellingPrice,
+  );
+
   const rawRatingValue = Number(productInfo?.avg_rating);
   const hasRating = Number.isFinite(rawRatingValue) && rawRatingValue > 0;
   const ratingValue = hasRating ? rawRatingValue : 0;
@@ -1077,48 +1091,127 @@ const ProductDetails = () => {
               </View>
 
               <View>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "baseline",
-                    gap: spacing(8),
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: font(25),
-                      fontFamily: "Poppins_700Bold",
-                      color: colors.primary,
-                      includeFontPadding: false,
-                    }}
-                  >
-                    ₹{formatPrice(sellingPrice)}
-                  </Text>
-                  {mrpPrice > 0 && mrpPrice !== sellingPrice && (
-                    <Text
+                {isB2bUser ? (
+                  <View style={{ gap: spacing(4) }}>
+                    <View
                       style={{
-                        fontSize: font(18),
-                        fontFamily: "Poppins_400Regular",
-                        color: colors.textTertiary,
-                        textDecorationLine: "line-through",
-                        includeFontPadding: false,
+                        flexDirection: "row",
+                        alignItems: "baseline",
+                        gap: spacing(8),
                       }}
                     >
-                      ₹{formatPrice(mrpPrice)}
-                    </Text>
-                  )}
-                </View>
-                {mrpPrice > 0 && (
-                  <Text
-                    style={{
-                      fontSize: font(11),
-                      fontFamily: "Poppins_400Regular",
-                      color: colors.textTertiary,
-                      includeFontPadding: false,
-                    }}
-                  >
-                    Inclusive of all taxes
-                  </Text>
+                      <Text
+                        style={{
+                          fontSize: font(25),
+                          fontFamily: "Poppins_700Bold",
+                          color: colors.primary,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        ₹{formatPrice(b2bExclusivePrice)}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: font(13),
+                          fontFamily: "Poppins_600SemiBold",
+                          color: colors.textSecondary,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        Excl. GST
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing(8),
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: font(13),
+                          fontFamily: "Poppins_500Medium",
+                          color: colors.textTertiary,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        ₹{formatPrice(b2bInclusivePrice)} Incl. GST
+                      </Text>
+                      {mrpPrice > 0 && (
+                        <Text
+                          style={{
+                            fontSize: font(13),
+                            fontFamily: "Poppins_400Regular",
+                            color: colors.textTertiary,
+                            textDecorationLine: "line-through",
+                            includeFontPadding: false,
+                          }}
+                        >
+                          MRP: ₹{formatPrice(mrpPrice)}
+                        </Text>
+                      )}
+                      {discountPercentage > 0 && (
+                        <Text
+                          style={{
+                            fontSize: font(13),
+                            fontFamily: "Poppins_700Bold",
+                            color: "#FF5E0E",
+                            includeFontPadding: false,
+                          }}
+                        >
+                          ({discountPercentage}% off)
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "baseline",
+                        gap: spacing(8),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: font(25),
+                          fontFamily: "Poppins_700Bold",
+                          color: colors.primary,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        ₹{formatPrice(sellingPrice)}
+                      </Text>
+                      {mrpPrice > 0 && mrpPrice !== sellingPrice && (
+                        <Text
+                          style={{
+                            fontSize: font(18),
+                            fontFamily: "Poppins_400Regular",
+                            color: colors.textTertiary,
+                            textDecorationLine: "line-through",
+                            includeFontPadding: false,
+                          }}
+                        >
+                          ₹{formatPrice(mrpPrice)}
+                        </Text>
+                      )}
+                    </View>
+                    {mrpPrice > 0 && (
+                      <Text
+                        style={{
+                          fontSize: font(11),
+                          fontFamily: "Poppins_400Regular",
+                          color: colors.textTertiary,
+                          includeFontPadding: false,
+                        }}
+                      >
+                        Inclusive of all taxes
+                      </Text>
+                    )}
+                  </>
                 )}
               </View>
             </View>

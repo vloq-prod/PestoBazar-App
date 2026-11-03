@@ -98,6 +98,7 @@ export interface WishlistProductItem {
   enc_product_variation_id: string;
   is_b2b_user?: string;
   selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
   category_slug?: string;
   discount?: string | number;
 }

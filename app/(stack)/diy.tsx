@@ -47,6 +47,10 @@ const mapDiyToListingItem = (item: DiyItem): ListingItem => {
     avg_rating: String(item.avg_rating || 0),
     product_variation_id: item.product_variation_id || item.id,
     enc_product_variation_id: item.enc_product_variation_id || String(item.id),
+    is_b2b_user: (item as any).is_b2b_user,
+    selling_price_inclusive_gst: (item as any).selling_price_inclusive_gst,
+    selling_price_exclusive_gst: (item as any).selling_price_exclusive_gst,
+    gst_percent: (item as any).gst_percent,
   };
 };
 

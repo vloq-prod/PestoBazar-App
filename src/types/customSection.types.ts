@@ -22,6 +22,10 @@ export interface CustomSectionProduct {
   enc_product_variation_id: string;
   product_id: number;
   brand_id: number;
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 export interface Pagination {

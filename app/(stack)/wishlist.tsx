@@ -42,6 +42,10 @@ const WishlistScreen = () => {
         avg_rating: item.avg_rating,
         total_reviews: 0,
         s3_image_path: item.s3_image_path || item.image_path,
+        is_b2b_user: item.is_b2b_user,
+        selling_price_inclusive_gst: item.selling_price_inclusive_gst,
+        selling_price_exclusive_gst: item.selling_price_exclusive_gst,
+        gst_percent: item.gst_percent,
       })
     );
   }, [products]);

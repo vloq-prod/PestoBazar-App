@@ -519,6 +519,15 @@ export default function Checkout() {
 
   // ── All derived data ─────────────────────────────────────────────────────
   const cart = data?.data?.cart_app;
+  const shippingCart = shippingData?.data?.cart;
+  const orderSummary =
+    shippingCart?.order_summary || data?.data?.order_summary;
+  const isB2BUser =
+    cart?.is_b2b === true ||
+    cart?.is_b2b === "Yes" ||
+    String(cart?.is_b2b) === "1" ||
+    String(cart?.is_b2b).toLowerCase() === "true" ||
+    Boolean(cart?.b2b_cart_discount);
   const items: any[] = data?.data?.cart_details || [];
   const freeProducts: any[] = data?.data?.free_products || [];
   const cartId = data?.data?.cart_app?.cart_id;
@@ -538,20 +547,28 @@ export default function Checkout() {
   const selectedBillingAddr = billingList.find((a) => a.id === selectedBillingId);
   const selectedDeliveryAddr = deliveryList.find((a) => a.id === selectedDeliveryId);
 
-  const shippingCart = shippingData?.data?.cart;
   const isFreeShipping =
     (shippingCart?.free_shipping ?? cart?.free_shipping) === "Yes";
   const shippingCharge = Number(
     shippingCart?.shipping_charge ?? cart?.shipping_charge ?? 0,
   );
   const gstAmount = cart?.gst_amount ?? "";
-  const isCod = paymentMethod === "cod";
+  const isCod = !isB2BUser && paymentMethod === "cod";
+
+  useEffect(() => {
+    if (isB2BUser && paymentMethod !== "online") {
+      setPaymentMethod("online");
+    }
+  }, [isB2BUser, paymentMethod]);
 
   const codCharge = Number(cart?.cod_charges ?? 0);
 
-  const amountToPay = shippingCart?.amount_to_pay
-    ? Number(shippingCart.amount_to_pay)
-    : Number(cart?.amount_to_pay ?? 0);
+  const amountToPay =
+    isB2BUser && orderSummary
+      ? Number(orderSummary.final_amount) + (isCod ? codCharge : 0)
+      : shippingCart?.amount_to_pay
+      ? Number(shippingCart.amount_to_pay)
+      : Number(cart?.amount_to_pay ?? 0);
 
   useEffect(() => {
     console.log(
@@ -1080,120 +1097,123 @@ export default function Checkout() {
               </View>
             </TouchableOpacity>
 
-            {/* ── Separator Line ── */}
-            <View style={{ height: 1, backgroundColor: colors.border }} />
+            {/* ── Separator Line & Cash on Delivery Option (Hidden for B2B) ── */}
+            {!isB2BUser && (
+              <>
+                <View style={{ height: 1, backgroundColor: colors.border }} />
 
-            {/* ── Cash on Delivery Option ── */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => setPaymentMethod("cod")}
-              style={{
-                padding: spacing(14),
-                backgroundColor: paymentMethod === "cod" ? colors.primary + "06" : "transparent",
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing(12) }}>
-                {/* Icon Box */}
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setPaymentMethod("cod")}
                   style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 12,
-                    backgroundColor: paymentMethod === "cod" ? colors.primary + "12" : colors.backgroundgray,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    borderWidth: 1,
-                    borderColor: paymentMethod === "cod" ? colors.primary + "30" : colors.border,
+                    padding: spacing(14),
+                    backgroundColor: paymentMethod === "cod" ? colors.primary + "06" : "transparent",
                   }}
                 >
-                  <Banknote
-                    size={22}
-                    color={paymentMethod === "cod" ? colors.primary : colors.textSecondary}
-                  />
-                </View>
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing(12) }}>
+                    {/* Icon Box */}
+                    <View
+                      style={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 12,
+                        backgroundColor: paymentMethod === "cod" ? colors.primary + "12" : colors.backgroundgray,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderWidth: 1,
+                        borderColor: paymentMethod === "cod" ? colors.primary + "30" : colors.border,
+                      }}
+                    >
+                      <Banknote
+                        size={22}
+                        color={paymentMethod === "cod" ? colors.primary : colors.textSecondary}
+                      />
+                    </View>
 
-                {/* Content */}
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    {/* Content */}
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_600SemiBold",
+                              fontSize: font(13.5),
+                              color: colors.text,
+                            }}
+                          >
+                            Cash on Delivery
+                          </Text>
+                          {codCharge > 0 && (
+                            <View
+                              style={{
+                                backgroundColor: "#EF444415",
+                                paddingHorizontal: 7,
+                                paddingVertical: 2,
+                                borderRadius: 6,
+                                borderWidth: 1,
+                                borderColor: "#EF444430",
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: "#EF4444",
+                                  fontSize: font(9.5),
+                                  fontFamily: "Poppins_600SemiBold",
+                                }}
+                              >
+                                +{cleanPrice(codCharge)} Fee
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        {/* Selection Checkbox */}
+                        {paymentMethod === "cod" ? (
+                          <CheckCircle2 size={20} color={colors.primary} />
+                        ) : (
+                          <Circle size={20} color={colors.textTertiary} />
+                        )}
+                      </View>
+
                       <Text
                         style={{
-                          fontFamily: "Poppins_600SemiBold",
-                          fontSize: font(13.5),
-                          color: colors.text,
+                          fontFamily: "Poppins_400Regular",
+                          fontSize: font(11),
+                          color: colors.textSecondary,
+                          marginTop: 2,
                         }}
                       >
-                        Cash on Delivery
+                        Pay cash when your order is delivered
                       </Text>
+
                       {codCharge > 0 && (
                         <View
                           style={{
-                            backgroundColor: "#EF444415",
-                            paddingHorizontal: 7,
-                            paddingVertical: 2,
-                            borderRadius: 6,
+                            backgroundColor: "#FEF2F2",
+                            borderRadius: spacing(6),
+                            paddingHorizontal: spacing(8),
+                            paddingVertical: spacing(4),
+                            marginTop: spacing(8),
                             borderWidth: 1,
-                            borderColor: "#EF444430",
+                            borderColor: "#FCA5A5",
                           }}
                         >
                           <Text
                             style={{
-                              color: "#EF4444",
-                              fontSize: font(9.5),
-                              fontFamily: "Poppins_600SemiBold",
+                              fontFamily: "Poppins_500Medium",
+                              fontSize: font(10.5),
+                              color: "#B91C1C",
                             }}
                           >
-                            +{cleanPrice(codCharge)} Fee
+                            ⚠️ Extra {cleanPrice(codCharge)} COD fee applies. Pay online to save!
                           </Text>
                         </View>
                       )}
                     </View>
-
-                    {/* Selection Checkbox */}
-                    {paymentMethod === "cod" ? (
-                      <CheckCircle2 size={20} color={colors.primary} />
-                    ) : (
-                      <Circle size={20} color={colors.textTertiary} />
-                    )}
                   </View>
-
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_400Regular",
-                      fontSize: font(11),
-                      color: colors.textSecondary,
-                      marginTop: 2,
-                    }}
-                  >
-                    Pay cash when your order is delivered
-                  </Text>
-
-                  {codCharge > 0 && (
-                    <View
-                      style={{
-                        backgroundColor: "#FEF2F2",
-                        borderRadius: spacing(6),
-                        paddingHorizontal: spacing(8),
-                        paddingVertical: spacing(4),
-                        marginTop: spacing(8),
-                        borderWidth: 1,
-                        borderColor: "#FCA5A5",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: "Poppins_500Medium",
-                          fontSize: font(10.5),
-                          color: "#B91C1C",
-                        }}
-                      >
-                        ⚠️ Extra {cleanPrice(codCharge)} COD fee applies. Pay online to save!
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 
@@ -1417,12 +1437,14 @@ export default function Checkout() {
                   color: colors.text,
                 }}
               >
-                {cleanPrice(cart?.cart_amount)}
+                {cleanPrice(isB2BUser && orderSummary ? orderSummary.base_amount : cart?.cart_amount)}
               </Text>
             </View>
 
             {/* Promo Discount Row */}
-            {parseFloat(String(cart?.promo_discount_amount || 0)) > 0 && (
+            {(isB2BUser && orderSummary
+              ? parseFloat(String(orderSummary.coupon_discount || 0))
+              : parseFloat(String(cart?.promo_discount_amount || 0))) > 0 && (
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -1440,7 +1462,33 @@ export default function Checkout() {
                     color: "#10B981",
                   }}
                 >
-                  - {cleanPrice(cart?.promo_discount_amount)}
+                  - {cleanPrice(isB2BUser && orderSummary ? orderSummary.coupon_discount : cart?.promo_discount_amount)}
+                </Text>
+              </View>
+            )}
+
+            {/* Bulk Buyer (B2B) Cart Discount Row */}
+            {(isB2BUser && orderSummary
+              ? parseFloat(String(orderSummary.b2b_discount || 0))
+              : parseFloat(String(cart?.b2b_cart_discount?.discount_amount || 0))) > 0 && (
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: "#10B981",
+                  }}
+                >
+                  Bulk Buyer Discount ({cart?.b2b_cart_discount?.discount_percent}%)
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(12.5),
+                    color: "#10B981",
+                  }}
+                >
+                  - {cleanPrice(isB2BUser && orderSummary ? orderSummary.b2b_discount : cart?.b2b_cart_discount?.discount_amount)}
                 </Text>
               </View>
             )}
@@ -1456,7 +1504,9 @@ export default function Checkout() {
               >
                 Shipping
               </Text>
-              {shippingCharge === 0 || isFreeShipping ? (
+              {(isB2BUser && orderSummary
+                ? parseFloat(String(orderSummary.shipping || 0))
+                : (shippingCharge === 0 || isFreeShipping ? 0 : 1)) === 0 ? (
                 <Text
                   style={{
                     fontFamily: "Poppins_700Bold",
@@ -1474,7 +1524,7 @@ export default function Checkout() {
                     color: colors.text,
                   }}
                 >
-                  + {cleanPrice(shippingCharge)}
+                  + {cleanPrice(isB2BUser && orderSummary ? orderSummary.shipping : shippingCharge)}
                 </Text>
               )}
             </View>
@@ -1504,7 +1554,9 @@ export default function Checkout() {
             )}
 
             {/* GST Row */}
-            {!!gstAmount && (
+            {(isB2BUser && orderSummary
+              ? parseFloat(String(orderSummary.gst || 0)) > 0
+              : !!gstAmount) && (
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -1522,7 +1574,7 @@ export default function Checkout() {
                     color: colors.text,
                   }}
                 >
-                  + {cleanPrice(gstAmount)}
+                  + {cleanPrice(isB2BUser && orderSummary ? orderSummary.gst : gstAmount)}
                 </Text>
               </View>
             )}

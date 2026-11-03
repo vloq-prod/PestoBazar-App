@@ -28,6 +28,10 @@ export interface ListingItem {
   avg_rating: string;
   product_variation_id: number;
   enc_product_variation_id: string;
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 // 🔹 Response

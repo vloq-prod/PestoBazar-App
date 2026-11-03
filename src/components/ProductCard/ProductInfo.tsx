@@ -11,6 +11,9 @@ interface ProductInfoProps {
   overview?: string | null;
   mrp: string;
   sellingPrice: string;
+  isB2bUser?: boolean;
+  exclusivePrice?: number | string;
+  inclusivePrice?: number | string;
 }
 
 const ProductInfo: React.FC<ProductInfoProps> = ({
@@ -18,6 +21,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   overview,
   mrp,
   sellingPrice,
+  isB2bUser,
+  exclusivePrice,
+  inclusivePrice,
 }) => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -70,48 +76,131 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       )}
 
       {/* Price row */}
-      <View style={[styles.priceRow, { gap: spacing(5) }]}>
-        <Text
-          style={{
-            fontFamily: "Poppins_700Bold",
-            fontSize: font(20),
-            color: colors.text,
-            lineHeight: font(28),
-          }}
-        >
-          {formatPrice(sellingPrice)}
-        </Text>
-
-        {hasMrp && (
-          <>
+      {isB2bUser ? (
+        <View style={{ gap: spacing(2) }}>
+          <View
+            style={[
+              styles.priceRow,
+              { gap: spacing(6), alignItems: "baseline" },
+            ]}
+          >
+            <Text
+              style={{
+                fontFamily: "Poppins_700Bold",
+                fontSize: font(18),
+                color: colors.primary,
+                lineHeight: font(24),
+              }}
+            >
+              {formatPrice(
+                exclusivePrice !== undefined && exclusivePrice !== null
+                  ? String(exclusivePrice)
+                  : sellingPrice,
+              )}
+            </Text>
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(11),
+                color: colors.textSecondary,
+              }}
+            >
+              Excl. GST
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.priceRow,
+              { gap: spacing(6), alignItems: "center" },
+            ]}
+          >
             <Text
               style={{
                 fontFamily: "Poppins_400Regular",
-                fontSize: font(13),
+                fontSize: font(11),
                 color: colors.textTertiary,
-                textDecorationLine: "line-through",
-                lineHeight: font(28),
               }}
             >
-              {formatPrice(mrp)}
+              {formatPrice(
+                inclusivePrice !== undefined && inclusivePrice !== null
+                  ? String(inclusivePrice)
+                  : sellingPrice,
+              )}{" "}
+              Incl. GST
             </Text>
+            {hasMrp && (
+              <>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_400Regular",
+                    fontSize: font(11),
+                    color: colors.textTertiary,
+                    textDecorationLine: "line-through",
+                  }}
+                >
+                  {formatPrice(mrp)}
+                </Text>
 
-            {discount > 0 && (
+                {discount > 0 && (
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(11),
+                      color: colors.error,
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    ({discount}% off)
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      ) : (
+        <View style={[styles.priceRow, { gap: spacing(5) }]}>
+          <Text
+            style={{
+              fontFamily: "Poppins_700Bold",
+              fontSize: font(20),
+              color: colors.text,
+              lineHeight: font(28),
+            }}
+          >
+            {formatPrice(sellingPrice)}
+          </Text>
+
+          {hasMrp && (
+            <>
               <Text
                 style={{
-                  fontFamily: "Poppins_700Bold",
+                  fontFamily: "Poppins_400Regular",
                   fontSize: font(13),
-                  color: colors.error,
+                  color: colors.textTertiary,
+                  textDecorationLine: "line-through",
                   lineHeight: font(28),
-                  letterSpacing: 0.2,
                 }}
               >
-                {discount}% off
+                {formatPrice(mrp)}
               </Text>
-            )}
-          </>
-        )}
-      </View>
+
+              {discount > 0 && (
+                <Text
+                  style={{
+                    fontFamily: "Poppins_700Bold",
+                    fontSize: font(13),
+                    color: colors.error,
+                    lineHeight: font(28),
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {discount}% off
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 };

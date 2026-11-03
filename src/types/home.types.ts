@@ -105,6 +105,10 @@ export interface ProductItem {
   total_reviews: number;
   avg_rating: string;
   s3_image_path: string;
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 export interface ProductSection {
@@ -269,6 +273,10 @@ export interface RecentlyViewedItem {
   moq: number;
   s3_image_path: string;
   enc_product_variation_id: string;
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 export interface GetRecentlyViewedResponse {

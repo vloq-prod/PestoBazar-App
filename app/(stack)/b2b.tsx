@@ -1394,8 +1394,26 @@ export default function B2BScreen() {
 
     const restoreSession = async () => {
       try {
+        const storedId = await StorageUtil.getUserId();
+        const userId = storedId || visitorUserId || "";
         const session = await StorageUtil.getB2BSession();
-        const userId = await StorageUtil.getUserId();
+
+        // If user is logged out, clear any stale B2B session and start fresh on Step 1
+        if (!userId) {
+          if (session.publicId || session.mobile) {
+            console.log("🏢 [B2B SCREEN]: User is logged out. Clearing stale B2B session.");
+            await StorageUtil.clearB2BSession();
+          }
+          if (isMounted) {
+            setPublicId("");
+            setTrackingToken("");
+            setApplicationStatus("Draft");
+            setShowStatusScreen(false);
+            setCurrentStep(1);
+            setLastCompletedStep(0);
+          }
+          return;
+        }
 
         if (session.publicId || session.mobile || userId) {
           const res = await getRegistrationDetails({
@@ -2568,6 +2586,25 @@ export default function B2BScreen() {
   // Step 4: Save KYC Documents Handler
   // -------------------------------------------------------------
   const handleSaveKycDetails = async () => {
+    console.log("🔥 [B2B Step 4]: 'Save & Review' clicked!");
+    console.log("📋 [B2B Step 4 State Snapshot]:", {
+      publicId,
+      trackingToken,
+      legalBusinessName,
+      panNumber,
+      panName,
+      aadhaarHolderName,
+      businessProofType,
+      gstCertificate: gstCertificate ? { name: gstCertificate.name, type: gstCertificate.type, uri: gstCertificate.uri } : null,
+      gstCertificateUrl,
+      panCard: panCard ? { name: panCard.name, type: panCard.type, uri: panCard.uri } : null,
+      panCardUrl,
+      aadhaarCard: aadhaarCard ? { name: aadhaarCard.name, type: aadhaarCard.type, uri: aadhaarCard.uri } : null,
+      aadhaarCardUrl,
+      businessProofDocument: businessProofDocument ? { name: businessProofDocument.name, type: businessProofDocument.type, uri: businessProofDocument.uri } : null,
+      businessProofUrl,
+    });
+
     const newErrors: { [key: string]: string } = {};
 
     if (!legalBusinessName.trim()) {
@@ -2620,6 +2657,7 @@ export default function B2BScreen() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
+      console.warn("⚠️ [B2B Step 4 Validation Failed]:", newErrors);
       showToast(
         "Please fill all required KYC fields and attach documents.",
         "error",
@@ -2628,6 +2666,7 @@ export default function B2BScreen() {
     }
 
     if (!publicId || !trackingToken) {
+      console.error("❌ [B2B Step 4 Session Missing]:", { publicId, trackingToken });
       showToast(
         "Application session missing. Please verify mobile again.",
         "error",
@@ -2646,6 +2685,7 @@ export default function B2BScreen() {
       formData.append("business_proof_type", businessProofType.trim());
 
       if (gstCertificate) {
+        console.log("📎 [B2B Step 4] Appending gst_certificate file:", gstCertificate);
         formData.append("gst_certificate", {
           uri: gstCertificate.uri,
           name: gstCertificate.name,
@@ -2653,6 +2693,7 @@ export default function B2BScreen() {
         } as any);
       }
       if (panCard) {
+        console.log("📎 [B2B Step 4] Appending pan_card file:", panCard);
         formData.append("pan_card", {
           uri: panCard.uri,
           name: panCard.name,
@@ -2660,6 +2701,7 @@ export default function B2BScreen() {
         } as any);
       }
       if (aadhaarCard) {
+        console.log("📎 [B2B Step 4] Appending aadhaar_card file:", aadhaarCard);
         formData.append("aadhaar_card", {
           uri: aadhaarCard.uri,
           name: aadhaarCard.name,
@@ -2667,6 +2709,7 @@ export default function B2BScreen() {
         } as any);
       }
       if (businessProofDocument) {
+        console.log("📎 [B2B Step 4] Appending business_proof_document file:", businessProofDocument);
         formData.append("business_proof_document", {
           uri: businessProofDocument.uri,
           name: businessProofDocument.name,
@@ -2674,9 +2717,12 @@ export default function B2BScreen() {
         } as any);
       }
 
+      console.log("🚀 [B2B Step 4]: Sending FormData to saveKycDetails (/app-api/v1/b2b-save-kyc-details)...");
       const response = await saveKycDetails(formData);
+      console.log("📥 [B2B Step 4 API Response Received]:", JSON.stringify(response, null, 2));
 
       if (response.status === 1) {
+        console.log("✅ [B2B Step 4]: KYC saved successfully! Transitioning to currentStep = 5");
         setLastCompletedStep((prev) => Math.max(prev, 4));
         markFieldCorrected("legal_business_name");
         markFieldCorrected("gst_certificate");
@@ -2694,10 +2740,24 @@ export default function B2BScreen() {
           "success",
         );
         setCurrentStep(5);
+        console.log("🏁 [B2B Step 4]: setCurrentStep(5) executed!");
       } else {
+        console.warn("⚠️ [B2B Step 4 API Returned Non-1 Status]:", response);
         showToast(response.message || "Failed to save KYC documents.", "error");
       }
     } catch (err: any) {
+      console.error("💥 [B2B Step 4 Catch Block]: API call or processing threw an exception!", {
+        errorMessage: err?.message,
+        name: err?.name,
+        code: err?.code,
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
+        responseData: err?.response?.data,
+        responseHeaders: err?.response?.headers,
+        requestUrl: err?.config?.url,
+        requestData: err?.config?.data,
+        stack: err?.stack,
+      });
       const msg =
         err?.response?.data?.message ||
         err?.message ||
@@ -2710,6 +2770,7 @@ export default function B2BScreen() {
   // Step 5: Final Submission Handler
   // -------------------------------------------------------------
   const handleSubmitApplication = async () => {
+    console.log("🔥 [B2B Step 5]: 'Submit Application' clicked!");
     if (!finalConfirmation) {
       setErrors((prev) => ({
         ...prev,
@@ -2723,6 +2784,7 @@ export default function B2BScreen() {
     }
 
     if (!publicId || !trackingToken) {
+      console.error("❌ [B2B Step 5 Session Missing]:", { publicId, trackingToken });
       showToast(
         "Application session missing. Please verify mobile again.",
         "error",
@@ -2731,13 +2793,16 @@ export default function B2BScreen() {
     }
 
     try {
+      console.log("🚀 [B2B Step 5]: Calling submitKycDetails (/app-api/v1/b2b-submit-kyc-details)...");
       const response = await submitKycDetails({
         public_id: publicId,
         tracking_token: trackingToken,
         final_confirmation: 1,
       });
+      console.log("📥 [B2B Step 5 API Response Received]:", JSON.stringify(response, null, 2));
 
       if (response.status === 1) {
+        console.log("✅ [B2B Step 5]: Application submitted successfully!");
         setApplicationStatus("Submitted for Approval");
         setLastCompletedStep(5);
         setShowStatusScreen(true);
@@ -2748,9 +2813,20 @@ export default function B2BScreen() {
           "success",
         );
       } else {
+        console.warn("⚠️ [B2B Step 5 API Returned Non-1 Status]:", response);
         showToast(response.message || "Failed to submit application.", "error");
       }
     } catch (err: any) {
+      console.error("💥 [B2B Step 5 Catch Block]: submitKycDetails error!", {
+        errorMessage: err?.message,
+        name: err?.name,
+        code: err?.code,
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
+        responseData: err?.response?.data,
+        requestUrl: err?.config?.url,
+        stack: err?.stack,
+      });
       const msg =
         err?.response?.data?.message ||
         err?.message ||
@@ -3575,7 +3651,7 @@ export default function B2BScreen() {
 
               {/* APPROVED ACTION BUTTON */}
               {applicationStatus === "Approved" && (
-                <View style={{ width: "100%", marginTop: spacing(16) }}>
+                <View style={{ width: "100%", marginTop: spacing(16), gap: spacing(10) }}>
                   <TouchableOpacity
                     activeOpacity={0.85}
                     onPress={() => router.replace("/(tabs)")}
@@ -3601,6 +3677,25 @@ export default function B2BScreen() {
                       START SHOPPING
                     </Text>
                     <ArrowRight size={18} color="#ffffff" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.75}
+                    onPress={handleStartNewApplication}
+                    style={{
+                      paddingVertical: spacing(8),
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colors.textSecondary,
+                        fontSize: font(12),
+                        fontFamily: "Poppins_500Medium",
+                      }}
+                    >
+                      Register Another Business / Start Fresh
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -5449,6 +5544,24 @@ export default function B2BScreen() {
           {/* ========================================================= */}
           {/* STEP 5: REVIEW & SUBMIT APPLICATION                       */}
           {/* ========================================================= */}
+          {!showStatusScreen && currentStep === 5 && (
+            (() => {
+              console.log("👀 [B2B Step 5 Render]: Rendering Review & Submit screen!", {
+                ownerName,
+                mobile,
+                legalBusinessName,
+                panNumber,
+                panName,
+                aadhaarHolderName,
+                businessProofType,
+                hasGst: !!gstCertificate || !!gstCertificateUrl,
+                hasPan: !!panCard || !!panCardUrl,
+                hasAadhaar: !!aadhaarCard || !!aadhaarCardUrl,
+                hasProof: !!businessProofDocument || !!businessProofUrl,
+              });
+              return null;
+            })()
+          )}
           {!showStatusScreen && currentStep === 5 && (
             <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
               {/* Step Header */}

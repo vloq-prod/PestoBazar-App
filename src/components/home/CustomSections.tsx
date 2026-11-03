@@ -209,6 +209,10 @@ const CustomSections = () => {
               overview: p.overview || "",
               url: p.url,
               total_reviews: 0,
+              is_b2b_user: (p as any).is_b2b_user,
+              selling_price_inclusive_gst: (p as any).selling_price_inclusive_gst,
+              selling_price_exclusive_gst: (p as any).selling_price_exclusive_gst,
+              gst_percent: (p as any).gst_percent,
             };
           });
 

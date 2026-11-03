@@ -53,6 +53,10 @@ const mapCustomProductToListingItem = (
     avg_rating: String(item.avg_rating || 0),
     product_variation_id: variationId,
     enc_product_variation_id: item.enc_product_variation_id || String(variationId),
+    is_b2b_user: item.is_b2b_user,
+    selling_price_inclusive_gst: item.selling_price_inclusive_gst,
+    selling_price_exclusive_gst: item.selling_price_exclusive_gst,
+    gst_percent: item.gst_percent,
   };
 };
 

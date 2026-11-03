@@ -7,7 +7,7 @@ const ENVIRONMENT =
   process.env.EXPO_PUBLIC_ENVIRONMENT?.toUpperCase() ?? "LOCAL";
 
 const BASE_URLS = {
-  LOCAL: process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.1.104:8000/",
+  LOCAL: process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.1.106:8000/",
   STAGING: "https://pestobazaar.vloq.com/",
   PRODUCTION: "https://pestobazaar.com/",
 };
@@ -40,6 +40,21 @@ apiClient.interceptors.request.use(
         }
       }
     });
+
+    try {
+      const { useAppVisitorStore } = require("../store/auth");
+      const userId = useAppVisitorStore?.getState?.()?.userId;
+      if (userId) {
+        config.headers?.set("User-Id", String(userId));
+        config.headers?.set("user-id", String(userId));
+        if (config.method?.toLowerCase() === "get" && !config.params?.user_id) {
+          config.params = {
+            ...config.params,
+            user_id: userId,
+          };
+        }
+      }
+    } catch (_) {}
 
     // If body is FormData, ensure multipart/form-data header and bypass Axios JSON serialization
     const isFormData =

@@ -47,6 +47,10 @@ const mapProductToListingItem = (item: ProductItem): ListingItem => {
     avg_rating: item.avg_rating,
     product_variation_id: item.id,
     enc_product_variation_id: String(item.id),
+    is_b2b_user: item.is_b2b_user,
+    selling_price_inclusive_gst: item.selling_price_inclusive_gst,
+    selling_price_exclusive_gst: item.selling_price_exclusive_gst,
+    gst_percent: item.gst_percent,
   };
 };
 

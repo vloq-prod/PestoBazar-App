@@ -117,6 +117,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
 
   clearUser: async () => {
     await StorageUtil.clearUser();
+    await StorageUtil.clearB2BSession();
     console.log("📦 [AUTH STORE clearUser]: cleared");
     set({ userId: null, userName: null, userEmail: null, userAvatar: null });
   },
@@ -135,6 +136,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   // ── Logout (clears everything) ────────────────────
   logout: async () => {
     await StorageUtil.clearUser();
+    await StorageUtil.clearB2BSession();
     resetAnalytics();
     console.log("📦 [AUTH STORE logout]: logged out");
     set({ userId: null, userName: null, userEmail: null, userAvatar: null });

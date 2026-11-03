@@ -12,6 +12,31 @@ export interface PromoCodeDetails {
   discount_amount: string | number;
 }
 
+export interface B2BCartDiscountTier {
+  from_amount: number;
+  to_amount: number | null;
+  discount_percent: number;
+}
+
+export interface B2BCartDiscount {
+  is_discount_applicable: boolean;
+  bracket?: {
+    id: number;
+    from_amount: number;
+    to_amount: number | null;
+    discount_percent: number;
+  } | null;
+  cart_amount: number;
+  discount_percent: number;
+  discount_amount: number;
+  amount_after_discount: number;
+  next_discount_percent: number | null;
+  amount_to_shop_more: number;
+  message: string;
+  allBracket?: B2BCartDiscountTier[];
+  tiers?: B2BCartDiscountTier[];
+}
+
 export interface CartSummary {
   cart_id: string;
   cart_amount: string;
@@ -28,6 +53,9 @@ export interface CartSummary {
   applied_promo_code?: string;
   promo_discount_amount?: string | number;
   promo_code_details?: PromoCodeDetails;
+  is_b2b?: boolean | string;
+  b2b_cart_discount?: B2BCartDiscount;
+  b2b_gst_no?: string;
 }
 
 // src/types/cart.types.ts
@@ -132,12 +160,23 @@ export interface FreeProductCartItem {
   display_price: string;
 }
 
+export interface OrderSummary {
+  base_amount: number | string;
+  b2b_discount: number | string;
+  sub_total: number | string;
+  gst: number | string;
+  shipping: number | string;
+  coupon_discount: number | string;
+  final_amount: number | string;
+}
+
 export interface CartData {
   cart: CartSummary;
   cart_details: CartItem[];
   cart_app: CartSummary;
   razorpay: RazorpayConfig;
   free_products: FreeProductCartItem[];
+  order_summary?: OrderSummary;
 }
 
 export interface CartResponse {

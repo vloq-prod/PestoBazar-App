@@ -8,7 +8,7 @@ interface Props {
 }
 
 const SaveRecentlyViewedProduct = ({ productId }: Props) => {
-  const visitorId = useAppVisitorStore((state) => state.visitorId);
+  const { visitorId, userId } = useAppVisitorStore((state) => state);
 
   const { saveRecentlyViewed, data } = useSaveRecentlyViewed();
 
@@ -17,10 +17,10 @@ const SaveRecentlyViewedProduct = ({ productId }: Props) => {
 
     saveRecentlyViewed({
       product_id: productId,
-      user_id: "", 
+      user_id: userId ? String(userId) : "", 
       visitor_id: visitorId ?? "",
     });
-  }, [productId, visitorId]);
+  }, [productId, visitorId, userId]);
 
 
 

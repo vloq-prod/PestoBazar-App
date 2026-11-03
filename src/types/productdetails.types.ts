@@ -317,6 +317,10 @@ export interface CustomerAlsoBoughtItem {
   listing_type: string;
   product_visibility: string;
   product_variation_id: number;
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 export interface CustomerAlsoBoughtResponse {

@@ -27,6 +27,7 @@ import {
 import { useAppVisitorStore } from "../../src/store/auth";
 import CartItem from "../../src/components/cart/CartItem";
 import CartRecentlyViewed from "../../src/components/cart/CartRecentlyViewed";
+import B2BCartDiscountCard from "../../src/components/cart/B2BCartDiscountCard";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { Info, MoveRight, Gift, Tag, ChevronRight, Receipt, BadgePercent, Clock, CreditCard } from "lucide-react-native";
@@ -152,9 +153,32 @@ export default function CartScreen() {
   const cartId = cartData?.data?.cart_app?.cart_id || cartData?.data?.cart?.cart_id;
 
   const cartTotal = cartData?.data?.cart_app || cartData?.data?.cart;
+  const orderSummary = cartData?.data?.order_summary;
   const isFreeShipping = cartTotal?.free_shipping;
   const cartCount = cartCountData?.data;
   const appliedPromo = cartTotal?.promo_code_details;
+  const b2bCartDiscount = cartTotal?.b2b_cart_discount;
+  const isB2BUser =
+    cartTotal?.is_b2b === true ||
+    cartTotal?.is_b2b === "Yes" ||
+    String(cartTotal?.is_b2b) === "1" ||
+    String(cartTotal?.is_b2b).toLowerCase() === "true" ||
+    Boolean(b2bCartDiscount && (b2bCartDiscount.allBracket || b2bCartDiscount.tiers));
+
+  const b2bDiscountAmount = parseFloat(String(orderSummary?.b2b_discount ?? b2bCartDiscount?.discount_amount ?? 0));
+  const couponDiscountAmount = parseFloat(String(orderSummary?.coupon_discount ?? appliedPromo?.discount_amount ?? cartTotal?.promo_discount_amount ?? 0));
+  const itemSavings = (items || []).reduce((acc: number, item: any) => {
+    const youSave = parseFloat(String(item.you_save || 0));
+    return acc + (isNaN(youSave) ? 0 : youSave);
+  }, 0);
+  const totalSaved = isB2BUser && orderSummary
+    ? (b2bDiscountAmount + couponDiscountAmount + itemSavings)
+    : (couponDiscountAmount + itemSavings);
+
+  const finalPayableAmount = isB2BUser && orderSummary
+    ? parseFloat(String(orderSummary.final_amount || 0))
+    : parseFloat(String(cartTotal?.amount_to_pay || 0));
+
   const isCouponSuccessLoading =
     showCouponSuccessModal &&
     (isCartFetching ||
@@ -309,7 +333,7 @@ export default function CartScreen() {
 
   const handleContinue = () => {
     trackCheckout({
-      value: cartTotal?.amount_to_pay || cartTotal?.cart_amount,
+      value: finalPayableAmount || cartTotal?.amount_to_pay || cartTotal?.cart_amount,
       coupon: appliedPromo?.promo_code,
     });
     if (userId) {
@@ -806,6 +830,12 @@ export default function CartScreen() {
                 </View>
               </View>
             )}
+
+            {/* ── Bulk Buyer (B2B) Cart Discount Card ── */}
+            {isB2BUser && b2bCartDiscount ? (
+              <B2BCartDiscountCard discountData={b2bCartDiscount} />
+            ) : null}
+
             {/* ── Bill Summary Ticket Card ── */}
             {cartTotal ? (
               <View
@@ -858,6 +888,7 @@ export default function CartScreen() {
                 </View>
 
                 <View style={styles.cardContent}>
+                  {/* Item Total */}
                   <View style={styles.summaryRow}>
                     <Text
                       style={{
@@ -875,12 +906,14 @@ export default function CartScreen() {
                         color: colors.text,
                       }}
                     >
-                      {cleanPrice(cartTotal?.cart_amount)}
+                      {cleanPrice(isB2BUser && orderSummary ? orderSummary.base_amount : cartTotal?.cart_amount)}
                     </Text>
                   </View>
 
                   {/* Promo Discount Row */}
-                  {parseFloat(String(cartTotal?.promo_discount_amount || 0)) > 0 && (
+                  {(isB2BUser && orderSummary
+                    ? parseFloat(String(orderSummary.coupon_discount || 0))
+                    : parseFloat(String(cartTotal?.promo_discount_amount || 0))) > 0 && (
                     <View style={styles.summaryRow}>
                       <Text
                         style={{
@@ -898,7 +931,33 @@ export default function CartScreen() {
                           color: "#10B981",
                         }}
                       >
-                        - {cleanPrice(cartTotal?.promo_discount_amount)}
+                        - {cleanPrice(isB2BUser && orderSummary ? orderSummary.coupon_discount : cartTotal?.promo_discount_amount)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Bulk Buyer (B2B) Cart Discount Row */}
+                  {(isB2BUser && orderSummary
+                    ? parseFloat(String(orderSummary.b2b_discount || 0))
+                    : parseFloat(String(b2bCartDiscount?.discount_amount || 0))) > 0 && (
+                    <View style={styles.summaryRow}>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_500Medium",
+                          fontSize: font(12.5),
+                          color: "#10B981",
+                        }}
+                      >
+                        Bulk Buyer Discount ({b2bCartDiscount?.discount_percent}%)
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_700Bold",
+                          fontSize: font(12.5),
+                          color: "#10B981",
+                        }}
+                      >
+                        - {cleanPrice(isB2BUser && orderSummary ? orderSummary.b2b_discount : b2bCartDiscount?.discount_amount)}
                       </Text>
                     </View>
                   )}
@@ -914,9 +973,11 @@ export default function CartScreen() {
                     >
                       Shipping
                     </Text>
-                    {cartTotal?.shipping_charge === 0 ||
-                    cartTotal?.shipping_charge === "0" ||
-                    String(cartTotal?.shipping_charge).toLowerCase() === "free" ? (
+                    {(isB2BUser && orderSummary
+                      ? parseFloat(String(orderSummary.shipping || 0))
+                      : (cartTotal?.shipping_charge === 0 ||
+                         cartTotal?.shipping_charge === "0" ||
+                         String(cartTotal?.shipping_charge).toLowerCase() === "free" ? 0 : 1)) === 0 ? (
                       <Text
                         style={{
                           fontFamily: "Poppins_700Bold",
@@ -934,7 +995,7 @@ export default function CartScreen() {
                           color: colors.text,
                         }}
                       >
-                        + {cleanPrice(cartTotal?.shipping_charge)}
+                        + {cleanPrice(isB2BUser && orderSummary ? orderSummary.shipping : cartTotal?.shipping_charge)}
                       </Text>
                     )}
                   </View>
@@ -964,26 +1025,30 @@ export default function CartScreen() {
                   )}
 
                   {/* GST Row */}
-                  <View style={styles.summaryRow}>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_500Medium",
-                        fontSize: font(12.5),
-                        color: colors.textSecondary,
-                      }}
-                    >
-                      GST (Govt. Taxes)
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_600SemiBold",
-                        fontSize: font(12.5),
-                        color: colors.text,
-                      }}
-                    >
-                      + {cleanPrice(cartTotal?.gst_amount)}
-                    </Text>
-                  </View>
+                  {(isB2BUser && orderSummary
+                    ? parseFloat(String(orderSummary.gst || 0))
+                    : parseFloat(String(cartTotal?.gst_amount || 0))) > 0 && (
+                    <View style={styles.summaryRow}>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_500Medium",
+                          fontSize: font(12.5),
+                          color: colors.textSecondary,
+                        }}
+                      >
+                        GST (Govt. Taxes)
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(12.5),
+                          color: colors.text,
+                        }}
+                      >
+                        + {cleanPrice(isB2BUser && orderSummary ? orderSummary.gst : cartTotal?.gst_amount)}
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 <WavyDivider color={colors.border} spacing={spacing} />
@@ -1014,7 +1079,7 @@ export default function CartScreen() {
                           color: colors.text,
                         }}
                       >
-                        {cleanPrice(cartTotal?.amount_to_pay)}
+                        {cleanPrice(finalPayableAmount)}
                       </Text>
                     </View>
                   </View>
@@ -1135,7 +1200,7 @@ export default function CartScreen() {
                   fontFamily: "Poppins_600SemiBold",
                 }}
               >
-                {formatINR(cartTotal?.amount_to_pay || 0)}
+                {cleanPrice(finalPayableAmount)}
               </Text>
               <View
                 style={{ flexDirection: "row", alignItems: "center", gap: 4 }}

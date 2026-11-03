@@ -28,6 +28,16 @@ const SearchItem: React.FC<Props> = ({ item }) => {
     return fixed.endsWith(".00") ? String(Math.trunc(val)) : fixed;
   };
 
+  const isB2b = item?.is_b2b_user === "Yes";
+  const exclusivePrice =
+    item?.selling_price_exclusive_gst !== undefined && item?.selling_price_exclusive_gst !== null
+      ? Number(item.selling_price_exclusive_gst)
+      : price;
+  const inclusivePrice =
+    item?.selling_price_inclusive_gst !== undefined && item?.selling_price_inclusive_gst !== null
+      ? Number(item.selling_price_inclusive_gst)
+      : price;
+
   return (
     <TouchableOpacity
       onPress={() =>
@@ -79,32 +89,84 @@ const SearchItem: React.FC<Props> = ({ item }) => {
           {item.product_name}
         </Text>
 
-        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6), marginTop: spacing(4) }}>
-          <Text
-            style={{
-              fontSize: font(13),
-              fontFamily: "Poppins_600SemiBold",
-              color: colors.textSecondary,
-              includeFontPadding: false,
-            }}
-          >
-            ₹{formatPrice(price)}
-          </Text>
-
-          {discount && (
+        {isB2b ? (
+          <View style={{ flexDirection: "column", gap: spacing(2), marginTop: spacing(3) }}>
+            <View style={{ flexDirection: "row", alignItems: "baseline", gap: spacing(4) }}>
+              <Text
+                style={{
+                  fontSize: font(13),
+                  fontFamily: "Poppins_700Bold",
+                  color: colors.primary,
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(exclusivePrice)}
+              </Text>
+              <Text
+                style={{
+                  fontSize: font(9.5),
+                  color: colors.textSecondary,
+                  fontFamily: "Poppins_600SemiBold",
+                  includeFontPadding: false,
+                }}
+              >
+                Excl. GST
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6) }}>
+              <Text
+                style={{
+                  fontSize: font(9.5),
+                  color: colors.textTertiary,
+                  fontFamily: "Poppins_400Regular",
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(inclusivePrice)} Incl. GST
+              </Text>
+              {discount && (
+                <Text
+                  style={{
+                    fontSize: font(10),
+                    color: colors.textTertiary,
+                    textDecorationLine: "line-through",
+                    fontFamily: "Poppins_400Regular",
+                    includeFontPadding: false,
+                  }}
+                >
+                  ₹{formatPrice(mrp)}
+                </Text>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6), marginTop: spacing(4) }}>
             <Text
               style={{
-                fontSize: font(11),
-                color: colors.textTertiary,
-                textDecorationLine: "line-through",
-                fontFamily: "Poppins_400Regular",
+                fontSize: font(13),
+                fontFamily: "Poppins_600SemiBold",
+                color: colors.textSecondary,
                 includeFontPadding: false,
               }}
             >
-              ₹{formatPrice(mrp)}
+              ₹{formatPrice(price)}
             </Text>
-          )}
-        </View>
+
+            {discount && (
+              <Text
+                style={{
+                  fontSize: font(11),
+                  color: colors.textTertiary,
+                  textDecorationLine: "line-through",
+                  fontFamily: "Poppins_400Regular",
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(mrp)}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Arrow Icon */}

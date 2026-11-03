@@ -53,7 +53,21 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
   const price = Number(item.selling_price);
   const mrp = Number(item.mrp);
 
+  const isB2b = item.is_b2b_user === "Yes";
+  const exclusivePrice =
+    item.selling_price_exclusive_gst !== undefined &&
+    item.selling_price_exclusive_gst !== null
+      ? Number(item.selling_price_exclusive_gst)
+      : price;
+  const inclusivePrice =
+    item.selling_price_inclusive_gst !== undefined &&
+    item.selling_price_inclusive_gst !== null
+      ? Number(item.selling_price_inclusive_gst)
+      : price;
+
   const discountAmount = mrp > price ? Math.round(mrp - price) : null;
+  const discountPercent =
+    mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   const rating = Number(item.avg_rating);
   const showRating = rating > 0;
@@ -384,61 +398,150 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
       {/* ── DETAILS SECTION BELOW THE BORDERED CONTAINER ── */}
       <View style={{ paddingTop: spacing(8), gap: spacing(1) }}>
         {/* Price container */}
-        <View
-          style={{
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: spacing(2),
-            marginTop: spacing(1),
-          }}
-        >
-          {/* Selling Price 3D Pill */}
+        {isB2b ? (
           <View
             style={{
-              backgroundColor: colors.primary,
-              borderRadius: spacing(8),
-              paddingHorizontal: spacing(8),
-              paddingVertical: spacing(4),
-              borderWidth: 0, // No full border
-              borderColor: colors.primaryDark || "#1e3a8a", // Darker shade of primary
-              borderBottomWidth: 3, // 3D shadow offset only on bottom
-              borderRightWidth: 2, // 3D shadow offset only on right
-              alignItems: "center",
-              justifyContent: "center",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: spacing(2),
+              marginTop: spacing(1),
             }}
           >
-            <Text
+            {/* Excl. GST Main Price */}
+            <View
               style={{
-                fontSize: font(13),
-                color: "#FFFFFF",
-                fontFamily: "Poppins_700Bold",
-                includeFontPadding: false,
-                textAlign: "center",
-                transform: [{ translateY: 0.8 }], // Offsets bottom border to center visually
+                flexDirection: "row",
+                alignItems: "baseline",
+                gap: spacing(4),
+                flexWrap: "wrap",
               }}
             >
-              ₹{formatPrice(item.selling_price)}
-            </Text>
-          </View>
+              <Text
+                style={{
+                  fontSize: font(14),
+                  color: colors.primary,
+                  fontFamily: "Poppins_700Bold",
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(exclusivePrice)}
+              </Text>
+              <Text
+                style={{
+                  fontSize: font(10),
+                  color: colors.textSecondary,
+                  fontFamily: "Poppins_600SemiBold",
+                  includeFontPadding: false,
+                }}
+              >
+                Excl. GST
+              </Text>
+            </View>
 
-          {/* MRP Price crossed out below selling price */}
-          {discountAmount && (
+            {/* Incl. GST Secondary Price */}
             <Text
               style={{
-                fontSize: font(11),
-                color: colors.textSecondary,
-                textDecorationLine: "line-through",
+                fontSize: font(10),
+                color: colors.textTertiary,
                 fontFamily: "Poppins_400Regular",
                 includeFontPadding: false,
               }}
             >
-              ₹{formatMRP(item.mrp)}
+              ₹{formatPrice(inclusivePrice)} Incl. GST
             </Text>
-          )}
-        </View>
 
-        {/* Off price below selling price and MRP */}
-        {discountAmount && (
+            {/* MRP Price crossed out */}
+            {discountAmount && (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: spacing(4),
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(10),
+                    color: colors.textSecondary,
+                    textDecorationLine: "line-through",
+                    fontFamily: "Poppins_400Regular",
+                    includeFontPadding: false,
+                  }}
+                >
+                  ₹{formatMRP(item.mrp)}
+                </Text>
+                {discountPercent > 0 && (
+                  <Text
+                    style={{
+                      fontSize: font(10),
+                      color: "#FF5E0E",
+                      fontFamily: "Poppins_700Bold",
+                      includeFontPadding: false,
+                    }}
+                  >
+                    ({discountPercent}% off)
+                  </Text>
+                )}
+              </View>
+            )}
+          </View>
+        ) : (
+          <View
+            style={{
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: spacing(2),
+              marginTop: spacing(1),
+            }}
+          >
+            {/* Selling Price 3D Pill */}
+            <View
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: spacing(8),
+                paddingHorizontal: spacing(8),
+                paddingVertical: spacing(4),
+                borderWidth: 0, // No full border
+                borderColor: colors.primaryDark || "#1e3a8a", // Darker shade of primary
+                borderBottomWidth: 3, // 3D shadow offset only on bottom
+                borderRightWidth: 2, // 3D shadow offset only on right
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(13),
+                  color: "#FFFFFF",
+                  fontFamily: "Poppins_700Bold",
+                  includeFontPadding: false,
+                  textAlign: "center",
+                  transform: [{ translateY: 0.8 }], // Offsets bottom border to center visually
+                }}
+              >
+                ₹{formatPrice(item.selling_price)}
+              </Text>
+            </View>
+
+            {/* MRP Price crossed out below selling price */}
+            {discountAmount && (
+              <Text
+                style={{
+                  fontSize: font(11),
+                  color: colors.textSecondary,
+                  textDecorationLine: "line-through",
+                  fontFamily: "Poppins_400Regular",
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatMRP(item.mrp)}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* Off price below selling price and MRP (Only for B2C since B2B shows discount inline) */}
+        {!isB2b && discountAmount && (
           <View
             style={{
               flexDirection: "row",

@@ -39,6 +39,19 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
 
   const price = Number(item.selling_price);
   const mrp = Number(item.mrp);
+
+  const isB2b = item.is_b2b_user === "Yes";
+  const exclusivePrice =
+    item.selling_price_exclusive_gst !== undefined &&
+    item.selling_price_exclusive_gst !== null
+      ? Number(item.selling_price_exclusive_gst)
+      : price;
+  const inclusivePrice =
+    item.selling_price_inclusive_gst !== undefined &&
+    item.selling_price_inclusive_gst !== null
+      ? Number(item.selling_price_inclusive_gst)
+      : price;
+
   const discountAmount = mrp > price ? Math.round(mrp - price) : null;
   const rating = Number(item.avg_rating);
   const showRating = rating > 0;
@@ -244,37 +257,101 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
         )}
 
         {/* Price row */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: spacing(6),
-          }}
-        >
-          <Text
+        {isB2b ? (
+          <View style={{ gap: spacing(1) }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "baseline",
+                gap: spacing(4),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(15),
+                  fontFamily: "Poppins_700Bold",
+                  color: colors.primary,
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(exclusivePrice)}
+              </Text>
+              <Text
+                style={{
+                  fontSize: font(10),
+                  fontFamily: "Poppins_600SemiBold",
+                  color: colors.textSecondary,
+                  includeFontPadding: false,
+                }}
+              >
+                Excl. GST
+              </Text>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: spacing(6),
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: font(10),
+                  fontFamily: "Poppins_400Regular",
+                  color: colors.textTertiary,
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(inclusivePrice)} Incl. GST
+              </Text>
+              {discountAmount && (
+                <Text
+                  style={{
+                    fontSize: font(9),
+                    fontFamily: "Poppins_400Regular",
+                    color: colors.textSecondary,
+                    textDecorationLine: "line-through",
+                    includeFontPadding: false,
+                  }}
+                >
+                  ₹{formatPrice(mrp)}
+                </Text>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View
             style={{
-              fontSize: font(15),
-              fontFamily: "Poppins_700Bold",
-              color: colors.text,
-              includeFontPadding: false,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing(6),
             }}
           >
-            ₹{formatPrice(price)}
-          </Text>
-          {discountAmount && (
             <Text
               style={{
-                fontSize: font(9),
-                fontFamily: "Poppins_400Regular",
-                color: colors.textSecondary,
-                textDecorationLine: "line-through",
+                fontSize: font(15),
+                fontFamily: "Poppins_700Bold",
+                color: colors.text,
                 includeFontPadding: false,
               }}
             >
-              ₹{formatPrice(mrp)}
+              ₹{formatPrice(price)}
             </Text>
-          )}
-        </View>
+            {discountAmount && (
+              <Text
+                style={{
+                  fontSize: font(9),
+                  fontFamily: "Poppins_400Regular",
+                  color: colors.textSecondary,
+                  textDecorationLine: "line-through",
+                  includeFontPadding: false,
+                }}
+              >
+                ₹{formatPrice(mrp)}
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* ── CART CONTROL & OFF PRICE ROW ── */}
         <View
@@ -285,9 +362,9 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
             marginTop: spacing(2),
           }}
         >
-          {/* Left side: Off price */}
+          {/* Left side: Off price (Only for B2C) */}
           <View style={{ flex: 1 }}>
-            {discountAmount && (
+            {!isB2b && discountAmount && (
               <Text
                 style={{
                   fontSize: font(11),
