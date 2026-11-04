@@ -1303,6 +1303,7 @@ export default function Checkout() {
                 <CheckoutItem 
                   key={item.id} 
                   item={item} 
+                  isB2B={isB2BUser}
                   isLast={index === items.length - 1 && (!freeProducts || freeProducts.length === 0)}
                 />
               ))}

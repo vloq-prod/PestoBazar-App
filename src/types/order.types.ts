@@ -136,6 +136,7 @@ export interface OrderInfo {
   total_after_discount?: string | number | null;
   b2b_discount_percent?: string | number | null;
   b2b_discount_amount?: string | number | null;
+  b2b_order?: number | string | boolean;
   is_unboxing_message_sent?: number;
   tally_remark?: string | null;
 }
@@ -173,6 +174,13 @@ export interface OrderItem {
 
   tax_percent: string;
   gst_amount: string;
+
+  gst?: string | number;
+  price_exclusive_gst_amount?: string | number;
+  discount_percentage?: string | number;
+  discounted_amount?: string | number;
+  post_discount_amount?: string | number;
+  igst_amount?: string | number;
 
   listing_type: "Static" | "Combo";
   parent_variant_id: number;
@@ -293,6 +301,18 @@ export interface ViewOrderData {
   order_combo_detail: any[];
 
   free_product?: FreeProductOrderItem[];
+
+  you_save?: string | number;
+  b2b_summary?: {
+    base_amount: number;
+    b2b_discount_percent: number;
+    b2b_discount_amount: number;
+    sub_total: number;
+    gst_amount: number;
+    shipping_charge: number;
+    final_amount: number;
+    you_save: number;
+  } | null;
 }
 
 // ======================================================
@@ -400,6 +420,7 @@ export interface OrderHistoryItem {
   total_after_discount?: string | number | null;
   b2b_discount_percent?: string | number | null;
   b2b_discount_amount?: string | number | null;
+  b2b_order?: number | string | boolean;
   is_unboxing_message_sent?: number;
   tally_remark?: string | null;
 }
@@ -514,6 +535,7 @@ export interface Order {
   total_after_discount?: string | number | null;
   b2b_discount_percent?: string | number | null;
   b2b_discount_amount?: string | number | null;
+  b2b_order?: number | string | boolean;
   is_unboxing_message_sent?: number;
   tally_remark?: string | null;
 }

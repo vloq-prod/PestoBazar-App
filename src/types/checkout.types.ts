@@ -86,6 +86,16 @@ export interface CartItem {
   parent_variant_id: number;
 
   sku: string;
+  is_b2b_user?: string;
+  price_exclusive_gst?: number | string;
+  price_inclusive_gst?: number | string;
+  line_total_exclusive_gst?: number | string;
+  line_total_inclusive_gst?: number | string;
+  price_exclusive_gst_amount?: number | string;
+  discount_percentage?: string | number;
+  discounted_amount?: number | string;
+  post_discount_amount?: number | string;
+  post_discount_gst_amount?: number | string;
 }
 
 // ======================================================

@@ -77,6 +77,15 @@ const formatPrice = (price: any) => {
   return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.?0+$/, "");
 };
 
+const cartMoney = (val: any) => {
+  const num = Number(val || 0);
+  if (!Number.isFinite(num)) return "0.00";
+  return num.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const WavyDivider = ({ color, spacing }: { color: string; spacing: any }) => {
   return (
     <View
@@ -347,6 +356,68 @@ const OrderDetails = () => {
 
   const orderData = data?.data;
   const currentStatus = orderData?.order?.current_status || "Order Placed";
+
+  const isB2B = Boolean(
+    orderData?.order?.b2b_order == 1 ||
+    orderData?.order?.b2b_order === "1" ||
+    orderData?.order?.b2b_order === true ||
+    orderData?.b2b_summary
+  );
+
+  const b2bSummary = orderData?.b2b_summary;
+
+  const calculatedBaseAmount = React.useMemo(() => {
+    if (b2bSummary?.base_amount) return Number(b2bSummary.base_amount);
+    if (!orderData?.order_detail) return 0;
+    return orderData.order_detail.reduce((sum: number, it: any) => {
+      const tax = Number(it.tax_percent ?? it.gst ?? 18);
+      const priceExcl = Number(
+        it.price_exclusive_gst_amount !== undefined && Number(it.price_exclusive_gst_amount) > 0
+          ? it.price_exclusive_gst_amount
+          : Number(it.total_amount || 0) / (1 + tax / 100)
+      );
+      return sum + priceExcl;
+    }, 0);
+  }, [b2bSummary, orderData?.order_detail]);
+
+  const calculatedGstAmount = React.useMemo(() => {
+    if (b2bSummary?.gst_amount) return Number(b2bSummary.gst_amount);
+    if (!orderData?.order_detail) return 0;
+    return orderData.order_detail.reduce((sum: number, it: any) => {
+      const tax = Number(it.tax_percent ?? it.gst ?? 18);
+      const priceExcl = Number(
+        it.price_exclusive_gst_amount !== undefined && Number(it.price_exclusive_gst_amount) > 0
+          ? it.price_exclusive_gst_amount
+          : Number(it.total_amount || 0) / (1 + tax / 100)
+      );
+      const discPct = Number(it.discount_percentage ?? orderData?.order?.b2b_discount_percent ?? 0);
+      const discAmt = Number(
+        it.discounted_amount !== undefined && Number(it.discounted_amount) > 0
+          ? it.discounted_amount
+          : priceExcl * (discPct / 100)
+      );
+      const taxable = Number(
+        it.post_discount_amount !== undefined && Number(it.post_discount_amount) > 0
+          ? it.post_discount_amount
+          : priceExcl - discAmt
+      );
+      const gst = Number(
+        it.igst_amount !== undefined && Number(it.igst_amount) > 0
+          ? it.igst_amount
+          : taxable * (tax / 100)
+      );
+      return sum + gst;
+    }, 0);
+  }, [b2bSummary, orderData?.order_detail, orderData?.order?.b2b_discount_percent]);
+
+  const b2bDiscountAmount = Number(
+    orderData?.order?.b2b_discount_amount || b2bSummary?.b2b_discount_amount || 0
+  );
+  const b2bDiscountPercent = Number(
+    orderData?.order?.b2b_discount_percent || b2bSummary?.b2b_discount_percent || 0
+  );
+  const b2bSubTotal = calculatedBaseAmount - b2bDiscountAmount;
+  const youSaved = Number(orderData?.you_save || b2bDiscountAmount);
 
   React.useEffect(() => {
     if (orderData) {
@@ -667,6 +738,7 @@ const OrderDetails = () => {
             </View>
 
             <View style={styles.cardContent}>
+              {/* Item Total / Base Amount */}
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -675,7 +747,7 @@ const OrderDetails = () => {
                     color: colors.text,
                   }}
                 >
-                  Item Total
+                  {isB2B ? "Base Amount B2B" : "Item Total"}
                 </Text>
                 <Text
                   style={{
@@ -684,72 +756,62 @@ const OrderDetails = () => {
                     color: colors.text,
                   }}
                 >
-                  ₹{formatPrice(
-                    orderData?.order?.total_before_discount ||
-                      orderData?.order?.order_amount
+                  ₹{cartMoney(
+                    isB2B
+                      ? calculatedBaseAmount
+                      : orderData?.order?.total_before_discount || orderData?.order?.order_amount
                   )}
                 </Text>
               </View>
 
-              <View style={styles.summaryRow}>
-                <Text
-                  style={{
-                    fontFamily: "Poppins_500Medium",
-                    fontSize: font(12.5),
-                    color: colors.text,
-                  }}
-                >
-                  Shipping
-                </Text>
-                {orderData?.order?.shipping_charge === "0" ? (
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_700Bold",
-                      fontSize: font(12.5),
-                      color: "#10B981", // Green for FREE
-                    }}
-                  >
-                    FREE
-                  </Text>
-                ) : (
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_600SemiBold",
-                      fontSize: font(12.5),
-                      color: colors.text,
-                    }}
-                  >
-                    + ₹{formatPrice(orderData?.order?.shipping_charge)}
-                  </Text>
-                )}
-              </View>
+              {/* B2B Discount Row (if B2B) */}
+              {isB2B && b2bDiscountAmount > 0 && (
+                <>
+                  <View style={styles.summaryRow}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(12.5),
+                        color: "#10B981",
+                      }}
+                    >
+                      B2B discount ({b2bDiscountPercent}%)
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12.5),
+                        color: "#10B981",
+                      }}
+                    >
+                      - ₹{cartMoney(b2bDiscountAmount)}
+                    </Text>
+                  </View>
 
-              {orderData?.order?.cod_charges !== "0" && (
-                <View style={styles.summaryRow}>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_500Medium",
-                      fontSize: font(12.5),
-                      color: colors.text,
-                    }}
-                  >
-                    COD Charges
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_700Bold",
-                      fontSize: font(12.5),
-                      color:
-                        Number(orderData?.order?.cod_charges) > 0
-                          ? "#EF4444"
-                          : colors.text,
-                    }}
-                  >
-                    + ₹{formatPrice(orderData?.order?.cod_charges)}
-                  </Text>
-                </View>
+                  <View style={styles.summaryRow}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(12.5),
+                        color: colors.text,
+                      }}
+                    >
+                      Sub Total
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12.5),
+                        color: colors.text,
+                      }}
+                    >
+                      ₹{cartMoney(b2bSubTotal)}
+                    </Text>
+                  </View>
+                </>
               )}
 
+              {/* GST Row */}
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -767,11 +829,70 @@ const OrderDetails = () => {
                     color: colors.text,
                   }}
                 >
-                  + ₹{formatPrice(orderData?.order?.shipping_gst || "0")}
+                  + ₹{cartMoney(isB2B ? calculatedGstAmount : (orderData?.order?.shipping_gst || "0"))}
                 </Text>
               </View>
 
-              {Number(orderData?.order?.b2b_discount_amount) > 0 && (
+              {/* Shipping Row */}
+              <View style={styles.summaryRow}>
+                <Text
+                  style={{
+                    fontFamily: "Poppins_500Medium",
+                    fontSize: font(12.5),
+                    color: colors.text,
+                  }}
+                >
+                  Shipping
+                </Text>
+                {Number(orderData?.order?.shipping_charge || 0) === 0 ? (
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(12.5),
+                      color: "#10B981", // Green for FREE
+                    }}
+                  >
+                    FREE
+                  </Text>
+                ) : (
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    + ₹{cartMoney(orderData?.order?.shipping_charge)}
+                  </Text>
+                )}
+              </View>
+
+              {/* COD Charges Row */}
+              {Number(orderData?.order?.cod_charges || 0) > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    COD Charges
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_700Bold",
+                      fontSize: font(12.5),
+                      color: "#EF4444",
+                    }}
+                  >
+                    + ₹{cartMoney(orderData?.order?.cod_charges)}
+                  </Text>
+                </View>
+              )}
+
+              {/* Retail B2B Discount row (fallback for non-B2B mode) */}
+              {!isB2B && Number(orderData?.order?.b2b_discount_amount) > 0 && (
                 <View style={styles.summaryRow}>
                   <Text
                     style={{
@@ -792,11 +913,12 @@ const OrderDetails = () => {
                       color: "#10B981",
                     }}
                   >
-                    - ₹{formatPrice(orderData?.order?.b2b_discount_amount)}
+                    - ₹{cartMoney(orderData?.order?.b2b_discount_amount)}
                   </Text>
                 </View>
               )}
 
+              {/* Coupon Discount Row */}
               {Number(orderData?.order?.promo_discount_amount) > 0 && (
                 <View style={styles.summaryRow}>
                   <Text
@@ -818,7 +940,7 @@ const OrderDetails = () => {
                       color: "#10B981",
                     }}
                   >
-                    - ₹{formatPrice(orderData?.order?.promo_discount_amount)}
+                    - ₹{cartMoney(orderData?.order?.promo_discount_amount)}
                   </Text>
                 </View>
               )}
@@ -856,6 +978,18 @@ const OrderDetails = () => {
                       ? "Cash"
                       : "Prepaid"}
                   </Text>
+                  {youSaved > 0 && (
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(10.5),
+                        color: "#10B981",
+                        marginTop: 2,
+                      }}
+                    >
+                      You Saved ₹{cartMoney(youSaved)}
+                    </Text>
+                  )}
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
                   <Text
@@ -865,7 +999,7 @@ const OrderDetails = () => {
                       color: colors.text,
                     }}
                   >
-                    ₹{formatPrice(
+                    ₹{cartMoney(
                       orderData?.order?.total_after_discount ??
                         orderData?.order?.paid_amount ??
                         orderData?.order?.order_amount

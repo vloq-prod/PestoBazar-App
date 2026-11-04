@@ -820,6 +820,7 @@ export default function CartScreen() {
                       )}
                       <CartItem
                         item={item}
+                        isB2B={isB2BUser}
                         onDecrease={handleDecrease}
                         onIncrease={handleIncrease}
                         onRemove={handleRemove}
