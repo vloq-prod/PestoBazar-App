@@ -2,10 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { getDiyListing } from "../api/diy.api";
 import { DiyListingRequest } from "../types/diy.types";
 
-export const useDiyListing = (params: DiyListingRequest = {}) => {
+export const useDiyListing = (
+  params: DiyListingRequest = {},
+  userId?: string | null,
+) => {
+  const effectiveUserId = userId ?? params.user_id ?? "guest";
   const query = useQuery({
-    queryKey: ["diy-listing", params],
-    queryFn: () => getDiyListing(params),
+    queryKey: ["diy-listing", params, effectiveUserId],
+    queryFn: () =>
+      getDiyListing({
+        ...params,
+        ...(userId ? { user_id: userId } : {}),
+      }),
     staleTime: 1000 * 60 * 2,
   });
 

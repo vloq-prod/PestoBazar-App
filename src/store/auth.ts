@@ -13,6 +13,7 @@ interface AppState {
   userName: string | null;
   userEmail: string | null;
   userAvatar: string | null;
+  userMobile: string | null;
 
   // Visitor actions
   setVisitor: (visitorId: string, token: string) => Promise<void>;
@@ -48,6 +49,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   userName: null,
   userEmail: null,
   userAvatar: null,
+  userMobile: null,
 
   // ── Visitor ──────────────────────────────────────
   setVisitor: async (visitorId, token) => {
@@ -119,7 +121,13 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     await StorageUtil.clearUser();
     await StorageUtil.clearB2BSession();
     console.log("📦 [AUTH STORE clearUser]: cleared");
-    set({ userId: null, userName: null, userEmail: null, userAvatar: null });
+    set({
+      userId: null,
+      userName: null,
+      userEmail: null,
+      userAvatar: null,
+      userMobile: null,
+    });
   },
 
   hydrateUser: async () => {
@@ -127,9 +135,22 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     const userName = await StorageUtil.getUserName();
     const email = await StorageUtil.getUserEmail();
     const avatar = await StorageUtil.getUserAvatar();
-    console.log("📦 [AUTH STORE hydrateUser]:", { userId, userName, email, avatar });
-    if (userId && userName) {
-      set({ userId, userName, userEmail: email, userAvatar: avatar });
+    const mobile = await StorageUtil.getUserMobile();
+    console.log("📦 [AUTH STORE hydrateUser]:", {
+      userId,
+      userName,
+      email,
+      avatar,
+      mobile,
+    });
+    if (userId) {
+      set({
+        userId,
+        userName: userName || "User",
+        userEmail: email,
+        userAvatar: avatar,
+        userMobile: mobile,
+      });
     }
   },
 
@@ -139,6 +160,12 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     await StorageUtil.clearB2BSession();
     resetAnalytics();
     console.log("📦 [AUTH STORE logout]: logged out");
-    set({ userId: null, userName: null, userEmail: null, userAvatar: null });
+    set({
+      userId: null,
+      userName: null,
+      userEmail: null,
+      userAvatar: null,
+      userMobile: null,
+    });
   },
 }));

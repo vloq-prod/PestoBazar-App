@@ -146,10 +146,10 @@ export const useCategoryWithSubcategories = (rootId: number = 0) => {
 };
 
 // home product hook
-export const useHomeProduct = () => {
+export const useHomeProduct = (userId?: string | null) => {
   const query = useQuery({
-    queryKey: ["home-products"],
-    queryFn: getHomeProducts,
+    queryKey: ["home-products", userId ?? "guest"],
+    queryFn: () => getHomeProducts(userId ? { user_id: userId } : undefined),
   });
 
   return {
@@ -171,10 +171,10 @@ export const useHomeBanners = () => {
   };
 };
 
-export const useDeals = () => {
+export const useDeals = (userId?: string | null) => {
   const query = useQuery({
-    queryKey: ["deals-of-the-day"],
-    queryFn: getDealsOfTheDay,
+    queryKey: ["deals-of-the-day", userId ?? "guest"],
+    queryFn: () => getDealsOfTheDay(userId ? { user_id: userId } : undefined),
   });
 
   return {
@@ -205,10 +205,11 @@ export const useDealsListing = (
   };
 };
 
-export const useFeatured = () => {
+export const useFeatured = (userId?: string | null) => {
   const query = useQuery({
-    queryKey: ["featured-products"],
-    queryFn: getFeaturedProducts,
+    queryKey: ["featured-products", userId ?? "guest"],
+    queryFn: () =>
+      getFeaturedProducts(userId ? { user_id: userId } : undefined),
   });
 
   return {

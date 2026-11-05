@@ -714,7 +714,15 @@ export default function HomeScreen() {
 
   useEffect(() => {
     console.log("user_id:", userId, "visitor_id:", visitorId);
-  }, [userId, visitorId]);
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ["custom-product-sections"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-category-sections"] });
+      queryClient.invalidateQueries({ queryKey: ["home-products"] });
+      queryClient.invalidateQueries({ queryKey: ["deals-of-the-day"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+      queryClient.invalidateQueries({ queryKey: ["diy-listing"] });
+    }
+  }, [userId, visitorId, queryClient]);
   const { colors } = useTheme();
   const { spacing } = useResponsive();
 
@@ -764,14 +772,14 @@ export default function HomeScreen() {
   console.log("slidingbanners", slidingbanners);
   const { banners: mainBanners } = useAppMainBanner();
   const { banners: headerBanners } = useAppHeaderBanner();
-  const { sections: homeProducts } = useHomeProduct();
-  const { deals } = useDeals();
-  const { featured } = useFeatured();
+  const { sections: homeProducts } = useHomeProduct(userId);
+  const { deals } = useDeals(userId);
+  const { featured } = useFeatured(userId);
   const { testimonials } = useTestimonial();
   const { uspList } = useUsp();
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "", userId || "");
-  const { products: diyProducts } = useDiyListing();
+  const { products: diyProducts } = useDiyListing({}, userId);
   const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
   const promoHeight = useSharedValue(0);
   const [isPromoVisible, setIsPromoVisible] = useState(false);

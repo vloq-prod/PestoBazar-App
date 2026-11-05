@@ -1,3 +1,4 @@
+
 // src/components/home/CustomSections.tsx
 
 import React from "react";
@@ -9,7 +10,10 @@ import {
   Dimensions,
   ActivityIndicator,
 } from "react-native";
-import { useCustomSections } from "../../hooks/customSection.hooks";
+import {
+  useCustomCategorySections,
+  useCustomProductSections,
+} from "../../hooks/customSection.hooks";
 import ItemCard from "../comman/ItemCard";
 import { useTheme } from "../../theme";
 import { ChevronRight } from "lucide-react-native";
@@ -19,6 +23,7 @@ import { useRouter } from "expo-router";
 import SeeAllProductsButton from "../comman/SeeAllProductsButton";
 import { CategorySectionBlock } from "./CategoryCardSection";
 import { CustomSection } from "../../types/customSection.types";
+import { useAppVisitorStore } from "../../store/auth";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -152,9 +157,45 @@ const SectionHeader = ({ title, description }: any) => {
 };
 
 const CustomSections = () => {
-  const { data: customSectionsRes, isLoading, error } = useCustomSections();
+  const userId = useAppVisitorStore((state) => state.userId);
+
+  const {
+    data: categorySectionsRes,
+    isLoading: isCategoryLoading,
+    error: categoryError,
+  } = useCustomCategorySections(userId);
+
+  const {
+    data: productSectionsRes,
+    isLoading: isProductLoading,
+    error: productError,
+  } = useCustomProductSections(userId);
+
   const { colors } = useTheme();
   const router = useRouter();
+
+  const sections = React.useMemo(() => {
+    // 1) Saare Category sections pehle (sorted by sequence)
+    const catSections = [...(categorySectionsRes?.data || [])].sort((a, b) => {
+      const seqA = a.sequence ?? 0;
+      const seqB = b.sequence ?? 0;
+      if (seqA !== seqB) return seqA - seqB;
+      return (a.section_id ?? 0) - (b.section_id ?? 0);
+    });
+
+    // 2) Saare Product sections uske niche (sorted by sequence)
+    const prodSections = [...(productSectionsRes?.data || [])].sort((a, b) => {
+      const seqA = a.sequence ?? 0;
+      const seqB = b.sequence ?? 0;
+      if (seqA !== seqB) return seqA - seqB;
+      return (a.section_id ?? 0) - (b.section_id ?? 0);
+    });
+
+    return [...catSections, ...prodSections];
+  }, [categorySectionsRes?.data, productSectionsRes?.data]);
+
+  const isLoading =
+    (isCategoryLoading || isProductLoading) && sections.length === 0;
 
   if (isLoading) {
     return (
@@ -164,11 +205,9 @@ const CustomSections = () => {
     );
   }
 
-  if (error) {
+  if (categoryError && productError && sections.length === 0) {
     return null;
   }
-
-  const sections = customSectionsRes?.data || [];
 
   if (sections.length === 0) {
     return null;

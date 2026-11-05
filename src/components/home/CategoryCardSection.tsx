@@ -599,9 +599,25 @@ export const CategorySectionBlock: React.FC<{
   );
 };
 
-// ─── Main Component (Deprecated / Handled by CustomSections) ──
+// ─── Main Component ──────────────────────────────────────────
 const CategoryCardSection = () => {
-  return null;
+  const { data: categorySectionsRes, isLoading, error } = useCustomCategorySections();
+
+  if (isLoading || error) return null;
+
+  const sections = categorySectionsRes?.data || [];
+  if (sections.length === 0) return null;
+
+  return (
+    <View style={{ gap: 20 }}>
+      {sections.map((section) => (
+        <CategorySectionBlock
+          key={`cat-sec-${section.section_id}`}
+          section={section}
+        />
+      ))}
+    </View>
+  );
 };
 
 export default CategoryCardSection;

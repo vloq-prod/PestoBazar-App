@@ -16,6 +16,7 @@ import { useVerifyOtp, useSendOtp } from "../../src/hooks/useAuthHooks";
 
 import { ArrowLeft } from "lucide-react-native";
 import { useAppVisitorStore } from "../../src/store/auth";
+import { StorageUtil } from "../../src/utils/storage";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import ResendOtpModal, { OtpChannel } from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
@@ -106,6 +107,9 @@ export default function VerifyOtpScreen() {
         isVerifyingRef.current = false;
 
         await setUser(data.data.user_id, data.data.user_name);
+        if (mobile) {
+          await StorageUtil.setUserMobile(mobile);
+        }
         setAnalyticsUserId(data.data.user_id);
         if (isNewUser === "1") {
           trackSignUp("phone");

@@ -25,8 +25,11 @@ import {
 } from "lucide-react-native";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useAppVisitorStore } from "../../src/store/auth";
+import { StorageUtil } from "../../src/utils/storage";
 import { useToast } from "../../src/context/ToastContext";
 import { useRouter } from "expo-router";
+import { useB2BProfile } from "../../src/hooks/b2bHooks";
+import BulkBuyerDetailsCard from "../../src/components/profile/BulkBuyerDetailsCard";
 
 const getInitials = (name?: string | null) => {
   if (!name || !name.trim()) return "U";
@@ -136,7 +139,33 @@ export default function UserProfile() {
   const userName = useAppVisitorStore((s) => s.userName);
   const userEmail = useAppVisitorStore((s) => s.userEmail);
   const userAvatar = useAppVisitorStore((s) => s.userAvatar);
+  const userMobile = useAppVisitorStore((s) => s.userMobile);
   const setUser = useAppVisitorStore((s) => s.setUser);
+
+  const [form, setForm] = useState({
+    fullName: userName || "",
+    email: userEmail || "",
+    phone: userMobile || "",
+  });
+
+  const cleanPhone = form.phone ? form.phone.replace(/\D/g, "") : "";
+  const effectiveMobile =
+    userMobile || (cleanPhone.length === 10 ? cleanPhone : undefined);
+
+  // ── B2B Profile Data Fetching ────────────────
+  const {
+    data: b2bRes,
+    isLoading: isB2BLoading,
+    refetch: refetchB2B,
+  } = useB2BProfile({
+    user_id: userId || undefined,
+    mobile: effectiveMobile || undefined,
+  });
+
+  const b2bData = b2bRes?.data;
+  const isB2BUser =
+    b2bData?.is_b2b_user ?? (b2bData?.dealer?.status === "Approved");
+  const b2bDealer = b2bData?.dealer;
 
   const [imageError, setImageError] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState(userAvatar);
@@ -147,11 +176,12 @@ export default function UserProfile() {
     setCurrentAvatar(userAvatar);
   }, [userAvatar]);
 
-  const [form, setForm] = useState({
-    fullName: userName || "",
-    email: userEmail || "",
-    phone: "",
-  });
+  useEffect(() => {
+    if (b2bDealer?.mobile && !form.phone) {
+      setForm((p) => ({ ...p, phone: b2bDealer.mobile }));
+      StorageUtil.setUserMobile(b2bDealer.mobile);
+    }
+  }, [b2bDealer?.mobile]);
 
   const setField = useCallback(
     (key: keyof typeof form) => (v: string) =>
@@ -194,12 +224,16 @@ export default function UserProfile() {
 
     setIsSaving(true);
     try {
+      if (form.phone.trim()) {
+        await StorageUtil.setUserMobile(form.phone.trim());
+      }
       await setUser(
         userId || "user",
         form.fullName.trim(),
         form.email.trim(),
         currentAvatar || undefined,
       );
+      refetchB2B();
       showToast("Profile updated successfully!", "success");
       setTimeout(() => {
         router.back();
@@ -248,15 +282,22 @@ export default function UserProfile() {
                 >
                   Hey there,
                 </Text>
-                <Text
-                  style={[
-                    styles.userName,
-                    { color: colors.text, fontSize: font(22) },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {form.fullName || userName || "Guest User"}
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <Text
+                    style={[
+                      styles.userName,
+                      { color: colors.text, fontSize: font(22) },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {form.fullName || userName || "Guest User"}
+                  </Text>
+                  {isB2BUser ? (
+                    <View style={styles.heroB2BBadge}>
+                      <Text style={styles.heroB2BBadgeText}>Bulk Buyer</Text>
+                    </View>
+                  ) : null}
+                </View>
                 <Text
                   style={[styles.description, { color: colors.textSecondary }]}
                 >
@@ -355,6 +396,36 @@ export default function UserProfile() {
             </View>
           </View>
 
+       
+          {/* ── Bulk Buyer Details ── */}
+          {isB2BLoading && !b2bDealer ? (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                paddingVertical: 18,
+                marginTop: 4,
+              }}
+            >
+              <ActivityIndicator color={colors.primary} size="small" />
+              <Text
+                style={{
+                  fontFamily: "Poppins_500Medium",
+                  fontSize: font(12),
+                  color: colors.textSecondary,
+                  marginTop: 6,
+                }}
+              >
+                Loading Bulk Buyer Details...
+              </Text>
+            </View>
+          ) : b2bDealer ? (
+            <BulkBuyerDetailsCard
+              dealer={b2bDealer}
+              statusBadge={b2bData?.status_badge}
+              containerStyle={{ marginHorizontal: 0, marginTop: 8 }}
+            />
+          ) : null}
         </ScrollView>
 
         {/* ── Footer Action Button ── */}
@@ -425,6 +496,19 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_700Bold",
     lineHeight: 28,
   },
+  heroB2BBadge: {
+    backgroundColor: "#E3F8EF",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(8, 122, 84, 0.25)",
+  },
+  heroB2BBadgeText: {
+    fontFamily: "Poppins_700Bold",
+    fontSize: 11,
+    color: "#087A54",
+  },
   description: {
     fontFamily: "Poppins_400Regular",
     fontSize: 13,
@@ -494,6 +578,10 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontFamily: "Poppins_500Medium",
     marginLeft: 1,
+  },
+  divider: {
+    height: 1,
+    width: "100%",
   },
   inputBox: {
     flexDirection: "row",

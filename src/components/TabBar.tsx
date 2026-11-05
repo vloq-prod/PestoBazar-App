@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 import { Platform, Pressable, View, LayoutChangeEvent } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Home, LayoutGrid, User, Briefcase } from "lucide-react-native";
+import { Home, LayoutGrid, User, Briefcase, Clock, ShieldCheck } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
@@ -15,6 +15,7 @@ import { useTheme } from "../theme";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import dealsimage from "../../assets/deal2.png";
+import { useB2BApplicationStatus } from "../hooks/b2bHooks";
 
 type TabCfg = {
   label: string;
@@ -155,6 +156,42 @@ function AndroidTabItem({
 }
 
 // ─────────────────────────────────────────────────────────
+// Dynamic B2B Visual State Hook
+// ─────────────────────────────────────────────────────────
+function useB2BButtonVisual() {
+  const { data } = useB2BApplicationStatus();
+
+  return useMemo(() => {
+    if (!data || !data.has_application || !data.status) {
+      return {
+        gradient: ["#20086b", "#5f16e9"] as [string, string],
+        bgColor: "#20086b",
+        shadowColor: "#000",
+        Icon: Briefcase,
+      };
+    }
+
+    const s = (data.status || "").toLowerCase().trim();
+    if (data.is_b2b_user || s === "approved") {
+      return {
+        gradient: ["#047857", "#10B981"] as [string, string],
+        bgColor: "#047857",
+        shadowColor: "#047857",
+        Icon: ShieldCheck,
+      };
+    }
+
+    // Pending, Under Review, Submitted, Correction Required, Draft
+    return {
+      gradient: ["#D97706", "#F59E0B"] as [string, string],
+      bgColor: "#D97706",
+      shadowColor: "#D97706",
+      Icon: Clock,
+    };
+  }, [data]);
+}
+
+// ─────────────────────────────────────────────────────────
 // iOS TabBar — floating pill style
 // ─────────────────────────────────────────────────────────
 function IOSTabBar({ state, navigation }: BottomTabBarProps) {
@@ -163,6 +200,7 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = (insets.bottom || 0) + -13;
   const pillInset = 3;
+  const b2bVisual = useB2BButtonVisual();
 
   const tabLayouts = useRef<{ x: number; width: number }[]>([]);
   const pillX = useSharedValue(0);
@@ -325,16 +363,17 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
             borderRadius: 999,
             alignItems: "center",
             justifyContent: "center",
-            shadowColor: "#000",
+            shadowColor: b2bVisual.shadowColor,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 0.2,
             shadowRadius: 9,
             elevation: 8,
             overflow: "hidden",
+            backgroundColor: b2bVisual.bgColor,
           }}
         >
           <LinearGradient
-            colors={["#20086b", "#5f16e9"]}
+            colors={b2bVisual.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
@@ -345,7 +384,7 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
               gap: 2,
             }}
           >
-            <Briefcase size={22} color="#ffffff" strokeWidth={2.2} />
+            <b2bVisual.Icon size={22} color="#ffffff" strokeWidth={2.2} />
             <Animated.Text
               style={{
                 fontFamily: "Poppins_700Bold",
@@ -372,6 +411,7 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const b2bVisual = useB2BButtonVisual();
 
   const handlePress = useCallback(
     (routeKey: string, routeName: string, isFocused: boolean) => {
@@ -474,11 +514,11 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
             alignItems: "center",
             justifyContent: "center",
             overflow: "hidden",
-            backgroundColor: colors.primary,
+            backgroundColor: b2bVisual.bgColor,
           }}
         >
           <LinearGradient
-            colors={["#20086b", "#5f16e9"]}
+            colors={b2bVisual.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{
@@ -489,7 +529,7 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
               gap: 2,
             }}
           >
-            <Briefcase size={18} color="#ffffff" strokeWidth={2.2} />
+            <b2bVisual.Icon size={18} color="#ffffff" strokeWidth={2.2} />
             <Animated.Text
               style={{
                 fontFamily: "Poppins_700Bold",

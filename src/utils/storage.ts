@@ -12,6 +12,7 @@ export const StorageKeys = {
   USER_NAME: "user_name",
   USER_EMAIL: "user_email",
   USER_AVATAR: "user_avatar",
+  USER_MOBILE: `user_mobile_${ENV_SUFFIX}`,
   B2B_PUBLIC_ID: `b2b_public_id_${ENV_SUFFIX}`,
   B2B_TRACKING_TOKEN: `b2b_tracking_token_${ENV_SUFFIX}`,
   B2B_MOBILE: `b2b_mobile_${ENV_SUFFIX}`,
@@ -41,11 +42,17 @@ export const StorageUtil = {
   getUserName: async () => SecureStore.getItemAsync(StorageKeys.USER_NAME),
   getUserEmail: async () => SecureStore.getItemAsync(StorageKeys.USER_EMAIL),
   getUserAvatar: async () => SecureStore.getItemAsync(StorageKeys.USER_AVATAR),
+  setUserMobile: async (mobile: string) =>
+    SecureStore.setItemAsync(StorageKeys.USER_MOBILE, mobile),
+  getUserMobile: async () => SecureStore.getItemAsync(StorageKeys.USER_MOBILE),
+  clearUserMobile: async () =>
+    SecureStore.deleteItemAsync(StorageKeys.USER_MOBILE),
   clearUser: async () => {
     await SecureStore.deleteItemAsync(StorageKeys.USER_ID);
     await SecureStore.deleteItemAsync(StorageKeys.USER_NAME);
     await SecureStore.deleteItemAsync(StorageKeys.USER_EMAIL);
     await SecureStore.deleteItemAsync(StorageKeys.USER_AVATAR);
+    await SecureStore.deleteItemAsync(StorageKeys.USER_MOBILE);
   },
 
   // ── Pincode ──────────────────────────────────────

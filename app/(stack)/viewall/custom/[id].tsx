@@ -23,6 +23,7 @@ import { ListingItem } from "../../../../src/types/shop.types";
 import ProductCard from "../../../../src/components/ProductCard";
 import { useResponsive } from "../../../../src/utils/useResponsive";
 import AddToCartPreview from "../../../../src/components/cart/AddToCartPreview";
+import { useAppVisitorStore } from "../../../../src/store/auth";
 
 const { width } = Dimensions.get("window");
 
@@ -203,6 +204,7 @@ const CustomSectionAllProducts = () => {
 
   const { id } = useLocalSearchParams();
   const sectionId = Number(id);
+  const userId = useAppVisitorStore((state) => state.userId);
 
   const [gridMode, setGridMode] = React.useState<GridMode>("grid");
   const isGrid = gridMode === "grid";
@@ -226,6 +228,7 @@ const CustomSectionAllProducts = () => {
   } = useCustomSectionProducts({
     sectionId,
     page,
+    user_id: userId,
   });
 
   const title = res?.data?.section?.section_title || "Products";

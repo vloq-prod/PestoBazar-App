@@ -40,16 +40,21 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
   const price = Number(item.selling_price);
   const mrp = Number(item.mrp);
 
-  const isB2b = item.is_b2b_user === "Yes";
+  const isB2b =
+    item.is_b2b_user === "Yes" ||
+    String(item.is_b2b_user || "").toLowerCase() === "yes";
+
+  const rawExclusive = Number(item.selling_price_exclusive_gst);
+  const rawInclusive = Number(item.selling_price_inclusive_gst);
+
   const exclusivePrice =
-    item.selling_price_exclusive_gst !== undefined &&
-    item.selling_price_exclusive_gst !== null
-      ? Number(item.selling_price_exclusive_gst)
+    !isNaN(rawExclusive) && rawExclusive > 0
+      ? rawExclusive
       : price;
+
   const inclusivePrice =
-    item.selling_price_inclusive_gst !== undefined &&
-    item.selling_price_inclusive_gst !== null
-      ? Number(item.selling_price_inclusive_gst)
+    !isNaN(rawInclusive) && rawInclusive > 0
+      ? rawInclusive
       : price;
 
   const discountAmount = mrp > price ? Math.round(mrp - price) : null;

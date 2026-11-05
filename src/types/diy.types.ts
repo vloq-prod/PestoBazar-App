@@ -48,6 +48,10 @@ export interface DiyItem {
   image_path?: string | null;
   enc_product_variation_id?: string | null;
   product_all_images?: ProductImage[];
+  is_b2b_user?: string;
+  selling_price_inclusive_gst?: number | string;
+  selling_price_exclusive_gst?: number | string;
+  gst_percent?: number | string;
 }
 
 export interface DiyListingData {
@@ -69,5 +73,6 @@ export interface DiyListingRequest {
   page_size?: number;
   sort_by?: string | number;
   search?: string;
+  user_id?: string | null;
   [key: string]: any;
 }

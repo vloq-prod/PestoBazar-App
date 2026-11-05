@@ -13,6 +13,7 @@ import { useTheme } from "../../theme";
 import { ChevronRight } from "lucide-react-native";
 import { ProductItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
+import { useAppVisitorStore } from "../../store/auth";
 
 import SeeAllProductsButton from "../comman/SeeAllProductsButton";
 
@@ -164,7 +165,8 @@ const SectionHeader = ({ title, description }: any) => {
 // Main Component
 // ─────────────────────────────────────────────
 const HomeProduct = () => {
-  const { sections, loading, error } = useHomeProduct();
+  const userId = useAppVisitorStore((state) => state.userId);
+  const { sections, loading, error } = useHomeProduct(userId);
   const { colors } = useTheme();
 
   const router = useRouter();

@@ -90,8 +90,11 @@ export interface CustomCategorySection {
   section_id: number;
   section_title: string;
   section_description?: string | null;
-  parent_category_id: number;
+  parent_category_id?: number;
   sequence: number;
+  selection_type: string;
+  type?: "category" | string;
+  timezone?: string;
   start_datetime: string;
   end_datetime: string | null;
   category_count: number;
@@ -101,5 +104,11 @@ export interface CustomCategorySection {
 export interface GetCustomCategorySectionsResponse {
   status: boolean;
   message: string;
-  data: CustomCategorySection[];
+  data: CustomSection[];
+}
+
+export interface GetCustomProductSectionsResponse {
+  status: boolean;
+  message: string;
+  data: CustomSection[];
 }

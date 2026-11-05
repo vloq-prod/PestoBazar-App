@@ -64,17 +64,27 @@ export const getHomeCategories = async (
 };
 
 // home product api
-export const getHomeProducts = async (): Promise<HomeProductApiResponse> => {
+export const getHomeProducts = async (params?: {
+  user_id?: string | null;
+}): Promise<HomeProductApiResponse> => {
   const response = await apiClient.get<HomeProductApiResponse>(
     "/app-api/v1/app-home-product",
+    {
+      params: params?.user_id ? { user_id: params.user_id } : undefined,
+    },
   );
 
   return response.data;
 };
 
-export const getDealsOfTheDay = async (): Promise<DealsApiResponse> => {
+export const getDealsOfTheDay = async (params?: {
+  user_id?: string | null;
+}): Promise<DealsApiResponse> => {
   const response = await apiClient.get<DealsApiResponse>(
     "/app-api/v1/app-home-deals-of-the-day",
+    {
+      params: params?.user_id ? { user_id: params.user_id } : undefined,
+    },
   );
 
   return response.data;
@@ -91,9 +101,14 @@ export const getDealsListing = async (
   return response.data;
 };
 
-export const getFeaturedProducts = async (): Promise<FeaturedApiResponse> => {
+export const getFeaturedProducts = async (params?: {
+  user_id?: string | null;
+}): Promise<FeaturedApiResponse> => {
   const response = await apiClient.get<FeaturedApiResponse>(
     "/app-api/v1/app-home-featured-day",
+    {
+      params: params?.user_id ? { user_id: params.user_id } : undefined,
+    },
   );
 
   return response.data;

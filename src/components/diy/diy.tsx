@@ -6,6 +6,7 @@ import { useDiyListing } from "../../hooks/diyHooks";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
+import { useAppVisitorStore } from "../../store/auth";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -15,7 +16,8 @@ interface DiyProps {
 }
 
 const Diy: React.FC<DiyProps> = ({ products: propProducts, loading: propLoading }) => {
-    const { products: hookProducts, loading: hookLoading } = useDiyListing({});
+    const userId = useAppVisitorStore((state) => state.userId);
+    const { products: hookProducts, loading: hookLoading } = useDiyListing({}, userId);
     const products = propProducts !== undefined ? propProducts : hookProducts;
     const loading = propLoading !== undefined ? propLoading : hookLoading;
     const { colors } = useTheme();

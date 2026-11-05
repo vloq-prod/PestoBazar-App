@@ -22,6 +22,7 @@ import { ItemCardSkeleton } from "../../src/components/comman/ItemCard";
 import { ListingItem } from "../../src/types/shop.types";
 import { DiyItem } from "../../src/types/diy.types";
 import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -66,8 +67,10 @@ const DiyScreen = () => {
     setGridMode((prev) => (prev === "grid" ? "list" : "grid"));
   };
 
+  const userId = useAppVisitorStore((state) => state.userId);
+
   // Fetch DIY products and banner
-  const { products, banner, totalCount, loading } = useDiyListing({});
+  const { products, banner, totalCount, loading } = useDiyListing({}, userId);
 
   const mappedProducts = useMemo(() => {
     return products.map(mapDiyToListingItem);

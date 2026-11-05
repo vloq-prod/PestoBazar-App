@@ -12,7 +12,10 @@ import {
   b2bSaveAddressDetailsApi,
   b2bSaveKycDetailsApi,
   b2bSubmitKycDetailsApi,
+  b2bGetProfileApi,
+  b2bGetApplicationStatusApi,
 } from "../api/b2b.api";
+import { useAppVisitorStore } from "../store/auth";
 import {
   B2BGetRegistrationDetailsPayload,
   B2BGetRegistrationDetailsResponse,
@@ -338,3 +341,115 @@ export const useB2BRegistrationFlow = (initialState?: {
     },
   };
 };
+
+/**
+ * 10. Hook: Fetch B2B User Profile details
+ * Calls GET /api/app-b2b/profile
+ */
+export const useB2BProfile = (params?: {
+  user_id?: string | number;
+  public_id?: string;
+  mobile?: string;
+  enabled?: boolean;
+}) => {
+  return useQuery({
+    queryKey: ["b2b-profile", params?.user_id, params?.public_id, params?.mobile],
+    queryFn: () =>
+      b2bGetProfileApi({
+        user_id: params?.user_id,
+        public_id: params?.public_id,
+        mobile: params?.mobile,
+      }),
+    enabled: params?.enabled !== undefined ? params.enabled : true,
+    staleTime: 1000 * 60 * 3, // 3 minutes cache
+  });
+};
+
+export interface B2BStatusResult {
+  has_application: boolean;
+  is_b2b_user: boolean;
+  status: string | null;
+  status_badge?: any;
+  public_id?: string;
+  business_name?: string;
+}
+
+/**
+ * 11. Hook: Fetch B2B Application Status (for TabBar, Header, Badges)
+ * Checks GET /api/app-b2b/application/status with automatic fallback to profile
+ */
+export const useB2BApplicationStatus = () => {
+  const userId = useAppVisitorStore((s) => s.userId);
+  const userMobile = useAppVisitorStore((s) => s.userMobile);
+
+  return useQuery<B2BStatusResult>({
+    queryKey: ["b2b-application-status", userId, userMobile],
+    queryFn: async (): Promise<B2BStatusResult> => {
+      if (!userId && !userMobile) {
+        return {
+          has_application: false,
+          is_b2b_user: false,
+          status: null,
+        };
+      }
+
+      // 1. Try GET /api/app-b2b/application/status
+      try {
+        const res = await b2bGetApplicationStatusApi({
+          user_id: userId || undefined,
+          mobile: userMobile || undefined,
+        });
+        if (res && res.data) {
+          const d = res.data;
+          const rawStatus = d.status || null;
+          const isApproved =
+            d.is_b2b_user === true || (rawStatus || "").toLowerCase() === "approved";
+          return {
+            has_application: Boolean(d.has_application ?? rawStatus),
+            is_b2b_user: isApproved,
+            status: rawStatus,
+            status_badge: d.status_badge,
+            public_id: d.public_id,
+            business_name: d.business_name,
+          };
+        }
+      } catch (e) {
+        // Fallback below
+      }
+
+      // 2. Safe Fallback to b2bGetProfileApi
+      try {
+        const profile = await b2bGetProfileApi({
+          user_id: userId || undefined,
+          mobile: userMobile || undefined,
+        });
+
+        if (profile && profile.data) {
+          const d = profile.data;
+          const rawStatus = d.status || d.dealer?.status || null;
+          const isApproved =
+            d.is_b2b_user === true || (rawStatus || "").toLowerCase() === "approved";
+          return {
+            has_application: Boolean(d.has_b2b_application ?? d.dealer ?? rawStatus),
+            is_b2b_user: isApproved,
+            status: rawStatus,
+            status_badge: d.status_badge,
+            public_id: d.dealer?.public_id,
+            business_name: d.dealer?.business_name,
+          };
+        }
+      } catch (profileErr) {
+        // Fallback error ignored
+      }
+
+      return {
+        has_application: false,
+        is_b2b_user: false,
+        status: null,
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnWindowFocus: false,
+  });
+};
+

@@ -355,3 +355,100 @@ export interface B2BSubmitKycDetailsData {
 }
 
 export type B2BSubmitKycDetailsResponse = B2BApiResponse<B2BSubmitKycDetailsData>;
+
+// -------------------------------------------------------------
+// 10. B2B Profile (GET /api/app-b2b/profile)
+// -------------------------------------------------------------
+export interface B2BProfileStatusBadge {
+  status: string;
+  is_approved: boolean;
+  label: string;
+  color: string;
+  bg_color: string;
+  can_resume: boolean;
+}
+
+export interface B2BProfileUserData {
+  id: number;
+  name: string;
+  email: string;
+  mobile: string;
+  is_b2b_user: "Yes" | "No";
+  profile_picture?: string | null;
+}
+
+export interface B2BProfileDealerData {
+  id: number;
+  public_id: string;
+  tracking_token?: string;
+  status: string;
+  kyc_status: string;
+  current_step: number;
+  last_completed_step: number;
+  mobile_verified: "Yes" | "No";
+  last_admin_remark?: string;
+  correction_step?: number | null;
+  correction_fields?: { [step: string]: string[] } | null;
+
+  // Basic Details
+  owner_name: string;
+  mobile: string;
+  alternate_mobile?: string;
+  email: string;
+
+  // Business Details
+  business_name?: string;
+  legal_business_name?: string;
+  business_type_id?: number | null;
+  business_type?: string;
+  dealer_category_id?: number | null;
+  dealer_category?: string;
+  years_in_business?: string;
+  referral_code?: string;
+  gst_number?: string;
+  pan_number?: string;
+  pan_name?: string;
+
+  // Address Details
+  business_address?: string;
+  business_city?: string;
+  business_state_id?: number | null;
+  business_state?: string;
+  business_pincode?: string;
+  delivery_same_as_business?: "Yes" | "No";
+  delivery_address?: string;
+  delivery_city?: string;
+  delivery_state_id?: number | null;
+  delivery_state?: string;
+  delivery_pincode?: string;
+  warehouse_same?: "Yes" | "No";
+  warehouse_address?: string;
+  warehouse_city?: string;
+  warehouse_state_id?: number | null;
+  warehouse_state?: string;
+  warehouse_pincode?: string;
+
+  // KYC
+  aadhaar_holder_name?: string;
+  gst_certificate_url?: string | null;
+  pan_card_url?: string | null;
+  aadhaar_card_url?: string | null;
+  business_proof_type?: string;
+  business_proof_url?: string | null;
+
+  // Timestamps
+  approved_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface B2BProfileData {
+  is_b2b_user: boolean;
+  has_b2b_application: boolean;
+  status: string | null;
+  status_badge: B2BProfileStatusBadge;
+  user: B2BProfileUserData | null;
+  dealer: B2BProfileDealerData | null;
+}
+
+export type B2BProfileResponse = B2BApiResponse<B2BProfileData>;
+

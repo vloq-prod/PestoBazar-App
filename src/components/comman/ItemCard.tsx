@@ -82,16 +82,21 @@ export default function ItemCard({
   const mrpVal = Number(item.mrp);
   const sellingPriceVal = Number(item.selling_price);
   const discountAmount = mrpVal > sellingPriceVal ? Math.round(mrpVal - sellingPriceVal) : null;
-  const isB2b = (item as any).is_b2b_user === "Yes";
+  const isB2b =
+    (item as any).is_b2b_user === "Yes" ||
+    String((item as any).is_b2b_user || "").toLowerCase() === "yes";
+
+  const rawExclusive = Number((item as any).selling_price_exclusive_gst);
+  const rawInclusive = Number((item as any).selling_price_inclusive_gst);
+
   const exclusivePrice =
-    (item as any).selling_price_exclusive_gst !== undefined &&
-    (item as any).selling_price_exclusive_gst !== null
-      ? Number((item as any).selling_price_exclusive_gst)
+    !isNaN(rawExclusive) && rawExclusive > 0
+      ? rawExclusive
       : sellingPriceVal;
+
   const inclusivePrice =
-    (item as any).selling_price_inclusive_gst !== undefined &&
-    (item as any).selling_price_inclusive_gst !== null
-      ? Number((item as any).selling_price_inclusive_gst)
+    !isNaN(rawInclusive) && rawInclusive > 0
+      ? rawInclusive
       : sellingPriceVal;
   const discountPercent =
     mrpVal > sellingPriceVal ? Math.round(((mrpVal - sellingPriceVal) / mrpVal) * 100) : 0;

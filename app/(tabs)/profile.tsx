@@ -10,6 +10,7 @@ import {
   Alert,
   Share,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
@@ -400,22 +401,6 @@ export default function ProfileScreen() {
             )}
           </>
         </View>
-
-        {/* ── Account Info ───────────────────────── */}
-        {/* Hiding Account Info since we don't have email/phone in the store yet */}
-        {/*
-          {userId ? (
-            <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
-              <View style={styles.inputRow}>
-                <Phone size={16} color={colors.primary} />
-                <Text style={[styles.inputText, { color: colors.textSecondary }]}>
-                  +91 XXXXXXXXXX
-                </Text>
-                <SquarePen size={16} color={colors.primary} />
-              </View>
-            </View>
-          ) : null}
-          */}
 
         {/* ── Menu Sections ───────────────────────── */}
         {MENU_SECTIONS.map((section) => {
