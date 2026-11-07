@@ -25,6 +25,7 @@ interface CheckoutItemProps {
     post_discount_amount?: number | string;
     post_discount_gst_amount?: number | string;
     gst_amount?: number | string;
+    tax_percent?: number | string;
   };
   isB2B?: boolean;
   isLast?: boolean;
@@ -44,11 +45,18 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
   const isB2B =
     isB2BProp ??
     (item.is_b2b_user === "Yes" ||
-      String(item.is_b2b_user || "").toLowerCase() === "yes" ||
-      item.price_exclusive_gst !== undefined);
+      String(item.is_b2b_user || "").toLowerCase() === "yes");
 
   const itemDiscountPercent = parseFloat(String(item.discount_percentage || 0));
   const hasB2BDiscount = itemDiscountPercent > 0;
+
+  const parsePrice = (value: string | number | undefined | null): number => {
+    if (typeof value === "number") return value;
+    if (!value) return 0;
+    const cleaned = String(value).replace(/[^0-9.]/g, "");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
 
   const cartMoney = (val: any) => {
     const num = Number(val || 0);
@@ -58,6 +66,37 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
       maximumFractionDigits: 2,
     });
   };
+
+  const rawBaseAmount = hasB2BDiscount
+    ? (item.post_discount_amount ?? item.line_total_exclusive_gst ?? item.total_price)
+    : (item.line_total_exclusive_gst ?? (Number(item.price_exclusive_gst ?? item.price_per_piece) * item.qty));
+  const baseAmount = parsePrice(rawBaseAmount);
+
+  const rawGstAmount = hasB2BDiscount
+    ? (item.post_discount_gst_amount ?? item.gst_amount)
+    : (item.post_discount_gst_amount ?? item.gst_amount);
+  const gstAmount = parsePrice(rawGstAmount);
+
+  let gstRate = parseFloat(String(item.tax_percent || 0));
+  if (gstRate <= 0 && baseAmount > 0 && gstAmount > 0) {
+    gstRate = Math.round((gstAmount / baseAmount) * 100);
+  }
+  const gstRateStr =
+    gstRate > 0
+      ? gstRate % 1 === 0
+        ? `${gstRate}%`
+        : `${gstRate.toFixed(1)}%`
+      : "0%";
+
+  const itemQty = Number(item.qty) || 1;
+  const unitPriceExclGst =
+    item.price_exclusive_gst !== undefined && item.price_exclusive_gst !== null
+      ? parsePrice(item.price_exclusive_gst)
+      : (item as any).price_exclusive_gst_amount !== undefined && (item as any).price_exclusive_gst_amount !== null
+      ? parsePrice((item as any).price_exclusive_gst_amount)
+      : baseAmount > 0
+      ? baseAmount / itemQty
+      : parsePrice(item.price_per_piece);
 
   return (
     <>
@@ -120,7 +159,7 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
               alignItems: "center",
             }}
           >
-            {/* Size + Qty */}
+            {/* Size + Unit Price + Qty */}
             <Text
               style={{
                 fontSize: font(11.5),
@@ -129,6 +168,7 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
               }}
             >
               {item.size ? `${item.size}  ·  ` : ""}
+              {isB2B ? `₹${cartMoney(unitPriceExclGst)}  ·  ` : ""}
               <Text
                 style={{
                   fontFamily: "Poppins_500Medium",
@@ -139,10 +179,30 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
               </Text>
             </Text>
 
-            {/* Price */}
-            <View style={{ alignItems: "flex-end" }}>
-              {isB2B ? (
-                <>
+            {/* Price / Total & GST */}
+            {isB2B ? (
+              <View style={{ alignItems: "flex-end" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  {hasB2BDiscount && (
+                    <View
+                      style={{
+                        backgroundColor: "#10B98115",
+                        paddingHorizontal: 4,
+                        paddingVertical: 1,
+                        borderRadius: 4,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: font(8.5),
+                          color: "#10B981",
+                          fontFamily: "Poppins_700Bold",
+                        }}
+                      >
+                        {itemDiscountPercent}% OFF
+                      </Text>
+                    </View>
+                  )}
                   <Text
                     style={{
                       fontSize: font(13.5),
@@ -150,19 +210,22 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
                       color: colors.text,
                     }}
                   >
-                    ₹{cartMoney(hasB2BDiscount ? item.post_discount_amount : (item.line_total_exclusive_gst || item.total_price))}
+                    ₹{cartMoney(baseAmount)}
                   </Text>
-                  <Text
-                    style={{
-                      fontSize: font(9),
-                      fontFamily: "Poppins_500Medium",
-                      color: colors.textSecondary,
-                    }}
-                  >
-                    Excl. GST
-                  </Text>
-                </>
-              ) : (
+                </View>
+                <Text
+                  style={{
+                    fontSize: font(10),
+                    fontFamily: "Poppins_500Medium",
+                    color: colors.textSecondary,
+                    marginTop: 1,
+                  }}
+                >
+                  + ₹{cartMoney(gstAmount)} GST ({gstRateStr})
+                </Text>
+              </View>
+            ) : (
+              <View style={{ alignItems: "flex-end" }}>
                 <Text
                   style={{
                     fontSize: font(13.5),
@@ -172,199 +235,11 @@ const CheckoutItem = ({ item, isB2B: isB2BProp, isLast }: CheckoutItemProps) => 
                 >
                   ₹{fmt(item.total_price)}
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
           </View>
         </View>
       </View>
-
-      {/* ── B2B Pricing Breakdown (Web Style) ── */}
-      {isB2B && (
-        <View
-          style={{
-            marginTop: spacing(4),
-            marginBottom: spacing(8),
-            backgroundColor: colors.backgroundgray,
-            borderRadius: spacing(8),
-            padding: spacing(8),
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}
-          >
-            {/* 1. Price */}
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: font(10),
-                  color: colors.textSecondary,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                Price
-              </Text>
-              <Text
-                style={{
-                  fontSize: font(11),
-                  color: colors.text,
-                  fontFamily: "Poppins_600SemiBold",
-                  marginTop: 2,
-                }}
-              >
-                ₹{cartMoney(item.price_exclusive_gst ?? item.price_per_piece)}{" "}
-                <Text
-                  style={{
-                    fontSize: font(8),
-                    color: colors.textSecondary,
-                    fontFamily: "Poppins_400Regular",
-                  }}
-                >
-                  Excl. GST
-                </Text>
-              </Text>
-              <Text
-                style={{
-                  fontSize: font(9),
-                  color: colors.textTertiary,
-                  fontFamily: "Poppins_400Regular",
-                  marginTop: 1,
-                }}
-              >
-                ₹{cartMoney(item.price_inclusive_gst ?? item.price_per_piece)} Incl. GST
-              </Text>
-            </View>
-
-            {/* 2. Base Amount */}
-            <View style={{ flex: 1, alignItems: "center" }}>
-              <Text
-                style={{
-                  fontSize: font(10),
-                  color: colors.textSecondary,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                Base Amount
-              </Text>
-              <Text
-                style={{
-                  fontSize: font(11),
-                  color: colors.text,
-                  fontFamily: "Poppins_600SemiBold",
-                  marginTop: 2,
-                }}
-              >
-                ₹{cartMoney(item.line_total_exclusive_gst ?? (Number(item.price_exclusive_gst ?? item.price_per_piece) * item.qty))}{" "}
-                <Text
-                  style={{
-                    fontSize: font(8),
-                    color: colors.textSecondary,
-                    fontFamily: "Poppins_400Regular",
-                  }}
-                >
-                  Excl. GST
-                </Text>
-              </Text>
-              <Text
-                style={{
-                  fontSize: font(9),
-                  color: colors.textTertiary,
-                  fontFamily: "Poppins_400Regular",
-                  marginTop: 1,
-                }}
-              >
-                ₹{cartMoney(item.line_total_inclusive_gst ?? item.total_price)} Incl. GST
-              </Text>
-            </View>
-
-            {/* 3. Total Amount / Discount */}
-            <View style={{ flex: 1.1, alignItems: "flex-end" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Text
-                  style={{
-                    fontSize: font(10),
-                    color: colors.textSecondary,
-                    fontFamily: "Poppins_500Medium",
-                  }}
-                >
-                  Total Amount
-                </Text>
-                {hasB2BDiscount && (
-                  <View
-                    style={{
-                      backgroundColor: "#10B98115",
-                      paddingHorizontal: 4,
-                      paddingVertical: 1,
-                      borderRadius: 4,
-                      borderWidth: 0.5,
-                      borderColor: "#10B98140",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: font(8.5),
-                        color: "#10B981",
-                        fontFamily: "Poppins_700Bold",
-                      }}
-                    >
-                      {itemDiscountPercent}%
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {hasB2BDiscount && (
-                <Text
-                  style={{
-                    fontSize: font(9),
-                    color: "#10B981",
-                    fontFamily: "Poppins_600SemiBold",
-                    marginTop: 2,
-                  }}
-                >
-                  Discount: ₹{cartMoney(item.discounted_amount)}
-                </Text>
-              )}
-
-              <Text
-                style={{
-                  fontSize: font(11.5),
-                  color: colors.text,
-                  fontFamily: "Poppins_700Bold",
-                  marginTop: hasB2BDiscount ? 1 : 2,
-                }}
-              >
-                ₹{cartMoney(hasB2BDiscount ? item.post_discount_amount : (item.line_total_exclusive_gst ?? item.total_price))}{" "}
-                <Text
-                  style={{
-                    fontSize: font(8),
-                    color: colors.textSecondary,
-                    fontFamily: "Poppins_400Regular",
-                  }}
-                >
-                  Excl. GST
-                </Text>
-              </Text>
-
-              <Text
-                style={{
-                  fontSize: font(9),
-                  color: colors.textTertiary,
-                  fontFamily: "Poppins_400Regular",
-                  marginTop: 1,
-                }}
-              >
-                GST: ₹{cartMoney(hasB2BDiscount ? item.post_discount_gst_amount : item.gst_amount)}
-              </Text>
-            </View>
-          </View>
-        </View>
-      )}
 
       {/* Edge-to-Edge Divider */}
       <View

@@ -103,6 +103,29 @@ const OrderCard = ({
             >
               <StatusIcon size={12} color={cfg.color} strokeWidth={2.5} />
             </View>
+
+            {Boolean(item.b2b_order == 1 || String(item.b2b_order) === "1") && (
+              <View
+                style={{
+                  backgroundColor: colors.primary + "15",
+                  paddingHorizontal: 6,
+                  paddingVertical: 1,
+                  borderRadius: 4,
+                  borderWidth: 1,
+                  borderColor: colors.primary + "30",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: font(9.5),
+                    fontFamily: "Poppins_600SemiBold",
+                    color: colors.primary,
+                  }}
+                >
+                  B2B
+                </Text>
+              </View>
+            )}
           </View>
           <Text
             style={[

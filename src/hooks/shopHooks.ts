@@ -10,6 +10,7 @@ import {
   ListingItem,
   ListingParams,
 } from "../types/shop.types";
+import { useAppVisitorStore } from "../store/auth";
 
 const PAGE_SIZE = 16;
 
@@ -17,14 +18,16 @@ export const useListing = (
   baseParams: Omit<ListingParams, "page_no">,
   options?: { enabled?: boolean },
 ) => {
+  const { userId } = useAppVisitorStore((s) => s);
+
   const query = useInfiniteQuery<
     ListingApiResponse,
     Error,
     InfiniteData<ListingApiResponse>,
-    [string, Omit<ListingParams, "page_no">],
+    [string, Omit<ListingParams, "page_no">, string],
     number
   >({
-    queryKey: ["listing", baseParams],
+    queryKey: ["listing", baseParams, userId ?? "guest"],
     initialPageParam: 1,
     enabled: options?.enabled ?? true,
 

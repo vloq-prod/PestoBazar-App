@@ -97,9 +97,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ item, cardWidth, onPress }) =
           overview={item.overview}
           mrp={item.mrp}
           sellingPrice={item.selling_price}
-          isB2bUser={item.is_b2b_user === "Yes"}
-          exclusivePrice={item.selling_price_exclusive_gst}
-          inclusivePrice={item.selling_price_inclusive_gst}
+          isB2bUser={
+            item.is_b2b_user === "Yes" ||
+            String(item.is_b2b_user || "").toLowerCase() === "yes"
+          }
+          exclusivePrice={
+            item.selling_price_exclusive_gst !== undefined &&
+            item.selling_price_exclusive_gst !== null &&
+            !isNaN(Number(item.selling_price_exclusive_gst)) &&
+            Number(item.selling_price_exclusive_gst) > 0
+              ? item.selling_price_exclusive_gst
+              : item.selling_price
+          }
+          inclusivePrice={
+            item.selling_price_inclusive_gst !== undefined &&
+            item.selling_price_inclusive_gst !== null &&
+            !isNaN(Number(item.selling_price_inclusive_gst)) &&
+            Number(item.selling_price_inclusive_gst) > 0
+              ? item.selling_price_inclusive_gst
+              : item.selling_price
+          }
         />
 
         <ProductTimer expiryDate={item.expiry_date} onPress={handlePress} />

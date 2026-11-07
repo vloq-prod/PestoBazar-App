@@ -11,7 +11,10 @@ import {
   Modal,
   Pressable,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -34,6 +37,13 @@ import {
   Edit3,
   AlertCircle,
   RotateCcw,
+  Minus,
+  Plus,
+  Calendar,
+  Hash,
+  CheckCircle2,
+  Truck,
+  FileText,
 } from "lucide-react-native";
 import Svg, { Path } from "react-native-svg";
 
@@ -43,7 +53,13 @@ import ReturnProductModal from "../../../src/components/comman/ReturnProductModa
 import RefundDetailsModal from "../../../src/components/comman/RefundDetailsModal";
 import ReturnSuccessModal from "../../../src/components/comman/ReturnSuccessModal";
 import { useToast } from "../../../src/context/ToastContext";
-import { useViewOrder, useUploadReturnVideo, useUploadReturnImage, useReturnProduct, useSaveReturnImage } from "../../../src/hooks/orderHooks";
+import {
+  useViewOrder,
+  useUploadReturnVideo,
+  useUploadReturnImage,
+  useReturnProduct,
+  useSaveReturnImage,
+} from "../../../src/hooks/orderHooks";
 import { useTheme } from "../../../src/theme";
 import { useResponsive } from "../../../src/utils/useResponsive";
 import { getImageUrl } from "../../../src/utils/imageUtils";
@@ -81,7 +97,13 @@ const WavyDivider = ({ color, spacing }: { color: string; spacing: any }) => {
   );
 };
 
-const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
+const OrderDetailsSummary = ({
+  orderData,
+  colors,
+  font,
+  spacing,
+  isB2B,
+}: any) => {
   const maskedMobile = (mobile: string) => {
     if (!mobile) return "N/A";
     const str = String(mobile);
@@ -186,7 +208,9 @@ const OrderDetailsSummary = ({ orderData, colors, font, spacing }: any) => {
               }}
             >
               Payment Via:{" "}
-              {orderData?.order?.payment_type?.toUpperCase() || "PREPAID"}
+              {isB2B
+                ? "PREPAID"
+                : orderData?.order?.payment_type?.toUpperCase() || "PREPAID"}
             </Text>
           </View>
         </View>
@@ -317,7 +341,15 @@ const LocalVideoPreview = ({ uri, colors }: { uri: string; colors: any }) => {
 
   if (isMock || !player) {
     return (
-      <View style={{ width: "100%", height: "100%", alignItems: "center", justifyContent: "center", backgroundColor: colors.surface }}>
+      <View
+        style={{
+          width: "100%",
+          height: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.surface,
+        }}
+      >
         <Play size={20} color={colors.primary} fill={colors.primary} />
       </View>
     );
@@ -340,13 +372,24 @@ const ReturnProductsScreen = () => {
   const { font, spacing } = useResponsive();
   const insets = useSafeAreaInsets();
 
-
   const { data: orderResponse } = useViewOrder({
     order_id: id || "",
   });
   const uploadVideoMutation = useUploadReturnVideo();
 
   const orderData = orderResponse?.data;
+  const orderNo = orderData?.order?.order_no || orderData?.order?.id || id;
+  const orderDate = orderData?.order?.created_at;
+  const isB2B = Boolean(
+    orderData?.order?.b2b_order == 1 ||
+    orderData?.order?.b2b_order === "1" ||
+    orderData?.order?.b2b_order === true ||
+    orderData?.b2b_summary ||
+    orderData?.order_detail?.some(
+      (it: any) =>
+        it.price_exclusive_gst_amount !== undefined || it.is_b2b_user === "Yes",
+    ),
+  );
 
   // Video State
   const [videoUri, setVideoUri] = useState<string | null>(null);
@@ -360,16 +403,45 @@ const ReturnProductsScreen = () => {
   const uploadImageMutation = useUploadReturnImage();
 
   // Return Flow States
-  const [checkedProducts, setCheckedProducts] = useState<Record<number, boolean>>({});
-  const [productReturns, setProductReturns] = useState<Record<number, {
-    reasonId: number;
-    reasonText: string;
-    subReasonId: number | null;
-    subReasonText: string;
-    comments: string;
-    images: string[];
-  }>>({});
+  const [checkedProducts, setCheckedProducts] = useState<
+    Record<number, boolean>
+  >({});
+  const [returnQuantities, setReturnQuantities] = useState<
+    Record<number, number>
+  >({});
+  const [productReturns, setProductReturns] = useState<
+    Record<
+      number,
+      {
+        reasonId: number;
+        reasonText: string;
+        subReasonId: number | null;
+        subReasonText: string;
+        comments: string;
+        images: string[];
+      }
+    >
+  >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getReturnQty = (item: any) => {
+    const maxQty = Math.max(1, Number(item?.qty || 1));
+    const current = returnQuantities[item?.id];
+    if (typeof current === "number") {
+      return Math.min(Math.max(1, current), maxQty);
+    }
+    return maxQty;
+  };
+
+  const updateReturnQty = (item: any, delta: number) => {
+    const maxQty = Math.max(1, Number(item?.qty || 1));
+    const current = getReturnQty(item);
+    const next = Math.min(Math.max(1, current + delta), maxQty);
+    setReturnQuantities((prev) => ({
+      ...prev,
+      [item.id]: next,
+    }));
+  };
 
   // Return Modal State
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -395,24 +467,25 @@ const ReturnProductsScreen = () => {
             },
           },
           { text: "Cancel", style: "cancel" },
-        ]
+        ],
       );
       return;
     }
 
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
         Alert.alert(
           "Permission Required",
-          "Please grant media library access to select a proof video."
+          "Please grant media library access to select a proof video.",
         );
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
+        mediaTypes: ["videos"],
         allowsEditing: true,
         quality: 1,
       });
@@ -424,8 +497,12 @@ const ReturnProductsScreen = () => {
         const type = asset.mimeType || "video/mp4";
 
         const sizeBytes = asset.fileSize || 0;
-        const sizeMB = sizeBytes ? (sizeBytes / (1024 * 1024)).toFixed(1) + " MB" : "";
-        const durationSec = asset.duration ? Math.round(asset.duration) + "s" : "";
+        const sizeMB = sizeBytes
+          ? (sizeBytes / (1024 * 1024)).toFixed(1) + " MB"
+          : "";
+        const durationSec = asset.duration
+          ? Math.round(asset.duration) + "s"
+          : "";
 
         setVideoUri(uri);
         setVideoName(name);
@@ -447,8 +524,18 @@ const ReturnProductsScreen = () => {
   };
 
   const checkedCount = Object.values(checkedProducts).filter(Boolean).length;
-  const checkedItems = orderData?.order_detail?.filter((item: any) => checkedProducts[item.id]) || [];
-  const allCheckedFilled = checkedCount > 0 && checkedItems.every((item: any) => productReturns[item.id]?.reasonId !== undefined);
+  const checkedItems =
+    orderData?.order_detail?.filter((item: any) => checkedProducts[item.id]) ||
+    [];
+  const totalReturnQty = checkedItems.reduce(
+    (sum: number, it: any) => sum + getReturnQty(it),
+    0,
+  );
+  const allCheckedFilled =
+    checkedCount > 0 &&
+    checkedItems.every(
+      (item: any) => productReturns[item.id]?.reasonId !== undefined,
+    );
   const isSubmitEnabled = checkedCount > 0 && allCheckedFilled;
 
   const handleSubmitReturn = async (refundData: any) => {
@@ -459,7 +546,8 @@ const ReturnProductsScreen = () => {
       // 1. Upload unboxing video if selected
       let serverVideoPath = "";
       if (videoUri) {
-        const rawName = videoName || videoUri.split("/").pop() || "return_proof.mp4";
+        const rawName =
+          videoName || videoUri.split("/").pop() || "return_proof.mp4";
         const cleanName = rawName.replace(/[^a-zA-Z0-9_\-\.]/g, "_");
         const uploadFileName = `${Date.now()}_${cleanName}`;
         const vRes = await uploadVideoMutation.mutateAsync({
@@ -467,18 +555,31 @@ const ReturnProductsScreen = () => {
           name: uploadFileName,
           type: videoType || "video/mp4",
         });
-        const rawUploadedName = vRes?.data?.video_name || vRes?.data?.video_path || "";
-        serverVideoPath = rawUploadedName ? rawUploadedName.split("/").pop() || "" : "";
+        const rawUploadedName =
+          vRes?.data?.video_name || vRes?.data?.video_path || "";
+        serverVideoPath = rawUploadedName
+          ? rawUploadedName.split("/").pop() || ""
+          : "";
       }
 
       // 2. Upload refund proof image (Cheque or UPI QR) if provided
       let serverBankPath = "";
-      const rawBankImage = refundData.method === "Bank" ? refundData.chequeImage : refundData.upiImage;
+      const rawBankImage =
+        refundData.method === "Bank"
+          ? refundData.chequeImage
+          : refundData.upiImage;
       if (rawBankImage) {
-        if (rawBankImage.startsWith("file://") || rawBankImage.startsWith("content://")) {
-          const bRes = await uploadImageMutation.mutateAsync({ uri: rawBankImage });
+        if (
+          rawBankImage.startsWith("file://") ||
+          rawBankImage.startsWith("content://")
+        ) {
+          const bRes = await uploadImageMutation.mutateAsync({
+            uri: rawBankImage,
+          });
           const rawBankName = bRes?.data?.image_path || "";
-          serverBankPath = rawBankName ? rawBankName.split("/").pop() || "" : "";
+          serverBankPath = rawBankName
+            ? rawBankName.split("/").pop() || ""
+            : "";
         } else {
           serverBankPath = rawBankImage.split("/").pop() || "";
         }
@@ -489,7 +590,7 @@ const ReturnProductsScreen = () => {
         const returnPayload: any = {
           order_id: String(id),
           product_id: item.product_id,
-          return_quantity: item.qty,
+          return_quantity: getReturnQty(item),
           purchased_qty: item.qty,
           return_reason: details.reasonId,
           more_return_reason: details.subReasonId || details.reasonId,
@@ -520,8 +621,13 @@ const ReturnProductsScreen = () => {
         if (productDetailId && details.images && details.images.length > 0) {
           for (const imgUri of details.images) {
             let serverImgPath = imgUri;
-            if (imgUri.startsWith("file://") || imgUri.startsWith("content://")) {
-              const uploadImgRes = await uploadImageMutation.mutateAsync({ uri: imgUri });
+            if (
+              imgUri.startsWith("file://") ||
+              imgUri.startsWith("content://")
+            ) {
+              const uploadImgRes = await uploadImageMutation.mutateAsync({
+                uri: imgUri,
+              });
               serverImgPath = uploadImgRes?.data?.image_path || "";
             }
 
@@ -550,17 +656,22 @@ const ReturnProductsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={["top"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top"]}
+    >
       <StatusBar barStyle="dark-content" />
       <AppNavbar
-        title="Return Products"
-        subtitle={orderData?.order_id ? `Order #${orderData.order_id}` : undefined}
+        title={`Return Products #${orderNo}`}
+        subtitle={orderDate}
         showBack
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ paddingHorizontal: spacing(16), gap: spacing(8) }}>
-
           {/* Instruction Section */}
           <SectionLabel
             title="Upload Unboxing Video"
@@ -582,57 +693,127 @@ const ReturnProductsScreen = () => {
                 },
               ]}
             >
-              <View style={[styles.iconContainer, { backgroundColor: colors.surface }]}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
                 <UploadCloud size={18} color={colors.primary} />
               </View>
               <View style={{ alignItems: "center", gap: 2 }}>
-                <Text style={[styles.uploadBoxTitle, { color: colors.text, fontSize: font(13.5) }]}>
+                <Text
+                  style={[
+                    styles.uploadBoxTitle,
+                    { color: colors.text, fontSize: font(13.5) },
+                  ]}
+                >
                   Select Unboxing Video
                 </Text>
-                <Text style={[styles.uploadBoxSub, { color: colors.textTertiary, fontSize: font(10) }]}>
+                <Text
+                  style={[
+                    styles.uploadBoxSub,
+                    { color: colors.textTertiary, fontSize: font(10) },
+                  ]}
+                >
                   Supports MP4 or MOV up to 200MB (Max 1 file)
                 </Text>
               </View>
             </TouchableOpacity>
           ) : (
-            <View style={[styles.previewCard, { borderColor: colors.border, backgroundColor: colors.backgroundgray }]}>
+            <View
+              style={[
+                styles.previewCard,
+                {
+                  borderColor: colors.border,
+                  backgroundColor: colors.backgroundgray,
+                },
+              ]}
+            >
               <View style={styles.previewHeader}>
-
                 {/* Left Side: Video Preview Player */}
-                <View style={[styles.playIconContainer, { backgroundColor: colors.surface, overflow: "hidden" }]}>
+                <View
+                  style={[
+                    styles.playIconContainer,
+                    { backgroundColor: colors.surface, overflow: "hidden" },
+                  ]}
+                >
                   <LocalVideoPreview uri={videoUri} colors={colors} />
                 </View>
 
                 {/* Middle: File Name and Details */}
-                <View style={{ flex: 1, gap: 2, paddingRight: 16, justifyContent: "center" }}>
-                  <Text style={[styles.fileName, { color: colors.text, fontSize: font(12.5) }]} numberOfLines={1}>
+                <View
+                  style={{
+                    flex: 1,
+                    gap: 2,
+                    paddingRight: 16,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.fileName,
+                      { color: colors.text, fontSize: font(12.5) },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {videoName}
                   </Text>
                   <View style={{ flexDirection: "row", gap: 6, marginTop: 2 }}>
                     {!!videoSize && (
-                      <View style={[styles.metaPill, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.metaText, { color: colors.textSecondary, fontSize: font(10) }]}>
+                      <View
+                        style={[
+                          styles.metaPill,
+                          { backgroundColor: colors.surface },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.metaText,
+                            { color: colors.textSecondary, fontSize: font(10) },
+                          ]}
+                        >
                           {videoSize}
                         </Text>
                       </View>
                     )}
                     {!!videoDuration && (
-                      <View style={[styles.metaPill, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.metaText, { color: colors.textSecondary, fontSize: font(10) }]}>
+                      <View
+                        style={[
+                          styles.metaPill,
+                          { backgroundColor: colors.surface },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.metaText,
+                            { color: colors.textSecondary, fontSize: font(10) },
+                          ]}
+                        >
                           {videoDuration}
                         </Text>
                       </View>
                     )}
                     {!!videoType && (
-                      <View style={[styles.metaPill, { backgroundColor: colors.surface }]}>
-                        <Text style={[styles.metaText, { color: colors.textSecondary, fontSize: font(10) }]}>
-                          {videoType.split("/")[1]?.toUpperCase() || videoType.toUpperCase()}
+                      <View
+                        style={[
+                          styles.metaPill,
+                          { backgroundColor: colors.surface },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.metaText,
+                            { color: colors.textSecondary, fontSize: font(10) },
+                          ]}
+                        >
+                          {videoType.split("/")[1]?.toUpperCase() ||
+                            videoType.toUpperCase()}
                         </Text>
                       </View>
                     )}
                   </View>
                 </View>
-
               </View>
 
               {/* Top Right absolutely positioned close button */}
@@ -677,7 +858,8 @@ const ReturnProductsScreen = () => {
                     marginTop: 2,
                   }}
                 >
-                  Any free product received with this order must also be included in the return parcel.
+                  Any free product received with this order must also be
+                  included in the return parcel.
                 </Text>
               </View>
             </View>
@@ -709,19 +891,32 @@ const ReturnProductsScreen = () => {
                 ]}
               >
                 {/* Top Row: Checkbox + Image + Core Details */}
-                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    gap: 14,
+                  }}
+                >
                   {/* Checkbox Icon */}
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => {
                       const nextChecked = !checkedProducts[item.id];
-                      setCheckedProducts(prev => ({ ...prev, [item.id]: nextChecked }));
+                      setCheckedProducts((prev) => ({
+                        ...prev,
+                        [item.id]: nextChecked,
+                      }));
                       if (nextChecked && !hasDetails) {
                         setSelectedProduct(item);
                         setIsModalVisible(true);
                       }
                     }}
-                    style={{ marginRight: 2, height: 80, justifyContent: "center" }}
+                    style={{
+                      marginRight: 2,
+                      height: 80,
+                      justifyContent: "center",
+                    }}
                   >
                     {isChecked ? (
                       <CheckSquare size={22} color={colors.primary} />
@@ -735,7 +930,10 @@ const ReturnProductsScreen = () => {
                     activeOpacity={0.7}
                     onPress={() => {
                       if (!isChecked) {
-                        setCheckedProducts(prev => ({ ...prev, [item.id]: true }));
+                        setCheckedProducts((prev) => ({
+                          ...prev,
+                          [item.id]: true,
+                        }));
                       }
                       setSelectedProduct(item);
                       setIsModalVisible(true);
@@ -803,7 +1001,12 @@ const ReturnProductsScreen = () => {
                                 }}
                               >
                                 Size:{" "}
-                                <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
+                                <Text
+                                  style={{
+                                    color: colors.text,
+                                    fontFamily: "Poppins_500Medium",
+                                  }}
+                                >
                                   {item.size}
                                 </Text>
                               </Text>
@@ -824,22 +1027,17 @@ const ReturnProductsScreen = () => {
                               color: colors.textSecondary,
                             }}
                           >
-                            Qty:{" "}
-                            <Text style={{ color: colors.text, fontFamily: "Poppins_500Medium" }}>
+                            Purchased Qty:{" "}
+                            <Text
+                              style={{
+                                color: colors.text,
+                                fontFamily: "Poppins_500Medium",
+                              }}
+                            >
                               {item.qty}
                             </Text>
                           </Text>
                         </View>
-
-                        <Text
-                          style={{
-                            fontFamily: "Poppins_600SemiBold",
-                            fontSize: font(14),
-                            color: colors.text,
-                          }}
-                        >
-                          ₹{formatPrice(item.price_per_piece)}
-                        </Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -852,10 +1050,133 @@ const ReturnProductsScreen = () => {
                       paddingTop: spacing(8),
                       borderTopWidth: 1,
                       borderTopColor: colors.border,
-                      gap: spacing(6),
+                      gap: spacing(8),
                       marginLeft: 36,
                     }}
                   >
+                    {/* Return Quantity Stepper */}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        backgroundColor: colors.backgroundgray,
+                        borderRadius: 10,
+                        paddingVertical: spacing(6),
+                        paddingHorizontal: spacing(10),
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
+                    >
+                      <View>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_600SemiBold",
+                            fontSize: font(11.5),
+                            color: colors.text,
+                            includeFontPadding: false,
+                          }}
+                        >
+                          Return Qty
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_400Regular",
+                            fontSize: font(10),
+                            color: colors.textSecondary,
+                            includeFontPadding: false,
+                          }}
+                        >
+                          Max available: {item.qty}
+                        </Text>
+                      </View>
+
+                      {/* Stepper - / + */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          backgroundColor: colors.surface,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          borderRadius: 8,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => updateReturnQty(item, -1)}
+                          disabled={getReturnQty(item) <= 1}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor:
+                              getReturnQty(item) <= 1
+                                ? colors.backgroundgray
+                                : colors.surface,
+                          }}
+                        >
+                          <Minus
+                            size={13}
+                            color={
+                              getReturnQty(item) <= 1
+                                ? colors.textTertiary
+                                : colors.text
+                            }
+                          />
+                        </TouchableOpacity>
+
+                        <View
+                          style={{
+                            width: 36,
+                            height: 32,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderLeftWidth: 1,
+                            borderRightWidth: 1,
+                            borderColor: colors.border,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_700Bold",
+                              fontSize: font(13),
+                              color: colors.text,
+                              includeFontPadding: false,
+                            }}
+                          >
+                            {getReturnQty(item)}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => updateReturnQty(item, 1)}
+                          disabled={getReturnQty(item) >= Number(item.qty || 1)}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor:
+                              getReturnQty(item) >= Number(item.qty || 1)
+                                ? colors.backgroundgray
+                                : colors.surface,
+                          }}
+                        >
+                          <Plus
+                            size={13}
+                            color={
+                              getReturnQty(item) >= Number(item.qty || 1)
+                                ? colors.textTertiary
+                                : colors.text
+                            }
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                     {hasDetails ? (
                       <View style={{ gap: 4 }}>
                         <View
@@ -865,7 +1186,13 @@ const ReturnProductsScreen = () => {
                             justifyContent: "space-between",
                           }}
                         >
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 5,
+                            }}
+                          >
                             <CheckCircle size={14} color="#10B981" />
                             <Text
                               style={{
@@ -949,28 +1276,40 @@ const ReturnProductsScreen = () => {
                               fontStyle: "italic",
                             }}
                           >
-                            Comment: {"\""}{productReturns[item.id].comments}{"\""}
+                            Comment: {'"'}
+                            {productReturns[item.id].comments}
+                            {'"'}
                           </Text>
                         )}
                         {/* Show uploaded product images */}
-                        {productReturns[item.id]?.images && productReturns[item.id].images.length > 0 && (
-                          <View style={{ flexDirection: "row", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
-                            {productReturns[item.id].images.map((imgUri: string, idx: number) => (
-                              <Image
-                                key={idx}
-                                source={{ uri: imgUri }}
-                                style={{
-                                  width: 45,
-                                  height: 45,
-                                  borderRadius: 6,
-                                  borderWidth: 1,
-                                  borderColor: colors.border,
-                                }}
-                                contentFit="cover"
-                              />
-                            ))}
-                          </View>
-                        )}
+                        {productReturns[item.id]?.images &&
+                          productReturns[item.id].images.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                gap: 6,
+                                marginTop: 4,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              {productReturns[item.id].images.map(
+                                (imgUri: string, idx: number) => (
+                                  <Image
+                                    key={idx}
+                                    source={{ uri: imgUri }}
+                                    style={{
+                                      width: 45,
+                                      height: 45,
+                                      borderRadius: 6,
+                                      borderWidth: 1,
+                                      borderColor: colors.border,
+                                    }}
+                                    contentFit="cover"
+                                  />
+                                ),
+                              )}
+                            </View>
+                          )}
                       </View>
                     ) : (
                       /* Clear Prominent Button to Add Reason & Details */
@@ -993,7 +1332,14 @@ const ReturnProductsScreen = () => {
                           marginTop: 2,
                         }}
                       >
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6), flex: 1 }}>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: spacing(6),
+                            flex: 1,
+                          }}
+                        >
                           <AlertCircle size={font(15)} color={colors.primary} />
                           <Text
                             style={{
@@ -1014,7 +1360,10 @@ const ReturnProductsScreen = () => {
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => {
-                      setCheckedProducts(prev => ({ ...prev, [item.id]: true }));
+                      setCheckedProducts((prev) => ({
+                        ...prev,
+                        [item.id]: true,
+                      }));
                       setSelectedProduct(item);
                       setIsModalVisible(true);
                     }}
@@ -1032,7 +1381,14 @@ const ReturnProductsScreen = () => {
                       marginTop: 2,
                     }}
                   >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6), flex: 1 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: spacing(6),
+                        flex: 1,
+                      }}
+                    >
                       <RotateCcw size={font(14)} color={colors.primary} />
                       <Text
                         style={{
@@ -1065,6 +1421,7 @@ const ReturnProductsScreen = () => {
                 colors={colors}
                 font={font}
                 spacing={spacing}
+                isB2B={isB2B}
               />
             </View>
           </View>
@@ -1098,7 +1455,9 @@ const ReturnProductsScreen = () => {
                   marginBottom: 16,
                 }}
               >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                >
                   <View
                     style={{
                       flexDirection: "row",
@@ -1124,7 +1483,8 @@ const ReturnProductsScreen = () => {
                     >
                       Bill Summary
                     </Text>
-                    {(orderData?.order?.invoice_no || orderData?.order?.order_no) ? (
+                    {orderData?.order?.invoice_no ||
+                    orderData?.order?.order_no ? (
                       <Text
                         style={{
                           fontFamily: "Poppins_400Regular",
@@ -1134,10 +1494,11 @@ const ReturnProductsScreen = () => {
                           marginTop: 2,
                         }}
                       >
-                        Invoice: {orderData?.order?.invoice_no
-                          ? (String(orderData.order.invoice_no).startsWith("#")
-                              ? orderData.order.invoice_no
-                              : `#${orderData.order.invoice_no}`)
+                        Invoice:{" "}
+                        {orderData?.order?.invoice_no
+                          ? String(orderData.order.invoice_no).startsWith("#")
+                            ? orderData.order.invoice_no
+                            : `#${orderData.order.invoice_no}`
                           : `#${orderData?.order?.order_no}`}
                       </Text>
                     ) : null}
@@ -1145,62 +1506,122 @@ const ReturnProductsScreen = () => {
                 </View>
               </View>
 
-              <View style={[styles.cardContent, { paddingHorizontal: 16, gap: 4, marginBottom: 8 }]}>
+              <View
+                style={[
+                  styles.cardContent,
+                  { paddingHorizontal: 16, gap: 4, marginBottom: 8 },
+                ]}
+              >
                 <View style={styles.detailsRow}>
-                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(12.5), color: colors.text }}>Item Total</Text>
-                  <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12.5), color: colors.text }}>₹{formatPrice(orderData?.order?.order_amount)}</Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    Item Total
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_600SemiBold",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    ₹{formatPrice(orderData?.order?.order_amount)}
+                  </Text>
                 </View>
 
                 <View style={styles.detailsRow}>
-                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(12.5), color: colors.text }}>Shipping</Text>
-                  {orderData?.order?.shipping_charge === "0" ? (
-                    <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(12.5), color: "#10B981" }}>FREE</Text>
-                  ) : (
-                    <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12.5), color: colors.text }}>+ ₹{formatPrice(orderData?.order?.shipping_charge)}</Text>
-                  )}
-                </View>
-
-                {orderData?.order?.cod_charges !== "0" && (
-                  <View style={styles.detailsRow}>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(12.5), color: colors.text }}>COD Charges</Text>
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(12.5),
+                      color: colors.text,
+                    }}
+                  >
+                    Shipping
+                  </Text>
+                  {Number(orderData?.order?.shipping_charge || 0) === 0 ? (
                     <Text
                       style={{
                         fontFamily: "Poppins_700Bold",
                         fontSize: font(12.5),
-                        color: Number(orderData?.order?.cod_charges) > 0 ? "#EF4444" : colors.text,
+                        color: "#10B981",
                       }}
                     >
-                      + ₹{formatPrice(orderData?.order?.cod_charges)}
+                      FREE
                     </Text>
-                  </View>
-                )}
-
-                <View style={styles.detailsRow}>
-                  <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(12.5), color: colors.text }}>GST (Govt. Taxes)</Text>
-                  <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(12.5), color: colors.text }}>+ ₹{formatPrice(orderData?.order?.shipping_gst || "0")}</Text>
+                  ) : (
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(12.5),
+                        color: colors.text,
+                      }}
+                    >
+                      + ₹{formatPrice(orderData?.order?.shipping_charge)}
+                    </Text>
+                  )}
                 </View>
               </View>
 
               <WavyDivider color={colors.border} spacing={spacing} />
 
-              <View style={{ paddingHorizontal: 16, marginTop: 0, marginBottom: spacing(8) }}>
+              <View
+                style={{
+                  paddingHorizontal: 16,
+                  marginTop: 0,
+                  marginBottom: spacing(8),
+                }}
+              >
                 <View style={styles.detailsRow}>
                   <View>
-                    <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(14), color: colors.textSecondary }}>Grand Total</Text>
-                    <Text style={{ fontFamily: "Poppins_500Medium", fontSize: font(10), color: colors.textSecondary, marginTop: -1 }}>
-                      Payment by {orderData?.order?.payment_type?.toLowerCase() === "cash" ? "Cash" : "Prepaid"}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_600SemiBold",
+                        fontSize: font(14),
+                        color: colors.textSecondary,
+                      }}
+                    >
+                      Grand Total
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_500Medium",
+                        fontSize: font(10),
+                        color: colors.textSecondary,
+                        marginTop: -1,
+                      }}
+                    >
+                      Payment by{" "}
+                      {isB2B ||
+                      orderData?.order?.payment_type?.toLowerCase() !== "cash"
+                        ? "Prepaid"
+                        : "Cash"}
                     </Text>
                   </View>
                   <View style={{ alignItems: "flex-end" }}>
-                    <Text style={{ fontFamily: "Poppins_700Bold", fontSize: font(20), color: colors.text }}>
-                      ₹{formatPrice(orderData?.order?.paid_amount)}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_700Bold",
+                        fontSize: font(20),
+                        color: colors.text,
+                      }}
+                    >
+                      ₹
+                      {formatPrice(
+                        orderData?.order?.paid_amount ??
+                          Number(orderData?.order?.order_amount || 0) +
+                            Number(orderData?.order?.shipping_charge || 0),
+                      )}
                     </Text>
                   </View>
                 </View>
               </View>
             </View>
           </View>
-
         </View>
       </ScrollView>
 
@@ -1217,7 +1638,10 @@ const ReturnProductsScreen = () => {
         <TouchableOpacity
           onPress={() => {
             if (!isSubmitEnabled) {
-              showToast("Please select at least one item and fill in their return details.", "warning");
+              showToast(
+                "Please select at least one item and fill in their return details.",
+                "warning",
+              );
               return;
             }
             setIsRefundModalVisible(true);
@@ -1235,8 +1659,17 @@ const ReturnProductsScreen = () => {
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={{ fontFamily: "Poppins_600SemiBold", fontSize: font(14), color: "#fff" }}>
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: font(14),
+                color: "#fff",
+              }}
+            >
               Submit Return Request
+              {totalReturnQty > 0
+                ? ` (${totalReturnQty} ${totalReturnQty === 1 ? "Item" : "Items"})`
+                : ""}
             </Text>
           )}
         </TouchableOpacity>
@@ -1248,15 +1681,38 @@ const ReturnProductsScreen = () => {
         orderId={id}
         productName={selectedProduct?.product_name}
         onClose={() => setIsModalVisible(false)}
-        initialReasonId={selectedProduct ? productReturns[selectedProduct.id]?.reasonId : null}
-        initialReasonText={selectedProduct ? productReturns[selectedProduct.id]?.reasonText : ""}
-        initialSubReasonId={selectedProduct ? productReturns[selectedProduct.id]?.subReasonId : null}
-        initialSubReasonText={selectedProduct ? productReturns[selectedProduct.id]?.subReasonText : ""}
-        initialComments={selectedProduct ? productReturns[selectedProduct.id]?.comments : ""}
-        initialImages={selectedProduct ? productReturns[selectedProduct.id]?.images : []}
-        onConfirm={(reasonId, reasonText, subReasonId, subReasonText, comments, imageUris) => {
+        initialReasonId={
+          selectedProduct ? productReturns[selectedProduct.id]?.reasonId : null
+        }
+        initialReasonText={
+          selectedProduct ? productReturns[selectedProduct.id]?.reasonText : ""
+        }
+        initialSubReasonId={
+          selectedProduct
+            ? productReturns[selectedProduct.id]?.subReasonId
+            : null
+        }
+        initialSubReasonText={
+          selectedProduct
+            ? productReturns[selectedProduct.id]?.subReasonText
+            : ""
+        }
+        initialComments={
+          selectedProduct ? productReturns[selectedProduct.id]?.comments : ""
+        }
+        initialImages={
+          selectedProduct ? productReturns[selectedProduct.id]?.images : []
+        }
+        onConfirm={(
+          reasonId,
+          reasonText,
+          subReasonId,
+          subReasonText,
+          comments,
+          imageUris,
+        ) => {
           if (selectedProduct) {
-            setProductReturns(prev => ({
+            setProductReturns((prev) => ({
               ...prev,
               [selectedProduct.id]: {
                 reasonId,
@@ -1265,7 +1721,7 @@ const ReturnProductsScreen = () => {
                 subReasonText,
                 comments,
                 images: imageUris,
-              }
+              },
             }));
           }
           setIsModalVisible(false);
@@ -1304,9 +1760,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 100,
   },
-  titleSection: {
-
-  },
+  titleSection: {},
   titleText: {
     fontFamily: "Poppins_700Bold",
   },
@@ -1454,4 +1908,3 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 });
-

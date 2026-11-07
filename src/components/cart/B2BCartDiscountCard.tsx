@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Tag } from "lucide-react-native";
+import { BadgePercent } from "lucide-react-native";
 import { B2BCartDiscount, B2BCartDiscountTier } from "../../types/cart.types";
 import { useResponsive } from "../../utils/useResponsive";
+import { useTheme } from "../../theme";
 
 interface B2BCartDiscountCardProps {
   discountData?: B2BCartDiscount;
@@ -36,7 +37,11 @@ export const calculateTierProgress = (
 export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
   discountData,
 }) => {
+  const { colors } = useTheme();
   const { font, spacing } = useResponsive();
+
+  // Brand green specified by user (#169957)
+  const DARK_GREEN = "#169957";
 
   if (!discountData) return null;
 
@@ -46,6 +51,8 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
   if (!Array.isArray(tiers) || tiers.length === 0) return null;
 
   const currentCartAmount = Number(discountData.cart_amount || 0);
+  const currentDiscountPercent = Number(discountData.discount_percent || 0);
+
   const progressPercent = Math.min(
     100,
     Math.max(0, calculateTierProgress(currentCartAmount, tiers))
@@ -55,28 +62,56 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
     (tier) => currentCartAmount < tier.from_amount
   );
 
-  // Formats numbers with Indian comma format (e.g. 10,000)
   const formatAmount = (num: number | null | undefined): string => {
     if (num == null) return "";
     return Number(num).toLocaleString("en-IN", {
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 0,
     });
+  };
+
+  const getRangeDisplay = (
+    from: number,
+    to: number | null | undefined
+  ): string => {
+    if (to == null) {
+      return `₹${formatAmount(from)}+`;
+    }
+    return `₹${formatAmount(from)}–₹${formatAmount(to)}`;
   };
 
   const renderFormattedMessage = (msg: string) => {
     if (!msg) return null;
     const parts = msg.split(
-      /(₹[\d,.]+(?:\.\d+)?|\d+(?:\.\d+)?%\s*(?:discount|OFF)?)/gi
+      /(₹\s*[\d,.]+(?:\.\d+)?|\d+(?:\.\d+)?%\s*(?:discount|OFF)?)/gi
     );
     return (
-      <Text style={[styles.headlineText, { fontSize: font(13.5) }]}>
+      <Text
+        style={{
+          fontSize: font(12.5),
+          lineHeight: font(18),
+          color: colors.textSecondary,
+          fontFamily: "Poppins_400Regular",
+        }}
+        numberOfLines={2}
+      >
         {parts.map((part, i) => {
           const isHighlight = part.startsWith("₹") || part.includes("%");
           return (
             <Text
               key={i}
               style={
-                isHighlight ? styles.highlightText : styles.normalHeadlineText
+                isHighlight
+                  ? {
+                      color:
+                        currentDiscountPercent > 0
+                          ? DARK_GREEN
+                          : colors.primary,
+                      fontFamily: "Poppins_700Bold",
+                    }
+                  : {
+                      color: colors.textSecondary,
+                      fontFamily: "Poppins_400Regular",
+                    }
               }
             >
               {part}
@@ -95,41 +130,72 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
       style={[
         styles.cardContainer,
         {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
           padding: spacing(14),
-          marginVertical: spacing(8),
           borderRadius: spacing(12),
         },
       ]}
     >
-      {/* ── Top Badge ── */}
-      <View style={styles.badgeWrapper}>
-        <View style={styles.badgeContainer}>
-          <Text style={[styles.badgeText, { fontSize: font(9.5) }]}>
-            Bulk Buyer CART DISCOUNT
+      {/* ── Header Row (Clean Title, No Fake Status Pill) ── */}
+      <View style={styles.headerRow}>
+        <View style={styles.headerLeft}>
+          <View
+            style={[
+              styles.iconWrapper,
+              { backgroundColor: colors.primary + "12" },
+            ]}
+          >
+            <BadgePercent size={16} color={colors.primary} />
+          </View>
+          <Text
+            style={[
+              styles.cardTitle,
+              { fontSize: font(13.5), color: colors.text },
+            ]}
+          >
+            Bulk Buyer Discount
           </Text>
         </View>
+
+        {currentDiscountPercent > 0 && (
+          <View
+            style={[
+              styles.statusPill,
+              {
+                backgroundColor: DARK_GREEN + "14",
+                borderColor: DARK_GREEN + "35",
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusPillText,
+                { fontSize: font(10.5), color: DARK_GREEN },
+              ]}
+            >
+              {currentDiscountPercent}% OFF Unlocked
+            </Text>
+          </View>
+        )}
       </View>
 
-      {/* ── Headline Row (Icon + Message) ── */}
-      <View style={styles.headlineRow}>
-        <View style={styles.iconContainer}>
-          <Tag size={20} color="#4B32B1" strokeWidth={2.2} />
-        </View>
-        <View style={{ flex: 1 }}>
-          {renderFormattedMessage(
-            discountData.message ||
-              "Shop more to unlock exclusive Bulk Buyer discounts!"
-          )}
-        </View>
+      {/* ── Headline / Motivation Message ── */}
+      <View style={styles.messageRow}>
+        {renderFormattedMessage(
+          discountData.message ||
+            "Shop more to unlock exclusive Bulk Buyer discounts!"
+        )}
       </View>
 
-      {/* ── Stepper / Progress Bar ── */}
+      {/* ── Progress Stepper Track ── */}
       <View style={styles.stepperContainer}>
         {/* Connecting Background Line */}
         <View
           style={[
             styles.trackBackground,
             {
+              backgroundColor: colors.border,
               left: lineInsetPercent as any,
               right: lineInsetPercent as any,
             },
@@ -139,7 +205,10 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
           <View
             style={[
               styles.trackFill,
-              { width: `${progressPercent}%` },
+              {
+                width: `${progressPercent}%`,
+                backgroundColor: DARK_GREEN,
+              },
             ]}
           />
         </View>
@@ -150,56 +219,51 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
             const isUnlocked = currentCartAmount >= tier.from_amount;
             const isNext = index === nextTierIndex;
 
-            const discountDisplay = Number(
-              tier.discount_percent
-            ).toLocaleString("en-IN", {
-              maximumFractionDigits: 2,
-            });
+            const discountDisplay = Number(tier.discount_percent).toFixed(
+              Number(tier.discount_percent) % 1 === 0 ? 0 : 1
+            );
 
-            const rangeText =
-              tier.to_amount === null || tier.to_amount === undefined
-                ? `₹${formatAmount(tier.from_amount)}+`
-                : `₹${formatAmount(tier.from_amount)}–₹${formatAmount(tier.to_amount)}`;
+            const rangeText = getRangeDisplay(tier.from_amount, tier.to_amount);
 
             return (
               <View key={index} style={styles.tierColumn}>
-                {/* Outer Ring + Inner Dot */}
+                {/* Dot with % symbol */}
                 <View
                   style={[
-                    styles.tierRing,
+                    styles.tierDot,
                     isUnlocked
-                      ? styles.tierRingUnlocked
+                      ? {
+                          backgroundColor: DARK_GREEN,
+                          borderColor: DARK_GREEN,
+                        }
                       : isNext
-                      ? styles.tierRingNext
-                      : styles.tierRingLocked,
+                      ? {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.primary,
+                          borderWidth: 2,
+                        }
+                      : {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                          borderWidth: 1.5,
+                        },
                   ]}
                 >
-                  <View
+                  <Text
                     style={[
-                      styles.tierDot,
-                      isUnlocked
-                        ? styles.tierDotUnlocked
-                        : isNext
-                        ? styles.tierDotNext
-                        : styles.tierDotLocked,
+                      styles.tierDotPercent,
+                      {
+                        fontSize: font(11.5),
+                        color: isUnlocked
+                          ? "#FFFFFF"
+                          : isNext
+                          ? colors.primary
+                          : colors.textTertiary,
+                      },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.tierDotPercent,
-                        {
-                          fontSize: font(11),
-                          color: isUnlocked
-                            ? "#FFFFFF"
-                            : isNext
-                            ? "#4B32B1"
-                            : "#8B7FCE",
-                        },
-                      ]}
-                    >
-                      %
-                    </Text>
-                  </View>
+                    %
+                  </Text>
                 </View>
 
                 {/* Discount % Text */}
@@ -209,21 +273,25 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
                     {
                       fontSize: font(12),
                       color: isUnlocked
-                        ? "#16A34A"
+                        ? DARK_GREEN
                         : isNext
-                        ? "#1E2028"
-                        : "#6E7280",
+                        ? colors.text
+                        : colors.textSecondary,
                     },
                   ]}
+                  numberOfLines={1}
                 >
                   {discountDisplay}% OFF
                 </Text>
 
-                {/* Range Label */}
+                {/* Range Label (Clear, readable price) */}
                 <Text
                   style={[
                     styles.tierRangeLabel,
-                    { fontSize: font(10) },
+                    {
+                      fontSize: font(10.5),
+                      color: colors.textSecondary,
+                    },
                   ]}
                   numberOfLines={1}
                 >
@@ -240,56 +308,48 @@ export const B2BCartDiscountCard: React.FC<B2BCartDiscountCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: "#F9F8FE",
-    borderWidth: 1.2,
-    borderColor: "#E2DCF8",
-    shadowColor: "#5C3FC4",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
     elevation: 1,
   },
-  badgeWrapper: {
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  badgeContainer: {
-    backgroundColor: "#F2EDFF",
-    borderWidth: 1,
-    borderColor: "#DCD0F8",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  badgeText: {
-    fontFamily: "Poppins_700Bold",
-    color: "#4B32B1",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
-  headlineRow: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
-    marginBottom: 14,
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  iconContainer: {
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  iconWrapper: {
     width: 28,
     height: 28,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  headlineText: {
+  cardTitle: {
     fontFamily: "Poppins_600SemiBold",
-    lineHeight: 20,
+    includeFontPadding: false,
   },
-  normalHeadlineText: {
-    color: "#1E2028",
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  statusPillText: {
     fontFamily: "Poppins_600SemiBold",
+    letterSpacing: 0.2,
+    includeFontPadding: false,
   },
-  highlightText: {
-    color: "#4B32B1",
-    fontFamily: "Poppins_700Bold",
+  messageRow: {
+    marginBottom: 12,
   },
   stepperContainer: {
     position: "relative",
@@ -298,16 +358,14 @@ const styles = StyleSheet.create({
   },
   trackBackground: {
     position: "absolute",
-    top: 17,
-    height: 4,
-    backgroundColor: "#E2DCF8",
+    top: 11.5,
+    height: 3,
     borderRadius: 999,
     overflow: "hidden",
     zIndex: 0,
   },
   trackFill: {
     height: "100%",
-    backgroundColor: "#16A34A",
     borderRadius: 999,
   },
   tiersGrid: {
@@ -320,22 +378,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
   },
-  tierRing: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tierRingUnlocked: {
-    backgroundColor: "#DCFCE7",
-  },
-  tierRingNext: {
-    backgroundColor: "#EDE9FE",
-  },
-  tierRingLocked: {
-    backgroundColor: "transparent",
-  },
   tierDot: {
     width: 26,
     height: 26,
@@ -343,34 +385,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  tierDotUnlocked: {
-    backgroundColor: "#16A34A",
-  },
-  tierDotNext: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#4B32B1",
-  },
-  tierDotLocked: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.8,
-    borderColor: "#D2C7F7",
-  },
   tierDotPercent: {
     fontFamily: "Poppins_700Bold",
+    includeFontPadding: false,
+    textAlign: "center",
   },
   tierPercentLabel: {
     fontFamily: "Poppins_700Bold",
-    marginTop: 6,
+    marginTop: 5,
     textAlign: "center",
+    includeFontPadding: false,
   },
   tierRangeLabel: {
     fontFamily: "Poppins_500Medium",
-    color: "#777B87",
-    marginTop: 1.5,
+    marginTop: 2,
     textAlign: "center",
+    includeFontPadding: false,
   },
 });
 
 export default B2BCartDiscountCard;
-

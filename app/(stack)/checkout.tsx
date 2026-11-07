@@ -56,6 +56,14 @@ import { fmt, formatINR } from "../../src/utils/productHelpers";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
 import { useRouter } from "expo-router";
 
+const parsePrice = (val: any): number => {
+  if (val === undefined || val === null || val === "") return 0;
+  if (typeof val === "number") return isNaN(val) ? 0 : val;
+  const str = String(val).replace(/[^0-9.-]/g, "");
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
+};
+
 const cleanPrice = (val: any) => {
   if (val === undefined || val === null || val === "") return "₹0";
   const str = String(val).replace(/[^0-9.]/g, "");
@@ -385,6 +393,17 @@ export default function Checkout() {
                   const rawContact = initRes.data?.mobile || "";
                   const cleanContact = rawContact.replace(/\D/g, "").slice(-10);
 
+                  const prefillData: any = {};
+                  if (initRes.data?.email && typeof initRes.data.email === "string" && initRes.data.email.trim()) {
+                    prefillData.email = initRes.data.email.trim();
+                  }
+                  if (cleanContact.length === 10) {
+                    prefillData.contact = cleanContact;
+                  }
+                  if (initRes.data?.first_name && typeof initRes.data.first_name === "string" && initRes.data.first_name.trim()) {
+                    prefillData.name = initRes.data.first_name.trim();
+                  }
+
                   const options: any = {
                     description: "Payment for Order",
                     // Use verified HTTPS logo to prevent iOS App Transport Security (ATS) block / 404 failure
@@ -393,11 +412,7 @@ export default function Checkout() {
                     key: activeRazorpayKey,
                     amount: amountInPaise,
                     name: (initRes.data?.company_name || "Pestobazaar").replace(/\b[pP]esto\s*[bB]aza[ar]*\b/gi, "Pestobazaar"),
-                    prefill: {
-                      email: initRes.data?.email || "",
-                      contact: cleanContact,
-                      name: initRes.data?.first_name || "",
-                    },
+                    prefill: prefillData,
                     theme: { color: colors.primary },
                   };
 
@@ -465,15 +480,54 @@ export default function Checkout() {
                       })
                       .catch((error: any) => {
                         console.warn("⚠️ [Checkout] Razorpay Payment Dismissed or Failed:", error);
+
+                        // Parse potential nested JSON error from Razorpay Native SDK
+                        let parsedDesc: any = null;
+                        if (typeof error?.description === "string") {
+                          try {
+                            parsedDesc = JSON.parse(error.description);
+                          } catch {
+                            // not JSON string
+                          }
+                        }
+
+                        const innerError = parsedDesc?.error || error?.error || {};
+                        const innerDesc = typeof innerError?.description === "string" ? innerError.description.trim() : "";
+                        const rawDesc = typeof error?.description === "string" ? error.description.trim() : "";
+                        const errorReason = String(innerError?.reason || error?.reason || "").toLowerCase();
+                        const errorSource = String(innerError?.source || error?.source || "").toLowerCase();
+                        const errorStep = String(innerError?.step || error?.step || "").toLowerCase();
+
+                        // Code 0 in react-native-razorpay is officially PAYMENT_CANCELLED (user dismissed/closed)
                         const isCancelled =
                           error?.code === 0 ||
-                          String(error?.description || "").toLowerCase().includes("cancel") ||
-                          String(error?.description || "").toLowerCase().includes("dismiss");
-                        const errorMsg =
-                          error?.description ||
+                          errorReason.includes("cancel") ||
+                          rawDesc.toLowerCase().includes("cancel") ||
+                          rawDesc.toLowerCase().includes("dismiss") ||
+                          (errorSource === "customer" &&
+                            (innerDesc === "undefined" || !innerDesc || errorReason === "payment_error"));
+
+                        if (isCancelled) {
+                          showToast("Payment was cancelled.", "warning");
+                          return;
+                        }
+
+                        // Meaningful human-readable error extraction
+                        let errorMsg =
+                          (innerDesc && innerDesc !== "undefined" ? innerDesc : null) ||
+                          (!rawDesc.startsWith("{") && rawDesc !== "undefined" ? rawDesc : null) ||
                           error?.message ||
-                          (isCancelled ? "Payment cancelled." : "Payment failed.");
-                        showToast(errorMsg, isCancelled ? "warning" : "error");
+                          null;
+
+                        if (!errorMsg) {
+                          if (errorStep === "payment_authentication") {
+                            errorMsg = "Payment authentication failed. Please try again or use another payment method.";
+                          } else {
+                            errorMsg = "Payment failed. Please try again.";
+                          }
+                        }
+
+                        showToast(errorMsg, "error");
                       });
                   }, 120);
                 }
@@ -1438,14 +1492,12 @@ export default function Checkout() {
                   color: colors.text,
                 }}
               >
-                {cleanPrice(isB2BUser && orderSummary ? orderSummary.base_amount : cart?.cart_amount)}
+                {cleanPrice(orderSummary?.base_amount ?? cart?.cart_amount)}
               </Text>
             </View>
 
             {/* Promo Discount Row */}
-            {(isB2BUser && orderSummary
-              ? parseFloat(String(orderSummary.coupon_discount || 0))
-              : parseFloat(String(cart?.promo_discount_amount || 0))) > 0 && (
+            {parsePrice(orderSummary?.coupon_discount ?? cart?.promo_discount_amount) > 0 && (
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -1463,15 +1515,13 @@ export default function Checkout() {
                     color: "#10B981",
                   }}
                 >
-                  - {cleanPrice(isB2BUser && orderSummary ? orderSummary.coupon_discount : cart?.promo_discount_amount)}
+                  - {cleanPrice(orderSummary?.coupon_discount ?? cart?.promo_discount_amount)}
                 </Text>
               </View>
             )}
 
             {/* Bulk Buyer (B2B) Cart Discount Row */}
-            {(isB2BUser && orderSummary
-              ? parseFloat(String(orderSummary.b2b_discount || 0))
-              : parseFloat(String(cart?.b2b_cart_discount?.discount_amount || 0))) > 0 && (
+            {parsePrice(orderSummary?.b2b_discount ?? cart?.b2b_cart_discount?.discount_amount) > 0 && (
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -1489,7 +1539,7 @@ export default function Checkout() {
                     color: "#10B981",
                   }}
                 >
-                  - {cleanPrice(isB2BUser && orderSummary ? orderSummary.b2b_discount : cart?.b2b_cart_discount?.discount_amount)}
+                  - {cleanPrice(orderSummary?.b2b_discount ?? cart?.b2b_cart_discount?.discount_amount)}
                 </Text>
               </View>
             )}
@@ -1505,9 +1555,10 @@ export default function Checkout() {
               >
                 Shipping
               </Text>
-              {(isB2BUser && orderSummary
-                ? parseFloat(String(orderSummary.shipping || 0))
-                : (shippingCharge === 0 || isFreeShipping ? 0 : 1)) === 0 ? (
+              {((orderSummary?.shipping !== undefined && parsePrice(orderSummary.shipping) === 0) ||
+                shippingCharge === 0 ||
+                isFreeShipping ||
+                parsePrice(shippingCharge) === 0) ? (
                 <Text
                   style={{
                     fontFamily: "Poppins_700Bold",
@@ -1525,7 +1576,7 @@ export default function Checkout() {
                     color: colors.text,
                   }}
                 >
-                  + {cleanPrice(isB2BUser && orderSummary ? orderSummary.shipping : shippingCharge)}
+                  + {cleanPrice(orderSummary?.shipping ?? shippingCharge)}
                 </Text>
               )}
             </View>
@@ -1555,9 +1606,7 @@ export default function Checkout() {
             )}
 
             {/* GST Row */}
-            {(isB2BUser && orderSummary
-              ? parseFloat(String(orderSummary.gst || 0)) > 0
-              : !!gstAmount) && (
+            {parsePrice(orderSummary?.gst ?? gstAmount ?? data?.data?.cart?.gst_amount) > 0 && (
               <View style={styles.summaryRow}>
                 <Text
                   style={{
@@ -1575,7 +1624,7 @@ export default function Checkout() {
                     color: colors.text,
                   }}
                 >
-                  + {cleanPrice(isB2BUser && orderSummary ? orderSummary.gst : gstAmount)}
+                  + {cleanPrice(orderSummary?.gst ?? gstAmount ?? data?.data?.cart?.gst_amount)}
                 </Text>
               </View>
             )}

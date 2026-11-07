@@ -30,7 +30,17 @@ import CartRecentlyViewed from "../../src/components/cart/CartRecentlyViewed";
 import B2BCartDiscountCard from "../../src/components/cart/B2BCartDiscountCard";
 import { CartItem as CartItemTypes } from "../../src/types/cart.types";
 import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
-import { Info, MoveRight, Gift, Tag, ChevronRight, Receipt, BadgePercent, Clock, CreditCard } from "lucide-react-native";
+import {
+  Info,
+  MoveRight,
+  Gift,
+  Tag,
+  ChevronRight,
+  Receipt,
+  BadgePercent,
+  Clock,
+  CreditCard,
+} from "lucide-react-native";
 import LottieView from "lottie-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import CartItemSkeleton from "../../src/skeleton/CartItemSkeleton";
@@ -81,7 +91,8 @@ export default function CartScreen() {
   const router = useRouter();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  const { mutate: removePromo, isPending: isRemovingPromo } = useRemovePromoCode();
+  const { mutate: removePromo, isPending: isRemovingPromo } =
+    useRemovePromoCode();
 
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -94,14 +105,17 @@ export default function CartScreen() {
   const [removeModalVisible, setRemoveModalVisible] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<CartItemTypes | null>(null);
 
-  const params = useLocalSearchParams<{ couponApplied?: string; couponCode?: string }>();
+  const params = useLocalSearchParams<{
+    couponApplied?: string;
+    couponCode?: string;
+  }>();
   const [showCouponSuccessModal, setShowCouponSuccessModal] = useState(false);
   const [successCouponCode, setSuccessCouponCode] = useState("");
   const couponSuccessCode = useCartStore((state) => state.couponSuccessCode);
   const clearCouponSuccessCode = useCartStore(
     (state) => state.clearCouponSuccessCode,
   );
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
 
   React.useEffect(() => {
@@ -150,7 +164,8 @@ export default function CartScreen() {
     }
   }, [isCartEmpty, router]);
 
-  const cartId = cartData?.data?.cart_app?.cart_id || cartData?.data?.cart?.cart_id;
+  const cartId =
+    cartData?.data?.cart_app?.cart_id || cartData?.data?.cart?.cart_id;
 
   const cartTotal = cartData?.data?.cart_app || cartData?.data?.cart;
   const orderSummary = cartData?.data?.order_summary;
@@ -163,27 +178,41 @@ export default function CartScreen() {
     cartTotal?.is_b2b === "Yes" ||
     String(cartTotal?.is_b2b) === "1" ||
     String(cartTotal?.is_b2b).toLowerCase() === "true" ||
-    Boolean(b2bCartDiscount && (b2bCartDiscount.allBracket || b2bCartDiscount.tiers));
+    Boolean(
+      b2bCartDiscount && (b2bCartDiscount.allBracket || b2bCartDiscount.tiers),
+    );
 
-  const b2bDiscountAmount = parseFloat(String(orderSummary?.b2b_discount ?? b2bCartDiscount?.discount_amount ?? 0));
-  const couponDiscountAmount = parseFloat(String(orderSummary?.coupon_discount ?? appliedPromo?.discount_amount ?? cartTotal?.promo_discount_amount ?? 0));
+  const b2bDiscountAmount = parseFloat(
+    String(orderSummary?.b2b_discount ?? b2bCartDiscount?.discount_amount ?? 0),
+  );
+  const couponDiscountAmount = parseFloat(
+    String(
+      orderSummary?.coupon_discount ??
+        appliedPromo?.discount_amount ??
+        cartTotal?.promo_discount_amount ??
+        0,
+    ),
+  );
   const itemSavings = (items || []).reduce((acc: number, item: any) => {
     const youSave = parseFloat(String(item.you_save || 0));
     return acc + (isNaN(youSave) ? 0 : youSave);
   }, 0);
-  const totalSaved = isB2BUser && orderSummary
-    ? (b2bDiscountAmount + couponDiscountAmount + itemSavings)
-    : (couponDiscountAmount + itemSavings);
+  const totalSaved =
+    isB2BUser && orderSummary
+      ? b2bDiscountAmount + couponDiscountAmount + itemSavings
+      : couponDiscountAmount + itemSavings;
 
-  const finalPayableAmount = isB2BUser && orderSummary
-    ? parseFloat(String(orderSummary.final_amount || 0))
-    : parseFloat(String(cartTotal?.amount_to_pay || 0));
+  const finalPayableAmount =
+    isB2BUser && orderSummary
+      ? parseFloat(String(orderSummary.final_amount || 0))
+      : parseFloat(String(cartTotal?.amount_to_pay || 0));
 
   const isCouponSuccessLoading =
     showCouponSuccessModal &&
     (isCartFetching ||
       !appliedPromo?.promo_code ||
-      appliedPromo.promo_code.toUpperCase() !== successCouponCode.toUpperCase());
+      appliedPromo.promo_code.toUpperCase() !==
+        successCouponCode.toUpperCase());
 
   const handleCouponsPress = () => {
     if (!userId) {
@@ -333,7 +362,10 @@ export default function CartScreen() {
 
   const handleContinue = () => {
     trackCheckout({
-      value: finalPayableAmount || cartTotal?.amount_to_pay || cartTotal?.cart_amount,
+      value:
+        finalPayableAmount ||
+        cartTotal?.amount_to_pay ||
+        cartTotal?.cart_amount,
       coupon: appliedPromo?.promo_code,
     });
     if (userId) {
@@ -371,6 +403,272 @@ export default function CartScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: spacing(15), gap: spacing(15) }}>
+            {/* ── Bulk Buyer (B2B) Cart Discount Card ── */}
+            {isB2BUser && b2bCartDiscount ? (
+              <B2BCartDiscountCard discountData={b2bCartDiscount} />
+            ) : null}
+
+            {/* Cart Product List Section */}
+            {isLoading ? (
+              <View style={{ gap: spacing(12) }}>
+                {[1, 2, 3, 4, 5].map((_, i) => (
+                  <CartItemSkeleton key={i} />
+                ))}
+              </View>
+            ) : error ? (
+              <View style={styles.emptyContainer}>
+                <Text style={{ color: colors.text }}>
+                  Error loading cart data
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: colors.surface,
+                  borderRadius: spacing(12),
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  overflow: "hidden",
+                }}
+              >
+                {/* Unified Card Header */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingHorizontal: spacing(14),
+                    paddingVertical: spacing(12),
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: spacing(10),
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: colors.backgroundgray,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Clock size={16} color={colors.text} />
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: font(13),
+                          fontFamily: "Poppins_600SemiBold",
+                          color: colors.text,
+                        }}
+                      >
+                        Delivering soon
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: font(11),
+                          fontFamily: "Poppins_400Regular",
+                          color: colors.textSecondary,
+                        }}
+                      >
+                        {items?.length || 0} item
+                        {items && items.length > 1 ? "s" : ""}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Divider Line */}
+                <View style={{ height: 1, backgroundColor: colors.border }} />
+
+                {/* Items List */}
+                <View>
+                  {items?.map((item, index) => (
+                    <View key={item.id}>
+                      {index > 0 && (
+                        <View
+                          style={{
+                            height: 1,
+                            backgroundColor: colors.border,
+                          }}
+                        />
+                      )}
+                      <CartItem
+                        item={item}
+                        isB2B={isB2BUser}
+                        onDecrease={handleDecrease}
+                        onIncrease={handleIncrease}
+                        onRemove={handleRemove}
+                        onChangeQty={handleChangeQty}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Free Products */}
+            {!isLoading &&
+              !error &&
+              freeProducts &&
+              freeProducts.length > 0 && (
+                <View
+                  style={{
+                    borderWidth: 1.2,
+                    borderColor: "#A7F3D0", // Soft light green border
+                    borderRadius: spacing(12),
+                    backgroundColor: colors.surface,
+                    overflow: "hidden", // Clips header's background to rounded corners
+                  }}
+                >
+                  {/* Section Header */}
+                  <View
+                    style={{
+                      backgroundColor: "#E8FDF0", // Soft success green
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: spacing(12),
+                      paddingHorizontal: spacing(14),
+                      gap: spacing(10),
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: "#10B981",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Gift size={16} color="#FFFFFF" />
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: font(13),
+                        fontFamily: "Poppins_600SemiBold",
+                        color: "#06563F",
+                        flex: 1,
+                      }}
+                    >
+                      {freeProducts.length} Free gift
+                      {freeProducts.length > 1 ? "s" : ""} added to your order
+                    </Text>
+                  </View>
+
+                  {/* Divider Line connecting sides */}
+                  <FilledWavyDivider color="#E8FDF0" />
+
+                  {/* Free Products Cards */}
+                  <View style={{ padding: spacing(14), gap: spacing(16) }}>
+                    {freeProducts.map((item) => {
+                      // Resolve image path
+                      const imageUri = getImageUrl(item.s3_image_path);
+
+                      return (
+                        <View
+                          key={item.free_cart_item_id}
+                          style={{
+                            flexDirection: "row",
+                            backgroundColor: "transparent",
+                            gap: spacing(12),
+                            alignItems: "center",
+                          }}
+                        >
+                          {/* Image */}
+                          <View
+                            style={{
+                              width: spacing(75),
+                              height: spacing(75),
+                              borderRadius: spacing(8),
+                              borderWidth: 1,
+                              borderColor: colors.border,
+                              backgroundColor: colors.background,
+                              overflow: "hidden",
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Image
+                              source={{ uri: imageUri }}
+                              style={{
+                                width: spacing(65),
+                                height: spacing(65),
+                              }}
+                              resizeMode="contain"
+                            />
+                          </View>
+
+                          {/* Content */}
+                          <View
+                            style={{
+                              flex: 1,
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Text
+                              numberOfLines={2}
+                              style={{
+                                fontSize: font(12.5),
+                                fontFamily: "Poppins_600SemiBold",
+                                color: colors.text,
+                                lineHeight: font(17),
+                              }}
+                            >
+                              {item.product_name}
+                            </Text>
+
+                            <Text
+                              style={{
+                                fontSize: font(10.5),
+                                fontFamily: "Poppins_400Regular",
+                                color: colors.textSecondary,
+                                marginTop: spacing(3),
+                              }}
+                            >
+                              {item.size ? `${item.size} • ` : ""}
+                              {item.quantity
+                                ? `${item.quantity} unit`
+                                : "1 unit"}
+                            </Text>
+                          </View>
+
+                          {/* Green FREE text label instead of ADD button */}
+                          <View
+                            style={{
+                              borderWidth: 1,
+                              borderColor: "#10B981",
+                              borderRadius: 8,
+                              paddingHorizontal: 12,
+                              paddingVertical: 6,
+                              backgroundColor: "#10B98110",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: font(11.5),
+                                fontFamily: "Poppins_700Bold",
+                                color: "#10B981",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              Free
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
             {/* ── Coupons & Offers Premium Card ── */}
             <View
               style={{
@@ -476,11 +774,15 @@ export default function CartScreen() {
                           }}
                           numberOfLines={1}
                         >
-                          {parseFloat(String(appliedPromo.discount_amount || 0)) > 0
+                          {parseFloat(
+                            String(appliedPromo.discount_amount || 0),
+                          ) > 0
                             ? `Saved ${cleanPrice(appliedPromo.discount_amount)} with ${appliedPromo.promo_code}`
                             : `${appliedPromo.title || "Coupon"} with ${appliedPromo.promo_code}`}
                         </Text>
-                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        <View
+                          style={{ flexDirection: "row", alignItems: "center" }}
+                        >
                           <Text
                             style={{
                               fontFamily: "Poppins_500Medium",
@@ -490,7 +792,11 @@ export default function CartScreen() {
                           >
                             View all coupons
                           </Text>
-                          <ChevronRight size={11} color={colors.textSecondary} style={{ marginTop: 1 }} />
+                          <ChevronRight
+                            size={11}
+                            color={colors.textSecondary}
+                            style={{ marginTop: 1 }}
+                          />
                         </View>
                       </TouchableOpacity>
 
@@ -584,259 +890,6 @@ export default function CartScreen() {
               </View>
             </View>
 
-            {/* Free Products */}
-            {!isLoading && !error && freeProducts && freeProducts.length > 0 && (
-              <View
-                style={{
-                  borderWidth: 1.2,
-                  borderColor: "#A7F3D0", // Soft light green border
-                  borderRadius: spacing(12),
-                  backgroundColor: colors.surface,
-                  overflow: "hidden", // Clips header's background to rounded corners
-                }}
-              >
-                {/* Section Header */}
-                <View
-                  style={{
-                    backgroundColor: "#E8FDF0", // Soft success green
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingVertical: spacing(12),
-                    paddingHorizontal: spacing(14),
-                    gap: spacing(10),
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: "#10B981",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Gift size={16} color="#FFFFFF" />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: font(13),
-                      fontFamily: "Poppins_600SemiBold",
-                      color: "#06563F",
-                      flex: 1,
-                    }}
-                  >
-                    {freeProducts.length} Free gift{freeProducts.length > 1 ? "s" : ""} added to your order
-                  </Text>
-                </View>
-
-                {/* Divider Line connecting sides */}
-                <FilledWavyDivider color="#E8FDF0" />
-
-                {/* Free Products Cards */}
-                <View style={{ padding: spacing(14), gap: spacing(16) }}>
-                  {freeProducts.map((item) => {
-                    // Resolve image path
-                    const imageUri = getImageUrl(item.s3_image_path);
-
-                    return (
-                      <View
-                        key={item.free_cart_item_id}
-                        style={{
-                          flexDirection: "row",
-                          backgroundColor: "transparent",
-                          gap: spacing(12),
-                          alignItems: "center",
-                        }}
-                      >
-                        {/* Image */}
-                        <View
-                          style={{
-                            width: spacing(75),
-                            height: spacing(75),
-                            borderRadius: spacing(8),
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                            backgroundColor: colors.background,
-                            overflow: "hidden",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Image
-                            source={{ uri: imageUri }}
-                            style={{
-                              width: spacing(65),
-                              height: spacing(65),
-                            }}
-                            resizeMode="contain"
-                          />
-                        </View>
-
-                        {/* Content */}
-                        <View
-                          style={{
-                            flex: 1,
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Text
-                            numberOfLines={2}
-                            style={{
-                              fontSize: font(12.5),
-                              fontFamily: "Poppins_600SemiBold",
-                              color: colors.text,
-                              lineHeight: font(17),
-                            }}
-                          >
-                            {item.product_name}
-                          </Text>
-
-                          <Text
-                            style={{
-                              fontSize: font(10.5),
-                              fontFamily: "Poppins_400Regular",
-                              color: colors.textSecondary,
-                              marginTop: spacing(3),
-                            }}
-                          >
-                            {item.size ? `${item.size} • ` : ""}
-                            {item.quantity ? `${item.quantity} unit` : "1 unit"}
-                          </Text>
-                        </View>
-
-                        {/* Green FREE text label instead of ADD button */}
-                        <View
-                          style={{
-                            borderWidth: 1,
-                            borderColor: "#10B981",
-                            borderRadius: 8,
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            backgroundColor: "#10B98110",
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: font(11.5),
-                              fontFamily: "Poppins_700Bold",
-                              color: "#10B981",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Free
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
-
-            {/* Cart Product List Section */}
-            {isLoading ? (
-              <View style={{ gap: spacing(12) }}>
-                {[1, 2, 3, 4, 5].map((_, i) => (
-                  <CartItemSkeleton key={i} />
-                ))}
-              </View>
-            ) : error ? (
-              <View style={styles.emptyContainer}>
-                <Text style={{ color: colors.text }}>Error loading cart data</Text>
-              </View>
-            ) : (
-              <View
-                style={{
-                  backgroundColor: colors.surface,
-                  borderRadius: spacing(12),
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  overflow: "hidden",
-                }}
-              >
-                {/* Unified Card Header */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingHorizontal: spacing(14),
-                    paddingVertical: spacing(12),
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(10) }}>
-                    <View
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 16,
-                        backgroundColor: colors.backgroundgray,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Clock size={16} color={colors.text} />
-                    </View>
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: font(13),
-                          fontFamily: "Poppins_600SemiBold",
-                          color: colors.text,
-                        }}
-                      >
-                        Delivering soon
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: font(11),
-                          fontFamily: "Poppins_400Regular",
-                          color: colors.textSecondary,
-                        }}
-                      >
-                        {items?.length || 0} item{items && items.length > 1 ? "s" : ""}
-                      </Text>
-                    </View>
-                  </View>
-
-                  
-                </View>
-
-                {/* Divider Line */}
-                <View style={{ height: 1, backgroundColor: colors.border }} />
-
-                {/* Items List */}
-                <View>
-                  {items?.map((item, index) => (
-                    <View key={item.id}>
-                      {index > 0 && (
-                        <View
-                          style={{
-                            height: 1,
-                            backgroundColor: colors.border,
-                          }}
-                        />
-                      )}
-                      <CartItem
-                        item={item}
-                        isB2B={isB2BUser}
-                        onDecrease={handleDecrease}
-                        onIncrease={handleIncrease}
-                        onRemove={handleRemove}
-                        onChangeQty={handleChangeQty}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* ── Bulk Buyer (B2B) Cart Discount Card ── */}
-            {isB2BUser && b2bCartDiscount ? (
-              <B2BCartDiscountCard discountData={b2bCartDiscount} />
-            ) : null}
-
             {/* ── Bill Summary Ticket Card ── */}
             {cartTotal ? (
               <View
@@ -845,7 +898,6 @@ export default function CartScreen() {
                   {
                     backgroundColor: colors.surface,
                     borderColor: colors.border,
-                    marginTop: spacing(10),
                   },
                 ]}
               >
@@ -907,14 +959,20 @@ export default function CartScreen() {
                         color: colors.text,
                       }}
                     >
-                      {cleanPrice(isB2BUser && orderSummary ? orderSummary.base_amount : cartTotal?.cart_amount)}
+                      {cleanPrice(
+                        isB2BUser && orderSummary
+                          ? orderSummary.base_amount
+                          : cartTotal?.cart_amount,
+                      )}
                     </Text>
                   </View>
 
                   {/* Promo Discount Row */}
                   {(isB2BUser && orderSummary
                     ? parseFloat(String(orderSummary.coupon_discount || 0))
-                    : parseFloat(String(cartTotal?.promo_discount_amount || 0))) > 0 && (
+                    : parseFloat(
+                        String(cartTotal?.promo_discount_amount || 0),
+                      )) > 0 && (
                     <View style={styles.summaryRow}>
                       <Text
                         style={{
@@ -932,7 +990,12 @@ export default function CartScreen() {
                           color: "#10B981",
                         }}
                       >
-                        - {cleanPrice(isB2BUser && orderSummary ? orderSummary.coupon_discount : cartTotal?.promo_discount_amount)}
+                        -{" "}
+                        {cleanPrice(
+                          isB2BUser && orderSummary
+                            ? orderSummary.coupon_discount
+                            : cartTotal?.promo_discount_amount,
+                        )}
                       </Text>
                     </View>
                   )}
@@ -940,7 +1003,9 @@ export default function CartScreen() {
                   {/* Bulk Buyer (B2B) Cart Discount Row */}
                   {(isB2BUser && orderSummary
                     ? parseFloat(String(orderSummary.b2b_discount || 0))
-                    : parseFloat(String(b2bCartDiscount?.discount_amount || 0))) > 0 && (
+                    : parseFloat(
+                        String(b2bCartDiscount?.discount_amount || 0),
+                      )) > 0 && (
                     <View style={styles.summaryRow}>
                       <Text
                         style={{
@@ -949,7 +1014,8 @@ export default function CartScreen() {
                           color: "#10B981",
                         }}
                       >
-                        Bulk Buyer Discount ({b2bCartDiscount?.discount_percent}%)
+                        Bulk Buyer Discount ({b2bCartDiscount?.discount_percent}
+                        %)
                       </Text>
                       <Text
                         style={{
@@ -958,7 +1024,12 @@ export default function CartScreen() {
                           color: "#10B981",
                         }}
                       >
-                        - {cleanPrice(isB2BUser && orderSummary ? orderSummary.b2b_discount : b2bCartDiscount?.discount_amount)}
+                        -{" "}
+                        {cleanPrice(
+                          isB2BUser && orderSummary
+                            ? orderSummary.b2b_discount
+                            : b2bCartDiscount?.discount_amount,
+                        )}
                       </Text>
                     </View>
                   )}
@@ -976,9 +1047,12 @@ export default function CartScreen() {
                     </Text>
                     {(isB2BUser && orderSummary
                       ? parseFloat(String(orderSummary.shipping || 0))
-                      : (cartTotal?.shipping_charge === 0 ||
-                         cartTotal?.shipping_charge === "0" ||
-                         String(cartTotal?.shipping_charge).toLowerCase() === "free" ? 0 : 1)) === 0 ? (
+                      : cartTotal?.shipping_charge === 0 ||
+                          cartTotal?.shipping_charge === "0" ||
+                          String(cartTotal?.shipping_charge).toLowerCase() ===
+                            "free"
+                        ? 0
+                        : 1) === 0 ? (
                       <Text
                         style={{
                           fontFamily: "Poppins_700Bold",
@@ -996,7 +1070,12 @@ export default function CartScreen() {
                           color: colors.text,
                         }}
                       >
-                        + {cleanPrice(isB2BUser && orderSummary ? orderSummary.shipping : cartTotal?.shipping_charge)}
+                        +{" "}
+                        {cleanPrice(
+                          isB2BUser && orderSummary
+                            ? orderSummary.shipping
+                            : cartTotal?.shipping_charge,
+                        )}
                       </Text>
                     )}
                   </View>
@@ -1046,7 +1125,12 @@ export default function CartScreen() {
                           color: colors.text,
                         }}
                       >
-                        + {cleanPrice(isB2BUser && orderSummary ? orderSummary.gst : cartTotal?.gst_amount)}
+                        +{" "}
+                        {cleanPrice(
+                          isB2BUser && orderSummary
+                            ? orderSummary.gst
+                            : cartTotal?.gst_amount,
+                        )}
                       </Text>
                     </View>
                   )}
@@ -1141,7 +1225,9 @@ export default function CartScreen() {
           </View>
 
           {/* ── Recently Viewed in Empty State ── */}
-          <View style={{ paddingHorizontal: spacing(15), marginTop: spacing(20) }}>
+          <View
+            style={{ paddingHorizontal: spacing(15), marginTop: spacing(20) }}
+          >
             <CartRecentlyViewed />
           </View>
         </ScrollView>
@@ -1189,9 +1275,11 @@ export default function CartScreen() {
             }}
           >
             {/* LEFT: PRICE SECTION */}
-            <TouchableOpacity 
-              activeOpacity={0.7} 
-              onPress={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() =>
+                scrollViewRef.current?.scrollToEnd({ animated: true })
+              }
             >
               <Text
                 style={{
@@ -1265,7 +1353,12 @@ export default function CartScreen() {
         onRequestClose={() => setShowCouponSuccessModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.couponModalContainer, { backgroundColor: colors.background }]}>
+          <View
+            style={[
+              styles.couponModalContainer,
+              { backgroundColor: colors.background },
+            ]}
+          >
             {/* Lottie Animation Wrapper */}
             <View style={styles.lottieWrapper}>
               <LottieView
@@ -1279,15 +1372,42 @@ export default function CartScreen() {
             {/* Keep the text area stable while the refreshed cart resolves the applied coupon. */}
             {isCouponSuccessLoading ? (
               <View style={styles.couponTextSkeleton}>
-                <View style={[styles.skeletonLine, { width: "88%", backgroundColor: colors.backgroundSkeleton }]} />
-                <View style={[styles.skeletonLine, { width: "52%", backgroundColor: colors.backgroundSkeleton }]} />
+                <View
+                  style={[
+                    styles.skeletonLine,
+                    {
+                      width: "88%",
+                      backgroundColor: colors.backgroundSkeleton,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.skeletonLine,
+                    {
+                      width: "52%",
+                      backgroundColor: colors.backgroundSkeleton,
+                    },
+                  ]}
+                />
               </View>
             ) : (
               <>
-                <Text style={[styles.couponSuccessTitle, { color: colors.text, fontSize: font(18) }]}>
-                  {appliedPromo?.title || `Get Upto ${cleanPrice(appliedPromo?.discount_amount || cartTotal?.promo_discount_amount || 50)} Cashback on your order`}
+                <Text
+                  style={[
+                    styles.couponSuccessTitle,
+                    { color: colors.text, fontSize: font(18) },
+                  ]}
+                >
+                  {appliedPromo?.title ||
+                    `Get Upto ${cleanPrice(appliedPromo?.discount_amount || cartTotal?.promo_discount_amount || 50)} Cashback on your order`}
                 </Text>
-                <Text style={[styles.couponAppliedText, { color: colors.textSecondary, fontSize: font(12.5) }]}>
+                <Text
+                  style={[
+                    styles.couponAppliedText,
+                    { color: colors.textSecondary, fontSize: font(12.5) },
+                  ]}
+                >
                   {`"${successCouponCode.toUpperCase()} APPLIED"`}
                 </Text>
               </>
@@ -1299,10 +1419,15 @@ export default function CartScreen() {
               onPress={() => setShowCouponSuccessModal(false)}
               style={[
                 styles.gotItButton,
-                { borderColor: colors.primary || "#5f16e9" }
+                { borderColor: colors.primary || "#5f16e9" },
               ]}
             >
-              <Text style={[styles.gotItButtonText, { color: colors.primary || "#5f16e9", fontSize: font(14) }]}>
+              <Text
+                style={[
+                  styles.gotItButtonText,
+                  { color: colors.primary || "#5f16e9", fontSize: font(14) },
+                ]}
+              >
                 Got it
               </Text>
             </TouchableOpacity>
@@ -1391,7 +1516,6 @@ const styles = StyleSheet.create({
   successLottie: {
     width: 320,
     height: 300,
-
   },
   couponSuccessTitle: {
     fontFamily: "Poppins_700Bold",

@@ -353,7 +353,9 @@ export const useB2BProfile = (params?: {
   enabled?: boolean;
 }) => {
   return useQuery({
-    queryKey: ["b2b-profile", params?.user_id, params?.public_id, params?.mobile],
+    queryKey: params?.user_id
+      ? ["b2b-profile", params.user_id]
+      : ["b2b-profile", params?.public_id || "guest", params?.mobile || "none"],
     queryFn: () =>
       b2bGetProfileApi({
         user_id: params?.user_id,
@@ -361,6 +363,7 @@ export const useB2BProfile = (params?: {
         mobile: params?.mobile,
       }),
     enabled: params?.enabled !== undefined ? params.enabled : true,
+    placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 3, // 3 minutes cache
   });
 };

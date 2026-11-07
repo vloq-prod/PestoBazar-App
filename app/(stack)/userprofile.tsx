@@ -148,9 +148,18 @@ export default function UserProfile() {
     phone: userMobile || "",
   });
 
-  const cleanPhone = form.phone ? form.phone.replace(/\D/g, "") : "";
-  const effectiveMobile =
-    userMobile || (cleanPhone.length === 10 ? cleanPhone : undefined);
+  // Keep a stable initial mobile so typing in the form or auto-populating phone never changes query key
+  const [initialMobile, setInitialMobile] = useState<string | undefined>(
+    userMobile || undefined,
+  );
+
+  useEffect(() => {
+    if (!initialMobile) {
+      StorageUtil.getUserMobile().then((m) => {
+        if (m) setInitialMobile(m);
+      });
+    }
+  }, [initialMobile]);
 
   // ── B2B Profile Data Fetching ────────────────
   const {
@@ -159,7 +168,7 @@ export default function UserProfile() {
     refetch: refetchB2B,
   } = useB2BProfile({
     user_id: userId || undefined,
-    mobile: effectiveMobile || undefined,
+    mobile: initialMobile || undefined,
   });
 
   const b2bData = b2bRes?.data;

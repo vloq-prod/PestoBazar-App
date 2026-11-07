@@ -189,9 +189,10 @@ export const useDeals = (userId?: string | null) => {
 export const useDealsListing = (
   page_no: number = 1,
   page_size: number = 16,
+  userId?: string | null,
 ) => {
   const query = useQuery({
-    queryKey: ["deals-listing", page_no, page_size],
+    queryKey: ["deals-listing", page_no, page_size, userId ?? "guest"],
     queryFn: () => getDealsListing(page_no, page_size),
   });
 

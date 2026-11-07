@@ -22,6 +22,7 @@ import { ItemCardSkeleton } from "../../src/components/comman/ItemCard";
 import { ListingItem } from "../../src/types/shop.types";
 import { DealsListingItem } from "../../src/types/home.types";
 import AddToCartPreview from "../../src/components/cart/AddToCartPreview";
+import { useAppVisitorStore } from "../../src/store/auth";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -66,8 +67,10 @@ const DealsScreen = () => {
     setGridMode((prev) => (prev === "grid" ? "list" : "grid"));
   };
 
+  const { userId } = useAppVisitorStore((s) => s);
+
   // Fetch Deals products and banner
-  const { deals, banner, totalCount, loading } = useDealsListing(1, 16);
+  const { deals, banner, totalCount, loading } = useDealsListing(1, 16, userId);
 
   const mappedDeals = useMemo(() => {
     return deals.map(mapDealToListingItem);

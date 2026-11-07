@@ -19,6 +19,7 @@ import {
   getTaggedProducts,
   saveRecentlyViewed,
 } from "../api/productdetails.api";
+import { useAppVisitorStore } from "../store/auth";
 
 export const useProductDetails = (params: ProductDetailsParams) => {
   return useQuery({
@@ -160,8 +161,9 @@ export const useEstimatedDelivery = ({
 };
 
 export const useCustomerAlsoBought = (params: CustomerAlsoBoughtParams) => {
+  const { userId } = useAppVisitorStore((s) => s);
   const query = useQuery({
-    queryKey: ["customer-also-bought", params.product_id],
+    queryKey: ["customer-also-bought", params.product_id, userId ?? "guest"],
 
     queryFn: () => getCustomerAlsoBought(params),
 
@@ -200,8 +202,9 @@ export const useSaveRecentlyViewed = () => {
 
 export const useTaggedProducts = (productId?: number) => {
   const numericId = Number(productId ?? 0);
+  const { userId } = useAppVisitorStore((s) => s);
   const query = useQuery({
-    queryKey: ["tagged-products", numericId],
+    queryKey: ["tagged-products", numericId, userId ?? "guest"],
     queryFn: () => getTaggedProducts(numericId),
     enabled: Number.isFinite(numericId) && numericId > 0,
     select: (res) => res?.data?.tagged_products ?? [],

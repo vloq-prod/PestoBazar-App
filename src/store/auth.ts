@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { StorageUtil } from "../utils/storage";
 import { createVisitor } from "../api/auth.api";
 import { resetAnalytics } from "../lib/analytics";
+import { queryClient } from "../lib/queryClient";
 
 interface AppState {
   // Visitor
@@ -108,12 +109,14 @@ export const useAppVisitorStore = create<AppState>((set) => ({
   setUser: async (userId, userName, email, avatar) => {
     await StorageUtil.setUser(userId, userName, email, avatar);
     console.log("📦 [AUTH STORE setUser]:", { userId, userName, email, avatar });
+    queryClient.clear();
     set({ userId, userName, userEmail: email, userAvatar: avatar });
   },
 
   setGoogleUser: async (userId, userName, email, avatar) => {
     await StorageUtil.setUser(userId, userName, email, avatar);
     console.log("📦 [AUTH STORE setGoogleUser]:", { userId, userName, email, avatar });
+    queryClient.clear();
     set({ userId, userName, userEmail: email, userAvatar: avatar });
   },
 
@@ -121,6 +124,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     await StorageUtil.clearUser();
     await StorageUtil.clearB2BSession();
     console.log("📦 [AUTH STORE clearUser]: cleared");
+    queryClient.clear();
     set({
       userId: null,
       userName: null,
@@ -160,6 +164,7 @@ export const useAppVisitorStore = create<AppState>((set) => ({
     await StorageUtil.clearB2BSession();
     resetAnalytics();
     console.log("📦 [AUTH STORE logout]: logged out");
+    queryClient.clear();
     set({
       userId: null,
       userName: null,

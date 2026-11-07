@@ -120,14 +120,14 @@ const ReturnCard = ({
         </View>
 
         {/* Right Info: Price */}
-        <Text
+        {/* <Text
           style={[
             styles.priceText,
             { color: colors.text, fontSize: font(16) },
           ]}
         >
           ₹{item.return_price ? parseFloat(String(item.return_price)).toFixed(0) : "0"}
-        </Text>
+        </Text> */}
       </View>
 
       {/* ── Middle: Product Images Row ── */}
