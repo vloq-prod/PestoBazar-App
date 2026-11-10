@@ -353,52 +353,6 @@ function IOSTabBar({ state, navigation }: BottomTabBarProps) {
             contentFit="cover"
           />
         </Pressable>
-
-        {/* B2B circle button */}
-        <Pressable
-          onPress={() => router.push("/b2b")}
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 999,
-            alignItems: "center",
-            justifyContent: "center",
-            shadowColor: b2bVisual.shadowColor,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.2,
-            shadowRadius: 9,
-            elevation: 8,
-            overflow: "hidden",
-            backgroundColor: b2bVisual.bgColor,
-          }}
-        >
-          <LinearGradient
-            colors={b2bVisual.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              width: "100%",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 2,
-            }}
-          >
-            <b2bVisual.Icon size={22} color="#ffffff" strokeWidth={2.2} />
-            <Animated.Text
-              style={{
-                fontFamily: "Poppins_700Bold",
-                fontSize: 11,
-                lineHeight: 14,
-                color: "#ffffff",
-                letterSpacing: 0.5,
-                textAlign: "center",
-              }}
-            >
-              B2B
-            </Animated.Text>
-          </LinearGradient>
-        </Pressable>
       </View>
     </View>
   );
@@ -503,47 +457,7 @@ function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
           />
         </Pressable>
 
-        {/* B2B circle button */}
-        <Pressable
-          android_ripple={null}
-          onPress={() => router.push("/b2b")}
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 26,
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            backgroundColor: b2bVisual.bgColor,
-          }}
-        >
-          <LinearGradient
-            colors={b2bVisual.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              width: "100%",
-              height: "100%",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 2,
-            }}
-          >
-            <b2bVisual.Icon size={18} color="#ffffff" strokeWidth={2.2} />
-            <Animated.Text
-              style={{
-                fontFamily: "Poppins_700Bold",
-                fontSize: 10,
-                lineHeight: 12,
-                color: "#ffffff",
-                letterSpacing: 0.5,
-                textAlign: "center",
-              }}
-            >
-              B2B
-            </Animated.Text>
-          </LinearGradient>
-        </Pressable>
+     
       </View>
     </View>
   );

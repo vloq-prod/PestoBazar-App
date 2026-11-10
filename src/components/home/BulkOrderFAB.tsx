@@ -1,12 +1,20 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Platform,
   TouchableOpacity,
   Text,
   View,
   useWindowDimensions,
+  StyleSheet,
 } from "react-native";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Briefcase,
+  Clock,
+  ShieldCheck,
+} from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useAnimatedStyle,
   useAnimatedReaction,
@@ -18,11 +26,15 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
+import { useB2BApplicationStatus } from "../../hooks/b2bHooks";
 
 const BULK_ORDER_IMAGE =
   "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=300&auto=format&fit=crop";
-import { Image } from "expo-image";
-import { useRouter } from "expo-router";
+
+const FAB_WIDTH = 130;
+const FAB_HEIGHT = 44;
 
 type Props = {
   onPress?: () => void;
@@ -40,6 +52,9 @@ const BulkOrderFAB: React.FC<Props> = ({
   const { colors } = useTheme();
   const { spacing } = useResponsive();
   const { height } = useWindowDimensions();
+  const router = useRouter();
+  const { data: b2bStatus } = useB2BApplicationStatus();
+
   const manualOpen = useSharedValue(1);
   const defaultBottomOffset = Math.max(120, Math.min(height * 0.22, 200));
   const bottomOffset =
@@ -49,7 +64,74 @@ const BulkOrderFAB: React.FC<Props> = ({
         : spacing(pbandroid ?? 12)
       : defaultBottomOffset;
 
-  const router = useRouter();
+  // Dynamic visual state based on B2B status
+  const visual = useMemo(() => {
+    const rawStatus = (b2bStatus?.status || "").toLowerCase().trim();
+    const isApproved =
+      b2bStatus?.is_b2b_user === true || rawStatus === "approved";
+
+    // 1. Approved Wholesale / B2B User -> Green
+    if (isApproved) {
+      return {
+        title: "Wholesale",
+        subtitle: "Buyer",
+        badge: "Verified",
+        gradient: ["#064e3b", "#059669"] as [string, string],
+        bgColor: "#059669",
+        shadowColor: "#059669",
+        Icon: ShieldCheck,
+      };
+    }
+
+    // 2. Pending / In Review / Submitted -> Yellow / Amber
+    const isPending =
+      rawStatus === "pending" ||
+      rawStatus === "in_review" ||
+      rawStatus === "under_review" ||
+      rawStatus === "submitted";
+
+    if (isPending) {
+      return {
+        title: "Wholesale",
+        subtitle: "Pending",
+        badge: "In Review",
+        gradient: ["#78350f", "#d97706"] as [string, string],
+        bgColor: "#d97706",
+        shadowColor: "#d97706",
+        Icon: Clock,
+      };
+    }
+
+    // 3. Draft / Continue Setup -> Orange / Amber
+    const isDraft =
+      rawStatus === "draft" ||
+      rawStatus === "incomplete" ||
+      rawStatus === "correction_required" ||
+      (b2bStatus?.has_application && !rawStatus);
+
+    if (isDraft) {
+      return {
+        title: "Continue",
+        subtitle: "Setup",
+        badge: "Draft",
+        gradient: ["#7c2d12", "#d97706"] as [string, string],
+        bgColor: "#d97706",
+        shadowColor: "#d97706",
+        Icon: Clock,
+      };
+    }
+
+    // 4. Default / Not applied -> Brand Primary Purple
+    return {
+      title: "Wholesale",
+      subtitle: "Buyer",
+      badge: null,
+      gradient: ["#20086b", "#5f16e9"] as [string, string],
+      bgColor: "#5f16e9",
+      shadowColor: "#5f16e9",
+      Icon: Briefcase,
+    };
+  }, [b2bStatus]);
 
   useAnimatedReaction(
     () => visible?.value ?? 1,
@@ -64,7 +146,7 @@ const BulkOrderFAB: React.FC<Props> = ({
     const progress = manualOpen.value;
 
     return {
-      width: interpolate(progress, [0, 1], [0, 80], Extrapolate.CLAMP),
+      width: interpolate(progress, [0, 1], [0, FAB_WIDTH], Extrapolate.CLAMP),
       opacity: interpolate(
         progress,
         [0, 0.35, 1],
@@ -79,7 +161,7 @@ const BulkOrderFAB: React.FC<Props> = ({
     const progress = manualOpen.value;
 
     return {
-      width: interpolate(progress, [0, 1], [20, 0], Extrapolate.CLAMP),
+      width: interpolate(progress, [0, 1], [22, 0], Extrapolate.CLAMP),
       opacity: interpolate(
         progress,
         [0, 0.35, 1],
@@ -91,17 +173,14 @@ const BulkOrderFAB: React.FC<Props> = ({
   });
 
   const handlePress = () => {
-    const nextValue = manualOpen.value > 0.5 ? 0 : 1;
-    manualOpen.value = withTiming(nextValue, { duration: 280 });
     onPress?.();
-
-    router.push("(stack)/bulkorder");
+    router.push("/b2b");
   };
 
   return (
     <TouchableOpacity
       onPress={handlePress}
-      activeOpacity={9}
+      activeOpacity={0.88}
       style={{
         position: "absolute",
         right: 0,
@@ -109,117 +188,114 @@ const BulkOrderFAB: React.FC<Props> = ({
         zIndex: 50,
         flexDirection: "row",
         alignItems: "center",
-        borderTopLeftRadius: 8,
-        borderBottomLeftRadius: 8,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
         borderTopRightRadius: 0,
         borderBottomRightRadius: 0,
-
-        paddingVertical: 2,
-        paddingLeft: 2,
-
-        backgroundColor: colors.background,
+        shadowColor: visual.shadowColor,
+        shadowOffset: { width: -2, height: 2 },
+        shadowOpacity: 0.28,
+        shadowRadius: 5,
+        elevation: 7,
       }}
     >
-      {/* when visible show only this show */}
+      {/* Expanded State (Rich gradient badge with subtle backdrop) */}
       <Animated.View style={[{ position: "relative" }, expandStyle]}>
-        <Image
-          source={{ uri: BULK_ORDER_IMAGE }}
-          style={{
-            width: 80,
-            height: 40,
-            borderRadius: 8,
-            borderTopRightRadius: 0,
-            borderBottomRightRadius: 0,
-          }}
-          contentFit="cover"
-        />
-
         <View
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.55)",
-            borderRadius: 8,
-            borderTopRightRadius: 0,
-            borderBottomRightRadius: 0,
-          }}
-        />
-
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 6,
+            width: FAB_WIDTH,
+            height: FAB_HEIGHT,
+            position: "relative",
+            overflow: "hidden",
+            borderTopLeftRadius: 10,
+            borderBottomLeftRadius: 10,
           }}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <View>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: "#fff",
-                  fontWeight: "700",
-                  lineHeight: 20,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                whole
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: "#fff",
-                  fontWeight: "700",
-                  lineHeight: 15,
-                  fontFamily: "Poppins_500Medium",
-                }}
-              >
-                sale
-              </Text>
+          {/* Subtle background image */}
+          <Image
+            source={{ uri: BULK_ORDER_IMAGE }}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+          />
+
+          {/* Status Gradient Overlay */}
+          <LinearGradient
+            colors={visual.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              opacity: 0.92,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingLeft: 8,
+              paddingRight: 6,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                flex: 1,
+              }}
+            >
+              <visual.Icon size={18} color="#ffffff" strokeWidth={2.2} />
+              <View style={{ flex: 1, justifyContent: "center" }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 11,
+                    color: "#ffffff",
+                    fontFamily: "Poppins_700Bold",
+                    lineHeight: 14,
+                  }}
+                >
+                  {visual.title}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 9.5,
+                    color: "rgba(255,255,255,0.95)",
+                    fontFamily: "Poppins_600SemiBold",
+                    lineHeight: 12,
+                  }}
+                >
+                  {visual.subtitle}
+                </Text>
+              </View>
             </View>
 
-            <View style={{ justifyContent: "center", alignItems: "center" }}>
-              <ChevronRight size={22} color={colors.background} />
-            </View>
-          </View>
+            <ChevronRight size={17} color="#ffffff" strokeWidth={2.5} />
+          </LinearGradient>
         </View>
       </Animated.View>
 
-      {/* When visible hide this is show  only */}
+      {/* Collapsed State (Compact side-tab handle) */}
       <Animated.View
         style={{
-          height: 40,
+          height: FAB_HEIGHT,
           justifyContent: "center",
-          padding: 0.5,
         }}
       >
         <Animated.View style={collapsedHandleStyle}>
           <View
             style={{
-              width: 20,
-              height: 40,
+              width: 22,
+              height: FAB_HEIGHT,
               justifyContent: "center",
-              backgroundColor: "#000000",
-              borderTopLeftRadius: 5,
-              borderBottomLeftRadius: 5,
+              alignItems: "center",
+              backgroundColor: visual.bgColor,
+              borderTopLeftRadius: 6,
+              borderBottomLeftRadius: 6,
               borderTopRightRadius: 0,
               borderBottomRightRadius: 0,
               overflow: "hidden",
             }}
           >
-            <Animated.View>
-              <ChevronLeft size={20} color="#fff" strokeWidth={2.5} />
-            </Animated.View>
+            <ChevronLeft size={18} color="#ffffff" strokeWidth={2.5} />
           </View>
         </Animated.View>
       </Animated.View>
