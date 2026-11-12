@@ -29,6 +29,7 @@ interface RefundDetailsModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (refundData: any) => void;
+  isSubmitting?: boolean;
 }
 
 const INPUT_HEIGHT = 44;
@@ -37,6 +38,7 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
   visible,
   onClose,
   onSubmit,
+  isSubmitting = false,
 }) => {
   const { colors } = useTheme();
   const { font, spacing } = useResponsive();
@@ -155,6 +157,8 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
   };
 
   const handleSubmit = () => {
+    if (isSubmitting) return;
+
     if (!validate()) {
       if (accountNo.trim() && confirmAccountNo.trim() && accountNo.trim() !== confirmAccountNo.trim()) {
         showToast("Account Number and Confirm Account Number do not match", "error");
@@ -575,9 +579,11 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
+                    opacity: isSubmitting ? 0.5 : 1,
                   }}
                   activeOpacity={0.7}
                   onPress={handleClose}
+                  disabled={isSubmitting}
                 >
                   <Text
                     style={{
@@ -598,9 +604,11 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
                     borderRadius: 12,
                     alignItems: "center",
                     justifyContent: "center",
+                    opacity: isSubmitting ? 0.6 : 1,
                   }}
                   activeOpacity={0.8}
                   onPress={handleSubmit}
+                  disabled={isSubmitting}
                 >
                   <Text
                     style={{
@@ -609,7 +617,7 @@ const RefundDetailsModal: React.FC<RefundDetailsModalProps> = ({
                       color: "#FFFFFF",
                     }}
                   >
-                    Confirm Refund details
+                    {isSubmitting ? "Submitting..." : "Confirm Refund details"}
                   </Text>
                 </TouchableOpacity>
               </View>

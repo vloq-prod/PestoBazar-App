@@ -45,16 +45,10 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
     String(item.is_b2b_user || "").toLowerCase() === "yes";
 
   const rawExclusive = Number(item.selling_price_exclusive_gst);
-  const rawInclusive = Number(item.selling_price_inclusive_gst);
 
   const exclusivePrice =
     !isNaN(rawExclusive) && rawExclusive > 0
       ? rawExclusive
-      : price;
-
-  const inclusivePrice =
-    !isNaN(rawInclusive) && rawInclusive > 0
-      ? rawInclusive
       : price;
 
   const discountAmount = mrp > price ? Math.round(mrp - price) : null;
@@ -292,37 +286,19 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                 Excl. GST
               </Text>
             </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: spacing(6),
-              }}
-            >
+            {discountAmount && (
               <Text
                 style={{
-                  fontSize: font(10),
+                  fontSize: font(9),
                   fontFamily: "Poppins_400Regular",
-                  color: colors.textTertiary,
+                  color: colors.textSecondary,
+                  textDecorationLine: "line-through",
                   includeFontPadding: false,
                 }}
               >
-                ₹{formatPrice(inclusivePrice)} Incl. GST
+                ₹{formatPrice(mrp)}
               </Text>
-              {discountAmount && (
-                <Text
-                  style={{
-                    fontSize: font(9),
-                    fontFamily: "Poppins_400Regular",
-                    color: colors.textSecondary,
-                    textDecorationLine: "line-through",
-                    includeFontPadding: false,
-                  }}
-                >
-                  ₹{formatPrice(mrp)}
-                </Text>
-              )}
-            </View>
+            )}
           </View>
         ) : (
           <View

@@ -87,16 +87,10 @@ export default function ItemCard({
     String((item as any).is_b2b_user || "").toLowerCase() === "yes";
 
   const rawExclusive = Number((item as any).selling_price_exclusive_gst);
-  const rawInclusive = Number((item as any).selling_price_inclusive_gst);
 
   const exclusivePrice =
     !isNaN(rawExclusive) && rawExclusive > 0
       ? rawExclusive
-      : sellingPriceVal;
-
-  const inclusivePrice =
-    !isNaN(rawInclusive) && rawInclusive > 0
-      ? rawInclusive
       : sellingPriceVal;
   const discountPercent =
     mrpVal > sellingPriceVal ? Math.round(((mrpVal - sellingPriceVal) / mrpVal) * 100) : 0;
@@ -420,18 +414,6 @@ export default function ItemCard({
                 Excl. GST
               </Text>
             </View>
-
-            {/* Incl. GST Secondary Price */}
-            <Text
-              style={{
-                fontSize: font(9.5),
-                color: colors.textTertiary,
-                fontFamily: "Poppins_400Regular",
-                includeFontPadding: false,
-              }}
-            >
-              ₹{formatPrice(inclusivePrice)} Incl. GST
-            </Text>
 
             {/* MRP Price crossed out */}
             {discountAmount && (

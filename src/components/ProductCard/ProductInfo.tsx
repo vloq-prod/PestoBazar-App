@@ -108,54 +108,38 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
               Excl. GST
             </Text>
           </View>
-          <View
-            style={[
-              styles.priceRow,
-              { gap: spacing(6), alignItems: "center" },
-            ]}
-          >
-            <Text
-              style={{
-                fontFamily: "Poppins_400Regular",
-                fontSize: font(11),
-                color: colors.textTertiary,
-              }}
+          {hasMrp && (
+            <View
+              style={[
+                styles.priceRow,
+                { gap: spacing(6), alignItems: "center" },
+              ]}
             >
-              {formatPrice(
-                inclusivePrice !== undefined && inclusivePrice !== null
-                  ? String(inclusivePrice)
-                  : sellingPrice,
-              )}{" "}
-              Incl. GST
-            </Text>
-            {hasMrp && (
-              <>
+              <Text
+                style={{
+                  fontFamily: "Poppins_400Regular",
+                  fontSize: font(11),
+                  color: colors.textTertiary,
+                  textDecorationLine: "line-through",
+                }}
+              >
+                {formatPrice(mrp)}
+              </Text>
+
+              {discount > 0 && (
                 <Text
                   style={{
-                    fontFamily: "Poppins_400Regular",
+                    fontFamily: "Poppins_700Bold",
                     fontSize: font(11),
-                    color: colors.textTertiary,
-                    textDecorationLine: "line-through",
+                    color: colors.error,
+                    letterSpacing: 0.2,
                   }}
                 >
-                  {formatPrice(mrp)}
+                  ({discount}% off)
                 </Text>
-
-                {discount > 0 && (
-                  <Text
-                    style={{
-                      fontFamily: "Poppins_700Bold",
-                      fontSize: font(11),
-                      color: colors.error,
-                      letterSpacing: 0.2,
-                    }}
-                  >
-                    ({discount}% off)
-                  </Text>
-                )}
-              </>
-            )}
-          </View>
+              )}
+            </View>
+          )}
         </View>
       ) : (
         <View style={[styles.priceRow, { gap: spacing(5) }]}>

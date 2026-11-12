@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useRef, useMemo } from "react";
-import { Platform, Pressable, View, LayoutChangeEvent } from "react-native";
+import React, { useCallback, useMemo } from "react";
+import { Platform, Pressable, View, Text } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Home, LayoutGrid, User, Briefcase, Clock, ShieldCheck } from "lucide-react-native";
+import {
+  Home,
+  LayoutGrid,
+  User,
+  Clock,
+  ShieldCheck,
+  Store,
+  AlertCircle,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  interpolate,
+  Extrapolation,
   withTiming,
-  Easing,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme";
@@ -16,15 +23,16 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import dealsimage from "../../assets/deal2.png";
 import { useB2BApplicationStatus } from "../hooks/b2bHooks";
+import { useTabBarVisibility } from "../context/TabBarVisibilityContext";
 
 type TabCfg = {
   label: string;
-  Icon: React.ComponentType<{ size: number; color: string }>;
+  Icon: React.ComponentType<{ size: number; color: string; strokeWidth?: number }>;
 };
 
 const TAB_CONFIG: Record<string, TabCfg> = {
   index: { label: "Home", Icon: Home },
-  category: { label: "Category", Icon: LayoutGrid },
+  category: { label: "Categories", Icon: LayoutGrid },
   profile: { label: "Profile", Icon: User },
 };
 
@@ -32,128 +40,6 @@ const FALLBACK_CFG: TabCfg = {
   label: "",
   Icon: () => null,
 };
-
-const SPRING_CFG = { damping: 18, stiffness: 180, mass: 0.8 } as const;
-const TIMING_CFG = {
-  duration: 220,
-  easing: Easing.out(Easing.quad),
-} as const;
-
-// ─────────────────────────────────────────────────────────
-// iOS TabItem
-// ─────────────────────────────────────────────────────────
-function IOSTabItem({
-  routeName,
-  isFocused,
-  activeColor,
-  inactiveColor,
-  onPress,
-  onLongPress,
-  onLayout,
-}: {
-  routeName: string;
-  isFocused: boolean;
-  activeColor: string;
-  inactiveColor: string;
-  onPress: () => void;
-  onLongPress: () => void;
-  onLayout: (e: LayoutChangeEvent) => void;
-}) {
-  const cfg = TAB_CONFIG[routeName] ?? FALLBACK_CFG;
-
-  return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      onLayout={onLayout}
-      android_ripple={null}
-      className="flex-1 items-center justify-center px-2 py-2.5 gap-0.5"
-      style={{ borderRadius: 40 }}
-    >
-      <cfg.Icon size={22} color={isFocused ? activeColor : inactiveColor} />
-      <Animated.Text
-        numberOfLines={1}
-        className="text-[10px] text-center leading-[14px]"
-        style={{
-          fontFamily: "Poppins_500Medium",
-          color: isFocused ? activeColor : inactiveColor,
-        }}
-      >
-        {cfg.label}
-      </Animated.Text>
-    </Pressable>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Android TabItem
-// ─────────────────────────────────────────────────────────
-function AndroidTabItem({
-  routeName,
-  isFocused,
-  activeColor,
-  inactiveColor,
-  onPress,
-  onLongPress,
-}: {
-  routeName: string;
-  isFocused: boolean;
-  activeColor: string;
-  inactiveColor: string;
-  onPress: () => void;
-  onLongPress: () => void;
-}) {
-  const cfg = TAB_CONFIG[routeName] ?? FALLBACK_CFG;
-  const progress = useSharedValue(isFocused ? 1 : 0);
-
-  useEffect(() => {
-    progress.value = withTiming(isFocused ? 1 : 0, TIMING_CFG);
-  }, [isFocused, progress]);
-
-  const borderStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ scaleX: progress.value }],
-  }));
-
-  return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      android_ripple={null}
-      style={{
-        flex: 1,
-        minWidth: 0,
-        alignItems: "center",
-        justifyContent: "center",
-        paddingTop: 8,
-        paddingBottom: 6,
-        gap: 3,
-      }}
-    >
-      {/* Top indicator bar */}
-      <Animated.View
-        className="absolute top-0 h-[2.5px] rounded-b-sm"
-        style={[
-          { left: "15%", right: "15%", backgroundColor: activeColor },
-          borderStyle,
-        ]}
-      />
-      <cfg.Icon size={21} color={isFocused ? activeColor : inactiveColor} />
-      <Animated.Text
-        numberOfLines={1}
-        style={{
-          fontFamily: "Poppins_500Medium",
-          fontSize: 10,
-          lineHeight: 14,
-          textAlign: "center",
-          color: isFocused ? activeColor : inactiveColor,
-        }}
-      >
-        {cfg.label}
-      </Animated.Text>
-    </Pressable>
-  );
-}
 
 // ─────────────────────────────────────────────────────────
 // Dynamic B2B Visual State Hook
@@ -164,312 +50,328 @@ function useB2BButtonVisual() {
   return useMemo(() => {
     if (!data || !data.has_application || !data.status) {
       return {
+        title: "Become a",
+        subtitle: "Bulk Buyer",
         gradient: ["#20086b", "#5f16e9"] as [string, string],
-        bgColor: "#20086b",
-        shadowColor: "#000",
-        Icon: Briefcase,
+        bgColor: "#5f16e9",
+        shadowColor: "#5f16e9",
+        Icon: Store,
       };
     }
 
     const s = (data.status || "").toLowerCase().trim();
     if (data.is_b2b_user || s === "approved") {
       return {
-        gradient: ["#047857", "#10B981"] as [string, string],
-        bgColor: "#047857",
-        shadowColor: "#047857",
+        title: "Bulk Buyer",
+        subtitle: "Approved",
+        gradient: ["#064e3b", "#059669"] as [string, string],
+        bgColor: "#059669",
+        shadowColor: "#059669",
         Icon: ShieldCheck,
       };
     }
 
-    // Pending, Under Review, Submitted, Correction Required, Draft
+    const isSubmitted =
+      s === "submitted for approval" || s === "submitted" || s.includes("submit");
+    if (isSubmitted) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Submitted",
+        gradient: ["#805009", "#a66a10"] as [string, string],
+        bgColor: "#a66a10",
+        shadowColor: "#805009",
+        Icon: Clock,
+      };
+    }
+
+    const isUnderReview = s.includes("review");
+    if (isUnderReview) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "In Review",
+        gradient: ["#1e3a8a", "#2563eb"] as [string, string],
+        bgColor: "#2563eb",
+        shadowColor: "#1e3a8a",
+        Icon: Clock,
+      };
+    }
+
+    const isCorrection = s.includes("correct");
+    if (isCorrection) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Action Req.",
+        gradient: ["#7f1d1d", "#dc2626"] as [string, string],
+        bgColor: "#dc2626",
+        shadowColor: "#7f1d1d",
+        Icon: AlertCircle,
+      };
+    }
+
     return {
-      gradient: ["#D97706", "#F59E0B"] as [string, string],
-      bgColor: "#D97706",
-      shadowColor: "#D97706",
+      title: "Bulk Buyer",
+      subtitle: "Setup",
+      gradient: ["#7c2d12", "#d97706"] as [string, string],
+      bgColor: "#d97706",
+      shadowColor: "#d97706",
       Icon: Clock,
     };
   }, [data]);
 }
 
 // ─────────────────────────────────────────────────────────
-// iOS TabBar — floating pill style
+// Unified Floating Dock TabBar (iOS & Android)
 // ─────────────────────────────────────────────────────────
-function IOSTabBar({ state, navigation }: BottomTabBarProps) {
-  const { colors } = useTheme();
+export function TabBar({ state, navigation }: BottomTabBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomOffset = (insets.bottom || 0) + -13;
-  const pillInset = 3;
+  const visibility = useTabBarVisibility();
   const b2bVisual = useB2BButtonVisual();
+  const { colors } = useTheme();
 
-  const tabLayouts = useRef<{ x: number; width: number }[]>([]);
-  const pillX = useSharedValue(0);
-  const pillWidth = useSharedValue(0);
+  const bottomOffset = Platform.select({
+    ios: (insets.bottom || 0) > 0 ? insets.bottom - 13 : 12,
+    default: Math.max(insets.bottom || 0, 12),
+  });
 
-  const pillStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: pillX.value }],
-    width: pillWidth.value,
-  }));
+  const animatedDockStyle = useAnimatedStyle(() => {
+    const progress = visibility?.tabBarVisible?.value ?? 1;
+    const translateY = interpolate(
+      progress,
+      [0, 1],
+      [110, 0],
+      Extrapolation.CLAMP,
+    );
+    const opacity = interpolate(
+      progress,
+      [0, 0.35, 1],
+      [0, 0.7, 1],
+      Extrapolation.CLAMP,
+    );
 
-  const handleLayout = useCallback(
-    (index: number, e: LayoutChangeEvent) => {
-      const { x, width } = e.nativeEvent.layout;
-      tabLayouts.current[index] = { x, width };
-      if (index === state.index) {
-        pillX.value = x;
-        pillWidth.value = width;
-      }
-    },
-    [state.index, pillX, pillWidth],
-  );
-
-  useEffect(() => {
-    const layout = tabLayouts.current[state.index];
-    if (!layout) return;
-    pillX.value = withSpring(layout.x, SPRING_CFG);
-    pillWidth.value = withSpring(layout.width, SPRING_CFG);
-  }, [state.index, pillX, pillWidth]);
+    return {
+      transform: [{ translateY }],
+      opacity,
+    };
+  });
 
   const handlePress = useCallback(
     (routeKey: string, routeName: string, isFocused: boolean) => {
+      if (visibility) {
+        visibility.tabBarVisible.value = withTiming(1, { duration: 200 });
+      }
       const event = navigation.emit({
         type: "tabPress",
         target: routeKey,
         canPreventDefault: true,
       });
-      if (!isFocused && !event.defaultPrevented) navigation.navigate(routeName);
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(routeName);
+      }
     },
-    [navigation],
-  );
-
-  const handleLongPress = useCallback(
-    (routeKey: string) => {
-      navigation.emit({ type: "tabLongPress", target: routeKey });
-    },
-    [navigation],
+    [navigation, visibility],
   );
 
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: bottomOffset,
-      }}
+    <Animated.View
+      pointerEvents="box-none"
+      style={[
+        {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: bottomOffset,
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 10,
+          gap: 8,
+          zIndex: 100,
+        },
+        animatedDockStyle,
+      ]}
     >
+      {/* ── Main Tabs Capsule (White Dock with Home, Categories, Profile & Deals) ── */}
       <View
         style={{
           flex: 1,
-          paddingLeft: 12,
-          paddingRight: 6,
+          backgroundColor: "#FFFFFF",
+          borderRadius: 40,
+          height: 58,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 6,
+          paddingVertical: 4,
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.2,
-          shadowRadius: 9,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.12,
+          shadowRadius: 10,
+          elevation: 8,
+          borderWidth: 1,
+          borderColor: "rgba(0,0,0,0.06)",
+        }}
+      >
+        {state.routes.map((route, index) => {
+          const isFocused = state.index === index;
+          const cfg = TAB_CONFIG[route.name] ?? FALLBACK_CFG;
+          const activeColor = colors.primary; // App Brand Primary Color (#5f16e9)
+          const activeBg = colors.primaryLight; // Subtle primary tint
+          const inactiveColor = colors.text;
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={() => handlePress(route.key, route.name, isFocused)}
+              android_ripple={null}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: isFocused ? "92%" : "auto",
+                  paddingHorizontal: isFocused ? 14 : 6,
+                  paddingVertical: 5,
+                  borderRadius: 24,
+                  backgroundColor: isFocused ? activeBg : "transparent",
+                  gap: 2,
+                }}
+              >
+                <cfg.Icon
+                  size={20}
+                  color={isFocused ? activeColor : inactiveColor}
+                  strokeWidth={isFocused ? 2.4 : 2}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontFamily: isFocused
+                      ? "Poppins_600SemiBold"
+                      : "Poppins_500Medium",
+                    fontSize: 10,
+                    color: isFocused ? activeColor : inactiveColor,
+                    lineHeight: 13,
+                  }}
+                >
+                  {cfg.label}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+
+        {/* ── Deals Button (Inside White Capsule as 4th element) ── */}
+        <Pressable
+          onPress={() => {
+            if (visibility) {
+              visibility.tabBarVisible.value = withTiming(1, { duration: 200 });
+            }
+            router.push("/(stack)/deals");
+          }}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: "#FFFFFF",
+            borderWidth: 1.5,
+            borderColor: "#D1D5DB",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            marginRight: 3,
+            marginLeft: 2,
+          }}
+        >
+          <Image
+            source={dealsimage}
+            contentFit="cover"
+            style={{ width: "100%", height: "100%", borderRadius: 22 }}
+          />
+        </Pressable>
+      </View>
+
+      {/* ── Bulk Order FAB (Replacing 'select FINDS' on right) ── */}
+      <Pressable
+        onPress={() => {
+          if (visibility) {
+            visibility.tabBarVisible.value = withTiming(1, { duration: 200 });
+          }
+          router.push("/b2b");
+        }}
+        style={{
+          width: 106,
+          height: 58,
+          borderRadius: 20,
+          overflow: "hidden",
+          shadowColor: b2bVisual.shadowColor || "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.22,
+          shadowRadius: 8,
           elevation: 8,
         }}
       >
-        <View
+        <LinearGradient
+          colors={b2bVisual.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{
-            backgroundColor: colors.background,
-            borderRadius: 40,
-            borderColor: colors.border,
-            borderWidth: 1,
-            padding: pillInset,
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 8,
+            paddingVertical: 6,
+            gap: 4,
           }}
         >
+          <View style={{ flex: 1, justifyContent: "center" }}>
+            <Text
+              numberOfLines={1}
+              style={{
+                fontFamily: "Poppins_500Medium",
+                fontSize: 9.5,
+                color: "rgba(255,255,255,0.85)",
+                lineHeight: 12,
+              }}
+            >
+              {b2bVisual.title}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={{
+                fontFamily: "Poppins_700Bold",
+                fontSize: 11,
+                color: "#ffffff",
+                lineHeight: 14,
+                letterSpacing: 0.2,
+              }}
+            >
+              {b2bVisual.subtitle}
+            </Text>
+          </View>
+
           <View
             style={{
-              flexDirection: "row",
-              position: "relative",
-              borderRadius: 40 - pillInset,
-              overflow: "hidden",
+              width: 28,
+              height: 28,
+              borderRadius: 14,
+              backgroundColor: "rgba(255,255,255,0.22)",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <Animated.View
-              pointerEvents="none"
-              style={[
-                {
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  borderRadius: 40 - pillInset,
-                  backgroundColor: colors.primary,
-                },
-                pillStyle,
-              ]}
-            />
-            {state.routes.map((route, index) => {
-              const isFocused = state.index === index;
-              return (
-                <IOSTabItem
-                  key={route.key}
-                  routeName={route.name}
-                  isFocused={isFocused}
-                  activeColor={colors.textInverse}
-                  inactiveColor={colors.text}
-                  onPress={() => handlePress(route.key, route.name, isFocused)}
-                  onLongPress={() => handleLongPress(route.key)}
-                  onLayout={(e) => handleLayout(index, e)}
-                />
-              );
-            })}
+            <b2bVisual.Icon size={16} color="#ffffff" strokeWidth={2.2} />
           </View>
-        </View>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          marginRight: 14,
-        }}
-      >
-        {/* Deals circle button */}
-        <Pressable
-          onPress={() => router.push("/(stack)/deals")}
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 999,
-            backgroundColor: colors.background,
-            alignItems: "center",
-            justifyContent: "center",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.2,
-            shadowRadius: 9,
-            elevation: 8,
-            overflow: "hidden",
-          }}
-        >
-          <Image
-            style={{ width: "100%", height: "100%", borderRadius: 999 }}
-            source={dealsimage}
-            contentFit="cover"
-          />
-        </Pressable>
-      </View>
-    </View>
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
   );
 }
 
-// ─────────────────────────────────────────────────────────
-// Android TabBar — flat border-top style
-// ─────────────────────────────────────────────────────────
-function AndroidTabBar({ state, navigation }: BottomTabBarProps) {
-  const { colors } = useTheme();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const b2bVisual = useB2BButtonVisual();
-
-  const handlePress = useCallback(
-    (routeKey: string, routeName: string, isFocused: boolean) => {
-      const event = navigation.emit({
-        type: "tabPress",
-        target: routeKey,
-        canPreventDefault: true,
-      });
-      if (!isFocused && !event.defaultPrevented) navigation.navigate(routeName);
-    },
-    [navigation],
-  );
-
-  const handleLongPress = useCallback(
-    (routeKey: string) => {
-      navigation.emit({ type: "tabLongPress", target: routeKey });
-    },
-    [navigation],
-  );
-
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        backgroundColor: colors.tabBar,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        paddingBottom: insets.bottom || 10,
-        alignItems: "center",
-      }}
-    >
-      {/* Regular tabs — flex: 1 each */}
-      {state.routes.map((route, index) => {
-        const isFocused = state.index === index;
-        return (
-          <AndroidTabItem
-            key={route.key}
-            routeName={route.name}
-            isFocused={isFocused}
-            activeColor={colors.primary}
-            inactiveColor={colors.tabBarInactive}
-            onPress={() => handlePress(route.key, route.name, isFocused)}
-            onLongPress={() => handleLongPress(route.key)}
-          />
-        );
-      })}
-
-      {/* ── Deals & B2B — vertical left divider + circular buttons ── */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingTop: 6,
-          paddingBottom: 4,
-          paddingRight: 10,
-          gap: 8,
-        }}
-      >
-        {/* Straight vertical divider */}
-        <View
-          style={{
-            width: 1,
-            height: 38,
-            backgroundColor: colors.border,
-            marginRight: 4,
-          }}
-        />
-
-        {/* Deals circle button */}
-        <Pressable
-          android_ripple={null}
-          onPress={() => router.push("/(stack)/deals")}
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 26,
-            backgroundColor: colors.surfaceElevated,
-            borderWidth: 1,
-            borderColor: colors.border,
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-          }}
-        >
-          <Image
-            source={dealsimage}
-            contentFit="cover"
-            style={{ width: "100%", height: "100%", borderRadius: 26 }}
-          />
-        </Pressable>
-
-     
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Main Export — Platform switch
-// ─────────────────────────────────────────────────────────
-export function TabBar(props: BottomTabBarProps) {
-  return Platform.OS === "ios" ? (
-    <IOSTabBar {...props} />
-  ) : (
-    <AndroidTabBar {...props} />
-  );
-}
+export { TabBar as IOSTabBar, TabBar as AndroidTabBar, TabBar as FloatingTabBar };

@@ -33,10 +33,6 @@ const SearchItem: React.FC<Props> = ({ item }) => {
     item?.selling_price_exclusive_gst !== undefined && item?.selling_price_exclusive_gst !== null
       ? Number(item.selling_price_exclusive_gst)
       : price;
-  const inclusivePrice =
-    item?.selling_price_inclusive_gst !== undefined && item?.selling_price_inclusive_gst !== null
-      ? Number(item.selling_price_inclusive_gst)
-      : price;
 
   return (
     <TouchableOpacity
@@ -113,31 +109,19 @@ const SearchItem: React.FC<Props> = ({ item }) => {
                 Excl. GST
               </Text>
             </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6) }}>
+            {discount && (
               <Text
                 style={{
-                  fontSize: font(9.5),
+                  fontSize: font(10),
                   color: colors.textTertiary,
+                  textDecorationLine: "line-through",
                   fontFamily: "Poppins_400Regular",
                   includeFontPadding: false,
                 }}
               >
-                ₹{formatPrice(inclusivePrice)} Incl. GST
+                ₹{formatPrice(mrp)}
               </Text>
-              {discount && (
-                <Text
-                  style={{
-                    fontSize: font(10),
-                    color: colors.textTertiary,
-                    textDecorationLine: "line-through",
-                    fontFamily: "Poppins_400Regular",
-                    includeFontPadding: false,
-                  }}
-                >
-                  ₹{formatPrice(mrp)}
-                </Text>
-              )}
-            </View>
+            )}
           </View>
         ) : (
           <View style={{ flexDirection: "row", alignItems: "center", gap: spacing(6), marginTop: spacing(4) }}>

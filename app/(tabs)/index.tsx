@@ -41,10 +41,11 @@ import Animated, {
   interpolate,
   Extrapolation,
   runOnJS,
+  Easing,
 } from "react-native-reanimated";
 
 import HomeBottomCarousel from "../../src/components/home/HomeBottomCarousel";
-import BulkOrderFAB from "../../src/components/home/BulkOrderFAB";
+import { useTabBarVisibility } from "../../src/context/TabBarVisibilityContext";
 import Testimonial from "../../src/components/home/Testimonial";
 import HomeUsp from "../../src/components/home/HomeUsp";
 import Branches from "../../src/components/home/Branches";
@@ -874,6 +875,7 @@ export default function HomeScreen() {
 
   const lastScrollY = useSharedValue(0);
   const fabVisible = useSharedValue(1);
+  const tabBarVisibility = useTabBarVisibility();
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -886,10 +888,26 @@ export default function HomeScreen() {
         runOnJS(setIsPromoVisible)(false);
       }
 
-      // Hide FAB on scroll down, show on scroll up
-      if (currentY > lastScrollY.value && currentY > 150) {
+      const diff = currentY - lastScrollY.value;
+
+      // Up scroll (scrolling down the list): smoothly hide TabBar & FAB
+      if (diff > 6 && currentY > 60) {
+        if (tabBarVisibility?.tabBarVisible && tabBarVisibility.tabBarVisible.value !== 0) {
+          tabBarVisibility.tabBarVisible.value = withTiming(0, {
+            duration: 250,
+            easing: Easing.out(Easing.quad),
+          });
+        }
         fabVisible.value = withTiming(0, { duration: 200 });
-      } else if (currentY < lastScrollY.value) {
+      }
+      // Down scroll (scrolling up towards top) or near top: smoothly show TabBar & FAB
+      else if (diff < -6 || currentY <= 20) {
+        if (tabBarVisibility?.tabBarVisible && tabBarVisibility.tabBarVisible.value !== 1) {
+          tabBarVisibility.tabBarVisible.value = withTiming(1, {
+            duration: 250,
+            easing: Easing.out(Easing.quad),
+          });
+        }
         fabVisible.value = withTiming(1, { duration: 200 });
       }
       lastScrollY.value = currentY;
@@ -1181,7 +1199,7 @@ export default function HomeScreen() {
         overScrollMode="never"
         contentContainerStyle={{
           paddingTop: HEADER_HEIGHT_BASE,
-          paddingBottom: 50,
+          paddingBottom: 95,
         }}
         ListHeaderComponent={renderListHeader}
         ItemSeparatorComponent={SectionSeparator}
@@ -1194,7 +1212,6 @@ export default function HomeScreen() {
 
       {/* FLOATING ELEMENTS (Animations Preserved) */}
       <AddToCartPreview horizontalPosition="left" />
-      <BulkOrderFAB pbandroid={12} pbios={90} visible={fabVisible} />
     </View>
   );
 }

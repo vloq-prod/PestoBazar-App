@@ -58,16 +58,10 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
     String(item.is_b2b_user || "").toLowerCase() === "yes";
 
   const rawExclusive = Number(item.selling_price_exclusive_gst);
-  const rawInclusive = Number(item.selling_price_inclusive_gst);
 
   const exclusivePrice =
     !isNaN(rawExclusive) && rawExclusive > 0
       ? rawExclusive
-      : price;
-
-  const inclusivePrice =
-    !isNaN(rawInclusive) && rawInclusive > 0
-      ? rawInclusive
       : price;
 
   const discountAmount = mrp > price ? Math.round(mrp - price) : null;
@@ -442,18 +436,6 @@ const ListingGridCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
                 Excl. GST
               </Text>
             </View>
-
-            {/* Incl. GST Secondary Price */}
-            <Text
-              style={{
-                fontSize: font(10),
-                color: colors.textTertiary,
-                fontFamily: "Poppins_400Regular",
-                includeFontPadding: false,
-              }}
-            >
-              ₹{formatPrice(inclusivePrice)} Incl. GST
-            </Text>
 
             {/* MRP Price crossed out */}
             {discountAmount && (

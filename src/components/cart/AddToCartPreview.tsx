@@ -13,6 +13,8 @@ import { useResponsive } from "../../utils/useResponsive";
 import { useAppVisitorStore } from "../../store/auth";
 import { useCartCount, useQuickCart } from "../../hooks/cartHooks";
 import { ChevronRight } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTabBarVisibility } from "../../context/TabBarVisibilityContext";
 import Animated, {
   Extrapolate,
   interpolate,
@@ -63,6 +65,20 @@ const AddToCartPreview: React.FC<Props> = ({
   const router = useRouter();
   const { colors } = useTheme();
   const { spacing, font, isTablet } = useResponsive();
+  const insets = useSafeAreaInsets();
+  const tabBarVisibility = useTabBarVisibility();
+
+  const tabBottomOffset = Platform.select({
+    ios: (insets.bottom || 0) > 0 ? insets.bottom - 13 : 12,
+    default: Math.max(insets.bottom || 0, 12),
+  });
+  const TAB_BAR_GAP = spacing(68); // 56px bottom tab height + 12px gap
+
+  const computedBottom = tabBarVisibility
+    ? tabBottomOffset + TAB_BAR_GAP
+    : Platform.OS === "ios"
+      ? spacing(pbios)
+      : spacing(pbandroid);
 
   const { visitorId, userId } = useAppVisitorStore((state) => state);
 
@@ -95,22 +111,28 @@ const AddToCartPreview: React.FC<Props> = ({
         ? { right: horizontalInset }
         : { left: horizontalInset, right: horizontalInset };
   const animatedContainerStyle = useAnimatedStyle(() => {
-    const progress = visible?.value ?? 1;
+    const manualProgress = visible?.value ?? 1;
+
+    // When inside TabBar context:
+    // When tabBar is visible (tabProgress = 1): translateY = 0 (sits above bottom tab)
+    // When tabBar hides (tabProgress = 0): translateY = TAB_BAR_GAP (slides down into bottom tab spot)
+    const tabProgress = tabBarVisibility?.tabBarVisible?.value ?? 1;
+    const tabShiftDown = tabBarVisibility
+      ? interpolate(tabProgress, [0, 1], [TAB_BAR_GAP, 0], Extrapolate.CLAMP)
+      : 0;
+
+    const manualShift = interpolate(
+      manualProgress,
+      [0, 1],
+      [hiddenTranslateY * 0.75, 0],
+      Extrapolate.CLAMP,
+    );
 
     return {
-      opacity: interpolate(progress, [0, 1], [0, 1], Extrapolate.CLAMP),
-      transform: [
-        {
-          translateY: interpolate(
-            progress,
-            [0, 1],
-            [hiddenTranslateY * 0.75, 0],
-            Extrapolate.CLAMP,
-          ),
-        },
-      ],
+      opacity: interpolate(manualProgress, [0, 1], [0, 1], Extrapolate.CLAMP),
+      transform: [{ translateY: manualShift + tabShiftDown }],
     };
-  }, [hiddenTranslateY, visible]);
+  }, [hiddenTranslateY, visible, tabBarVisibility, TAB_BAR_GAP]);
 
   if (!hasCartPreview) return null;
   if (!visitorId) return null;
@@ -121,7 +143,7 @@ const AddToCartPreview: React.FC<Props> = ({
         styles.container,
         animatedContainerStyle,
         {
-          bottom: Platform.OS === "ios" ? spacing(pbios) : spacing(pbandroid),
+          bottom: computedBottom,
         },
         containerHorizontalStyle,
       ]}
@@ -247,7 +269,7 @@ export default AddToCartPreview;
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    zIndex: 99,
+    zIndex: 150,
     alignSelf: "center",
   },
 

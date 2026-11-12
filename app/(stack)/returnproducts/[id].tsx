@@ -539,6 +539,7 @@ const ReturnProductsScreen = () => {
   const isSubmitEnabled = checkedCount > 0 && allCheckedFilled;
 
   const handleSubmitReturn = async (refundData: any) => {
+    if (isSubmitting) return;
     try {
       setIsSubmitting(true);
       const returnKey = "RET-" + Date.now();
@@ -1733,6 +1734,7 @@ const ReturnProductsScreen = () => {
         visible={isRefundModalVisible}
         onClose={() => setIsRefundModalVisible(false)}
         onSubmit={handleSubmitReturn}
+        isSubmitting={isSubmitting}
       />
 
       {/* Return Success Modal */}
