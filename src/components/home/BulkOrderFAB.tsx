@@ -13,6 +13,8 @@ import {
   Briefcase,
   Clock,
   ShieldCheck,
+  AlertCircle,
+  Store,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -33,7 +35,7 @@ import { useB2BApplicationStatus } from "../../hooks/b2bHooks";
 const BULK_ORDER_IMAGE =
   "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=300&auto=format&fit=crop";
 
-const FAB_WIDTH = 130;
+const FAB_WIDTH = 138;
 const FAB_HEIGHT = 44;
 
 type Props = {
@@ -73,8 +75,8 @@ const BulkOrderFAB: React.FC<Props> = ({
     // 1. Approved Wholesale / B2B User -> Green
     if (isApproved) {
       return {
-        title: "Wholesale",
-        subtitle: "Buyer",
+        title: "Bulk Buyer",
+        subtitle: "Approved",
         badge: "Verified",
         gradient: ["#064e3b", "#059669"] as [string, string],
         bgColor: "#059669",
@@ -83,36 +85,71 @@ const BulkOrderFAB: React.FC<Props> = ({
       };
     }
 
-    // 2. Pending / In Review / Submitted -> Yellow / Amber
-    const isPending =
-      rawStatus === "pending" ||
-      rawStatus === "in_review" ||
-      rawStatus === "under_review" ||
-      rawStatus === "submitted";
+    // 2. Submitted for Approval -> Exact Web Warning Brown/Amber
+    const isSubmitted =
+      rawStatus === "submitted for approval" ||
+      rawStatus === "submitted" ||
+      rawStatus.includes("submit");
 
-    if (isPending) {
+    if (isSubmitted) {
       return {
-        title: "Wholesale",
-        subtitle: "Pending",
+        title: "Bulk Buyer",
+        subtitle: "Submitted",
         badge: "In Review",
-        gradient: ["#78350f", "#d97706"] as [string, string],
-        bgColor: "#d97706",
-        shadowColor: "#d97706",
+        gradient: ["#805009", "#a66a10"] as [string, string],
+        bgColor: "#a66a10",
+        shadowColor: "#805009",
         Icon: Clock,
       };
     }
 
-    // 3. Draft / Continue Setup -> Orange / Amber
+    // 3. Under Review -> Blue / Info
+    const isUnderReview =
+      rawStatus === "under review" ||
+      rawStatus === "under_review" ||
+      rawStatus === "in_review" ||
+      rawStatus.includes("review");
+
+    if (isUnderReview) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Under Review",
+        badge: "In Review",
+        gradient: ["#1e3a8a", "#2563eb"] as [string, string],
+        bgColor: "#2563eb",
+        shadowColor: "#1e3a8a",
+        Icon: Clock,
+      };
+    }
+
+    // 4. Correction Required -> Red
+    const isCorrection =
+      rawStatus === "correction required" ||
+      rawStatus === "correction_required" ||
+      rawStatus.includes("correct");
+
+    if (isCorrection) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Correction Req.",
+        badge: "Action Req.",
+        gradient: ["#7f1d1d", "#dc2626"] as [string, string],
+        bgColor: "#dc2626",
+        shadowColor: "#7f1d1d",
+        Icon: AlertCircle,
+      };
+    }
+
+    // 5. Draft / Continue Setup -> Orange / Amber
     const isDraft =
       rawStatus === "draft" ||
       rawStatus === "incomplete" ||
-      rawStatus === "correction_required" ||
       (b2bStatus?.has_application && !rawStatus);
 
     if (isDraft) {
       return {
-        title: "Continue",
-        subtitle: "Setup",
+        title: "Bulk Buyer",
+        subtitle: "Continue Setup",
         badge: "Draft",
         gradient: ["#7c2d12", "#d97706"] as [string, string],
         bgColor: "#d97706",
@@ -121,15 +158,15 @@ const BulkOrderFAB: React.FC<Props> = ({
       };
     }
 
-    // 4. Default / Not applied -> Brand Primary Purple
+    // 6. Default / Not applied -> Brand Primary Purple
     return {
-      title: "Wholesale",
-      subtitle: "Buyer",
+      title: "Become a",
+      subtitle: "Bulk Buyer",
       badge: null,
       gradient: ["#20086b", "#5f16e9"] as [string, string],
       bgColor: "#5f16e9",
       shadowColor: "#5f16e9",
-      Icon: Briefcase,
+      Icon: Store,
     };
   }, [b2bStatus]);
 

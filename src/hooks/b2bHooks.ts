@@ -375,6 +375,9 @@ export interface B2BStatusResult {
   status_badge?: any;
   public_id?: string;
   business_name?: string;
+  title?: string;
+  message?: string;
+  status_message?: string;
 }
 
 /**
@@ -387,6 +390,7 @@ export const useB2BApplicationStatus = () => {
 
   return useQuery<B2BStatusResult>({
     queryKey: ["b2b-application-status", userId, userMobile],
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<B2BStatusResult> => {
       if (!userId && !userMobile) {
         return {
@@ -414,6 +418,9 @@ export const useB2BApplicationStatus = () => {
             status_badge: d.status_badge,
             public_id: d.public_id,
             business_name: d.business_name,
+            title: d.title,
+            message: d.message,
+            status_message: d.status_message,
           };
         }
       } catch (e) {
@@ -451,7 +458,6 @@ export const useB2BApplicationStatus = () => {
         status: null,
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
     refetchOnWindowFocus: false,
   });
 };

@@ -166,9 +166,7 @@ const HomeNavbar: React.FC<{ name?: string; isLight?: boolean }> = React.memo(
     const textColor = isLight ? colors.text : colors.textInverse;
     const subtitleColor = isLight ? colors.textSecondary : colors.textInverse;
 
-    const handleMoveToCart = () => {
-      router.push("/(stack)/cart");
-    };
+   ``
 
     return (
       <View className="flex-row justify-between items-center px-4 ">
