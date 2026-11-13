@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
   Switch,
   Image as RNImage,
   Linking,
+  LayoutChangeEvent,
 } from "react-native";
 import {
   SafeAreaView,
@@ -211,6 +212,8 @@ interface AppInputFieldProps {
   letterSpacing?: number;
   inputStyle?: any;
   isRejected?: boolean;
+  isHighlighted?: boolean;
+  onLayout?: (e: LayoutChangeEvent) => void;
   colors: any;
   font: (n: number) => number;
   spacing: (n: number) => number;
@@ -237,13 +240,15 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
   letterSpacing,
   inputStyle,
   isRejected = false,
+  isHighlighted = false,
+  onLayout,
   colors,
   font,
   spacing,
 }) => {
   const [focused, setFocused] = useState(false);
   const [modified, setModified] = useState(false);
-  const showRejected = isRejected && !modified;
+  const showRejected = (isRejected || isHighlighted) && !modified;
 
   const borderColor = showRejected
     ? "#DC2626"
@@ -257,7 +262,7 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
     : (colors.inputBackground ?? colors.surface);
 
   return (
-    <View style={{ gap: 5 }}>
+    <View onLayout={onLayout} style={{ gap: 5 }}>
       {/* Label */}
       <View
         style={{
@@ -439,7 +444,7 @@ const AppInputField: React.FC<AppInputFieldProps> = ({
   );
 };
 
-// ── Standard App Dropdown Picker (Matching addaddress.tsx) ──────
+// ── Standard App Dropdown Picker (Matching StatePicker from addaddress.tsx) ──────
 interface AppDropdownPickerProps<T> {
   label: string;
   placeholder?: string;
@@ -453,10 +458,13 @@ interface AppDropdownPickerProps<T> {
   onSelect: (item: T) => void;
   error?: string;
   isRejected?: boolean;
+  isHighlighted?: boolean;
+  onLayout?: (e: LayoutChangeEvent) => void;
   required?: boolean;
   optional?: boolean;
   modalTitle: string;
   searchPlaceholder?: string;
+  searchable?: boolean;
   colors: any;
   font: (n: number) => number;
   spacing: (n: number) => number;
@@ -475,10 +483,13 @@ function AppDropdownPicker<T>({
   onSelect,
   error,
   isRejected = false,
+  isHighlighted = false,
+  onLayout,
   required,
   optional,
   modalTitle,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
+  searchable,
   colors,
   font,
   spacing,
@@ -503,7 +514,7 @@ function AppDropdownPicker<T>({
     });
   }, [items, search, getItemLabel, getItemSubLabel]);
 
-  const showRejected = isRejected && !modified;
+  const showRejected = (isRejected || isHighlighted) && !modified;
 
   const borderColor = showRejected
     ? "#DC2626"
@@ -516,57 +527,59 @@ function AppDropdownPicker<T>({
     ? (colors.isDark ? "#2A1414" : "#FEF2F2")
     : (colors.inputBackground ?? colors.surface);
 
+  const shouldShowSearch =
+    searchable !== undefined ? searchable : items.length > 4;
+
   return (
     <>
-      <View style={{ gap: 5 }}>
-        <View
+      <View onLayout={onLayout} style={{ gap: 5 }}>
+        {/* Label */}
+        <Text
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
+            fontFamily: "Poppins_500Medium",
+            fontSize: font(11),
+            color: showRejected
+              ? "#DC2626"
+              : error
+                ? colors.error
+                : selectedText
+                  ? colors.primary
+                  : colors.textSecondary,
+            marginLeft: 1,
+            marginBottom: 5,
           }}
         >
-          <Text
-            style={{
-              fontFamily: "Poppins_500Medium",
-              fontSize: font(11),
-              color: showRejected
-                ? "#DC2626"
-                : error
-                  ? colors.error
-                  : selectedText
-                    ? colors.primary
-                    : colors.textSecondary,
-              marginLeft: 1,
-            }}
-          >
-            {label}
-            {required && (
-              <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
-                {" "}
-                *
-              </Text>
-            )}
-            {optional && (
-              <Text
-                style={{
-                  color: colors.textTertiary,
-                  fontFamily: "Poppins_400Regular",
-                }}
-              >
-                {" "}
-                (Optional)
-              </Text>
-            )}
-          </Text>
-        </View>
+          {label}
+          {required && (
+            <Text style={{ color: "#EF4444", fontFamily: "Poppins_700Bold" }}>
+              {" "}
+              *
+            </Text>
+          )}
+          {optional && (
+            <Text
+              style={{
+                color: colors.textTertiary,
+                fontFamily: "Poppins_400Regular",
+              }}
+            >
+              {" "}
+              (Optional)
+            </Text>
+          )}
+        </Text>
 
+        {/* Trigger Button */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => setModalVisible(true)}
           style={{
             height: INPUT_HEIGHT,
-            borderWidth: showRejected ? 2 : (selectedText || !!error ? 1.8 : 1.2),
+            borderWidth: showRejected
+              ? 2
+              : selectedText || !!error
+                ? 1.8
+                : 1.2,
             borderColor,
             borderRadius: 12,
             backgroundColor: bgColor,
@@ -576,31 +589,39 @@ function AppDropdownPicker<T>({
             justifyContent: "space-between",
           }}
         >
-          {prefixIcon && (
-            <View
-              style={{
-                marginRight: 8,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {prefixIcon}
-            </View>
-          )}
-          <Text
-            numberOfLines={1}
+          <View
             style={{
-              fontFamily: selectedText
-                ? "Poppins_500Medium"
-                : "Poppins_400Regular",
-              fontSize: font(13),
-              color: selectedText ? colors.text : colors.textTertiary,
+              flexDirection: "row",
+              alignItems: "center",
               flex: 1,
               marginRight: 8,
+              gap: 8,
             }}
           >
-            {selectedText || placeholder}
-          </Text>
+            {prefixIcon && (
+              <View
+                style={{
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {prefixIcon}
+              </View>
+            )}
+            <Text
+              numberOfLines={1}
+              style={{
+                fontFamily: selectedText
+                  ? "Poppins_500Medium"
+                  : "Poppins_400Regular",
+                fontSize: font(13),
+                color: selectedText ? colors.text : colors.textTertiary,
+                flex: 1,
+              }}
+            >
+              {selectedText || placeholder}
+            </Text>
+          </View>
           <ChevronDown
             size={16}
             color={selectedText ? colors.primary : colors.textTertiary}
@@ -635,6 +656,7 @@ function AppDropdownPicker<T>({
               fontSize: font(11),
               color: colors.error,
               marginLeft: 1,
+              marginTop: 5,
             }}
           >
             {error}
@@ -642,6 +664,7 @@ function AppDropdownPicker<T>({
         ) : null}
       </View>
 
+      {/* Modal - Matching StatePicker in addaddress.tsx */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -656,20 +679,21 @@ function AppDropdownPicker<T>({
           <View
             style={{
               flex: 1,
-              backgroundColor: "rgba(0,0,0,0.5)",
+              backgroundColor: "rgba(0,0,0,0.45)",
               justifyContent: "flex-end",
             }}
           >
+            {/* Backdrop Dismiss */}
             <TouchableOpacity
               activeOpacity={1}
               style={{ flex: 1 }}
               onPress={handleClose}
             />
 
+            {/* Bottom Sheet Content */}
             <View
               style={{
-                maxHeight: "75%",
-                minHeight: "45%",
+                height: "75%",
                 backgroundColor: colors.background,
                 borderTopLeftRadius: 24,
                 borderTopRightRadius: 24,
@@ -677,13 +701,14 @@ function AppDropdownPicker<T>({
                 overflow: "hidden",
               }}
             >
+              {/* Header */}
               <View
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "space-between",
                   paddingHorizontal: spacing(16),
-                  paddingTop: spacing(18),
+                  paddingTop: spacing(20),
                   paddingBottom: spacing(12),
                   borderBottomWidth: 1,
                   borderBottomColor: colors.border,
@@ -692,7 +717,7 @@ function AppDropdownPicker<T>({
                 <Text
                   style={{
                     fontFamily: "Poppins_600SemiBold",
-                    fontSize: font(15.5),
+                    fontSize: font(16),
                     color: colors.text,
                   }}
                 >
@@ -700,68 +725,101 @@ function AppDropdownPicker<T>({
                 </Text>
                 <TouchableOpacity
                   onPress={handleClose}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={{
+                    width: spacing(32),
+                    height: spacing(32),
+                    borderRadius: spacing(16),
+                    backgroundColor: colors.inputBackground ?? colors.surface,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <X size={20} color={colors.textSecondary} />
+                  <X size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
-              {items.length > 6 && (
+              {/* Search */}
+              {shouldShowSearch && (
                 <View
                   style={{
-                    paddingHorizontal: spacing(16),
-                    paddingVertical: spacing(10),
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.border,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: spacing(10),
+                    marginHorizontal: spacing(16),
+                    marginVertical: spacing(12),
+                    height: INPUT_HEIGHT,
+                    borderWidth: 1.2,
+                    borderColor: colors.border,
+                    borderRadius: 12,
+                    backgroundColor: colors.inputBackground ?? colors.surface,
+                    paddingHorizontal: spacing(12),
                   }}
                 >
-                  <View
+                  <Search size={16} color={colors.textTertiary} />
+                  <TextInput
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder={
+                      searchPlaceholder ||
+                      `Search ${modalTitle.replace(/^Select\s+/i, "").toLowerCase()}...`
+                    }
+                    placeholderTextColor={colors.textTertiary}
                     style={{
-                      height: 40,
-                      backgroundColor: colors.surface,
-                      borderRadius: 10,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      paddingHorizontal: spacing(10),
-                      borderWidth: 1,
-                      borderColor: colors.border,
+                      flex: 1,
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(13),
+                      color: colors.text,
+                      paddingVertical: 0,
+                      ...Platform.select({
+                        android: { includeFontPadding: false },
+                        ios: {},
+                      }),
                     }}
-                  >
-                    <Search size={15} color={colors.textTertiary} />
-                    <TextInput
-                      value={search}
-                      onChangeText={setSearch}
-                      placeholder={searchPlaceholder}
-                      placeholderTextColor={colors.textTertiary}
-                      style={{
-                        flex: 1,
-                        marginLeft: 8,
-                        fontSize: font(12.5),
-                        fontFamily: "Poppins_400Regular",
-                        color: colors.text,
-                        paddingVertical: 0,
-                      }}
-                    />
-                    {search.length > 0 && (
-                      <TouchableOpacity onPress={() => setSearch("")}>
-                        <X size={15} color={colors.textTertiary} />
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                  />
+                  {!!search && (
+                    <TouchableOpacity onPress={() => setSearch("")}>
+                      <X size={14} color={colors.textTertiary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
 
+              {/* List */}
               <FlatList
                 data={filtered}
                 keyExtractor={(item) => String(getItemKey(item))}
+                showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
+                style={{ flex: 1 }}
                 contentContainerStyle={{
-                  paddingHorizontal: spacing(16),
-                  paddingVertical: spacing(6),
+                  paddingBottom: spacing(16),
+                  flexGrow: filtered.length === 0 ? 1 : undefined,
                 }}
+                ListEmptyComponent={
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      paddingVertical: spacing(30),
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Poppins_400Regular",
+                        fontSize: font(13),
+                        color: colors.textTertiary,
+                      }}
+                    >
+                      No options found
+                    </Text>
+                  </View>
+                }
                 renderItem={({ item }) => {
                   const labelStr = getItemLabel(item);
-                  const subLabelStr = getItemSubLabel ? getItemSubLabel(item) : undefined;
+                  const subLabelStr = getItemSubLabel
+                    ? getItemSubLabel(item)
+                    : undefined;
                   const IconComp = getItemIcon ? getItemIcon(item) : undefined;
                   const isSelected = selectedText === labelStr;
                   return (
@@ -776,16 +834,18 @@ function AppDropdownPicker<T>({
                         flexDirection: "row",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        paddingVertical: spacing(12),
-                        borderBottomWidth: StyleSheet.hairlineWidth,
-                        borderBottomColor: colors.border,
+                        paddingHorizontal: spacing(16),
+                        paddingVertical: spacing(13),
+                        backgroundColor: isSelected
+                          ? colors.primary + "08"
+                          : "transparent",
                       }}
                     >
                       <View
                         style={{
                           flexDirection: "row",
                           alignItems: "center",
-                          gap: 12,
+                          gap: spacing(12),
                           flex: 1,
                           marginRight: 8,
                         }}
@@ -793,19 +853,21 @@ function AppDropdownPicker<T>({
                         {IconComp && (
                           <View
                             style={{
-                              width: 34,
-                              height: 34,
-                              borderRadius: 17,
+                              width: spacing(32),
+                              height: spacing(32),
+                              borderRadius: spacing(16),
                               backgroundColor: isSelected
-                                ? colors.primary
-                                : colors.surfaceElevated,
+                                ? colors.primary + "18"
+                                : colors.inputBackground ?? colors.surface,
                               alignItems: "center",
                               justifyContent: "center",
                             }}
                           >
                             <IconComp
                               size={16}
-                              color={isSelected ? "#ffffff" : colors.primary}
+                              color={
+                                isSelected ? colors.primary : colors.textSecondary
+                              }
                             />
                           </View>
                         )}
@@ -814,8 +876,8 @@ function AppDropdownPicker<T>({
                             style={{
                               fontFamily: isSelected
                                 ? "Poppins_600SemiBold"
-                                : "Poppins_500Medium",
-                              fontSize: font(13),
+                                : "Poppins_400Regular",
+                              fontSize: font(14),
                               color: isSelected ? colors.primary : colors.text,
                             }}
                           >
@@ -825,9 +887,9 @@ function AppDropdownPicker<T>({
                             <Text
                               style={{
                                 fontFamily: "Poppins_400Regular",
-                                fontSize: font(11),
+                                fontSize: font(11.5),
                                 color: colors.textSecondary,
-                                marginTop: 1,
+                                marginTop: 2,
                               }}
                             >
                               {subLabelStr}
@@ -835,23 +897,20 @@ function AppDropdownPicker<T>({
                           ) : null}
                         </View>
                       </View>
-                      {isSelected && <Check size={18} color={colors.primary} />}
+                      {isSelected && <Check size={16} color={colors.primary} />}
                     </TouchableOpacity>
                   );
                 }}
-                ListEmptyComponent={
-                  <View style={{ padding: spacing(24), alignItems: "center" }}>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_400Regular",
-                        fontSize: font(12.5),
-                        color: colors.textSecondary,
-                      }}
-                    >
-                      No options found.
-                    </Text>
-                  </View>
-                }
+                ItemSeparatorComponent={() => (
+                  <View
+                    style={{
+                      height: 1,
+                      backgroundColor: colors.border,
+                      opacity: 0.4,
+                      marginHorizontal: spacing(16),
+                    }}
+                  />
+                )}
               />
             </View>
           </View>
@@ -868,8 +927,11 @@ interface AppDocumentUploadCardProps {
   document: { uri: string; name: string; type: string } | null;
   documentUrl?: string | null;
   onPress: () => void;
+  onPreview?: () => void;
   error?: string;
   isRejected?: boolean;
+  isHighlighted?: boolean;
+  onLayout?: (e: LayoutChangeEvent) => void;
   helperText?: string;
   colors: any;
   font: (n: number) => number;
@@ -882,23 +944,51 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
   document,
   documentUrl,
   onPress,
+  onPreview,
   error,
   isRejected = false,
+  isHighlighted = false,
+  onLayout,
   helperText,
   colors,
   font,
   spacing,
 }) => {
   const isNewlyAttached = !!document;
-  const isAttached = !!document || !!documentUrl;
-  const fileName = document
+  const isAttached =
+    !!document || (typeof documentUrl === "string" && documentUrl.trim().length > 0);
+  const rawFileName = document
     ? document.name
     : documentUrl
-      ? documentUrl.split("/").pop() || "Document Attached"
+      ? documentUrl.split("/").pop()?.split("?")[0] || "Document on file"
       : "";
+  const fileName =
+    rawFileName.length > 30
+      ? `${rawFileName.slice(0, 16)}...${rawFileName.slice(-10)}`
+      : rawFileName;
 
   // If rejected, but user has uploaded/attached a replacement document, do NOT show as rejected!
-  const showAsRejected = isRejected && !isNewlyAttached;
+  const showAsRejected = (isRejected || isHighlighted) && !isNewlyAttached;
+
+  const rawUri = document?.uri || documentUrl || "";
+  let resolvedUri = rawUri;
+  if (
+    resolvedUri &&
+    !resolvedUri.startsWith("http") &&
+    !resolvedUri.startsWith("file:") &&
+    !resolvedUri.startsWith("content:")
+  ) {
+    const cleanedBase = BASE_URL.replace(/\/$/, "");
+    const cleanedPath = resolvedUri.startsWith("/")
+      ? resolvedUri
+      : `/${resolvedUri}`;
+    resolvedUri = `${cleanedBase}${cleanedPath}`;
+  }
+
+  const isPdf =
+    (document?.type && document.type.toLowerCase().includes("pdf")) ||
+    fileName.toLowerCase().endsWith(".pdf") ||
+    resolvedUri.toLowerCase().endsWith(".pdf");
 
   const borderColor = showAsRejected
     ? "#DC2626"
@@ -910,12 +1000,12 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
   const bgColor = showAsRejected
     ? (colors.isDark ? "#2A1414" : "#FEF2F2")
     : isAttached
-      ? "#10B9810A"
+      ? (colors.isDark ? "#06281E" : "#F0FDF4")
       : colors.surface;
 
   return (
-    <View style={{ gap: 5 }}>
-      {/* Label */}
+    <View onLayout={onLayout} style={{ gap: 5 }}>
+      {/* Label & Status Badge */}
       <View
         style={{
           flexDirection: "row",
@@ -943,20 +1033,99 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
             </Text>
           )}
         </Text>
+
+        {isAttached && (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            {showAsRejected ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  backgroundColor: colors.isDark ? "#451A1A" : "#FEE2E2",
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                }}
+              >
+                <AlertCircle size={10} color="#DC2626" />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(9.5),
+                    color: "#DC2626",
+                  }}
+                >
+                  Correction Requested
+                </Text>
+              </View>
+            ) : isNewlyAttached ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  backgroundColor: colors.isDark ? "#064E3B" : "#D1FAE5",
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                }}
+              >
+                <CheckCircle2 size={10} color="#059669" />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(9.5),
+                    color: "#059669",
+                  }}
+                >
+                  New file ready
+                </Text>
+              </View>
+            ) : (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 3,
+                  backgroundColor: colors.isDark ? "#064E3B" : "#ECFDF5",
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                }}
+              >
+                <CheckCircle2 size={10} color="#10B981" />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(9.5),
+                    color: "#059669",
+                  }}
+                >
+                  Document on file
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
-      {/* Upload button container */}
-      <TouchableOpacity
-        activeOpacity={0.75}
-        onPress={onPress}
+      {/* Main Document Box */}
+      <View
         style={{
           borderRadius: 12,
           borderWidth: showAsRejected ? 2 : 1.2,
           borderStyle: isAttached ? "solid" : "dashed",
           borderColor,
           backgroundColor: bgColor,
-          paddingHorizontal: spacing(14),
-          paddingVertical: spacing(12),
+          paddingHorizontal: spacing(12),
+          paddingVertical: spacing(10),
         }}
       >
         <View
@@ -966,32 +1135,53 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
             gap: 12,
           }}
         >
-          {/* Icon Badge */}
-          <View
+          {/* Left Thumbnail or Icon Badge */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={!isAttached || !onPreview}
+            onPress={onPreview}
             style={{
-              width: 38,
-              height: 38,
+              width: 44,
+              height: 44,
               borderRadius: 10,
               backgroundColor: showAsRejected
                 ? "#FEE2E2"
                 : isAttached
-                  ? "#10B9811C"
+                  ? (colors.isDark ? "#0D3327" : "#10B9811C")
                   : colors.primary + "14",
               alignItems: "center",
               justifyContent: "center",
+              overflow: "hidden",
+              borderWidth: isAttached && !isPdf ? 1 : 0,
+              borderColor: colors.border,
             }}
           >
-            {showAsRejected ? (
-              <AlertCircle size={20} color="#DC2626" />
+            {isAttached && resolvedUri && !isPdf ? (
+              <RNImage
+                source={{ uri: resolvedUri }}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="cover"
+              />
+            ) : isPdf ? (
+              <FileText
+                size={22}
+                color={showAsRejected ? "#DC2626" : colors.primary}
+              />
+            ) : showAsRejected ? (
+              <AlertCircle size={22} color="#DC2626" />
             ) : isAttached ? (
-              <CheckCircle2 size={20} color="#10B981" />
+              <CheckCircle2 size={22} color="#10B981" />
             ) : (
-              <UploadCloud size={20} color={colors.primary} />
+              <UploadCloud size={22} color={colors.primary} />
             )}
-          </View>
+          </TouchableOpacity>
 
-          {/* Text Info */}
-          <View style={{ flex: 1 }}>
+          {/* Center Info Text (Tapping opens preview if attached, else opens picker) */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={isAttached && onPreview ? onPreview : onPress}
+            style={{ flex: 1 }}
+          >
             <Text
               style={{
                 fontFamily: "Poppins_600SemiBold",
@@ -1009,48 +1199,111 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
                 color: showAsRejected
                   ? "#DC2626"
                   : isAttached
-                    ? "#10B981"
+                    ? (colors.isDark ? "#34D399" : "#059669")
                     : colors.textSecondary,
                 marginTop: 1,
               }}
+              numberOfLines={1}
             >
               {showAsRejected
-                ? "Re-upload required by Admin"
-                : isAttached
-                  ? "Tap to re-capture or select new file"
-                  : "Camera photo or Gallery file (up to 5 MB)"}
+                ? "Correction requested • Tap View to inspect"
+                : isNewlyAttached
+                  ? "Newly selected file (ready to save)"
+                  : isAttached
+                    ? "Tap card or View to inspect file"
+                    : "Camera photo or Gallery file (up to 5 MB)"}
             </Text>
-          </View>
+          </TouchableOpacity>
 
-          {/* Right Action Chip */}
+          {/* Right Action Buttons */}
           <View
             style={{
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 8,
-              backgroundColor: showAsRejected
-                ? "#FEE2E2"
-                : isAttached
-                  ? "#10B98118"
-                  : colors.primary + "10",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            <Text
+            {/* View / Eye Button */}
+            {isAttached && onPreview && (
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={onPreview}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  paddingHorizontal: 9,
+                  paddingVertical: 5.5,
+                  borderRadius: 8,
+                  backgroundColor: colors.isDark ? "#1E293B" : "#EFF6FF",
+                  borderWidth: 1,
+                  borderColor: colors.isDark ? "#3B82F6" : "#BFDBFE",
+                }}
+              >
+                <Eye size={13} color="#2563EB" />
+                <Text
+                  style={{
+                    fontFamily: "Poppins_600SemiBold",
+                    fontSize: font(11),
+                    color: "#2563EB",
+                  }}
+                >
+                  View
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Change / Re-upload / Upload Button */}
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={onPress}
               style={{
-                fontFamily: "Poppins_600SemiBold",
-                fontSize: font(11),
-                color: showAsRejected
-                  ? "#DC2626"
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                paddingHorizontal: 10,
+                paddingVertical: 5.5,
+                borderRadius: 8,
+                backgroundColor: showAsRejected
+                  ? "#FEE2E2"
                   : isAttached
-                    ? "#10B981"
-                    : colors.primary,
+                    ? (colors.isDark ? "#064E3B" : "#ECFDF5")
+                    : colors.primary + "12",
+                borderWidth: 1,
+                borderColor: showAsRejected
+                  ? "#FECACA"
+                  : isAttached
+                    ? "#A7F3D0"
+                    : colors.primary + "30",
               }}
             >
-              {showAsRejected ? "Re-upload" : isAttached ? "Change" : "Upload"}
-            </Text>
+              <UploadCloud
+                size={12}
+                color={
+                  showAsRejected
+                    ? "#DC2626"
+                    : isAttached
+                      ? "#059669"
+                      : colors.primary
+                }
+              />
+              <Text
+                style={{
+                  fontFamily: "Poppins_600SemiBold",
+                  fontSize: font(11),
+                  color: showAsRejected
+                    ? "#DC2626"
+                    : isAttached
+                      ? "#059669"
+                      : colors.primary,
+                }}
+              >
+                {showAsRejected ? "Re-upload" : isAttached ? "Change" : "Upload"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
 
       {/* Error / Helper */}
       {showAsRejected ? (
@@ -1071,7 +1324,7 @@ const AppDocumentUploadCard: React.FC<AppDocumentUploadCardProps> = ({
               color: "#DC2626",
             }}
           >
-            {error || "Admin rejected this document. Please re-upload."}
+            {error || "Admin rejected this document. Please re-upload a clear copy."}
           </Text>
         </View>
       ) : !!error ? (
@@ -1339,6 +1592,138 @@ export default function B2BScreen() {
   const [showYearsModal, setShowYearsModal] = useState(false);
   const [showStatusScreen, setShowStatusScreen] = useState(false);
 
+  // Auto-scroll & field targeting for Correction Required
+  const scrollViewRef = useRef<ScrollView>(null);
+  const targetFieldRef = useRef<string | null>(null);
+  const [highlightedField, setHighlightedField] = useState<string | null>(null);
+  const fieldOffsets = useRef<Record<string, number>>({});
+  const stepContainerY = useRef<number>(0);
+  const scrollTimeoutRef = useRef<any>(null);
+
+  const checkPendingScroll = useCallback((specificFieldKey?: string) => {
+    const target = targetFieldRef.current;
+    if (!target) return;
+    if (specificFieldKey && specificFieldKey !== target) return;
+
+    const fieldY = fieldOffsets.current[target];
+    if (fieldY === undefined) return;
+
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      const totalY = Math.max(0, (stepContainerY.current || 0) + fieldY - 30);
+      scrollViewRef.current?.scrollTo({ y: totalY, animated: true });
+      setHighlightedField(target);
+      setTimeout(() => {
+        setHighlightedField((curr) => (curr === target ? null : curr));
+      }, 3500);
+      targetFieldRef.current = null;
+    }, 120);
+  }, []);
+
+  const registerFieldLayout = useCallback(
+    (key: string) => (e: LayoutChangeEvent) => {
+      const y = e.nativeEvent.layout.y;
+      fieldOffsets.current[key] = y;
+      if (targetFieldRef.current === key) {
+        checkPendingScroll(key);
+      }
+    },
+    [checkPendingScroll]
+  );
+
+  const handleStepContainerLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      stepContainerY.current = e.nativeEvent.layout.y;
+      if (targetFieldRef.current) {
+        checkPendingScroll();
+      }
+    },
+    [checkPendingScroll]
+  );
+
+  const navigateAndScrollToField = useCallback(
+    (stepNum: 1 | 2 | 3 | 4 | 5, fieldKey?: string) => {
+      let target = fieldKey;
+      if (!target && correctionFields && typeof correctionFields === "object") {
+        const stepFields = (correctionFields as any)[String(stepNum)];
+        if (Array.isArray(stepFields) && stepFields.length > 0) {
+          target = stepFields[0];
+        }
+      }
+
+      targetFieldRef.current = target || null;
+      if (target) {
+        setHighlightedField(target);
+      }
+
+      setShowStatusScreen(false);
+      setCurrentStep(stepNum);
+
+      if (target && fieldOffsets.current[target] !== undefined) {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        scrollTimeoutRef.current = setTimeout(() => {
+          const fieldY = fieldOffsets.current[target!];
+          const totalY = Math.max(0, (stepContainerY.current || 0) + fieldY - 30);
+          scrollViewRef.current?.scrollTo({ y: totalY, animated: true });
+          setTimeout(() => {
+            setHighlightedField((curr) => (curr === target ? null : curr));
+          }, 3500);
+          targetFieldRef.current = null;
+        }, 150);
+      }
+    },
+    [correctionFields]
+  );
+
+  useEffect(() => {
+    if (showStatusScreen || !targetFieldRef.current) return;
+    const target = targetFieldRef.current;
+    const timer = setTimeout(() => {
+      if (fieldOffsets.current[target] !== undefined) {
+        const fieldY = fieldOffsets.current[target];
+        const totalY = Math.max(0, (stepContainerY.current || 0) + fieldY - 30);
+        scrollViewRef.current?.scrollTo({ y: totalY, animated: true });
+        setTimeout(() => {
+          setHighlightedField((curr) => (curr === target ? null : curr));
+        }, 3500);
+        targetFieldRef.current = null;
+      }
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [currentStep, showStatusScreen]);
+
+  // Ensure Step 4 fields are auto-filled from Step 1 & Step 2 if initially empty
+  useEffect(() => {
+    if (currentStep === 4) {
+      if (!legalBusinessName && businessName) {
+        setLegalBusinessName(businessName);
+      }
+      if (!panNumber && gstNumber && gstNumber.length === 15) {
+        setPanNumber(gstNumber.slice(2, 12).toUpperCase());
+      }
+      if (!panName && ownerName) {
+        setPanName(ownerName);
+      }
+      if (!aadhaarHolderName && ownerName) {
+        setAadhaarHolderName(ownerName);
+      }
+    }
+  }, [
+    currentStep,
+    businessName,
+    gstNumber,
+    ownerName,
+    legalBusinessName,
+    panNumber,
+    panName,
+    aadhaarHolderName,
+  ]);
+
   // Step 5: Document Preview Modal State
   const [previewDocModal, setPreviewDocModal] = useState<{
     visible: boolean;
@@ -1506,30 +1891,83 @@ export default function B2BScreen() {
               setWarehousePincode(d.address_details.warehouse_pincode || "");
             }
 
-            // Populate Step 4 KYC Details
-            if (d.kyc_details) {
-              setLegalBusinessName(
-                d.kyc_details.legal_business_name ||
-                  d.business_details?.legal_business_name ||
-                  "",
+            // Populate Step 4 KYC Details with comprehensive fallbacks
+            const kyc = d.kyc_details || (d as any).dealer || d || {};
+            const resolvedLegalName =
+              kyc.legal_business_name ||
+              d.business_details?.legal_business_name ||
+              d.business_details?.business_name ||
+              (d as any).business_name ||
+              "";
+            if (resolvedLegalName) setLegalBusinessName(resolvedLegalName);
+
+            const resolvedGstNum =
+              d.business_details?.gst_number ||
+              kyc.gst_number ||
+              (d as any).gst_number ||
+              "";
+
+            const resolvedPan =
+              kyc.pan_number ||
+              d.business_details?.pan_number ||
+              (resolvedGstNum && resolvedGstNum.length === 15
+                ? resolvedGstNum.slice(2, 12).toUpperCase()
+                : "") ||
+              "";
+            if (resolvedPan) setPanNumber(resolvedPan);
+
+            const resolvedPanName =
+              kyc.pan_name ||
+              d.business_details?.pan_name ||
+              d.basic_details?.owner_name ||
+              (d as any).owner_name ||
+              "";
+            if (resolvedPanName) setPanName(resolvedPanName);
+
+            const resolvedAadhaarName =
+              kyc.aadhaar_holder_name ||
+              d.basic_details?.owner_name ||
+              (d as any).owner_name ||
+              "";
+            if (resolvedAadhaarName) setAadhaarHolderName(resolvedAadhaarName);
+
+            if (kyc.business_proof_type || (d as any).business_proof_type) {
+              setBusinessProofType(
+                kyc.business_proof_type || (d as any).business_proof_type,
               );
-              setPanNumber(
-                d.kyc_details.pan_number ||
-                  d.business_details?.pan_number ||
-                  "",
-              );
-              setPanName(
-                d.kyc_details.pan_name || d.business_details?.pan_name || "",
-              );
-              setAadhaarHolderName(d.kyc_details.aadhaar_holder_name || "");
-              if (d.kyc_details.business_proof_type) {
-                setBusinessProofType(d.kyc_details.business_proof_type);
-              }
-              setGstCertificateUrl(d.kyc_details.gst_certificate_path || "");
-              setPanCardUrl(d.kyc_details.pan_card_path || "");
-              setAadhaarCardUrl(d.kyc_details.aadhaar_card_path || "");
-              setBusinessProofUrl(d.kyc_details.business_proof_path || "");
             }
+
+            const resolvedGstUrl =
+              kyc.gst_certificate_path ||
+              (kyc as any).gst_certificate_url ||
+              (d as any).gst_certificate_path ||
+              (d as any).gst_certificate_url ||
+              "";
+            if (resolvedGstUrl) setGstCertificateUrl(resolvedGstUrl);
+
+            const resolvedPanUrl =
+              kyc.pan_card_path ||
+              (kyc as any).pan_card_url ||
+              (d as any).pan_card_path ||
+              (d as any).pan_card_url ||
+              "";
+            if (resolvedPanUrl) setPanCardUrl(resolvedPanUrl);
+
+            const resolvedAadhaarUrl =
+              kyc.aadhaar_card_path ||
+              (kyc as any).aadhaar_card_url ||
+              (d as any).aadhaar_card_path ||
+              (d as any).aadhaar_card_url ||
+              "";
+            if (resolvedAadhaarUrl) setAadhaarCardUrl(resolvedAadhaarUrl);
+
+            const resolvedProofUrl =
+              kyc.business_proof_path ||
+              (kyc as any).business_proof_url ||
+              (d as any).business_proof_path ||
+              (d as any).business_proof_url ||
+              "";
+            if (resolvedProofUrl) setBusinessProofUrl(resolvedProofUrl);
 
             // Navigate to appropriate active step based on status & completed progress
             if (
@@ -1733,7 +2171,11 @@ export default function B2BScreen() {
             "success",
           );
           const nextStep = getNextStepInFlow(1);
-          setCurrentStep(nextStep);
+          if (applicationStatus === "Correction Required" && nextStep <= 4) {
+            navigateAndScrollToField(nextStep);
+          } else {
+            setCurrentStep(nextStep);
+          }
           return;
         }
 
@@ -1904,38 +2346,84 @@ export default function B2BScreen() {
               );
             }
 
-            // Populate Step 4 KYC Details
-            if (fullData.kyc_details) {
-              setLegalBusinessName(
-                fullData.kyc_details.legal_business_name ||
-                  fullData.business_details?.legal_business_name ||
-                  "",
-              );
-              setPanNumber(
-                fullData.kyc_details.pan_number ||
-                  fullData.business_details?.pan_number ||
-                  "",
-              );
-              setPanName(
-                fullData.kyc_details.pan_name ||
-                  fullData.business_details?.pan_name ||
-                  "",
-              );
-              setAadhaarHolderName(
-                fullData.kyc_details.aadhaar_holder_name || "",
-              );
-              if (fullData.kyc_details.business_proof_type) {
-                setBusinessProofType(fullData.kyc_details.business_proof_type);
-              }
-              setGstCertificateUrl(
-                fullData.kyc_details.gst_certificate_path || "",
-              );
-              setPanCardUrl(fullData.kyc_details.pan_card_path || "");
-              setAadhaarCardUrl(fullData.kyc_details.aadhaar_card_path || "");
-              setBusinessProofUrl(
-                fullData.kyc_details.business_proof_path || "",
+            // Populate Step 4 KYC Details with comprehensive fallbacks
+            const kyc =
+              fullData.kyc_details || (fullData as any).dealer || fullData || {};
+            const resolvedLegalName =
+              kyc.legal_business_name ||
+              fullData.business_details?.legal_business_name ||
+              fullData.business_details?.business_name ||
+              (fullData as any).business_name ||
+              "";
+            if (resolvedLegalName) setLegalBusinessName(resolvedLegalName);
+
+            const resolvedGstNum =
+              fullData.business_details?.gst_number ||
+              kyc.gst_number ||
+              (fullData as any).gst_number ||
+              "";
+
+            const resolvedPan =
+              kyc.pan_number ||
+              fullData.business_details?.pan_number ||
+              (resolvedGstNum && resolvedGstNum.length === 15
+                ? resolvedGstNum.slice(2, 12).toUpperCase()
+                : "") ||
+              "";
+            if (resolvedPan) setPanNumber(resolvedPan);
+
+            const resolvedPanName =
+              kyc.pan_name ||
+              fullData.business_details?.pan_name ||
+              fullData.basic_details?.owner_name ||
+              (fullData as any).owner_name ||
+              "";
+            if (resolvedPanName) setPanName(resolvedPanName);
+
+            const resolvedAadhaarName =
+              kyc.aadhaar_holder_name ||
+              fullData.basic_details?.owner_name ||
+              (fullData as any).owner_name ||
+              "";
+            if (resolvedAadhaarName) setAadhaarHolderName(resolvedAadhaarName);
+
+            if (kyc.business_proof_type || (fullData as any).business_proof_type) {
+              setBusinessProofType(
+                kyc.business_proof_type || (fullData as any).business_proof_type,
               );
             }
+
+            const resolvedGstUrl =
+              kyc.gst_certificate_path ||
+              (kyc as any).gst_certificate_url ||
+              (fullData as any).gst_certificate_path ||
+              (fullData as any).gst_certificate_url ||
+              "";
+            if (resolvedGstUrl) setGstCertificateUrl(resolvedGstUrl);
+
+            const resolvedPanUrl =
+              kyc.pan_card_path ||
+              (kyc as any).pan_card_url ||
+              (fullData as any).pan_card_path ||
+              (fullData as any).pan_card_url ||
+              "";
+            if (resolvedPanUrl) setPanCardUrl(resolvedPanUrl);
+
+            const resolvedAadhaarUrl =
+              kyc.aadhaar_card_path ||
+              (kyc as any).aadhaar_card_url ||
+              (fullData as any).aadhaar_card_path ||
+              (fullData as any).aadhaar_card_url ||
+              "";
+            if (resolvedAadhaarUrl) setAadhaarCardUrl(resolvedAadhaarUrl);
+
+            const resolvedProofUrl =
+              kyc.business_proof_path ||
+              (kyc as any).business_proof_url ||
+              (fullData as any).business_proof_path ||
+              (fullData as any).business_proof_url ||
+              "";
+            if (resolvedProofUrl) setBusinessProofUrl(resolvedProofUrl);
           }
         } catch (detailErr) {
           console.log("Error loading full registration details:", detailErr);
@@ -2269,7 +2757,11 @@ export default function B2BScreen() {
           "success",
         );
         const nextStep = getNextStepInFlow(2);
-        setCurrentStep(nextStep);
+        if (applicationStatus === "Correction Required" && nextStep <= 4) {
+          navigateAndScrollToField(nextStep);
+        } else {
+          setCurrentStep(nextStep);
+        }
       } else {
         showToast(
           response.message || "Failed to save business details.",
@@ -2341,7 +2833,11 @@ export default function B2BScreen() {
           "success",
         );
         const nextStep = getNextStepInFlow(3);
-        setCurrentStep(nextStep);
+        if (applicationStatus === "Correction Required" && nextStep <= 4) {
+          navigateAndScrollToField(nextStep);
+        } else {
+          setCurrentStep(nextStep);
+        }
       } else {
         showToast(
           response.message || "Failed to save address details.",
@@ -2569,9 +3065,17 @@ export default function B2BScreen() {
       showToast("No document attached to view.", "info");
       return;
     }
-    if (resolvedUri.startsWith("/")) {
+    if (
+      resolvedUri &&
+      !resolvedUri.startsWith("http") &&
+      !resolvedUri.startsWith("file:") &&
+      !resolvedUri.startsWith("content:")
+    ) {
       const cleanedBase = BASE_URL.replace(/\/$/, "");
-      resolvedUri = `${cleanedBase}${resolvedUri}`;
+      const cleanedPath = resolvedUri.startsWith("/")
+        ? resolvedUri
+        : `/${resolvedUri}`;
+      resolvedUri = `${cleanedBase}${cleanedPath}`;
     }
 
     setPreviewDocModal({
@@ -2937,6 +3441,7 @@ export default function B2BScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={[
             styles.scrollContent,
             { paddingBottom: insets.bottom + spacing(40) },
@@ -3047,8 +3552,12 @@ export default function B2BScreen() {
                         activeOpacity={0.75}
                         disabled={!canNavigate}
                         onPress={() => {
-                          setShowStatusScreen(false);
-                          setCurrentStep(s.step);
+                          if (applicationStatus === "Correction Required") {
+                            navigateAndScrollToField(s.step);
+                          } else {
+                            setShowStatusScreen(false);
+                            setCurrentStep(s.step);
+                          }
                         }}
                         style={{
                           width: 32,
@@ -3108,8 +3617,12 @@ export default function B2BScreen() {
                       activeOpacity={0.75}
                       disabled={!canNavigate}
                       onPress={() => {
-                        setShowStatusScreen(false);
-                        setCurrentStep(s.step);
+                        if (applicationStatus === "Correction Required") {
+                          navigateAndScrollToField(s.step);
+                        } else {
+                          setShowStatusScreen(false);
+                          setCurrentStep(s.step);
+                        }
                       }}
                       style={{
                         alignItems: "center",
@@ -3436,8 +3949,7 @@ export default function B2BScreen() {
                                   key={stepKey}
                                   activeOpacity={0.75}
                                   onPress={() => {
-                                    setShowStatusScreen(false);
-                                    setCurrentStep(stepNum);
+                                    navigateAndScrollToField(stepNum, fieldList[0]);
                                   }}
                                   style={{
                                     backgroundColor: colors.surface,
@@ -3495,7 +4007,12 @@ export default function B2BScreen() {
                                       </Text>
                                     </View>
 
-                                    <View
+                                    <TouchableOpacity
+                                      activeOpacity={0.75}
+                                      onPress={(e) => {
+                                        e.stopPropagation?.();
+                                        navigateAndScrollToField(stepNum, fieldList[0]);
+                                      }}
                                       style={{
                                         flexDirection: "row",
                                         alignItems: "center",
@@ -3518,7 +4035,7 @@ export default function B2BScreen() {
                                         Fix Now
                                       </Text>
                                       <ChevronRight size={13} color="#DC2626" />
-                                    </View>
+                                    </TouchableOpacity>
                                   </View>
 
                                   {/* Flagged Fields list */}
@@ -3541,7 +4058,7 @@ export default function B2BScreen() {
                                           marginBottom: 6,
                                         }}
                                       >
-                                        Fields needing attention:
+                                        Fields needing attention (tap to fix):
                                       </Text>
                                       <View
                                         style={{
@@ -3551,9 +4068,17 @@ export default function B2BScreen() {
                                         }}
                                       >
                                         {fieldList.map((f) => (
-                                          <View
+                                          <TouchableOpacity
                                             key={f}
+                                            activeOpacity={0.7}
+                                            onPress={(e) => {
+                                              e.stopPropagation?.();
+                                              navigateAndScrollToField(stepNum, f);
+                                            }}
                                             style={{
+                                              flexDirection: "row",
+                                              alignItems: "center",
+                                              gap: 4,
                                               backgroundColor: isDark
                                                 ? "#2D1D1D"
                                                 : "#FFF1F2",
@@ -3563,9 +4088,10 @@ export default function B2BScreen() {
                                                 : "#FFE4E6",
                                               borderRadius: 6,
                                               paddingHorizontal: 8,
-                                              paddingVertical: 2.5,
+                                              paddingVertical: 3.5,
                                             }}
                                           >
+                                            <AlertCircle size={11} color="#BE123C" />
                                             <Text
                                               style={{
                                                 fontFamily: "Poppins_500Medium",
@@ -3576,7 +4102,8 @@ export default function B2BScreen() {
                                               {FIELD_LABELS[f] ||
                                                 f.replace(/_/g, " ")}
                                             </Text>
-                                          </View>
+                                            <ArrowRight size={10} color="#BE123C" />
+                                          </TouchableOpacity>
                                         ))}
                                       </View>
                                     </View>
@@ -3592,8 +4119,8 @@ export default function B2BScreen() {
                     <TouchableOpacity
                       activeOpacity={0.85}
                       onPress={() => {
-                        setShowStatusScreen(false);
-                        setCurrentStep(targetStep);
+                        const firstField = (correctionFields?.[String(targetStep)] || [])[0];
+                        navigateAndScrollToField(targetStep, firstField);
                       }}
                       style={{
                         width: "100%",
@@ -3679,24 +4206,7 @@ export default function B2BScreen() {
                     <ArrowRight size={18} color="#ffffff" />
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    activeOpacity={0.75}
-                    onPress={handleStartNewApplication}
-                    style={{
-                      paddingVertical: spacing(8),
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: colors.textSecondary,
-                        fontSize: font(12),
-                        fontFamily: "Poppins_500Medium",
-                      }}
-                    >
-                      Register Another Business / Start Fresh
-                    </Text>
-                  </TouchableOpacity>
+                 
                 </View>
               )}
 
@@ -3771,7 +4281,7 @@ export default function B2BScreen() {
           {/* STEP 1: BASIC DETAILS                                     */}
           {/* ========================================================= */}
           {!showStatusScreen && currentStep === 1 && !showOtpScreen && (
-            <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
+            <View onLayout={handleStepContainerLayout} style={{ gap: spacing(16), marginBottom: spacing(24) }}>
               {/* Step Header */}
               <View style={{ marginBottom: spacing(2) }}>
                 <Text
@@ -3809,6 +4319,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.ownerName}
                 isRejected={isFieldRejected("owner_name", 1)}
+                isHighlighted={highlightedField === "owner_name"}
+                onLayout={registerFieldLayout("owner_name")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3831,6 +4343,8 @@ export default function B2BScreen() {
                 helperText="OTP verification will be sent to this mobile number"
                 error={errors.mobile}
                 isRejected={isFieldRejected("mobile", 1)}
+                isHighlighted={highlightedField === "mobile"}
+                onLayout={registerFieldLayout("mobile")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3853,6 +4367,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.alternateMobile}
                 isRejected={isFieldRejected("alternate_mobile", 1)}
+                isHighlighted={highlightedField === "alternate_mobile"}
+                onLayout={registerFieldLayout("alternate_mobile")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -3873,6 +4389,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.email}
                 isRejected={isFieldRejected("email", 1)}
+                isHighlighted={highlightedField === "email"}
+                onLayout={registerFieldLayout("email")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4318,7 +4836,7 @@ export default function B2BScreen() {
           {/* STEP 2: BUSINESS & GST DETAILS FORM                       */}
           {/* ========================================================= */}
           {!showStatusScreen && currentStep === 2 && (
-            <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
+            <View onLayout={handleStepContainerLayout} style={{ gap: spacing(16), marginBottom: spacing(24) }}>
               {/* Step Header */}
               <View style={{ marginBottom: spacing(2) }}>
                 <Text
@@ -4361,6 +4879,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.gstNumber}
                 isRejected={isFieldRejected("gst_number", 2)}
+                isHighlighted={highlightedField === "gst_number"}
+                onLayout={registerFieldLayout("gst_number")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4382,6 +4902,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.businessName}
                 isRejected={isFieldRejected("business_name", 2)}
+                isHighlighted={highlightedField === "business_name"}
+                onLayout={registerFieldLayout("business_name")}
                 helperText={
                   isGstVerified
                     ? "Verified with GST registry records"
@@ -4412,6 +4934,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.businessType}
                 isRejected={isFieldRejected("business_type_id", 2)}
+                isHighlighted={highlightedField === "business_type_id"}
+                onLayout={registerFieldLayout("business_type_id")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4439,6 +4963,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.dealerCategory}
                 isRejected={isFieldRejected("dealer_category_id", 2)}
+                isHighlighted={highlightedField === "dealer_category_id"}
+                onLayout={registerFieldLayout("dealer_category_id")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4461,6 +4987,8 @@ export default function B2BScreen() {
                   markFieldCorrected("years_in_business");
                 }}
                 isRejected={isFieldRejected("years_in_business", 2)}
+                isHighlighted={highlightedField === "years_in_business"}
+                onLayout={registerFieldLayout("years_in_business")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4482,6 +5010,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.referralCode}
                 isRejected={isFieldRejected("referral_code", 2)}
+                isHighlighted={highlightedField === "referral_code"}
+                onLayout={registerFieldLayout("referral_code")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4587,7 +5117,7 @@ export default function B2BScreen() {
           {/* STEP 3: ADDRESS DETAILS FORM                              */}
           {/* ========================================================= */}
           {!showStatusScreen && currentStep === 3 && (
-            <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
+            <View onLayout={handleStepContainerLayout} style={{ gap: spacing(16), marginBottom: spacing(24) }}>
               {/* Step Header */}
               <View>
                 <Text
@@ -4628,13 +5158,21 @@ export default function B2BScreen() {
                 }}
                 error={errors.businessAddress}
                 isRejected={isFieldRejected("business_address", 3)}
+                isHighlighted={highlightedField === "business_address"}
+                onLayout={registerFieldLayout("business_address")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
               />
 
               {/* City & Pincode Row */}
-              <View style={{ flexDirection: "row", gap: spacing(10) }}>
+              <View
+                onLayout={(e) => {
+                  registerFieldLayout("business_city")(e);
+                  registerFieldLayout("business_pincode")(e);
+                }}
+                style={{ flexDirection: "row", gap: spacing(10) }}
+              >
                 <View style={{ flex: 1 }}>
                   <AppInputField
                     label="City"
@@ -4649,6 +5187,7 @@ export default function B2BScreen() {
                     }}
                     error={errors.businessCity}
                     isRejected={isFieldRejected("business_city", 3)}
+                    isHighlighted={highlightedField === "business_city"}
                     colors={colors}
                     font={font}
                     spacing={spacing}
@@ -4673,6 +5212,7 @@ export default function B2BScreen() {
                     }}
                     error={errors.businessPincode}
                     isRejected={isFieldRejected("business_pincode", 3)}
+                    isHighlighted={highlightedField === "business_pincode"}
                     colors={colors}
                     font={font}
                     spacing={spacing}
@@ -4702,6 +5242,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.businessStateId}
                 isRejected={isFieldRejected("business_state_id", 3)}
+                isHighlighted={highlightedField === "business_state_id"}
+                onLayout={registerFieldLayout("business_state_id")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -4808,7 +5350,7 @@ export default function B2BScreen() {
           {/* STEP 4: KYC DOCUMENTS FORM                                */}
           {/* ========================================================= */}
           {!showStatusScreen && currentStep === 4 && (
-            <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
+            <View onLayout={handleStepContainerLayout} style={{ gap: spacing(16), marginBottom: spacing(24) }}>
               {/* Step Header */}
               <View>
                 <Text
@@ -4879,7 +5421,13 @@ export default function B2BScreen() {
 
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => setCurrentStep(1)}
+                    onPress={() => {
+                      if (applicationStatus === "Correction Required") {
+                        navigateAndScrollToField(1);
+                      } else {
+                        setCurrentStep(1);
+                      }
+                    }}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -5128,6 +5676,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.legalBusinessName}
                 isRejected={isFieldRejected("legal_business_name", 4)}
+                isHighlighted={highlightedField === "legal_business_name"}
+                onLayout={registerFieldLayout("legal_business_name")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5139,6 +5689,8 @@ export default function B2BScreen() {
                 value={gstNumber}
                 editable={false}
                 isRejected={isFieldRejected("gst_number", 2) || isFieldRejected("gst_number", 4)}
+                isHighlighted={highlightedField === "gst_number"}
+                onLayout={registerFieldLayout("gst_number")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5150,8 +5702,18 @@ export default function B2BScreen() {
                 document={gstCertificate}
                 documentUrl={gstCertificateUrl}
                 onPress={() => handlePickDocument("gst")}
+                onPreview={() =>
+                  handleOpenDocumentPreview(
+                    "GST Certificate",
+                    gstCertificate?.uri,
+                    gstCertificateUrl,
+                    gstCertificate?.name,
+                  )
+                }
                 error={errors.gstCertificate}
                 isRejected={isFieldRejected("gst_certificate", 4)}
+                isHighlighted={highlightedField === "gst_certificate"}
+                onLayout={registerFieldLayout("gst_certificate")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5228,6 +5790,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.panNumber}
                 isRejected={isFieldRejected("pan_number", 4)}
+                isHighlighted={highlightedField === "pan_number"}
+                onLayout={registerFieldLayout("pan_number")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5247,6 +5811,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.panName}
                 isRejected={isFieldRejected("pan_name", 4)}
+                isHighlighted={highlightedField === "pan_name"}
+                onLayout={registerFieldLayout("pan_name")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5258,8 +5824,18 @@ export default function B2BScreen() {
                 document={panCard}
                 documentUrl={panCardUrl}
                 onPress={() => handlePickDocument("pan")}
+                onPreview={() =>
+                  handleOpenDocumentPreview(
+                    "PAN Card",
+                    panCard?.uri,
+                    panCardUrl,
+                    panCard?.name,
+                  )
+                }
                 error={errors.panCard}
                 isRejected={isFieldRejected("pan_card", 4)}
+                isHighlighted={highlightedField === "pan_card"}
+                onLayout={registerFieldLayout("pan_card")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5336,6 +5912,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.aadhaarHolderName}
                 isRejected={isFieldRejected("aadhaar_holder_name", 4)}
+                isHighlighted={highlightedField === "aadhaar_holder_name"}
+                onLayout={registerFieldLayout("aadhaar_holder_name")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5347,8 +5925,18 @@ export default function B2BScreen() {
                 document={aadhaarCard}
                 documentUrl={aadhaarCardUrl}
                 onPress={() => handlePickDocument("aadhaar")}
+                onPreview={() =>
+                  handleOpenDocumentPreview(
+                    "Aadhaar Card",
+                    aadhaarCard?.uri,
+                    aadhaarCardUrl,
+                    aadhaarCard?.name,
+                  )
+                }
                 error={errors.aadhaarCard}
                 isRejected={isFieldRejected("aadhaar_card", 4)}
+                isHighlighted={highlightedField === "aadhaar_card"}
+                onLayout={registerFieldLayout("aadhaar_card")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5427,6 +6015,8 @@ export default function B2BScreen() {
                 }}
                 error={errors.businessProofType}
                 isRejected={isFieldRejected("business_proof_type", 4)}
+                isHighlighted={highlightedField === "business_proof_type"}
+                onLayout={registerFieldLayout("business_proof_type")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5438,8 +6028,18 @@ export default function B2BScreen() {
                 document={businessProofDocument}
                 documentUrl={businessProofUrl}
                 onPress={() => handlePickDocument("proof")}
+                onPreview={() =>
+                  handleOpenDocumentPreview(
+                    businessProofType || "Business Proof",
+                    businessProofDocument?.uri,
+                    businessProofUrl,
+                    businessProofDocument?.name,
+                  )
+                }
                 error={errors.businessProofDocument}
                 isRejected={isFieldRejected("business_proof_document", 4)}
+                isHighlighted={highlightedField === "business_proof_document"}
+                onLayout={registerFieldLayout("business_proof_document")}
                 colors={colors}
                 font={font}
                 spacing={spacing}
@@ -5538,6 +6138,28 @@ export default function B2BScreen() {
                   )}
                 </TouchableOpacity>
               </View>
+
+              {applicationStatus === "Correction Required" && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setShowStatusScreen(true)}
+                  style={{
+                    alignItems: "center",
+                    marginTop: spacing(10),
+                    paddingVertical: spacing(8),
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.primary,
+                      fontSize: font(12.5),
+                      fontFamily: "Poppins_600SemiBold",
+                    }}
+                  >
+                    ← Return to Application Status
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -5563,7 +6185,7 @@ export default function B2BScreen() {
             })()
           )}
           {!showStatusScreen && currentStep === 5 && (
-            <View style={{ gap: spacing(16), marginBottom: spacing(24) }}>
+            <View onLayout={handleStepContainerLayout} style={{ gap: spacing(16), marginBottom: spacing(24) }}>
               {/* Step Header */}
               <View>
                 <Text
@@ -5646,7 +6268,13 @@ export default function B2BScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setCurrentStep(1)}
+                    onPress={() => {
+                      if (applicationStatus === "Correction Required") {
+                        navigateAndScrollToField(1);
+                      } else {
+                        setCurrentStep(1);
+                      }
+                    }}
                     activeOpacity={0.7}
                     style={{
                       flexDirection: "row",
@@ -5903,7 +6531,13 @@ export default function B2BScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setCurrentStep(2)}
+                    onPress={() => {
+                      if (applicationStatus === "Correction Required") {
+                        navigateAndScrollToField(2);
+                      } else {
+                        setCurrentStep(2);
+                      }
+                    }}
                     activeOpacity={0.7}
                     style={{
                       flexDirection: "row",
@@ -6172,7 +6806,13 @@ export default function B2BScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setCurrentStep(3)}
+                    onPress={() => {
+                      if (applicationStatus === "Correction Required") {
+                        navigateAndScrollToField(3);
+                      } else {
+                        setCurrentStep(3);
+                      }
+                    }}
                     activeOpacity={0.7}
                     style={{
                       flexDirection: "row",
@@ -6405,7 +7045,13 @@ export default function B2BScreen() {
                     </Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => setCurrentStep(4)}
+                    onPress={() => {
+                      if (applicationStatus === "Correction Required") {
+                        navigateAndScrollToField(4);
+                      } else {
+                        setCurrentStep(4);
+                      }
+                    }}
                     activeOpacity={0.7}
                     style={{
                       flexDirection: "row",

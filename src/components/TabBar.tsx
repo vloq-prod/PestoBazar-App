@@ -68,28 +68,8 @@ function useB2BButtonVisual() {
     const rawStatus = (data?.status || data?.status_badge?.label || "").toLowerCase().trim();
     const rawMessage = (data?.message || data?.status_message || "").toLowerCase().trim();
 
-    // 1. Approved Wholesale / B2B User -> Deep Emerald Green
-    const isApproved =
-      data?.is_b2b_user === true ||
-      rawStatus === "approved" ||
-      rawStatus.includes("approv");
-
-    if (isApproved) {
-      return {
-        title: "Bulk Buyer",
-        subtitle: "Approved",
-        bgColor: "#065F46",
-        shadowColor: "#065F46",
-        borderColor: "rgba(255,255,255,0.22)",
-        textColor: "#FFFFFF",
-        subtitleColor: "#A7F3D0",
-        iconColor: "#FFFFFF",
-        badgeBg: "rgba(255,255,255,0.22)",
-        Icon: ShieldCheck,
-      };
-    }
-
-    // 2. Under Review / In Review / Submitted for Approval -> Rich Yellow / Amber
+    // 1. Under Review / In Review / Submitted for Approval -> Rich Yellow / Amber
+    // Must be evaluated BEFORE approved to avoid matching "submitted for approval" as "approved"
     const isUnderReview =
       rawStatus === "under review" ||
       rawStatus === "in review" ||
@@ -102,7 +82,11 @@ function useB2BButtonVisual() {
       rawStatus === "submitted for approval" ||
       rawStatus === "submitted" ||
       rawStatus.includes("submit") ||
-      rawMessage.includes("submit");
+      rawMessage.includes("submit") ||
+      rawStatus.includes("pending") ||
+      rawMessage.includes("pending") ||
+      rawStatus.includes("waiting") ||
+      rawMessage.includes("waiting");
 
     if (isUnderReview || isSubmitted) {
       return {
@@ -116,6 +100,30 @@ function useB2BButtonVisual() {
         iconColor: "#18181B",
         badgeBg: "rgba(0,0,0,0.10)",
         Icon: Clock,
+      };
+    }
+
+    // 2. Approved Wholesale / B2B User -> Deep Emerald Green
+    // Strict check: strictly "approved", never substring matching "approv"
+    const isApproved =
+      !isSubmitted &&
+      !isUnderReview &&
+      (rawStatus === "approved" ||
+        data?.status_badge?.is_approved === true ||
+        (data?.is_b2b_user === true && rawStatus !== "draft"));
+
+    if (isApproved) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Approved",
+        bgColor: "#065F46",
+        shadowColor: "#065F46",
+        borderColor: "rgba(255,255,255,0.22)",
+        textColor: "#FFFFFF",
+        subtitleColor: "#A7F3D0",
+        iconColor: "#FFFFFF",
+        badgeBg: "rgba(255,255,255,0.22)",
+        Icon: ShieldCheck,
       };
     }
 

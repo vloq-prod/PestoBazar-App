@@ -62,14 +62,20 @@ export const BulkBuyerDetailsCard: React.FC<BulkBuyerDetailsCardProps> = ({
       };
     }
     const lower = rawStatus.toLowerCase();
-    if (lower.includes("approv")) {
+    if (lower === "approved") {
       return {
         badgeColor: "#087A54",
         badgeBg: "#E3F8EF",
         badgeBorder: "rgba(8, 122, 84, 0.25)",
       };
     }
-    if (lower.includes("pend")) {
+    if (
+      lower === "submitted for approval" ||
+      lower.includes("submit") ||
+      lower.includes("pend") ||
+      lower.includes("review") ||
+      lower.includes("wait")
+    ) {
       return {
         badgeColor: "#D97706",
         badgeBg: "#FEF3C7",

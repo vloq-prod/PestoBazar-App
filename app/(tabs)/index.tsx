@@ -1211,7 +1211,7 @@ export default function HomeScreen() {
       />
 
       {/* FLOATING ELEMENTS (Animations Preserved) */}
-      <AddToCartPreview horizontalPosition="left" />
+      <AddToCartPreview horizontalPosition="center" />
     </View>
   );
 }
