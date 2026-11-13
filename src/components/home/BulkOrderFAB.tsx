@@ -122,7 +122,7 @@ const BulkOrderFAB: React.FC<Props> = ({
       };
     }
 
-    // 4. Correction Required -> Red
+    // 4. Correction Required -> Red ("Changes Needed")
     const isCorrection =
       rawStatus === "correction required" ||
       rawStatus === "correction_required" ||
@@ -131,8 +131,8 @@ const BulkOrderFAB: React.FC<Props> = ({
     if (isCorrection) {
       return {
         title: "Bulk Buyer",
-        subtitle: "Correction Req.",
-        badge: "Action Req.",
+        subtitle: "Changes Needed",
+        badge: "Changes Needed",
         gradient: ["#7f1d1d", "#dc2626"] as [string, string],
         bgColor: "#dc2626",
         shadowColor: "#7f1d1d",
@@ -140,7 +140,43 @@ const BulkOrderFAB: React.FC<Props> = ({
       };
     }
 
-    // 5. Draft / Continue Setup -> Orange / Amber
+    // 5. Black Listed -> Dark Red ("Blocked")
+    const isBlacklisted =
+      rawStatus === "black listed" ||
+      rawStatus === "blacklisted" ||
+      rawStatus.includes("black");
+
+    if (isBlacklisted) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Blocked",
+        badge: "Blocked",
+        gradient: ["#581c87", "#991b1b"] as [string, string],
+        bgColor: "#991b1b",
+        shadowColor: "#7f1d1d",
+        Icon: AlertCircle,
+      };
+    }
+
+    // 6. Deactivated -> Slate Muted ("Inactive")
+    const isDeactivated =
+      rawStatus === "deactivated" ||
+      rawStatus.includes("deactivat") ||
+      rawStatus.includes("inactive");
+
+    if (isDeactivated) {
+      return {
+        title: "Bulk Buyer",
+        subtitle: "Inactive",
+        badge: "Inactive",
+        gradient: ["#374151", "#4b5563"] as [string, string],
+        bgColor: "#4b5563",
+        shadowColor: "#374151",
+        Icon: AlertCircle,
+      };
+    }
+
+    // 7. Draft -> Warm Orange ("Draft")
     const isDraft =
       rawStatus === "draft" ||
       rawStatus === "incomplete" ||
@@ -149,7 +185,7 @@ const BulkOrderFAB: React.FC<Props> = ({
     if (isDraft) {
       return {
         title: "Bulk Buyer",
-        subtitle: "Continue Setup",
+        subtitle: "Draft",
         badge: "Draft",
         gradient: ["#7c2d12", "#d97706"] as [string, string],
         bgColor: "#d97706",

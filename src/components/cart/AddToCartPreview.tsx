@@ -15,6 +15,11 @@ import { useCartCount, useQuickCart } from "../../hooks/cartHooks";
 import { ChevronRight } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarVisibility } from "../../context/TabBarVisibilityContext";
+import {
+  TAB_BAR_HEIGHT,
+  TAB_BAR_PREVIEW_GAP,
+  getTabBarBottomOffset,
+} from "../../constants/tabBar";
 import Animated, {
   Extrapolate,
   interpolate,
@@ -68,11 +73,8 @@ const AddToCartPreview: React.FC<Props> = ({
   const insets = useSafeAreaInsets();
   const tabBarVisibility = useTabBarVisibility();
 
-  const tabBottomOffset = Platform.select({
-    ios: (insets.bottom || 0) > 0 ? insets.bottom - 13 : 12,
-    default: Math.max(insets.bottom || 0, 12),
-  });
-  const TAB_BAR_GAP = spacing(68); // 56px bottom tab height + 12px gap
+  const tabBottomOffset = getTabBarBottomOffset(insets.bottom);
+  const TAB_BAR_GAP = TAB_BAR_HEIGHT + TAB_BAR_PREVIEW_GAP;
 
   const computedBottom = tabBarVisibility
     ? tabBottomOffset + TAB_BAR_GAP

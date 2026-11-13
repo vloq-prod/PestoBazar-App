@@ -1199,7 +1199,7 @@ export default function HomeScreen() {
         overScrollMode="never"
         contentContainerStyle={{
           paddingTop: HEADER_HEIGHT_BASE,
-          paddingBottom: 95,
+          paddingBottom: 110,
         }}
         ListHeaderComponent={renderListHeader}
         ItemSeparatorComponent={SectionSeparator}

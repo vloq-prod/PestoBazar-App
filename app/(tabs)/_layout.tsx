@@ -7,7 +7,7 @@ export default function TabLayout() {
     <TabBarVisibilityProvider>
       <Tabs
         tabBar={(props) => <TabBar {...props} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, animation: "none" }}
       >
         <Tabs.Screen name="index" />
         <Tabs.Screen name="category" />

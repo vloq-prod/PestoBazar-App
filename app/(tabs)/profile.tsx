@@ -11,6 +11,7 @@ import {
   Share,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../src/theme";
@@ -21,6 +22,7 @@ import {
   getAppBuildDetails,
   checkAppUpdateApi,
 } from "../../src/api/appVersion.api";
+import { deleteAccountApi } from "../../src/api/auth.api";
 import { useAppUpdate } from "../../src/providers/AppUpdateProvider";
 import { useToast } from "../../src/context/ToastContext";
 
@@ -43,6 +45,7 @@ import {
   Info,
   LogOut,
   MoveRight,
+  Trash2,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useAppVisitorStore } from "../../src/store/auth";
@@ -146,6 +149,12 @@ const MENU_SECTIONS = [
         route: "/about",
       },
       {
+        id: "delete_account",
+        label: "Delete Account",
+        sub: "Permanently delete your account",
+        icon: Trash2,
+      },
+      {
         id: "logout",
         label: "Logout",
         sub: "Sign out from your account",
@@ -171,6 +180,8 @@ const MenuRow = ({ item, colors, isLast, onPressOverride }: any) => {
     }
   };
 
+  const isDestructive = item.id === "logout" || item.id === "delete_account";
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -185,7 +196,7 @@ const MenuRow = ({ item, colors, isLast, onPressOverride }: any) => {
     >
       <Icon
         size={18}
-        color={item.id === "logout" ? "#ef4444" : colors.primary} // 👈 RED ICON
+        color={isDestructive ? "#ef4444" : colors.primary} // 👈 RED ICON FOR DESTRUCTIVE
       />
 
       <View style={styles.menuText}>
@@ -193,7 +204,7 @@ const MenuRow = ({ item, colors, isLast, onPressOverride }: any) => {
           style={[
             styles.menuTitle,
             {
-              color: item.id === "logout" ? "#ef4444" : colors.text, // 👈 RED TEXT
+              color: isDestructive ? "#ef4444" : colors.text, // 👈 RED TEXT FOR DESTRUCTIVE
             },
           ]}
         >
@@ -240,6 +251,8 @@ export default function ProfileScreen() {
 
   const insets = useSafeAreaInsets();
   const [logoutModalVisible, setLogoutModalVisible] = React.useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleLogout = () => {
     setLogoutModalVisible(true);
@@ -249,6 +262,40 @@ export default function ProfileScreen() {
     await logout();
     setLogoutModalVisible(false);
     router.replace("/login");
+  };
+
+  const handleDeleteAccount = () => {
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!userId || isDeleting) return;
+    try {
+      setIsDeleting(true);
+      const res = await deleteAccountApi(userId);
+      if (res?.status === 1 || res?.status === "1") {
+        showToast("Your account has been deleted successfully", "success");
+        await logout();
+        setDeleteModalVisible(false);
+        router.replace("/login");
+      } else {
+        showToast(
+          res?.message || "Failed to delete account. Please try again.",
+          "error"
+        );
+        setDeleteModalVisible(false);
+      }
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to delete account. Please try again.";
+      showToast(errorMsg, "error");
+      setDeleteModalVisible(false);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const appBuild = React.useMemo(() => getAppBuildDetails(), []);
@@ -298,7 +345,7 @@ export default function ProfileScreen() {
         contentContainerStyle={[
           styles.scroll,
           {
-            paddingBottom: insets.bottom + 60,
+            paddingBottom: insets.bottom + 95,
           },
         ]}
       >
@@ -405,7 +452,12 @@ export default function ProfileScreen() {
         {/* ── Menu Sections ───────────────────────── */}
         {MENU_SECTIONS.map((section) => {
           const items = section.items.filter((item) => {
-            if (!userId && (item.id === "logout" || item.id === "profile"))
+            if (
+              !userId &&
+              (item.id === "logout" ||
+                item.id === "profile" ||
+                item.id === "delete_account")
+            )
               return false;
             return true;
           });
@@ -426,6 +478,8 @@ export default function ProfileScreen() {
 
                   if (item.id === "logout") {
                     onPressOverride = handleLogout;
+                  } else if (item.id === "delete_account") {
+                    onPressOverride = handleDeleteAccount;
                   } else if (item.id === "share") {
                     onPressOverride = handleShare;
                   } else if (
@@ -482,6 +536,17 @@ export default function ProfileScreen() {
         title="Logout"
         description="Are you sure you want to logout from your account?"
         confirmText="Logout"
+      />
+
+      <ConfirmationModal
+        visible={deleteModalVisible}
+        onClose={() => !isDeleting && setDeleteModalVisible(false)}
+        onConfirm={confirmDeleteAccount}
+        isLoading={isDeleting}
+        title="Delete Account"
+        description="Are you sure you want to permanently delete your account? All your personal information will be permanently removed. This action cannot be undone."
+        confirmText="Permanently Delete"
+        confirmColor="#EF4444"
       />
     </View>
   );

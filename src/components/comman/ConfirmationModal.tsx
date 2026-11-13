@@ -116,8 +116,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                                         <Text
                                             style={[
                                                 styles.cancelText,
-                                                { fontSize: font(14), color: "#1F2937" }, // Dark text for cancel
+                                                { fontSize: font(13.5), color: "#1F2937" }, // Dark text for cancel
                                             ]}
+                                            numberOfLines={1}
                                         >
                                             {cancelText}
                                         </Text>
@@ -153,8 +154,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                                             <Text
                                                 style={[
                                                     styles.confirmText,
-                                                    { fontSize: font(14) },
+                                                    { fontSize: font(13.5) },
                                                 ]}
+                                                numberOfLines={1}
+                                                adjustsFontSizeToFit
                                             >
                                                 {confirmText}
                                             </Text>
@@ -179,9 +182,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     modalContainer: {
-        width: "100%",
-        maxWidth: 340,
-        padding: 20,
+        width: "92%",
+        maxWidth: 390,
+        padding: 22,
         alignItems: "center",
         shadowColor: "#000",
         shadowOffset: {
@@ -221,12 +224,14 @@ const styles = StyleSheet.create({
     cancelBtn: {
         flex: 1,
         paddingVertical: 14,
+        paddingHorizontal: 8,
         alignItems: "center",
         justifyContent: "center",
     },
     confirmBtn: {
-        flex: 1,
+        flex: 1.3,
         paddingVertical: 14,
+        paddingHorizontal: 10,
         alignItems: "center",
         justifyContent: "center",
     },

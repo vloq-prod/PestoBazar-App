@@ -22,6 +22,7 @@ import {
   Mail,
   Phone,
   Camera,
+  Trash2,
 } from "lucide-react-native";
 import { useResponsive } from "../../src/utils/useResponsive";
 import { useAppVisitorStore } from "../../src/store/auth";
@@ -30,6 +31,8 @@ import { useToast } from "../../src/context/ToastContext";
 import { useRouter } from "expo-router";
 import { useB2BProfile } from "../../src/hooks/b2bHooks";
 import BulkBuyerDetailsCard from "../../src/components/profile/BulkBuyerDetailsCard";
+import { ConfirmationModal } from "../../src/components/comman/ConfirmationModal";
+import { deleteAccountApi } from "../../src/api/auth.api";
 
 const getInitials = (name?: string | null) => {
   if (!name || !name.trim()) return "U";
@@ -141,6 +144,40 @@ export default function UserProfile() {
   const userAvatar = useAppVisitorStore((s) => s.userAvatar);
   const userMobile = useAppVisitorStore((s) => s.userMobile);
   const setUser = useAppVisitorStore((s) => s.setUser);
+  const logout = useAppVisitorStore((s) => s.logout);
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDeleteAccount = async () => {
+    if (!userId || isDeleting) return;
+    try {
+      setIsDeleting(true);
+      const res = await deleteAccountApi(userId);
+      if (res?.status === 1 || res?.status === "1") {
+        showToast("Your account has been deleted successfully", "success");
+        await logout();
+        setDeleteModalVisible(false);
+        router.replace("/login");
+      } else {
+        showToast(
+          res?.message || "Failed to delete account. Please try again.",
+          "error"
+        );
+        setDeleteModalVisible(false);
+      }
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to delete account. Please try again.";
+      showToast(errorMsg, "error");
+      setDeleteModalVisible(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const [form, setForm] = useState({
     fullName: userName || "",
@@ -435,6 +472,49 @@ export default function UserProfile() {
               containerStyle={{ marginHorizontal: 0, marginTop: 8 }}
             />
           ) : null}
+
+          {/* ── Danger Zone: Delete Account (Apple Guideline 5.1.1(v)) ── */}
+          {userId ? (
+            <View
+              style={[
+                styles.dangerZone,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: "#FEE2E2",
+                },
+              ]}
+            >
+              <View style={{ gap: 4 }}>
+                <Text style={[styles.dangerTitle, { fontSize: font(14) }]}>
+                  Delete Account
+                </Text>
+                <Text
+                  style={[
+                    styles.dangerDesc,
+                    { color: colors.textSecondary, fontSize: font(12.5) },
+                  ]}
+                >
+                  Permanently delete your Pestobazaar account and all associated personal data. This action cannot be undone.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setDeleteModalVisible(true)}
+                style={styles.deleteAccountBtn}
+                activeOpacity={0.8}
+              >
+                <Trash2 size={16} color="#EF4444" style={{ marginRight: 6 }} />
+                <Text
+                  style={[
+                    styles.deleteAccountBtnText,
+                    { fontSize: font(13.5) },
+                  ]}
+                >
+                  Delete Account
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </ScrollView>
 
         {/* ── Footer Action Button ── */}
@@ -470,6 +550,17 @@ export default function UserProfile() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <ConfirmationModal
+        visible={deleteModalVisible}
+        onClose={() => !isDeleting && setDeleteModalVisible(false)}
+        onConfirm={confirmDeleteAccount}
+        isLoading={isDeleting}
+        title="Delete Account"
+        description="Are you sure you want to permanently delete your account? All your personal information will be permanently removed. This action cannot be undone."
+        confirmText="Permanently Delete"
+        confirmColor="#EF4444"
+      />
     </View>
   );
 }
@@ -630,5 +721,35 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontFamily: "Poppins_600SemiBold",
     color: "#fff",
+  },
+  dangerZone: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+    gap: 14,
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  dangerTitle: {
+    fontFamily: "Poppins_600SemiBold",
+    color: "#EF4444",
+  },
+  dangerDesc: {
+    fontFamily: "Poppins_400Regular",
+    lineHeight: 18,
+  },
+  deleteAccountBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  deleteAccountBtnText: {
+    fontFamily: "Poppins_600SemiBold",
+    color: "#EF4444",
   },
 });

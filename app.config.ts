@@ -57,6 +57,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           "Allow Pestobazaar to access your location.",
       },
     ],
+    [
+      "expo-image-picker",
+      {
+        photosPermission:
+          "Pestobazaar needs access to your photo library to let you select and upload profile pictures, KYC documents, and product return photos.",
+        cameraPermission:
+          "Pestobazaar needs access to your camera to let you take photos for your profile picture, KYC verification, and product return requests.",
+      },
+    ],
   ],
 
   ios: {
@@ -67,6 +76,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     googleServicesFile: "./GoogleService-Info.plist",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      NSPhotoLibraryUsageDescription:
+        "Pestobazaar needs access to your photo library to let you select and upload profile pictures, KYC documents, and product return photos.",
+      NSCameraUsageDescription:
+        "Pestobazaar needs access to your camera to let you take photos for your profile picture, KYC verification, and product return requests.",
       LSApplicationQueriesSchemes: [
         "tez",
         "phonepe",

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, UseMutationOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, UseMutationOptions } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import {
   b2bGetMasterDataApi,
@@ -39,6 +39,39 @@ import {
   B2BSubmitKycDetailsResponse,
 } from "../types/b2b.types";
 
+const b2bQueryKeys = {
+  status: ["b2b-application-status"] as const,
+  profile: ["b2b-profile"] as const,
+};
+
+// Refresh both mounted and cached B2B views before the save completes.
+function useB2BMutation<TData extends { status: number }, TVariables>(
+  mutationFn: (variables: TVariables) => Promise<TData>,
+  options?: UseMutationOptions<TData, Error, TVariables>,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<TData, Error, TVariables>({
+    mutationFn,
+    ...options,
+    onSuccess: async (...args) => {
+      if (args[0].status === 1) {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: b2bQueryKeys.status,
+            refetchType: "all",
+          }),
+          queryClient.invalidateQueries({
+            queryKey: b2bQueryKeys.profile,
+            refetchType: "all",
+          }),
+        ]);
+      }
+      await options?.onSuccess?.(...args);
+    },
+  });
+}
+
 /**
  * Master Data Hook: Fetches business types, dealer categories, states from DB
  */
@@ -76,10 +109,7 @@ export const useB2BSaveBasicDetails = (
     B2BSaveBasicDetailsPayload
   >,
 ) => {
-  return useMutation({
-    mutationFn: b2bSaveBasicDetailsApi,
-    ...options,
-  });
+  return useB2BMutation(b2bSaveBasicDetailsApi, options);
 };
 
 /**
@@ -92,10 +122,7 @@ export const useB2BVerifyOtp = (
     B2BVerifyOtpPayload
   >,
 ) => {
-  return useMutation({
-    mutationFn: b2bVerifyOtpApi,
-    ...options,
-  });
+  return useB2BMutation(b2bVerifyOtpApi, options);
 };
 
 /**
@@ -156,10 +183,7 @@ export const useB2BSaveBusinessDetails = (
     B2BSaveBusinessDetailsPayload
   >,
 ) => {
-  return useMutation({
-    mutationFn: b2bSaveBusinessDetailsApi,
-    ...options,
-  });
+  return useB2BMutation(b2bSaveBusinessDetailsApi, options);
 };
 
 /**
@@ -172,10 +196,7 @@ export const useB2BSaveAddressDetails = (
     B2BSaveAddressDetailsPayload
   >,
 ) => {
-  return useMutation({
-    mutationFn: b2bSaveAddressDetailsApi,
-    ...options,
-  });
+  return useB2BMutation(b2bSaveAddressDetailsApi, options);
 };
 
 /**
@@ -188,10 +209,7 @@ export const useB2BSaveKycDetails = (
     FormData | B2BSaveKycDetailsPayload
   >,
 ) => {
-  return useMutation({
-    mutationFn: b2bSaveKycDetailsApi,
-    ...options,
-  });
+  return useB2BMutation(b2bSaveKycDetailsApi, options);
 };
 
 /**
@@ -204,10 +222,7 @@ export const useB2BSubmitKycDetails = (
     B2BSubmitKycDetailsPayload
   >,
 ) => {
-  return useMutation({
-    mutationFn: b2bSubmitKycDetailsApi,
-    ...options,
-  });
+  return useB2BMutation(b2bSubmitKycDetailsApi, options);
 };
 
 /**
@@ -354,8 +369,8 @@ export const useB2BProfile = (params?: {
 }) => {
   return useQuery({
     queryKey: params?.user_id
-      ? ["b2b-profile", params.user_id]
-      : ["b2b-profile", params?.public_id || "guest", params?.mobile || "none"],
+      ? [...b2bQueryKeys.profile, params.user_id]
+      : [...b2bQueryKeys.profile, params?.public_id || "guest", params?.mobile || "none"],
     queryFn: () =>
       b2bGetProfileApi({
         user_id: params?.user_id,
@@ -389,7 +404,7 @@ export const useB2BApplicationStatus = () => {
   const userMobile = useAppVisitorStore((s) => s.userMobile);
 
   return useQuery<B2BStatusResult>({
-    queryKey: ["b2b-application-status", userId, userMobile],
+    queryKey: [...b2bQueryKeys.status, userId, userMobile],
     staleTime: 30 * 1000,
     queryFn: async (): Promise<B2BStatusResult> => {
       if (!userId && !userMobile) {

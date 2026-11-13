@@ -87,3 +87,23 @@ export const getLoginBanners = async (): Promise<LoginBannerApiResponse> => {
   return response.data;
 };
 
+export interface DeleteAccountResponse {
+  status: number | string;
+  message: string;
+  data: any;
+}
+
+export const deleteAccountApi = async (
+  userId: string,
+): Promise<DeleteAccountResponse> => {
+  const response = await apiClient.post<DeleteAccountResponse>(
+    "/app-api/v1/delete-account",
+    {
+      user_id: userId,
+    },
+  );
+
+  return response.data;
+};
+
+
