@@ -394,7 +394,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       </View>
 
       {/* ── 3. Right-Side B2B Promotional Card (Zepto-Inspired Floating Card) ── */}
-      {/* <Pressable
+      <Pressable
         accessibilityRole="button"
         accessibilityLabel={[b2bVisual.title, b2bVisual.subtitle]
           .filter(Boolean)
@@ -459,7 +459,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             strokeWidth={2.3}
           />
         </View>
-      </Pressable> */}
+      </Pressable>
     </Animated.View>
   );
 }
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingLeft: 10,
-    paddingRight: 10,
+    paddingRight: 0,
     gap: TAB_BAR_ITEM_GAP,
     zIndex: 100,
   },
