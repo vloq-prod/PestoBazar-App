@@ -961,15 +961,15 @@ export default function HomeScreen() {
     () => [
       { id: "sliding_banners", data: slidingbanners },
       { id: "custom_sections" },
-      { id: "home_product", data: homeProducts },
+      
       { id: "feature_banner_0", data: featureBanners?.[0] },
       ...(diyProducts && diyProducts.length > 0
         ? [{ id: "diy", data: diyProducts }]
         : []),
-      { id: "deals_of_the_day", data: deals },
+
       { id: "feature_banner_1", data: featureBanners?.[1] },
       { id: "recently_viewed", data: recentlyViewed },
-      { id: "featured_products", data: featured },
+    
       {
         id: "home_bottom_carousel",
         data: Array.isArray(homeBottomBanners)

@@ -1508,6 +1508,7 @@ export default function B2BScreen() {
   const [gstNumber, setGstNumber] = useState("");
   const [isGstVerified, setIsGstVerified] = useState(false);
   const [gstVerifiedData, setGstVerifiedData] = useState<any>(null);
+  const lastVerifiedGstRef = useRef<string>("");
 
   const [businessName, setBusinessName] = useState("");
   const [businessTypeId, setBusinessTypeId] = useState<number | null>(null);
@@ -1724,6 +1725,58 @@ export default function B2BScreen() {
     aadhaarHolderName,
   ]);
 
+  // Ensure Step 3 Address fields are auto-filled from GST if initially empty (Web parity)
+  useEffect(() => {
+    if (currentStep === 3 && gstVerifiedData) {
+      if (!businessAddress && gstVerifiedData.address) {
+        setBusinessAddress(gstVerifiedData.address);
+        if (deliverySame === "Yes") setDeliveryAddress(gstVerifiedData.address);
+        if (warehouseSame === "Yes") setWarehouseAddress(gstVerifiedData.address);
+      }
+      if (!businessCity && (gstVerifiedData.city || gstVerifiedData.district)) {
+        const c = gstVerifiedData.city || gstVerifiedData.district;
+        setBusinessCity(c);
+        if (deliverySame === "Yes") setDeliveryCity(c);
+        if (warehouseSame === "Yes") setWarehouseCity(c);
+      }
+      if (!businessPincode && gstVerifiedData.pincode) {
+        const p = String(gstVerifiedData.pincode);
+        setBusinessPincode(p);
+        if (deliverySame === "Yes") setDeliveryPincode(p);
+        if (warehouseSame === "Yes") setWarehousePincode(p);
+      }
+      if (!businessStateId) {
+        const sid = Number(gstVerifiedData.suggested_state_id || gstVerifiedData.state_id);
+        if (sid) {
+          setBusinessStateId(sid);
+          if (deliverySame === "Yes") setDeliveryStateId(sid);
+          if (warehouseSame === "Yes") setWarehouseStateId(sid);
+        } else if (gstVerifiedData.state || gstVerifiedData.state_code) {
+          const matched = stateList.find(
+            (s) =>
+              (gstVerifiedData.state && s.name.toLowerCase() === gstVerifiedData.state.toLowerCase()) ||
+              (gstVerifiedData.state_code && s.state_no && String(s.state_no) === String(gstVerifiedData.state_code))
+          );
+          if (matched) {
+            setBusinessStateId(matched.id);
+            if (deliverySame === "Yes") setDeliveryStateId(matched.id);
+            if (warehouseSame === "Yes") setWarehouseStateId(matched.id);
+          }
+        }
+      }
+    }
+  }, [
+    currentStep,
+    gstVerifiedData,
+    businessAddress,
+    businessCity,
+    businessPincode,
+    businessStateId,
+    deliverySame,
+    warehouseSame,
+    stateList,
+  ]);
+
   // Step 5: Document Preview Modal State
   const [previewDocModal, setPreviewDocModal] = useState<{
     visible: boolean;
@@ -1868,6 +1921,7 @@ export default function B2BScreen() {
               setReferralCode(d.business_details.referral_code || "");
               if (d.business_details.gst_number) {
                 setIsGstVerified(true);
+                lastVerifiedGstRef.current = d.business_details.gst_number;
               }
             }
 
@@ -2303,6 +2357,7 @@ export default function B2BScreen() {
               setReferralCode(fullData.business_details.referral_code || "");
               if (fullData.business_details.gst_number) {
                 setIsGstVerified(true);
+                lastVerifiedGstRef.current = fullData.business_details.gst_number;
               }
             }
 
@@ -2534,26 +2589,35 @@ export default function B2BScreen() {
   // -------------------------------------------------------------
   // Step 2: GST Verification & Referral Validation
   // -------------------------------------------------------------
-  const handleVerifyGst = async () => {
-    const cleanGst = gstNumber.trim().toUpperCase();
+  const handleVerifyGst = async (customGst?: string, silent?: boolean): Promise<boolean> => {
+    const rawGst = (customGst !== undefined ? customGst : gstNumber) || "";
+    const cleanGst = rawGst.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/;
 
     if (!cleanGst) {
-      setErrors((prev) => ({
-        ...prev,
-        gstNumber: "Please enter GSTIN to verify.",
-      }));
-      showToast("Please enter your 15-character GSTIN.", "error");
-      return;
+      if (!silent) {
+        setErrors((prev) => ({
+          ...prev,
+          gstNumber: "Please enter GSTIN to verify.",
+        }));
+        showToast("Please enter your 15-character GSTIN.", "error");
+      }
+      return false;
     }
 
     if (!gstRegex.test(cleanGst)) {
-      setErrors((prev) => ({
-        ...prev,
-        gstNumber: "Invalid GSTIN format (e.g. 24AAAAA0000A1Z5)",
-      }));
-      showToast("Please enter a valid 15-character GSTIN format.", "error");
-      return;
+      if (!silent) {
+        setErrors((prev) => ({
+          ...prev,
+          gstNumber: "Invalid GSTIN format (e.g. 24AAAAA0000A1Z5)",
+        }));
+        showToast("Please enter a valid 15-character GSTIN format.", "error");
+      }
+      return false;
+    }
+
+    if (cleanGst === lastVerifiedGstRef.current && isGstVerified) {
+      return true;
     }
 
     try {
@@ -2564,16 +2628,17 @@ export default function B2BScreen() {
 
       if (response.status === 1 && response.data) {
         const d = response.data;
+        lastVerifiedGstRef.current = cleanGst;
         setIsGstVerified(true);
         setGstVerifiedData(d);
 
-        // Autofill business name
+        // Autofill Step 2: Business name
         const bName = d.business_name || d.trade_name || d.legal_name || "";
         if (bName) {
           setBusinessName(bName);
         }
 
-        // Autofill KYC fields from GST
+        // Autofill Step 4: Legal & KYC fields from GST
         const legalName = d.legal_name || d.trade_name || d.business_name || "";
         if (legalName) {
           setLegalBusinessName(legalName);
@@ -2586,55 +2651,104 @@ export default function B2BScreen() {
           setPanName(d.pan_name || d.legal_name || legalName);
         }
 
+        // Autofill Step 2: Business constitution / type
         if (d.suggested_business_type_id) {
           setBusinessTypeId(Number(d.suggested_business_type_id));
         }
 
+        // Autofill Step 2: Dealer category
         if (d.suggested_dealer_category_id) {
           setDealerCategoryId(Number(d.suggested_dealer_category_id));
         }
 
+        // Autofill Step 2: Years in business
         if (d.suggested_years_in_business) {
           setYearsInBusiness(d.suggested_years_in_business);
         }
 
-        // Pre-fill Step 3 Address fields if returned by GST
-        if (d.address && !businessAddress) {
-          setBusinessAddress(d.address);
+        // Autofill Step 3: Address fields from GST (Same as Web)
+        const addr = d.address || "";
+        const city = d.city || d.district || "";
+        const pin = d.pincode ? String(d.pincode) : "";
+
+        if (addr) {
+          setBusinessAddress(addr);
+          if (deliverySame === "Yes") setDeliveryAddress(addr);
+          if (warehouseSame === "Yes") setWarehouseAddress(addr);
         }
-        if (d.city && !businessCity) {
-          setBusinessCity(d.city);
+        if (city) {
+          setBusinessCity(city);
+          if (deliverySame === "Yes") setDeliveryCity(city);
+          if (warehouseSame === "Yes") setWarehouseCity(city);
         }
-        if (d.pincode && !businessPincode) {
-          setBusinessPincode(d.pincode);
-        }
-        if (d.state_id && !businessStateId) {
-          setBusinessStateId(Number(d.state_id));
+        if (pin) {
+          setBusinessPincode(pin);
+          if (deliverySame === "Yes") setDeliveryPincode(pin);
+          if (warehouseSame === "Yes") setWarehousePincode(pin);
         }
 
-        if (errors.gstNumber) {
-          setErrors((prev) => ({ ...prev, gstNumber: "" }));
+        // Match state ID for Step 3
+        const targetStateId = Number(d.suggested_state_id || d.state_id);
+        if (targetStateId) {
+          setBusinessStateId(targetStateId);
+          if (deliverySame === "Yes") setDeliveryStateId(targetStateId);
+          if (warehouseSame === "Yes") setWarehouseStateId(targetStateId);
+        } else if (d.state || d.state_code) {
+          const matched = stateList.find(
+            (s) =>
+              (d.state && s.name.toLowerCase() === d.state.toLowerCase()) ||
+              (d.state_code && s.state_no && String(s.state_no) === String(d.state_code))
+          );
+          if (matched) {
+            setBusinessStateId(matched.id);
+            if (deliverySame === "Yes") setDeliveryStateId(matched.id);
+            if (warehouseSame === "Yes") setWarehouseStateId(matched.id);
+          }
         }
 
+        // Clear errors on populated fields
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated.gstNumber;
+          delete updated.businessName;
+          delete updated.businessType;
+          delete updated.dealerCategory;
+          delete updated.businessAddress;
+          delete updated.businessCity;
+          delete updated.businessState;
+          delete updated.businessPincode;
+          return updated;
+        });
+
+        const displayName = d.trade_name || d.legal_name || bName || cleanGst;
         showToast(
-          response.message || "GSTIN Verified! Details autofilled.",
+          response.message || `GSTIN Verified! Details fetched for ${displayName}.`,
           "success",
         );
+        return true;
       } else {
+        lastVerifiedGstRef.current = cleanGst;
         setIsGstVerified(false);
-        showToast(
-          response.message ||
-            "GSTIN verification failed. You may enter details manually.",
-          "error",
-        );
+        if (!silent) {
+          showToast(
+            response.message ||
+              "GST details could not be auto-fetched. Please enter details manually.",
+            "error",
+          );
+        }
+        return false;
       }
     } catch (err: any) {
+      lastVerifiedGstRef.current = cleanGst;
       setIsGstVerified(false);
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "GSTIN verification failed.";
-      showToast(msg, "error");
+        "GSTIN verification failed. Please enter details manually.";
+      if (!silent) {
+        showToast(msg, "error");
+      }
+      return false;
     }
   };
 
@@ -2683,13 +2797,15 @@ export default function B2BScreen() {
   const handleSaveBusinessDetails = async () => {
     const newErrors: { [key: string]: string } = {};
 
-    const cleanGst = gstNumber.trim().toUpperCase();
+    const cleanGst = gstNumber.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/;
 
     if (!cleanGst) {
       newErrors.gstNumber = "GSTIN is required.";
     } else if (!gstRegex.test(cleanGst)) {
       newErrors.gstNumber = "Please enter a valid 15-character GSTIN.";
+    } else if (!isGstVerified) {
+      await handleVerifyGst(cleanGst, true);
     }
 
     if (!businessName.trim() || businessName.trim().length < 2) {
@@ -4870,12 +4986,66 @@ export default function B2BScreen() {
                 maxLength={15}
                 letterSpacing={0.8}
                 value={gstNumber}
+                rightElement={
+                  isVerifyingGst ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : isGstVerified ? (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                      <CheckCircle2 size={18} color="#059669" />
+                    </View>
+                  ) : gstNumber.length === 15 ? (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => handleVerifyGst(gstNumber, false)}
+                      style={{
+                        backgroundColor: colors.primary,
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(10.5),
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        Verify
+                      </Text>
+                    </TouchableOpacity>
+                  ) : undefined
+                }
                 onChangeText={(val) => {
-                  const formatted = val.toUpperCase().trim();
+                  const formatted = val
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "")
+                    .slice(0, 15);
                   setGstNumber(formatted);
                   markFieldCorrected("gst_number");
                   if (errors.gstNumber)
                     setErrors((prev) => ({ ...prev, gstNumber: "" }));
+
+                  if (
+                    lastVerifiedGstRef.current &&
+                    formatted !== lastVerifiedGstRef.current
+                  ) {
+                    lastVerifiedGstRef.current = "";
+                    setIsGstVerified(false);
+                    setGstVerifiedData(null);
+                  }
+
+                  if (formatted.length === 15) {
+                    const gstRegex =
+                      /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/;
+                    if (
+                      gstRegex.test(formatted) &&
+                      formatted !== lastVerifiedGstRef.current &&
+                      !isVerifyingGst
+                    ) {
+                      handleVerifyGst(formatted, false);
+                    }
+                  }
                 }}
                 error={errors.gstNumber}
                 isRejected={isFieldRejected("gst_number", 2)}
@@ -4885,6 +5055,57 @@ export default function B2BScreen() {
                 font={font}
                 spacing={spacing}
               />
+
+              {/* GST Verification Status Feedback (Same as Web) */}
+              {isVerifyingGst ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: -4,
+                    paddingHorizontal: 2,
+                  }}
+                >
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text
+                    style={{
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(11),
+                      color: colors.primary,
+                    }}
+                  >
+                    Fetching GST business details for {gstNumber}...
+                  </Text>
+                </View>
+              ) : isGstVerified ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: -4,
+                    paddingHorizontal: 2,
+                  }}
+                >
+                  <CheckCircle2 size={14} color="#059669" />
+                  <Text
+                    style={{
+                      flex: 1,
+                      fontFamily: "Poppins_500Medium",
+                      fontSize: font(11),
+                      color: "#059669",
+                    }}
+                  >
+                    Details fetched for{" "}
+                    {gstVerifiedData?.trade_name ||
+                      gstVerifiedData?.legal_name ||
+                      businessName ||
+                      gstNumber}
+                    . You can change any field below.
+                  </Text>
+                </View>
+              ) : null}
 
               {/* 2. Business / Firm Name */}
               <AppInputField
@@ -5140,6 +5361,36 @@ export default function B2BScreen() {
                   Enter registered business address and location
                 </Text>
               </View>
+
+              {/* Pre-fill Notice from GSTIN (Same as Web) */}
+              {(isGstVerified || !!gstVerifiedData) && !!gstNumber && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: isDark ? "#064E3B33" : "#ECFDF5",
+                    borderColor: "#059669",
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    paddingHorizontal: spacing(12),
+                    paddingVertical: spacing(8),
+                    gap: spacing(8),
+                    marginBottom: spacing(8),
+                  }}
+                >
+                  <CheckCircle2 size={16} color="#059669" />
+                  <Text
+                    style={{
+                      flex: 1,
+                      fontFamily: "Poppins_400Regular",
+                      fontSize: font(11.5),
+                      color: isDark ? "#34D399" : "#065F46",
+                    }}
+                  >
+                    Address details pre-filled from GSTIN ({gstNumber}). You can edit or change any field below.
+                  </Text>
+                </View>
+              )}
 
               {/* Business Address Field */}
               <AppInputField

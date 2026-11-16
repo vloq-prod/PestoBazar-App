@@ -416,10 +416,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           {
             width: B2B_CARD_WIDTH + insets.right,
             height: DOCK_HEIGHT,
-            paddingRight: 10 + insets.right,
+            paddingRight: 8 + insets.right,
             backgroundColor: b2bVisual.bgColor,
             shadowColor: b2bVisual.shadowColor,
             borderColor: b2bVisual.borderColor,
+            borderRightWidth: 0,
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+            marginRight: 0,
           },
         ]}
       >

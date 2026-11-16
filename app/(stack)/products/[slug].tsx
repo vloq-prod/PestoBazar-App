@@ -716,8 +716,12 @@ const ProductDetails = () => {
 
   useEffect(() => {
     if (!realProductId || !visitorId) return;
-    saveRecentlyViewed({ product_id: realProductId, visitor_id: visitorId });
-  }, [realProductId, visitorId]);
+    saveRecentlyViewed({
+      product_id: realProductId,
+      visitor_id: visitorId,
+      ...(userId ? { user_id: String(userId) } : {}),
+    });
+  }, [realProductId, visitorId, userId]);
 
   useEffect(() => {
     if (!shouldScrollToReview || isLoading || !realProductId) return;
