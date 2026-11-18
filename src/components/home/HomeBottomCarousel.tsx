@@ -4,6 +4,7 @@ import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { BannerItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
+import { getBannerImageUrl } from "../../utils/imageUtils";
 
 interface Props {
   item: BannerItem;
@@ -15,6 +16,14 @@ export default function HomeBottomBanner({ item }: Props) {
   const router = useRouter();
 
   if (!item) return null;
+
+  const imageUri =
+    getBannerImageUrl(item) ||
+    item.mobile_banner_url ||
+    item.s3_image_url ||
+    item.s3_image_path;
+
+  if (!imageUri) return null;
 
   const handlePress = () => {
     const { app_redirect_key, app_redirect_value } = item;
@@ -69,8 +78,7 @@ export default function HomeBottomBanner({ item }: Props) {
       >
         <Image
           source={{
-            uri:
-              item.mobile_banner_url || item.s3_image_url || item.s3_image_path,
+            uri: imageUri,
           }}
           style={{
             width: "100%",

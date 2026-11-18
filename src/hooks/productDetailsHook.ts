@@ -3,6 +3,7 @@ import {
   useInfiniteQuery,
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 import {
   CustomerAlsoBoughtParams,
@@ -185,9 +186,13 @@ export const useCustomerAlsoBought = (params: CustomerAlsoBoughtParams) => {
 // });
 
 export const useSaveRecentlyViewed = () => {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (payload: SaveRecentlyViewedParams) =>
       saveRecentlyViewed(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recently-viewed"] });
+    },
   });
 
   return {

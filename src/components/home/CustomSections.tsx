@@ -156,7 +156,11 @@ const SectionHeader = ({ title, description }: any) => {
   );
 };
 
-const CustomSections = () => {
+interface CustomSectionsProps {
+  targetSectionId?: number | null;
+}
+
+const CustomSections: React.FC<CustomSectionsProps> = ({ targetSectionId }) => {
   const userId = useAppVisitorStore((state) => state.userId);
 
   const {
@@ -191,8 +195,14 @@ const CustomSections = () => {
       return (a.section_id ?? 0) - (b.section_id ?? 0);
     });
 
-    return [...catSections, ...prodSections];
-  }, [categorySectionsRes?.data, productSectionsRes?.data]);
+    const all = [...catSections, ...prodSections];
+
+    if (targetSectionId !== undefined && targetSectionId !== null) {
+      return all.filter((s) => s.section_id === targetSectionId);
+    }
+
+    return all;
+  }, [categorySectionsRes?.data, productSectionsRes?.data, targetSectionId]);
 
   const isLoading =
     (isCategoryLoading || isProductLoading) && sections.length === 0;

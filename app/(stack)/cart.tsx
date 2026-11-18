@@ -25,6 +25,7 @@ import {
   useRemoveCartItem,
 } from "../../src/hooks/cartHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
+import { useB2BApplicationStatus } from "../../src/hooks/b2bHooks";
 import CartItem from "../../src/components/cart/CartItem";
 import CartRecentlyViewed from "../../src/components/cart/CartRecentlyViewed";
 import B2BCartDiscountCard from "../../src/components/cart/B2BCartDiscountCard";
@@ -173,7 +174,28 @@ export default function CartScreen() {
   const cartCount = cartCountData?.data;
   const appliedPromo = cartTotal?.promo_code_details;
   const b2bCartDiscount = cartTotal?.b2b_cart_discount;
-  const isB2BUser =
+
+  // ── B2B Status Validation (Pending applications must NOT receive B2B pricing) ──
+  const { data: b2bStatusData } = useB2BApplicationStatus();
+  const rawB2BStatus = (b2bStatusData?.status || "").toLowerCase().trim();
+  const isB2BPendingOrUnapproved =
+    rawB2BStatus.includes("pending") ||
+    rawB2BStatus.includes("submit") ||
+    rawB2BStatus.includes("review") ||
+    rawB2BStatus.includes("waiting") ||
+    rawB2BStatus.includes("draft") ||
+    rawB2BStatus.includes("correction") ||
+    rawB2BStatus.includes("reject") ||
+    b2bStatusData?.status_badge?.is_approved === false ||
+    (b2bStatusData?.has_application === true && b2bStatusData?.is_b2b_user === false);
+
+  const isB2BApproved =
+    !isB2BPendingOrUnapproved &&
+    (rawB2BStatus === "approved" ||
+      b2bStatusData?.status_badge?.is_approved === true ||
+      b2bStatusData?.is_b2b_user === true);
+
+  const cartHasB2B =
     cartTotal?.is_b2b === true ||
     cartTotal?.is_b2b === "Yes" ||
     String(cartTotal?.is_b2b) === "1" ||
@@ -181,6 +203,9 @@ export default function CartScreen() {
     Boolean(
       b2bCartDiscount && (b2bCartDiscount.allBracket || b2bCartDiscount.tiers),
     );
+
+  // CRITICAL: User is B2B ONLY IF their application is officially APPROVED!
+  const isB2BUser = !isB2BPendingOrUnapproved && (isB2BApproved && cartHasB2B);
 
   const b2bDiscountAmount = parseFloat(
     String(orderSummary?.b2b_discount ?? b2bCartDiscount?.discount_amount ?? 0),

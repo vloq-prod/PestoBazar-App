@@ -22,6 +22,8 @@ import {
   RegisterDeviceTokenRequest,
   RegisterDeviceTokenResponse,
   AppMenuCategoriesApiResponse,
+  HomepageSectionSequenceResponse,
+  AllAppBannersApiResponse,
 } from "../types/home.types";
 
 // banner api
@@ -244,6 +246,26 @@ export const getAppMenuCategories =
   async (): Promise<AppMenuCategoriesApiResponse> => {
     const response = await apiClient.get<AppMenuCategoriesApiResponse>(
       "/app-api/v1/app-menu-categories",
+    );
+
+    return response.data;
+  };
+
+// mobile homepage section sequence api
+export const getHomepageSectionSequence =
+  async (): Promise<HomepageSectionSequenceResponse> => {
+    const response = await apiClient.get<HomepageSectionSequenceResponse>(
+      "/app-api/v1/get-mobile-homepage-section-sequence",
+    );
+
+    return response.data;
+  };
+
+// all app banners with ids api
+export const getAllAppBanners =
+  async (): Promise<AllAppBannersApiResponse> => {
+    const response = await apiClient.get<AllAppBannersApiResponse>(
+      "/app-api/v1/app-banners",
     );
 
     return response.data;

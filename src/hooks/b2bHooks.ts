@@ -424,8 +424,21 @@ export const useB2BApplicationStatus = () => {
         if (res && res.data) {
           const d = res.data;
           const rawStatus = d.status || null;
+          const statusLower = (rawStatus || "").toLowerCase().trim();
+          const isPendingOrUnapproved =
+            statusLower.includes("pending") ||
+            statusLower.includes("submit") ||
+            statusLower.includes("review") ||
+            statusLower.includes("waiting") ||
+            statusLower.includes("draft") ||
+            statusLower.includes("correction") ||
+            statusLower.includes("reject") ||
+            d.status_badge?.is_approved === false;
           const isApproved =
-            d.is_b2b_user === true || (rawStatus || "").toLowerCase() === "approved";
+            !isPendingOrUnapproved &&
+            (statusLower === "approved" ||
+              d.status_badge?.is_approved === true ||
+              (d.is_b2b_user === true && statusLower === "approved"));
           return {
             has_application: Boolean(d.has_application ?? rawStatus),
             is_b2b_user: isApproved,
@@ -452,8 +465,21 @@ export const useB2BApplicationStatus = () => {
         if (profile && profile.data) {
           const d = profile.data;
           const rawStatus = d.status || d.dealer?.status || null;
+          const statusLower = (rawStatus || "").toLowerCase().trim();
+          const isPendingOrUnapproved =
+            statusLower.includes("pending") ||
+            statusLower.includes("submit") ||
+            statusLower.includes("review") ||
+            statusLower.includes("waiting") ||
+            statusLower.includes("draft") ||
+            statusLower.includes("correction") ||
+            statusLower.includes("reject") ||
+            d.status_badge?.is_approved === false;
           const isApproved =
-            d.is_b2b_user === true || (rawStatus || "").toLowerCase() === "approved";
+            !isPendingOrUnapproved &&
+            (statusLower === "approved" ||
+              d.status_badge?.is_approved === true ||
+              (d.is_b2b_user === true && statusLower === "approved"));
           return {
             has_application: Boolean(d.has_b2b_application ?? d.dealer ?? rawStatus),
             is_b2b_user: isApproved,

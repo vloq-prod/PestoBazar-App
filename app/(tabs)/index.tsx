@@ -78,6 +78,8 @@ import {
   useCategory,
   useAppMainBanner,
   useAppHeaderBanner,
+  useHomepageSectionSequence,
+  useAllAppBanners,
 } from "../../src/hooks/homeHooks";
 import { Image } from "expo-image";
 
@@ -704,6 +706,24 @@ const MemoFooter = React.memo(Footer);
 const sectionKeyExtractor = (item: any) => item.id;
 const SectionSeparator = () => <View style={{ height: 15 }} />;
 
+const parseBannerRedirect = (redirect?: string | null) => {
+  if (!redirect) return { app_redirect_key: "", app_redirect_value: "" };
+  const clean = redirect.trim();
+  if (clean.includes("/products/")) {
+    const slug = clean.split("/products/").pop()?.split(/[?#\s]/)[0] ?? "";
+    return { app_redirect_key: "products", app_redirect_value: slug };
+  }
+  if (clean.includes("/categories/")) {
+    const slug = clean.split("/categories/").pop()?.split(/[?#\s]/)[0] ?? "";
+    return { app_redirect_key: "categories", app_redirect_value: slug };
+  }
+  if (clean.includes("/brands/")) {
+    const slug = clean.split("/brands/").pop()?.split(/[?#\s]/)[0] ?? "";
+    return { app_redirect_key: "brands", app_redirect_value: slug };
+  }
+  return { app_redirect_key: "", app_redirect_value: clean };
+};
+
 export default function HomeScreen() {
   const queryClient = useQueryClient();
   const isConnected = useNetworkStatus();
@@ -720,6 +740,11 @@ export default function HomeScreen() {
       queryClient.invalidateQueries({ queryKey: ["deals-of-the-day"] });
       queryClient.invalidateQueries({ queryKey: ["featured-products"] });
       queryClient.invalidateQueries({ queryKey: ["diy-listing"] });
+      queryClient.invalidateQueries({ queryKey: ["recently-viewed"] });
+      queryClient.invalidateQueries({
+        queryKey: ["homepage-section-sequence"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["all-app-banners"] });
     }
   }, [userId, visitorId, queryClient]);
   const { colors } = useTheme();
@@ -779,7 +804,8 @@ export default function HomeScreen() {
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "", userId || "");
   const { products: diyProducts } = useDiyListing({}, userId);
-  const [visibleSectionsCount, setVisibleSectionsCount] = useState(4);
+  const { sequence: sectionSequence } = useHomepageSectionSequence();
+  const { banners: allAppBanners } = useAllAppBanners();
   const promoHeight = useSharedValue(0);
   const [isPromoVisible, setIsPromoVisible] = useState(false);
 
@@ -793,12 +819,15 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ["recently-viewed"] });
+      queryClient.invalidateQueries({ queryKey: ["homepage-section-sequence"] });
+      queryClient.invalidateQueries({ queryKey: ["all-app-banners"] });
       RNStatusBar.setBarStyle(isPromoVisible ? "dark-content" : "light-content", true);
       if (Platform.OS === "android") {
         RNStatusBar.setBackgroundColor("transparent", true);
         RNStatusBar.setTranslucent(true);
       }
-    }, [isPromoVisible]),
+    }, [isPromoVisible, queryClient]),
   );
 
   const rawMainBannerUri =
@@ -845,13 +874,6 @@ export default function HomeScreen() {
     () => (headerBannerImageUri ? { uri: headerBannerImageUri } : null),
     [headerBannerImageUri],
   );
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisibleSectionsCount(20);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Show promo banner smoothly after 1 second
   useEffect(() => {
@@ -957,55 +979,264 @@ export default function HomeScreen() {
   // SECTIONS
   // ─────────────────────────────────────────────
 
-  const sections = useMemo(
-    () => [
-      { id: "sliding_banners", data: slidingbanners },
-      { id: "custom_sections" },
-      
-      { id: "feature_banner_0", data: featureBanners?.[0] },
+  const sections = useMemo(() => {
+    // Default fallback sections (used if sequence API hasn't loaded or is offline)
+    const defaultSections = [
+      { id: "sliding_banners", type: "sliding_banners", data: slidingbanners },
+      { id: "custom_sections", type: "custom_section" },
+      { id: "feature_banner_0", type: "featured_banner", data: featureBanners?.[0] },
       ...(diyProducts && diyProducts.length > 0
-        ? [{ id: "diy", data: diyProducts }]
+        ? [{ id: "diy", type: "diy", data: diyProducts }]
         : []),
-
-      { id: "feature_banner_1", data: featureBanners?.[1] },
-      { id: "recently_viewed", data: recentlyViewed },
-    
+      { id: "feature_banner_1", type: "featured_banner", data: featureBanners?.[1] },
+      { id: "recently_viewed", type: "recently_viewed", data: recentlyViewed },
       {
         id: "home_bottom_carousel",
+        type: "home_bottom_carousel",
         data: Array.isArray(homeBottomBanners)
           ? homeBottomBanners[0]
           : homeBottomBanners,
       },
-      { id: "testimonial", data: testimonials },
-      { id: "home_usp", data: uspList },
-      { id: "our_services" },
-      { id: "branches", data: branches },
-      { id: "footer" },
-    ],
-    [
-      slidingbanners,
-      homeProducts,
-      featureBanners,
-      diyProducts,
-      deals,
-      recentlyViewed,
-      featured,
-      homeBottomBanners,
-      testimonials,
-      uspList,
-      branches,
-    ],
-  );
+      { id: "testimonial", type: "testimonial", data: testimonials },
+      { id: "home_usp", type: "home_usp", data: uspList },
+      { id: "our_services", type: "our_services" },
+      { id: "branches", type: "branches", data: branches },
+      { id: "footer", type: "footer" },
+    ];
 
-  const visibleSections = useMemo(
-    () => sections.slice(0, visibleSectionsCount),
-    [sections, visibleSectionsCount],
-  );
+    if (!sectionSequence || sectionSequence.length === 0) {
+      return defaultSections;
+    }
+
+    // Filter enabled items with non-empty tags and sort ascending by sequence
+    const activeItems = sectionSequence
+      .filter((item) => item.is_enabled === 1 && item.section_tag?.trim())
+      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+
+    if (activeItems.length === 0) {
+      return defaultSections;
+    }
+
+    const dynamicSections: Array<{
+      id: string;
+      type: string;
+      data?: any;
+      customSectionId?: number | null;
+    }> = [];
+
+    const findBannerById = (bannerId: number | null) => {
+      if (!bannerId) return null;
+      const raw = allAppBanners?.find((b: any) => b.id === bannerId);
+      if (!raw) return null;
+      const { app_redirect_key, app_redirect_value } = parseBannerRedirect(raw.redirect);
+      return {
+        ...raw,
+        app_redirect_key,
+        app_redirect_value,
+        s3_image_url: raw.s3_image_url || raw.s3_image_path,
+        s3_image_path: raw.s3_image_url || raw.s3_image_path,
+        mobile_banner_url: raw.s3_image_url || raw.mobile_banner_url,
+        desktop_banner_url: raw.desktop_banner_url,
+      };
+    };
+
+    let featuredBannerIndex = 0;
+    let homeBottomBannerIndex = 0;
+
+    for (const item of activeItems) {
+      const tag = item.section_tag.trim().toLowerCase();
+
+      switch (tag) {
+        case "main_banner":
+        case "sliding_banners":
+          dynamicSections.push({
+            id: `main_banner_${item.id}`,
+            type: "sliding_banners",
+            data: slidingbanners,
+          });
+          break;
+
+        case "diy_products":
+        case "diy":
+          if (diyProducts && diyProducts.length > 0) {
+            dynamicSections.push({
+              id: `diy_${item.id}`,
+              type: "diy",
+              data: diyProducts,
+            });
+          }
+          break;
+
+        case "testimonials":
+        case "testimonial":
+          dynamicSections.push({
+            id: `testimonial_${item.id}`,
+            type: "testimonial",
+            data: testimonials,
+          });
+          break;
+
+        case "featured_banner": {
+          const matchedBanner = item.banner_id
+            ? findBannerById(item.banner_id) ||
+              featureBanners?.find(
+                (b: any) =>
+                  b.id === item.banner_id || b.banner_id === item.banner_id,
+              ) ||
+              null
+            : featuredBannerIndex < (featureBanners?.length ?? 0)
+              ? featureBanners[featuredBannerIndex++]
+              : null;
+
+          if (matchedBanner) {
+            dynamicSections.push({
+              id: `featured_banner_${item.id}_${item.banner_id ?? featuredBannerIndex}`,
+              type: "featured_banner",
+              data: matchedBanner,
+            });
+          }
+          break;
+        }
+
+        case "home_bottom_banner":
+        case "home_bottom_carousel": {
+          const bottomList = Array.isArray(homeBottomBanners)
+            ? homeBottomBanners
+            : homeBottomBanners
+              ? [homeBottomBanners]
+              : [];
+          const matchedBottom = item.banner_id
+            ? findBannerById(item.banner_id) ||
+              bottomList.find(
+                (b: any) =>
+                  b.id === item.banner_id || b.banner_id === item.banner_id,
+              ) ||
+              null
+            : homeBottomBannerIndex < bottomList.length
+              ? bottomList[homeBottomBannerIndex++]
+              : null;
+
+          if (matchedBottom) {
+            dynamicSections.push({
+              id: `home_bottom_${item.id}_${item.banner_id ?? homeBottomBannerIndex}`,
+              type: "home_bottom_carousel",
+              data: matchedBottom,
+            });
+          }
+          break;
+        }
+
+        case "custom_section":
+        case "custom_sections":
+          dynamicSections.push({
+            id: `custom_sec_${item.id}_${item.custom_section_id ?? "all"}`,
+            type: "custom_section",
+            customSectionId: item.custom_section_id,
+          });
+          break;
+
+        case "home_usp":
+        case "usp":
+          dynamicSections.push({
+            id: `home_usp_${item.id}`,
+            type: "home_usp",
+            data: uspList,
+          });
+          break;
+
+        case "recently_view":
+        case "recently_viewed":
+          dynamicSections.push({
+            id: `recently_view_${item.id}`,
+            type: "recently_viewed",
+            data: recentlyViewed,
+          });
+          break;
+
+        case "our_services":
+        case "services":
+          dynamicSections.push({
+            id: `our_services_${item.id}`,
+            type: "our_services",
+          });
+          break;
+
+        case "branches":
+        case "branch":
+          dynamicSections.push({
+            id: `branches_${item.id}`,
+            type: "branches",
+            data: branches,
+          });
+          break;
+
+        case "footer":
+          dynamicSections.push({
+            id: `footer_${item.id}`,
+            type: "footer",
+          });
+          break;
+
+        case "deals":
+        case "deals_of_the_day":
+          dynamicSections.push({
+            id: `deals_${item.id}`,
+            type: "deals_of_the_day",
+            data: deals,
+          });
+          break;
+
+        case "featured":
+        case "featured_products":
+          dynamicSections.push({
+            id: `featured_products_${item.id}`,
+            type: "featured_products",
+            data: featured,
+          });
+          break;
+
+        case "home_product":
+        case "home_products":
+          dynamicSections.push({
+            id: `home_products_${item.id}`,
+            type: "home_product",
+            data: homeProducts,
+          });
+          break;
+
+        case "category_card_section":
+          dynamicSections.push({
+            id: `category_card_section_${item.id}`,
+            type: "category_card_section",
+          });
+          break;
+      }
+    }
+
+    return dynamicSections.length > 0 ? dynamicSections : defaultSections;
+  }, [
+    sectionSequence,
+    slidingbanners,
+    featureBanners,
+    diyProducts,
+    homeBottomBanners,
+    testimonials,
+    uspList,
+    recentlyViewed,
+    branches,
+    deals,
+    featured,
+    homeProducts,
+    allAppBanners,
+  ]);
 
   const renderItem = useCallback(
     ({ item }: any) => {
-      switch (item.id) {
+      const sectionType = item.type || item.id;
+
+      switch (sectionType) {
         case "sliding_banners":
+        case "main_banner":
           return (
             <View>
               {!!headerBannerSource && (
@@ -1059,20 +1290,26 @@ export default function HomeScreen() {
         case "category_card_section":
           return <MemoCategoryCardSection />;
         case "home_product":
+        case "home_products":
           return <MemoHomeProduct />;
+        case "custom_section":
         case "custom_sections":
-          return <MemoCustomSections />;
+          return <MemoCustomSections targetSectionId={item.customSectionId} />;
+        case "featured_banner":
         case "feature_banner_0":
-          return <MemoFeatureBanner item={item.data} />;
-        case "diy":
-          return <MemoDiy products={item.data} />;
         case "feature_banner_1":
           return <MemoFeatureBanner item={item.data} />;
+        case "diy":
+        case "diy_products":
+          return <MemoDiy products={item.data} />;
         case "recently_viewed":
-          return <MemoRecentlyViewProducts />;
+        case "recently_view":
+          return <MemoRecentlyViewProducts initialData={item.data} />;
         case "home_bottom_carousel":
+        case "home_bottom_banner":
           return <MemoHomeBottomCarousel item={item.data} />;
         case "testimonial":
+        case "testimonials":
           return <MemoTestimonial />;
         case "home_usp":
           return <MemoHomeUsp />;
@@ -1189,7 +1426,7 @@ export default function HomeScreen() {
 
       {/* CONTENT */}
       <Animated.FlatList
-        data={visibleSections}
+        data={sections}
         keyExtractor={sectionKeyExtractor}
         renderItem={renderItem}
         onScroll={scrollHandler}

@@ -16,6 +16,8 @@ import {
   submitRating,
   registerDeviceToken,
   getAppMenuCategories,
+  getHomepageSectionSequence,
+  getAllAppBanners,
 } from "../api/home.api";
 import {
   BulkEnquiryRequest,
@@ -311,6 +313,44 @@ export const useAppMenuCategories = () => {
   return {
     categories: query.data?.data?.categories || [],
     brands: query.data?.data?.brands || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
+// useHomepageSectionSequence hook
+export const useHomepageSectionSequence = () => {
+  const query = useQuery({
+    queryKey: ["homepage-section-sequence"],
+    queryFn: getHomepageSectionSequence,
+    staleTime: 1000 * 60 * 30, // 30 mins cache
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  return {
+    sequence: query.data?.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+
+// useAllAppBanners hook (returns banners with specific IDs for sequence matching)
+export const useAllAppBanners = () => {
+  const query = useQuery({
+    queryKey: ["all-app-banners"],
+    queryFn: getAllAppBanners,
+    staleTime: 1000 * 60 * 30, // 30 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  return {
+    banners: query.data?.data?.data || [],
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

@@ -68,9 +68,10 @@ const CartItem = ({
   };
 
   const isB2B =
-    isB2BProp ??
-    (item.is_b2b_user === "Yes" ||
-      String(item.is_b2b_user || "").toLowerCase() === "yes");
+    isB2BProp !== undefined
+      ? isB2BProp
+      : (item.is_b2b_user === "Yes" ||
+        String(item.is_b2b_user || "").toLowerCase() === "yes");
 
   const itemDiscountPercent = parseFloat(String(item.discount_percentage || 0));
   const hasB2BDiscount = itemDiscountPercent > 0;

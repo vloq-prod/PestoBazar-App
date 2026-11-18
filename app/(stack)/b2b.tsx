@@ -1596,10 +1596,15 @@ export default function B2BScreen() {
   // Auto-scroll & field targeting for Correction Required
   const scrollViewRef = useRef<ScrollView>(null);
   const targetFieldRef = useRef<string | null>(null);
+  const shouldScrollToTopRef = useRef<boolean>(false);
   const [highlightedField, setHighlightedField] = useState<string | null>(null);
   const fieldOffsets = useRef<Record<string, number>>({});
   const stepContainerY = useRef<number>(0);
   const scrollTimeoutRef = useRef<any>(null);
+
+  const scrollToTop = useCallback((animated: boolean = false) => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated });
+  }, []);
 
   const checkPendingScroll = useCallback((specificFieldKey?: string) => {
     const target = targetFieldRef.current;
@@ -1640,9 +1645,12 @@ export default function B2BScreen() {
       stepContainerY.current = e.nativeEvent.layout.y;
       if (targetFieldRef.current) {
         checkPendingScroll();
+      } else if (shouldScrollToTopRef.current) {
+        shouldScrollToTopRef.current = false;
+        scrollToTop(false);
       }
     },
-    [checkPendingScroll]
+    [checkPendingScroll, scrollToTop]
   );
 
   const navigateAndScrollToField = useCallback(
@@ -1658,6 +1666,8 @@ export default function B2BScreen() {
       targetFieldRef.current = target || null;
       if (target) {
         setHighlightedField(target);
+      } else {
+        shouldScrollToTopRef.current = true;
       }
 
       setShowStatusScreen(false);
@@ -1676,27 +1686,51 @@ export default function B2BScreen() {
           }, 3500);
           targetFieldRef.current = null;
         }, 150);
+      } else if (!target) {
+        scrollToTop(false);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        scrollTimeoutRef.current = setTimeout(() => {
+          scrollToTop(false);
+        }, 50);
       }
     },
-    [correctionFields]
+    [correctionFields, scrollToTop]
   );
 
   useEffect(() => {
-    if (showStatusScreen || !targetFieldRef.current) return;
-    const target = targetFieldRef.current;
-    const timer = setTimeout(() => {
-      if (fieldOffsets.current[target] !== undefined) {
-        const fieldY = fieldOffsets.current[target];
-        const totalY = Math.max(0, (stepContainerY.current || 0) + fieldY - 30);
-        scrollViewRef.current?.scrollTo({ y: totalY, animated: true });
-        setTimeout(() => {
-          setHighlightedField((curr) => (curr === target ? null : curr));
-        }, 3500);
-        targetFieldRef.current = null;
-      }
-    }, 280);
-    return () => clearTimeout(timer);
-  }, [currentStep, showStatusScreen]);
+    if (showStatusScreen) return;
+    if (targetFieldRef.current) {
+      const target = targetFieldRef.current;
+      const timer = setTimeout(() => {
+        if (fieldOffsets.current[target] !== undefined) {
+          const fieldY = fieldOffsets.current[target];
+          const totalY = Math.max(0, (stepContainerY.current || 0) + fieldY - 30);
+          scrollViewRef.current?.scrollTo({ y: totalY, animated: true });
+          setTimeout(() => {
+            setHighlightedField((curr) => (curr === target ? null : curr));
+          }, 3500);
+          targetFieldRef.current = null;
+        }
+      }, 280);
+      return () => clearTimeout(timer);
+    } else {
+      // Whenever step changes without a specific field target, scroll to top
+      shouldScrollToTopRef.current = true;
+      scrollToTop(false);
+      const timer1 = setTimeout(() => {
+        scrollToTop(false);
+      }, 50);
+      const timer2 = setTimeout(() => {
+        scrollToTop(false);
+      }, 150);
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }
+  }, [currentStep, showStatusScreen, scrollToTop]);
 
   // Ensure Step 4 fields are auto-filled from Step 1 & Step 2 if initially empty
   useEffect(() => {
@@ -2228,7 +2262,9 @@ export default function B2BScreen() {
           if (applicationStatus === "Correction Required" && nextStep <= 4) {
             navigateAndScrollToField(nextStep);
           } else {
+            shouldScrollToTopRef.current = true;
             setCurrentStep(nextStep);
+            scrollToTop(false);
           }
           return;
         }
@@ -2876,7 +2912,9 @@ export default function B2BScreen() {
         if (applicationStatus === "Correction Required" && nextStep <= 4) {
           navigateAndScrollToField(nextStep);
         } else {
+          shouldScrollToTopRef.current = true;
           setCurrentStep(nextStep);
+          scrollToTop(false);
         }
       } else {
         showToast(
@@ -2952,7 +2990,9 @@ export default function B2BScreen() {
         if (applicationStatus === "Correction Required" && nextStep <= 4) {
           navigateAndScrollToField(nextStep);
         } else {
+          shouldScrollToTopRef.current = true;
           setCurrentStep(nextStep);
+          scrollToTop(false);
         }
       } else {
         showToast(
@@ -3359,7 +3399,9 @@ export default function B2BScreen() {
             "KYC documents saved. Please review your application.",
           "success",
         );
+        shouldScrollToTopRef.current = true;
         setCurrentStep(5);
+        scrollToTop(false);
         console.log("🏁 [B2B Step 4]: setCurrentStep(5) executed!");
       } else {
         console.warn("⚠️ [B2B Step 4 API Returned Non-1 Status]:", response);
@@ -3671,8 +3713,10 @@ export default function B2BScreen() {
                           if (applicationStatus === "Correction Required") {
                             navigateAndScrollToField(s.step);
                           } else {
+                            shouldScrollToTopRef.current = true;
                             setShowStatusScreen(false);
                             setCurrentStep(s.step);
+                            scrollToTop(false);
                           }
                         }}
                         style={{
@@ -3736,8 +3780,10 @@ export default function B2BScreen() {
                         if (applicationStatus === "Correction Required") {
                           navigateAndScrollToField(s.step);
                         } else {
+                          shouldScrollToTopRef.current = true;
                           setShowStatusScreen(false);
                           setCurrentStep(s.step);
+                          scrollToTop(false);
                         }
                       }}
                       style={{
@@ -5249,7 +5295,11 @@ export default function B2BScreen() {
               >
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => setCurrentStep(1)}
+                  onPress={() => {
+                    shouldScrollToTopRef.current = true;
+                    setCurrentStep(1);
+                    scrollToTop(false);
+                  }}
                   style={{
                     flex: 1,
                     height: INPUT_HEIGHT,
@@ -5512,7 +5562,11 @@ export default function B2BScreen() {
               >
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => setCurrentStep(2)}
+                  onPress={() => {
+                    shouldScrollToTopRef.current = true;
+                    setCurrentStep(2);
+                    scrollToTop(false);
+                  }}
                   style={{
                     flex: 1,
                     height: INPUT_HEIGHT,
@@ -6308,7 +6362,11 @@ export default function B2BScreen() {
               >
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => setCurrentStep(3)}
+                  onPress={() => {
+                    shouldScrollToTopRef.current = true;
+                    setCurrentStep(3);
+                    scrollToTop(false);
+                  }}
                   style={{
                     flex: 1,
                     height: INPUT_HEIGHT,
@@ -6523,7 +6581,9 @@ export default function B2BScreen() {
                       if (applicationStatus === "Correction Required") {
                         navigateAndScrollToField(1);
                       } else {
+                        shouldScrollToTopRef.current = true;
                         setCurrentStep(1);
+                        scrollToTop(false);
                       }
                     }}
                     activeOpacity={0.7}
@@ -6786,7 +6846,9 @@ export default function B2BScreen() {
                       if (applicationStatus === "Correction Required") {
                         navigateAndScrollToField(2);
                       } else {
+                        shouldScrollToTopRef.current = true;
                         setCurrentStep(2);
+                        scrollToTop(false);
                       }
                     }}
                     activeOpacity={0.7}
@@ -7061,7 +7123,9 @@ export default function B2BScreen() {
                       if (applicationStatus === "Correction Required") {
                         navigateAndScrollToField(3);
                       } else {
+                        shouldScrollToTopRef.current = true;
                         setCurrentStep(3);
+                        scrollToTop(false);
                       }
                     }}
                     activeOpacity={0.7}
@@ -7300,7 +7364,9 @@ export default function B2BScreen() {
                       if (applicationStatus === "Correction Required") {
                         navigateAndScrollToField(4);
                       } else {
+                        shouldScrollToTopRef.current = true;
                         setCurrentStep(4);
+                        scrollToTop(false);
                       }
                     }}
                     activeOpacity={0.7}

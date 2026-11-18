@@ -18,6 +18,7 @@ import { useTheme } from "../../src/theme";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { BASE_URL } from "../../src/lib/apiClient";
+import { useB2BApplicationStatus } from "../../src/hooks/b2bHooks";
 import {
   useAddress,
   useCheckout,
@@ -576,12 +577,37 @@ export default function Checkout() {
   const shippingCart = shippingData?.data?.cart;
   const orderSummary =
     shippingCart?.order_summary || data?.data?.order_summary;
-  const isB2BUser =
+
+  // ── B2B Status Validation (Pending applications must NOT receive B2B pricing) ──
+  const { data: b2bStatusData } = useB2BApplicationStatus();
+  const rawB2BStatus = (b2bStatusData?.status || "").toLowerCase().trim();
+  const isB2BPendingOrUnapproved =
+    rawB2BStatus.includes("pending") ||
+    rawB2BStatus.includes("submit") ||
+    rawB2BStatus.includes("review") ||
+    rawB2BStatus.includes("waiting") ||
+    rawB2BStatus.includes("draft") ||
+    rawB2BStatus.includes("correction") ||
+    rawB2BStatus.includes("reject") ||
+    b2bStatusData?.status_badge?.is_approved === false ||
+    (b2bStatusData?.has_application === true && b2bStatusData?.is_b2b_user === false);
+
+  const isB2BApproved =
+    !isB2BPendingOrUnapproved &&
+    (rawB2BStatus === "approved" ||
+      b2bStatusData?.status_badge?.is_approved === true ||
+      b2bStatusData?.is_b2b_user === true);
+
+  const cartHasB2B =
     cart?.is_b2b === true ||
     cart?.is_b2b === "Yes" ||
     String(cart?.is_b2b) === "1" ||
     String(cart?.is_b2b).toLowerCase() === "true" ||
     Boolean(cart?.b2b_cart_discount);
+
+  // CRITICAL: User is B2B ONLY IF their application is officially APPROVED!
+  // If application is Pending, Under Review, or Not Approved, treat as regular B2C retail user.
+  const isB2BUser = !isB2BPendingOrUnapproved && (isB2BApproved && cartHasB2B);
   const items: any[] = data?.data?.cart_details || [];
   const freeProducts: any[] = data?.data?.free_products || [];
   const cartId = data?.data?.cart_app?.cart_id;

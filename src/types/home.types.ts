@@ -436,3 +436,31 @@ export interface AppMenuCategoriesApiResponse {
   data: AppMenuCategoriesData;
 }
 
+// ======================================================
+// Homepage Section Sequence Types
+// ======================================================
+
+export interface HomepageSectionSequenceItem {
+  id: number;
+  section_tag: string;
+  custom_section_id: number | null;
+  banner_id: number | null;
+  sequence: number;
+  is_enabled: number;
+}
+
+export interface HomepageSectionSequenceResponse {
+  message: string;
+  status: number;
+  data: HomepageSectionSequenceItem[];
+}
+
+export interface AllAppBannersApiResponse {
+  message: string;
+  status: number;
+  data: {
+    data: AppHeaderBannerItem[];
+  };
+}
+
+

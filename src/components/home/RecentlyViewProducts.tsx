@@ -53,7 +53,13 @@ const SkeletonCard = ({ colors }: { colors: any }) => (
   </View>
 );
 
-const RecentlyViewProducts = () => {
+interface RecentlyViewProductsProps {
+  initialData?: RecentlyViewedItem[];
+}
+
+const RecentlyViewProducts: React.FC<RecentlyViewProductsProps> = ({
+  initialData,
+}) => {
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const { visitorId, userId } = useAppVisitorStore((state) => state);
@@ -63,15 +69,16 @@ const RecentlyViewProducts = () => {
     queryFn: () =>
       getRecentlyViewed({
         visitor_id: visitorId || "",
-        user_id: userId || "",
+        user_id: userId ? String(userId) : "",
       }),
     enabled: !!(visitorId || userId),
     select: (res) => res?.data?.recently_viewed ?? [],
   });
 
-  const rawProducts = data ?? [];
+  const rawProducts =
+    data && data.length > 0 ? data : (initialData ?? data ?? []);
 
-  if (!isLoading && rawProducts.length === 0) return null;
+  if (rawProducts.length === 0) return null;
 
   // De-duplicate recently viewed products by unique variation/product ID
   const seenIds = new Set<number | string>();

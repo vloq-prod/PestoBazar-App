@@ -289,8 +289,21 @@ export const b2bGetProfileApi = async (params?: {
         };
       }
 
+      const rawStatus = (d.status || "").toLowerCase().trim();
+      const isPendingOrUnapproved =
+        rawStatus.includes("pending") ||
+        rawStatus.includes("submit") ||
+        rawStatus.includes("review") ||
+        rawStatus.includes("waiting") ||
+        rawStatus.includes("draft") ||
+        rawStatus.includes("correction") ||
+        rawStatus.includes("reject") ||
+        d.status_badge?.is_approved === false;
       const isApproved =
-        d.is_b2b_user === true || (d.status || "").toLowerCase() === "approved";
+        !isPendingOrUnapproved &&
+        (rawStatus === "approved" ||
+          d.status_badge?.is_approved === true ||
+          (d.is_b2b_user === true && rawStatus === "approved"));
 
       return {
         status: 1,
@@ -385,10 +398,19 @@ export const b2bGetProfileApi = async (params?: {
           ? statesMap.get(d.address_details.delivery_state_id)
           : undefined;
 
+        const rawStatus = (d.status || "").toLowerCase().trim();
+        const isPendingOrUnapproved =
+          rawStatus.includes("pending") ||
+          rawStatus.includes("submit") ||
+          rawStatus.includes("review") ||
+          rawStatus.includes("waiting") ||
+          rawStatus.includes("draft") ||
+          rawStatus.includes("correction") ||
+          rawStatus.includes("reject");
         const isApproved =
-          d.status === "Approved" ||
-          d.is_b2b_user === "Yes" ||
-          String(d.is_b2b_user || "").toLowerCase() === "yes";
+          !isPendingOrUnapproved &&
+          (rawStatus === "approved" ||
+            ((d.is_b2b_user === "Yes" || String(d.is_b2b_user || "").toLowerCase() === "yes") && rawStatus === "approved"));
 
         return {
           status: 1,
