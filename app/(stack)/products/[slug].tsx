@@ -1828,6 +1828,7 @@ const ProductDetails = () => {
         <ProductComparisonSection
           data={comparisonResponse?.data}
           isLoading={isComparisonLoading}
+          isB2B={isB2bUser}
         />
 
         {/* ── More Info Accordion ── */}

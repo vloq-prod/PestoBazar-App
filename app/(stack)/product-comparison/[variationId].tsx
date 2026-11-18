@@ -38,6 +38,13 @@ import { useProductComparison } from "../../../src/hooks/productComparison.hooks
 import { useTheme } from "../../../src/theme";
 import type { ProductComparisonProduct } from "../../../src/types/productComparison.types";
 import { RequestCallBackModal } from "../../../src/components/comman/RequestCallBackModal";
+import { useAppVisitorStore } from "../../../src/store/auth";
+import { useB2BApplicationStatus } from "../../../src/hooks/b2bHooks";
+import {
+  getComparisonB2BPricing,
+  formatB2BExclusivePrice,
+  formatB2BInclusivePrice,
+} from "../../../src/utils/productComparisonHelpers";
 
 const LABEL_WIDTH = 118;
 const PRODUCT_WIDTH = 176;
@@ -68,8 +75,11 @@ const ProductComparisonScreen = () => {
   const { colors } = useTheme();
   const { variationId: routeVariationId } = useLocalSearchParams<{ variationId?: string }>();
   const variationId = Number(routeVariationId ?? 0);
+  const userId = useAppVisitorStore((state) => state.userId);
+  const { data: b2bStatusData } = useB2BApplicationStatus();
+  const isB2bApproved = Boolean(b2bStatusData?.is_b2b_user);
   const { data: response, isLoading, isError, refetch, isFetching } =
-    useProductComparison(Number.isFinite(variationId) ? variationId : 0);
+    useProductComparison(Number.isFinite(variationId) ? variationId : 0, userId);
   const comparison = response?.data;
 
   const products = comparison?.products ?? [];
@@ -238,7 +248,68 @@ const ProductComparisonScreen = () => {
             ))}
 
             <ComparisonRow label="Price" icon={<IndianRupee size={15} color={colors.textSecondary} />} colors={colors}>
-              {products.map((product) => <ValueCell key={product.variation_id} value={formatPrice(product.price.display_price)} colors={colors} strong highlight={product.is_best_value} primary={product.is_best_value} />)}
+              {products.map((product) => {
+                const productPricing = getComparisonB2BPricing(product, isB2bApproved);
+                if (productPricing.isB2B) {
+                  return (
+                    <View
+                      key={product.variation_id}
+                      style={[
+                        styles.valueCell,
+                        { borderLeftColor: colors.border },
+                        product.is_best_value && { backgroundColor: colors.primary + "09" },
+                        { paddingVertical: 8, justifyContent: "center" },
+                      ]}
+                    >
+                      <View style={{ flexDirection: "row", alignItems: "baseline", flexWrap: "wrap" }}>
+                        <Text
+                          style={[
+                            styles.valueStrong,
+                            {
+                              color: product.is_best_value ? colors.primary : colors.text,
+                              fontSize: 13,
+                              fontFamily: "Poppins_700Bold",
+                            },
+                          ]}
+                        >
+                          {formatB2BExclusivePrice(productPricing.exclusivePrice)}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 8.5,
+                            fontFamily: "Poppins_500Medium",
+                            color: colors.textSecondary,
+                            marginLeft: 3,
+                          }}
+                        >
+                          Excl. GST
+                        </Text>
+                      </View>
+                      <Text
+                        style={{
+                          fontSize: 9.5,
+                          fontFamily: "Poppins_500Medium",
+                          color: colors.textSecondary,
+                          marginTop: 2,
+                        }}
+                      >
+                        {formatB2BInclusivePrice(productPricing.inclusivePrice)} Incl. GST
+                      </Text>
+                    </View>
+                  );
+                }
+
+                return (
+                  <ValueCell
+                    key={product.variation_id}
+                    value={formatPrice(product.price.display_price)}
+                    colors={colors}
+                    strong
+                    highlight={product.is_best_value}
+                    primary={product.is_best_value}
+                  />
+                );
+              })}
             </ComparisonRow>
             <ComparisonRow label="You Save" icon={<BadgePercent size={15} color={colors.textSecondary} />} colors={colors} bottom>
               {products.map((product) => (

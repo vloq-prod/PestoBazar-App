@@ -19,23 +19,31 @@ import type {
   ProductComparisonProduct,
 } from "../../types/productComparison.types";
 import SeeAllProductsButton from "../comman/SeeAllProductsButton";
+import { useAppVisitorStore } from "../../store/auth";
+import { useB2BApplicationStatus } from "../../hooks/b2bHooks";
+import {
+  getComparisonB2BPricing,
+  formatB2BExclusivePrice,
+  formatB2BInclusivePrice,
+  formatPrice,
+} from "../../utils/productComparisonHelpers";
 
 type Props = {
   data?: ProductComparisonData;
   isLoading?: boolean;
+  isB2B?: boolean;
 };
 
-const formatPrice = (value: number) =>
-  Number.isFinite(Number(value))
-    ? `₹${Number(value).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
-    : "₹0";
-
-const ProductComparisonSection = memo(({ data, isLoading = false }: Props) => {
+const ProductComparisonSection = memo(({ data, isLoading = false, isB2B: isB2BProp }: Props) => {
   const router = useRouter();
   const { colors } = useTheme();
   const { spacing, font } = useResponsive();
   const [showInfo, setShowInfo] = useState(false);
   const products = data?.products ?? [];
+
+  const { data: b2bStatusData } = useB2BApplicationStatus();
+  const isB2bApproved = Boolean(b2bStatusData?.is_b2b_user);
+  const isEffectiveB2B = Boolean(isB2BProp || isB2bApproved);
 
   // Show up to 4 products in preview box
   const displayProducts = products.length > 4 ? products.slice(0, 4) : products;
@@ -69,6 +77,7 @@ const ProductComparisonSection = memo(({ data, isLoading = false }: Props) => {
   if (!data?.has_comparison) return null;
 
   const economicalProduct = data.economical_product;
+  const economicalPricing = getComparisonB2BPricing(economicalProduct, isEffectiveB2B);
 
   return (
     <View style={{ gap: spacing(20) }}>
@@ -249,37 +258,72 @@ const ProductComparisonSection = memo(({ data, isLoading = false }: Props) => {
                     </Text>
                   )}
 
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "baseline",
-                      gap: spacing(6),
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontFamily: "Poppins_600SemiBold",
-                        fontSize: font(14),
-                        color: colors.text,
-                      }}
-                    >
-                      {formatPrice(economicalProduct.price.display_price)}
-                    </Text>
-
-                    {economicalProduct.price.mrp >
-                      economicalProduct.price.display_price && (
+                  {economicalPricing.isB2B ? (
+                    <View style={{ alignItems: "flex-end", gap: 1 }}>
+                      <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_700Bold",
+                            fontSize: font(14),
+                            color: colors.text,
+                          }}
+                        >
+                          {formatB2BExclusivePrice(economicalPricing.exclusivePrice)}
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_400Regular",
+                            fontSize: font(9.5),
+                            color: colors.textSecondary,
+                            marginLeft: 3,
+                          }}
+                        >
+                          excl. GST
+                        </Text>
+                      </View>
                       <Text
                         style={{
-                          fontFamily: "Poppins_400Regular",
-                          fontSize: font(11),
+                          fontFamily: "Poppins_500Medium",
+                          fontSize: font(9.5),
                           color: colors.textSecondary,
-                          textDecorationLine: "line-through",
                         }}
                       >
-                        {formatPrice(economicalProduct.price.mrp)}
+                        {formatB2BInclusivePrice(economicalPricing.inclusivePrice)} incl. GST
                       </Text>
-                    )}
-                  </View>
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "baseline",
+                        gap: spacing(6),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: "Poppins_600SemiBold",
+                          fontSize: font(14),
+                          color: colors.text,
+                        }}
+                      >
+                        {formatPrice(economicalProduct.price.display_price)}
+                      </Text>
+
+                      {economicalProduct.price.mrp >
+                        economicalProduct.price.display_price && (
+                        <Text
+                          style={{
+                            fontFamily: "Poppins_400Regular",
+                            fontSize: font(11),
+                            color: colors.textSecondary,
+                            textDecorationLine: "line-through",
+                          }}
+                        >
+                          {formatPrice(economicalProduct.price.mrp)}
+                        </Text>
+                      )}
+                    </View>
+                  )}
                 </View>
               </View>
             </TouchableOpacity>
@@ -389,6 +433,7 @@ const ProductComparisonSection = memo(({ data, isLoading = false }: Props) => {
               const isLast = index === displayProducts.length - 1;
               const isBest = product.is_best_value;
               const isCurrent = product.is_current;
+              const productPricing = getComparisonB2BPricing(product, isEffectiveB2B);
 
               return (
                 <TouchableOpacity
@@ -537,36 +582,71 @@ const ProductComparisonSection = memo(({ data, isLoading = false }: Props) => {
                       </View>
 
                       {/* Price */}
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "baseline",
-                          gap: spacing(6),
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontFamily: "Poppins_600SemiBold",
-                            fontSize: font(13.5),
-                            color: colors.text,
-                          }}
-                        >
-                          {formatPrice(product.price.display_price)}
-                        </Text>
-
-                        {product.price.mrp > product.price.display_price && (
+                      {productPricing.isB2B ? (
+                        <View style={{ alignItems: "flex-end", gap: 1 }}>
+                          <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_700Bold",
+                                fontSize: font(13.5),
+                                color: colors.text,
+                              }}
+                            >
+                              {formatB2BExclusivePrice(productPricing.exclusivePrice)}
+                            </Text>
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_400Regular",
+                                fontSize: font(9.5),
+                                color: colors.textSecondary,
+                                marginLeft: 3,
+                              }}
+                            >
+                              excl. GST
+                            </Text>
+                          </View>
                           <Text
                             style={{
-                              fontFamily: "Poppins_400Regular",
-                              fontSize: font(10.5),
+                              fontFamily: "Poppins_500Medium",
+                              fontSize: font(9.5),
                               color: colors.textSecondary,
-                              textDecorationLine: "line-through",
                             }}
                           >
-                            {formatPrice(product.price.mrp)}
+                            {formatB2BInclusivePrice(productPricing.inclusivePrice)} incl. GST
                           </Text>
-                        )}
-                      </View>
+                        </View>
+                      ) : (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "baseline",
+                            gap: spacing(6),
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: "Poppins_600SemiBold",
+                              fontSize: font(13.5),
+                              color: colors.text,
+                            }}
+                          >
+                            {formatPrice(product.price.display_price)}
+                          </Text>
+
+                          {product.price.mrp > product.price.display_price && (
+                            <Text
+                              style={{
+                                fontFamily: "Poppins_400Regular",
+                                fontSize: font(10.5),
+                                color: colors.textSecondary,
+                                textDecorationLine: "line-through",
+                              }}
+                            >
+                              {formatPrice(product.price.mrp)}
+                            </Text>
+                          )}
+                        </View>
+                      )}
                     </View>
                   </View>
                 </TouchableOpacity>

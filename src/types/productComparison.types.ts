@@ -2,6 +2,12 @@ export interface ProductComparisonPrice {
   mrp: number;
   selling_price: number;
   display_price: number;
+  is_b2b_user?: string;
+  gst_percent?: number;
+  selling_price_inclusive_gst?: number;
+  selling_price_exclusive_gst?: number;
+  b2b_price_inclusive_gst?: number;
+  b2b_price_exclusive_gst?: number;
 }
 
 export interface ProductComparisonProduct {
@@ -24,6 +30,11 @@ export interface ProductComparisonProduct {
   is_best_value: boolean;
   saving_from_current: number;
   saving_percent_from_current: number;
+  selling_price_exclusive_gst?: number;
+  selling_price_inclusive_gst?: number;
+  b2b_price_exclusive_gst?: number;
+  b2b_price_inclusive_gst?: number;
+  is_b2b_user?: string;
 }
 
 export interface ProductComparisonAttribute {
