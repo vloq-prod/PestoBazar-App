@@ -1,5 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { CustomSectionProductsRequest } from "../types/customSection.types";
+import { useQuery, useInfiniteQuery, InfiniteData } from "@tanstack/react-query";
+import {
+  CustomSectionProductsRequest,
+  CustomSectionProductsResponse,
+} from "../types/customSection.types";
 import {
   getCustomCategorySections,
   getCustomProductSections,
@@ -19,6 +22,41 @@ export const useCustomSectionProducts = (
     ],
     queryFn: () => getCustomSectionProducts(payload),
     enabled: !!payload.sectionId,
+  });
+};
+
+export const useInfiniteCustomSectionProducts = (
+  sectionId: number,
+  userId?: string | null,
+) => {
+  return useInfiniteQuery<
+    CustomSectionProductsResponse,
+    Error,
+    InfiniteData<CustomSectionProductsResponse>,
+    [string, number, string],
+    number
+  >({
+    queryKey: [
+      "custom-section-products-infinite",
+      sectionId,
+      userId ?? "guest",
+    ],
+    initialPageParam: 1,
+    enabled: Boolean(Number.isFinite(sectionId) && sectionId > 0),
+    queryFn: ({ pageParam = 1 }) =>
+      getCustomSectionProducts({
+        sectionId,
+        page: pageParam,
+        user_id: userId,
+      }),
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage?.data?.pagination;
+      if (pagination?.has_more_pages) {
+        return pagination.current_page + 1;
+      }
+      return undefined;
+    },
+    staleTime: 1000 * 60 * 2,
   });
 };
 

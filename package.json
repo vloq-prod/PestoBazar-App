@@ -1,6 +1,6 @@
 {
   "name": "pestobazar",
-  "version": "2.3.5",
+  "version": "2.3.6",
   "main": "expo-router/entry",
   "scripts": {
     "start": "bunx expo start",
@@ -70,6 +70,7 @@
     "@types/react": "~19.1.10",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~10.0.0",
+    "expo-module-scripts": "^56.0.3",
     "typescript": "~5.9.2"
   },
   "resolutions": {

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../../../src/theme";
 import AppNavbar from "../../../../src/components/comman/AppNavbar";
 import { useLocalSearchParams } from "expo-router";
-import { useCustomSectionProducts } from "../../../../src/hooks/customSection.hooks";
+import { useInfiniteCustomSectionProducts } from "../../../../src/hooks/customSection.hooks";
 import { LayoutGrid, List } from "lucide-react-native";
 import { CustomSectionProduct } from "../../../../src/types/customSection.types";
 import { ListingItem } from "../../../../src/types/shop.types";
@@ -202,7 +202,10 @@ const CustomSectionAllProducts = () => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const { id } = useLocalSearchParams();
+  const { id, title: routeTitle } = useLocalSearchParams<{
+    id?: string;
+    title?: string;
+  }>();
   const sectionId = Number(id);
   const userId = useAppVisitorStore((state) => state.userId);
 
@@ -213,55 +216,43 @@ const CustomSectionAllProducts = () => {
     setGridMode((prev) => (prev === "grid" ? "list" : "grid"));
   };
 
-  // Pagination states
-  const [page, setPage] = React.useState(1);
-  const [allProducts, setAllProducts] = React.useState<CustomSectionProduct[]>(
-    [],
-  );
-  // Track whether we have ever received a response (to distinguish "loading" vs "empty")
-  const [hasFetched, setHasFetched] = React.useState(false);
-
   const {
-    data: res,
+    data,
     isLoading,
-    isFetching,
-  } = useCustomSectionProducts({
-    sectionId,
-    page,
-    user_id: userId,
-  });
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCustomSectionProducts(sectionId, userId);
 
-  const title = res?.data?.section?.section_title || "Products";
-  const productCount =
-    res?.data?.pagination?.total ??
-    res?.data?.section?.product_count ??
-    (allProducts.length > 0 ? allProducts.length : undefined);
+  const firstPage = data?.pages?.[0];
+  const title =
+    (typeof routeTitle === "string" && routeTitle.trim() ? routeTitle : undefined) ||
+    firstPage?.data?.section?.section_title ||
+    "Products";
 
-  React.useEffect(() => {
-    if (res?.data?.products) {
-      setHasFetched(true);
-      if (page === 1) {
-        setAllProducts(res.data.products);
-      } else {
-        setAllProducts((prev) => {
-          const getVarId = (p: CustomSectionProduct) =>
-            Number(p.product_variation_id || p.id || p.product_id);
-          const existingIds = new Set(prev.map(getVarId));
-          const newProducts = res.data.products.filter(
-            (p) => !existingIds.has(getVarId(p)),
-          );
-          return [...prev, ...newProducts];
-        });
+  // Flatten and deduplicate all products across pages
+  const allProducts = React.useMemo(() => {
+    const rawList =
+      data?.pages?.flatMap((page) => page?.data?.products ?? []) ?? [];
+
+    const seenIds = new Set<number>();
+    const result: CustomSectionProduct[] = [];
+
+    for (const p of rawList) {
+      const varId = Number(p.product_variation_id || p.id || p.product_id);
+      if (!seenIds.has(varId)) {
+        seenIds.add(varId);
+        result.push(p);
       }
     }
-  }, [res, page]);
 
-  // Reset pagination and fetch state if section ID changes
-  React.useEffect(() => {
-    setPage(1);
-    setAllProducts([]);
-    setHasFetched(false);
-  }, [sectionId]);
+    return result;
+  }, [data]);
+
+  const productCount =
+    firstPage?.data?.pagination?.total ??
+    firstPage?.data?.section?.product_count ??
+    (allProducts.length > 0 ? allProducts.length : undefined);
 
   // ✅ MAPPED DATA
   const mappedProducts = React.useMemo(() => {
@@ -269,8 +260,8 @@ const CustomSectionAllProducts = () => {
   }, [allProducts]);
 
   const loadMore = () => {
-    if (!isFetching && res?.data?.pagination?.has_more_pages) {
-      setPage((prev) => prev + 1);
+    if (!isFetchingNextPage && hasNextPage) {
+      fetchNextPage();
     }
   };
 
@@ -278,8 +269,8 @@ const CustomSectionAllProducts = () => {
     // Handled internally inside ProductCard
   };
 
-  // Show skeleton only on initial fetch (page 1, never received data)
-  const showSkeleton = !hasFetched && (isLoading || isFetching);
+  // Show skeleton only on initial fetch when no cached products exist
+  const showSkeleton = isLoading && allProducts.length === 0;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -360,8 +351,7 @@ const CustomSectionAllProducts = () => {
             );
           }}
           ListFooterComponent={() => {
-            // Footer spinner only for paginated loads (page 2+)
-            if (isFetching && page > 1) {
+            if (isFetchingNextPage) {
               return (
                 <View
                   style={{
@@ -377,8 +367,7 @@ const CustomSectionAllProducts = () => {
             return null;
           }}
           ListEmptyComponent={() => {
-            // Only show empty state after a real fetch has completed with no data
-            if (!hasFetched) return null;
+            if (isLoading) return null;
 
             return (
               <View

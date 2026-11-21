@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Pestobazaar",
   owner: "vloq",
   slug: "pestobazaar",
-  version: "2.3.5",
+  version: "2.3.6",
   orientation: "default",
 
   // @ts-ignore
@@ -98,7 +98,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: "com.pestobazaar.app",
-    versionCode: 21,
+    versionCode: 22,
 
     permissions: [
       "INTERNET",

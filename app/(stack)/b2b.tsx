@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Alert,
   Modal,
@@ -674,7 +675,7 @@ function AppDropdownPicker<T>({
       >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View
             style={{
@@ -1592,6 +1593,26 @@ export default function B2BScreen() {
   const [showProofTypeModal, setShowProofTypeModal] = useState(false);
   const [showYearsModal, setShowYearsModal] = useState(false);
   const [showStatusScreen, setShowStatusScreen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Auto-scroll & field targeting for Correction Required
   const scrollViewRef = useRef<ScrollView>(null);
@@ -3594,15 +3615,24 @@ export default function B2BScreen() {
       <AppNavbar title="Become a Bulk Buyer" showBack />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 48 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 50 : 0}
         style={{ flex: 1 }}
       >
         <ScrollView
           ref={scrollViewRef}
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: insets.bottom + spacing(40) },
+            {
+              paddingBottom:
+                insets.bottom +
+                (keyboardHeight > 0
+                  ? keyboardHeight + spacing(20)
+                  : spacing(60)),
+            },
             showStatusScreen && {
               flexGrow: 1,
               paddingTop: spacing(12),
@@ -3610,7 +3640,6 @@ export default function B2BScreen() {
             },
           ]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
           {!showStatusScreen && (
             <>
@@ -8208,7 +8237,11 @@ export default function B2BScreen() {
         animationType="slide"
         onRequestClose={() => setShowBusinessTypeModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
           <View
             style={[
               styles.modalSheet,
@@ -8309,6 +8342,7 @@ export default function B2BScreen() {
             />
           </View>
         </View>
+      </KeyboardAvoidingView>
       </Modal>
 
       {/* ========================================================= */}
@@ -8320,7 +8354,11 @@ export default function B2BScreen() {
         animationType="slide"
         onRequestClose={() => setShowStateModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
           <View
             style={[
               styles.modalSheet,
@@ -8422,6 +8460,7 @@ export default function B2BScreen() {
             />
           </View>
         </View>
+      </KeyboardAvoidingView>
       </Modal>
 
       {/* ========================================================= */}
