@@ -24,6 +24,7 @@ import {
   AppMenuCategoriesApiResponse,
   HomepageSectionSequenceResponse,
   AllAppBannersApiResponse,
+  AppPopUpBannerApiResponse,
 } from "../types/home.types";
 
 // banner api
@@ -270,4 +271,15 @@ export const getAllAppBanners =
 
     return response.data;
   };
+
+// app pop up banner api
+export const getAppPopUpBanner =
+  async (): Promise<AppPopUpBannerApiResponse> => {
+    const response = await apiClient.get<AppPopUpBannerApiResponse>(
+      "/app-api/v1/app-pop-up-banner",
+    );
+
+    return response.data;
+  };
+
 

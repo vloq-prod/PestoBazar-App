@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, TouchableOpacity, useWindowDimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { useTheme } from "../../theme";
@@ -40,7 +40,6 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
   const { colors } = useTheme();
   const router = useRouter();
   const { width: SCREEN_WIDTH } = useWindowDimensions();
-  const [activeIndex, setActiveIndex] = useState(0);
 
   const IMAGE_WIDTH = SCREEN_WIDTH - SIDE_PADDING * 2;
   const IMAGE_HEIGHT = IMAGE_WIDTH * ASPECT_RATIO;
@@ -85,77 +84,50 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
   };
 
   return (
-    <View style={{ gap: 8 }}>
-      <Carousel
-        width={SCREEN_WIDTH} // ← full width scroll unit
-        height={IMAGE_HEIGHT}
-        data={data}
-        loop
-        autoPlay
-        autoPlayInterval={3500}
-        scrollAnimationDuration={500}
-        onSnapToItem={setActiveIndex}
-        onConfigurePanGesture={(gesture) => {
-          gesture.activeOffsetX([-10, 10]).failOffsetY([-5, 5]);
-        }}
-        renderItem={({ item }) => (
-          // paddingHorizontal yahan — image chhota, scroll full width
-          <View style={{ paddingHorizontal: SIDE_PADDING }}>
-            <TouchableOpacity
-              activeOpacity={0.92}
-              onPress={() => {
-                onBannerPress?.(item);
-                handleBannerPress(item);
-              }}
-              style={{
-                borderRadius: 12,
-                overflow: "hidden",
-                width: IMAGE_WIDTH,
-                height: IMAGE_HEIGHT,
-                backgroundColor: colors.backgroundSkeleton,
-              }}
-            >
-              <Image
-                source={{
-                  uri:
-                    item.mobile_banner_url ||
-                    item.s3_image_url ||
-                    item.s3_image_path ||
-                    item.desktop_banner_url ||
-                    "",
-                }}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
-                transition={200}
-                cachePolicy="memory-disk"
-              />
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-
-      {/* Pagination dots */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-        }}
-      >
-        {data.map((item, index) => (
-          <View
-            key={`${item.s3_image_path}-${index}`}
-            style={{
-              width: activeIndex === index ? 16 : 6,
-              height: 6,
-              borderRadius: 999,
-              backgroundColor:
-                activeIndex === index ? colors.primary : colors.border,
+    <Carousel
+      width={SCREEN_WIDTH} // ← full width scroll unit
+      height={IMAGE_HEIGHT}
+      data={data}
+      loop
+      autoPlay
+      autoPlayInterval={3500}
+      scrollAnimationDuration={500}
+      onConfigurePanGesture={(gesture) => {
+        gesture.activeOffsetX([-10, 10]).failOffsetY([-5, 5]);
+      }}
+      renderItem={({ item }) => (
+        <View style={{ paddingHorizontal: SIDE_PADDING }}>
+          <TouchableOpacity
+            activeOpacity={0.92}
+            onPress={() => {
+              onBannerPress?.(item);
+              handleBannerPress(item);
             }}
-          />
-        ))}
-      </View>
-    </View>
+            style={{
+              borderRadius: 14,
+              overflow: "hidden",
+              width: IMAGE_WIDTH,
+              height: IMAGE_HEIGHT,
+              backgroundColor: colors.backgroundSkeleton,
+            }}
+          >
+            <Image
+              source={{
+                uri:
+                  item.mobile_banner_url ||
+                  item.s3_image_url ||
+                  item.s3_image_path ||
+                  item.desktop_banner_url ||
+                  "",
+              }}
+              style={{ width: "100%", height: "100%" }}
+              contentFit="cover"
+              transition={200}
+              cachePolicy="memory-disk"
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+    />
   );
 }

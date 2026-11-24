@@ -365,7 +365,7 @@ export default function Login() {
             });
           } else {
             sendOtpMutate(
-              { mobile_no: phone, otp_channel: "sms" },
+              { mobile_no: phone, otp_channel: "both" },
               {
                 onSuccess: () => {
                   router.push({

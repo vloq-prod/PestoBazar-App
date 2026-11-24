@@ -1,4 +1,9 @@
 export interface BannerItem {
+  id?: number;
+  banner_id?: number;
+  banner_type?: string;
+  sequence?: number;
+  redirect?: string;
   s3_image_path?: string;
   mobile_banner_url?: string;
   s3_image_url?: string;
@@ -455,11 +460,53 @@ export interface HomepageSectionSequenceResponse {
   data: HomepageSectionSequenceItem[];
 }
 
+export interface AllAppBannersData {
+  home_sliding_banners?: AppHeaderBannerItem[];
+  featured_banners?: AppHeaderBannerItem[];
+  home_bottom_banners?: AppHeaderBannerItem[];
+  data?: AppHeaderBannerItem[];
+}
+
 export interface AllAppBannersApiResponse {
   message: string;
   status: number;
+  data: AllAppBannersData;
+}
+
+export interface PopupBannerImage {
+  filename: string;
+  s3_image_path: string;
+  redirect: string;
+  sequence: number;
+  app_redirect_key: string | null;
+  app_redirect_value: string | null;
+  url: string;
+}
+
+export interface AppPopUpBannerItem {
+  id: number;
+  desktop_banner: string;
+  mobile_banner: string;
+  redirect: string;
+  created_by: number;
+  created_at: string;
+  updated_at: string | null;
+  updated_by: number | null;
+  active: string;
+  banner_type: string;
+  sequence: number;
+  s3_image_path: string;
+  is_s3_uploaded: string | null;
+  app_redirect_key: string | null;
+  app_redirect_value: string | null;
+  popup_images: PopupBannerImage[];
+}
+
+export interface AppPopUpBannerApiResponse {
+  message: string;
+  status: number;
   data: {
-    data: AppHeaderBannerItem[];
+    data: AppPopUpBannerItem[];
   };
 }
 

@@ -16,6 +16,7 @@ import {
   Platform,
   useWindowDimensions,
   StyleSheet,
+  RefreshControl,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useIsFocused, useFocusEffect } from "@react-navigation/native";
@@ -28,6 +29,7 @@ import { useCartCount } from "../../src/hooks/cartHooks";
 import { useUnreadNotificationCount } from "../../src/hooks/useNotifications";
 import { Feather } from "@expo/vector-icons";
 import SlidingBanners from "../../src/components/home/SlidingBanners";
+import HomeScreenSkeleton from "../../src/skeleton/HomeScreenSkeleton";
 import HomeProduct from "../../src/components/home/HomeProduct";
 import CustomSections from "../../src/components/home/CustomSections";
 
@@ -57,10 +59,12 @@ import PromoBanner, {
 } from "../../src/components/home/PromoBanner";
 import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
+import { BannerItem } from "../../src/types/home.types";
 import Footer from "../../src/components/home/Footer";
 import RecentlyViewProducts from "../../src/components/home/RecentlyViewProducts";
 import OurServices from "../../src/components/home/OurServices";
 import Diy from "../../src/components/diy/diy";
+import PopUpBannerCarousel from "../../src/components/home/PopUpBannerCarousel";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
@@ -80,6 +84,7 @@ import {
   useAppHeaderBanner,
   useHomepageSectionSequence,
   useAllAppBanners,
+  useAppPopUpBanner,
 } from "../../src/hooks/homeHooks";
 import { Image } from "expo-image";
 
@@ -687,9 +692,10 @@ const CategoryList: React.FC = React.memo(() => {
 
 // ─────────────────────────────────────────────
 // MEMOIZED COMPONENTS
-// ─────────────────────────────────────────────
+// ────────────────────────────────────────c─────
 
 const MemoSlidingBanners = React.memo(SlidingBanners);
+const MemoPopUpBannerCarousel = React.memo(PopUpBannerCarousel);
 const MemoCategoryCardSection = React.memo(CategoryCardSection);
 const MemoHomeProduct = React.memo(HomeProduct);
 const MemoCustomSections = React.memo(CustomSections);
@@ -724,12 +730,30 @@ const parseBannerRedirect = (redirect?: string | null) => {
   return { app_redirect_key: "", app_redirect_value: clean };
 };
 
+const normalizeBanner = (b: any): BannerItem => {
+  const cleanRedirect = (b.redirect || "").replace(/^Home-Bottom[\t\s]*/i, "").trim();
+  const { app_redirect_key, app_redirect_value } = parseBannerRedirect(cleanRedirect);
+  return {
+    ...b,
+    id: b.id,
+    app_redirect_key,
+    app_redirect_value,
+    mobile_banner_url: b.mobile_banner_url || b.s3_image_url || b.s3_image_path || "",
+    s3_image_url: b.s3_image_url || b.s3_image_path || b.mobile_banner_url || "",
+    s3_image_path: b.s3_image_path || b.s3_image_url || b.mobile_banner_url || "",
+    desktop_banner_url: b.desktop_banner_url || "",
+  };
+};
+
 export default function HomeScreen() {
   const queryClient = useQueryClient();
   const isConnected = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const userId = useAppVisitorStore((state) => state.userId);
   const visitorId = useAppVisitorStore((state) => state.visitorId);
+
+  const HEADER_BANNER_HEIGHT = Math.round(SCREEN_WIDTH * (375 / 1253));
 
   useEffect(() => {
     console.log("user_id:", userId, "visitor_id:", visitorId);
@@ -791,12 +815,12 @@ export default function HomeScreen() {
     };
   });
 
-  const { slidingbanners, featureBanners, homeBottomBanners } =
+  const { slidingbanners, featureBanners, homeBottomBanners, loading: isHomeBannersLoading } =
     useHomeBanners();
   console.log("slidingbanners", slidingbanners);
   const { banners: mainBanners } = useAppMainBanner();
-  const { banners: headerBanners } = useAppHeaderBanner();
-  const { sections: homeProducts } = useHomeProduct(userId);
+  const { banners: headerBanners, loading: isHeaderBannersLoading } = useAppHeaderBanner();
+  const { sections: homeProducts, loading: isHomeProductsLoading } = useHomeProduct(userId);
   const { deals } = useDeals(userId);
   const { featured } = useFeatured(userId);
   const { testimonials } = useTestimonial();
@@ -804,8 +828,68 @@ export default function HomeScreen() {
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "", userId || "");
   const { products: diyProducts } = useDiyListing({}, userId);
-  const { sequence: sectionSequence } = useHomepageSectionSequence();
-  const { banners: allAppBanners } = useAllAppBanners();
+  const { sequence: sectionSequence, loading: isSequenceLoading } = useHomepageSectionSequence();
+  const {
+    banners: allAppBanners,
+    slidingBanners: rawSliding,
+    featuredBanners: rawFeatured,
+    homeBottomBanners: rawBottom,
+    loading: isAllBannersLoading,
+  } = useAllAppBanners();
+  const { activeBanners, popupImages } = useAppPopUpBanner();
+
+  // 1. Sliding Banners (Home-Sliding), sorted by sequence from /app-api/v1/app-banners
+  const slidingBannersFromApp = useMemo(() => {
+    if (rawSliding?.length) return rawSliding.map(normalizeBanner);
+    if (!allAppBanners?.length) return slidingbanners || [];
+    const filtered = allAppBanners
+      .filter((b: any) => {
+        const type = (b.banner_type || "").trim().toLowerCase();
+        return type === "home-sliding" || type === "home_sliding";
+      })
+      .sort((a: any, b: any) => (a.sequence ?? 0) - (b.sequence ?? 0));
+    return filtered.length > 0 ? filtered.map(normalizeBanner) : (slidingbanners || []);
+  }, [rawSliding, allAppBanners, slidingbanners]);
+
+  // 2. Featured Banners (Featured-Banner), sorted by sequence from /app-api/v1/app-banners
+  const featureBannersFromApp = useMemo(() => {
+    if (rawFeatured?.length) return rawFeatured.map(normalizeBanner);
+    if (!allAppBanners?.length) return featureBanners || [];
+    const filtered = allAppBanners
+      .filter((b: any) => {
+        const type = (b.banner_type || "").trim().toLowerCase();
+        return type === "featured-banner" || type === "featured_banner";
+      })
+      .sort((a: any, b: any) => (a.sequence ?? 0) - (b.sequence ?? 0));
+    return filtered.length > 0 ? filtered.map(normalizeBanner) : (featureBanners || []);
+  }, [rawFeatured, allAppBanners, featureBanners]);
+
+  // 3. Home Bottom Banners (Home-Bottom), sorted by sequence from /app-api/v1/app-banners
+  const homeBottomBannersFromApp = useMemo(() => {
+    if (rawBottom?.length) return rawBottom.map(normalizeBanner);
+    if (allAppBanners && allAppBanners.length > 0) {
+      const filtered = allAppBanners
+        .filter((b: any) => {
+          const type = (b.banner_type || "").trim().toLowerCase();
+          const redirect = (b.redirect || "").trim().toLowerCase();
+          return (
+            type === "home-bottom" ||
+            type === "home_bottom" ||
+            redirect.includes("home-bottom")
+          );
+        })
+        .sort((a: any, b: any) => (a.sequence ?? 0) - (b.sequence ?? 0));
+      if (filtered.length > 0) {
+        return filtered.map(normalizeBanner);
+      }
+    }
+    return Array.isArray(homeBottomBanners)
+      ? homeBottomBanners
+      : homeBottomBanners
+        ? [homeBottomBanners]
+        : [];
+  }, [rawBottom, allAppBanners, homeBottomBanners]);
+
   const promoHeight = useSharedValue(0);
   const [isPromoVisible, setIsPromoVisible] = useState(false);
 
@@ -822,6 +906,7 @@ export default function HomeScreen() {
       queryClient.invalidateQueries({ queryKey: ["recently-viewed"] });
       queryClient.invalidateQueries({ queryKey: ["homepage-section-sequence"] });
       queryClient.invalidateQueries({ queryKey: ["all-app-banners"] });
+      queryClient.invalidateQueries({ queryKey: ["app-pop-up-banner"] });
       RNStatusBar.setBarStyle(isPromoVisible ? "dark-content" : "light-content", true);
       if (Platform.OS === "android") {
         RNStatusBar.setBackgroundColor("transparent", true);
@@ -829,6 +914,30 @@ export default function HomeScreen() {
       }
     }, [isPromoVisible, queryClient]),
   );
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.allSettled([
+        queryClient.refetchQueries({ type: "active" }),
+        queryClient.invalidateQueries({ queryKey: ["all-app-banners"] }),
+        queryClient.invalidateQueries({ queryKey: ["app-pop-up-banner"] }),
+        queryClient.invalidateQueries({ queryKey: ["homepage-section-sequence"] }),
+        queryClient.invalidateQueries({ queryKey: ["home-categories"] }),
+        queryClient.invalidateQueries({ queryKey: ["banners"] }),
+        queryClient.invalidateQueries({ queryKey: ["app-main-banner"] }),
+        queryClient.invalidateQueries({ queryKey: ["app-header-banner"] }),
+        queryClient.invalidateQueries({ queryKey: ["cart-count"] }),
+        queryClient.invalidateQueries({ queryKey: ["recently-viewed"] }),
+      ]);
+    } catch (error) {
+      console.warn("Home screen refresh error:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient]);
 
   const rawMainBannerUri =
     mainBanners?.[0]?.s3_image_url ||
@@ -982,21 +1091,28 @@ export default function HomeScreen() {
   const sections = useMemo(() => {
     // Default fallback sections (used if sequence API hasn't loaded or is offline)
     const defaultSections = [
-      { id: "sliding_banners", type: "sliding_banners", data: slidingbanners },
+      { id: "sliding_banners", type: "sliding_banners", data: slidingBannersFromApp },
+      ...(activeBanners && activeBanners.length > 0
+        ? activeBanners.map((banner) => ({
+            id: `popup_banner_carousel_${banner.id}`,
+            type: "popup_banner_carousel",
+            data: banner.popup_images,
+          }))
+        : []),
       { id: "custom_sections", type: "custom_section" },
-      { id: "feature_banner_0", type: "featured_banner", data: featureBanners?.[0] },
+      { id: "feature_banner_0", type: "featured_banner", data: featureBannersFromApp?.[0] },
       ...(diyProducts && diyProducts.length > 0
         ? [{ id: "diy", type: "diy", data: diyProducts }]
         : []),
-      { id: "feature_banner_1", type: "featured_banner", data: featureBanners?.[1] },
+      { id: "feature_banner_1", type: "featured_banner", data: featureBannersFromApp?.[1] },
       { id: "recently_viewed", type: "recently_viewed", data: recentlyViewed },
-      {
-        id: "home_bottom_carousel",
-        type: "home_bottom_carousel",
-        data: Array.isArray(homeBottomBanners)
-          ? homeBottomBanners[0]
-          : homeBottomBanners,
-      },
+      ...(homeBottomBannersFromApp && homeBottomBannersFromApp.length > 0
+        ? homeBottomBannersFromApp.map((banner: any, idx: number) => ({
+            id: `home_bottom_banner_${banner.id ?? idx}`,
+            type: "home_bottom_carousel",
+            data: banner,
+          }))
+        : []),
       { id: "testimonial", type: "testimonial", data: testimonials },
       { id: "home_usp", type: "home_usp", data: uspList },
       { id: "our_services", type: "our_services" },
@@ -1028,20 +1144,12 @@ export default function HomeScreen() {
       if (!bannerId) return null;
       const raw = allAppBanners?.find((b: any) => b.id === bannerId);
       if (!raw) return null;
-      const { app_redirect_key, app_redirect_value } = parseBannerRedirect(raw.redirect);
-      return {
-        ...raw,
-        app_redirect_key,
-        app_redirect_value,
-        s3_image_url: raw.s3_image_url || raw.s3_image_path,
-        s3_image_path: raw.s3_image_url || raw.s3_image_path,
-        mobile_banner_url: raw.s3_image_url || raw.mobile_banner_url,
-        desktop_banner_url: raw.desktop_banner_url,
-      };
+      return normalizeBanner(raw);
     };
 
-    let featuredBannerIndex = 0;
-    let homeBottomBannerIndex = 0;
+    const usedFeaturedBannerIds = new Set<number | string>();
+    const usedHomeBottomBannerIds = new Set<number | string>();
+    let popupBannerIndex = 0;
 
     for (const item of activeItems) {
       const tag = item.section_tag.trim().toLowerCase();
@@ -1052,9 +1160,33 @@ export default function HomeScreen() {
           dynamicSections.push({
             id: `main_banner_${item.id}`,
             type: "sliding_banners",
-            data: slidingbanners,
+            data: slidingBannersFromApp,
           });
           break;
+
+        case "popup_banner":
+        case "popup_banners":
+        case "pop_up_banner":
+        case "pop_up_banners":
+        case "app_popup_banner":
+        case "app_popup_banners":
+        case "app_pop_up_banner":
+        case "app_pop_up_banners": {
+          const matchedPopup = item.banner_id
+            ? activeBanners.find((b: any) => b.id === item.banner_id) || null
+            : popupBannerIndex < activeBanners.length
+              ? activeBanners[popupBannerIndex++]
+              : null;
+
+          if (matchedPopup && matchedPopup.popup_images?.length > 0) {
+            dynamicSections.push({
+              id: `popup_banner_${item.id}_${matchedPopup.id}`,
+              type: "popup_banner_carousel",
+              data: matchedPopup.popup_images,
+            });
+          }
+          break;
+        }
 
         case "diy_products":
         case "diy":
@@ -1077,20 +1209,39 @@ export default function HomeScreen() {
           break;
 
         case "featured_banner": {
-          const matchedBanner = item.banner_id
-            ? findBannerById(item.banner_id) ||
-              featureBanners?.find(
+          let matchedBanner: any = null;
+          if (item.banner_id) {
+            const candidate =
+              findBannerById(item.banner_id) ||
+              featureBannersFromApp?.find(
                 (b: any) =>
                   b.id === item.banner_id || b.banner_id === item.banner_id,
               ) ||
-              null
-            : featuredBannerIndex < (featureBanners?.length ?? 0)
-              ? featureBanners[featuredBannerIndex++]
-              : null;
+              null;
+            if (candidate) {
+              const cId = candidate.id ?? candidate.banner_id;
+              if (cId != null && !usedFeaturedBannerIds.has(cId)) {
+                matchedBanner = candidate;
+              }
+            }
+          }
+
+          // Fallback only if we have an unused featured banner available
+          if (!matchedBanner) {
+            const nextUnused = featureBannersFromApp?.find((b: any) => {
+              const bId = b.id ?? b.banner_id;
+              return bId != null ? !usedFeaturedBannerIds.has(bId) : true;
+            });
+            if (nextUnused) {
+              matchedBanner = nextUnused;
+            }
+          }
 
           if (matchedBanner) {
+            const bId = matchedBanner.id ?? matchedBanner.banner_id ?? `fb_${dynamicSections.length}`;
+            usedFeaturedBannerIds.add(bId);
             dynamicSections.push({
-              id: `featured_banner_${item.id}_${item.banner_id ?? featuredBannerIndex}`,
+              id: `featured_banner_${item.id}_${bId}`,
               type: "featured_banner",
               data: matchedBanner,
             });
@@ -1100,28 +1251,72 @@ export default function HomeScreen() {
 
         case "home_bottom_banner":
         case "home_bottom_carousel": {
-          const bottomList = Array.isArray(homeBottomBanners)
-            ? homeBottomBanners
-            : homeBottomBanners
-              ? [homeBottomBanners]
-              : [];
-          const matchedBottom = item.banner_id
-            ? findBannerById(item.banner_id) ||
-              bottomList.find(
+          let matchedBottom: any = null;
+          if (item.banner_id) {
+            const candidate =
+              findBannerById(item.banner_id) ||
+              homeBottomBannersFromApp.find(
                 (b: any) =>
                   b.id === item.banner_id || b.banner_id === item.banner_id,
               ) ||
-              null
-            : homeBottomBannerIndex < bottomList.length
-              ? bottomList[homeBottomBannerIndex++]
-              : null;
+              null;
+            if (candidate) {
+              const cId = candidate.id ?? candidate.banner_id;
+              if (cId != null && !usedHomeBottomBannerIds.has(cId)) {
+                matchedBottom = candidate;
+              }
+            }
+          }
 
           if (matchedBottom) {
+            const bId = matchedBottom.id ?? matchedBottom.banner_id ?? `hb_${dynamicSections.length}`;
+            usedHomeBottomBannerIds.add(bId);
             dynamicSections.push({
-              id: `home_bottom_${item.id}_${item.banner_id ?? homeBottomBannerIndex}`,
+              id: `home_bottom_${item.id}_${bId}`,
               type: "home_bottom_carousel",
               data: matchedBottom,
             });
+          } else {
+            // Check if there are further home_bottom_banner tags later in sequence
+            const currentIndex = activeItems.indexOf(item);
+            const remainingTags = activeItems
+              .slice(currentIndex + 1)
+              .filter(
+                (it) =>
+                  it.section_tag === "home_bottom_banner" ||
+                  it.section_tag === "home_bottom_carousel",
+              ).length;
+
+            if (remainingTags === 0) {
+              // This is the last (or only) home_bottom slot: push all remaining unused bottom banners
+              const unusedList = homeBottomBannersFromApp.filter((b: any) => {
+                const bId = b.id ?? b.banner_id;
+                return bId != null ? !usedHomeBottomBannerIds.has(bId) : true;
+              });
+              for (const banner of unusedList) {
+                const bId = banner.id ?? banner.banner_id ?? `hb_${dynamicSections.length}`;
+                usedHomeBottomBannerIds.add(bId);
+                dynamicSections.push({
+                  id: `home_bottom_${item.id}_${bId}`,
+                  type: "home_bottom_carousel",
+                  data: banner,
+                });
+              }
+            } else {
+              const nextUnused = homeBottomBannersFromApp.find((b: any) => {
+                const bId = b.id ?? b.banner_id;
+                return bId != null ? !usedHomeBottomBannerIds.has(bId) : true;
+              });
+              if (nextUnused) {
+                const bId = nextUnused.id ?? nextUnused.banner_id ?? `hb_${dynamicSections.length}`;
+                usedHomeBottomBannerIds.add(bId);
+                dynamicSections.push({
+                  id: `home_bottom_${item.id}_${bId}`,
+                  type: "home_bottom_carousel",
+                  data: nextUnused,
+                });
+              }
+            }
           }
           break;
         }
@@ -1213,13 +1408,41 @@ export default function HomeScreen() {
       }
     }
 
+    // Safety fallback: Ensure any remaining unused home bottom banners are shown before footer
+    const remainingUnusedBottom = homeBottomBannersFromApp.filter((b: any) => {
+      const bId = b.id ?? b.banner_id;
+      return bId != null ? !usedHomeBottomBannerIds.has(bId) : true;
+    });
+    for (const banner of remainingUnusedBottom) {
+      const bId = banner.id ?? banner.banner_id ?? `hb_rem_${dynamicSections.length}`;
+      usedHomeBottomBannerIds.add(bId);
+      const footerIndex = dynamicSections.findIndex((s) => s.type === "footer");
+      const sectionObj = {
+        id: `home_bottom_remaining_${bId}`,
+        type: "home_bottom_carousel",
+        data: banner,
+      };
+      if (footerIndex !== -1) {
+        dynamicSections.splice(footerIndex, 0, sectionObj);
+      } else {
+        dynamicSections.push(sectionObj);
+      }
+    }
+
+    // Ensure footer is always the absolute last section
+    const footerIdx = dynamicSections.findIndex((s) => s.type === "footer");
+    if (footerIdx !== -1 && footerIdx !== dynamicSections.length - 1) {
+      const [footerItem] = dynamicSections.splice(footerIdx, 1);
+      dynamicSections.push(footerItem);
+    }
+
     return dynamicSections.length > 0 ? dynamicSections : defaultSections;
   }, [
     sectionSequence,
-    slidingbanners,
-    featureBanners,
+    slidingBannersFromApp,
+    featureBannersFromApp,
     diyProducts,
-    homeBottomBanners,
+    homeBottomBannersFromApp,
     testimonials,
     uspList,
     recentlyViewed,
@@ -1228,6 +1451,7 @@ export default function HomeScreen() {
     featured,
     homeProducts,
     allAppBanners,
+    activeBanners,
   ]);
 
   const renderItem = useCallback(
@@ -1275,18 +1499,26 @@ export default function HomeScreen() {
                   <Image
                     key={`header-banner-${headerBannerImageUri}-${isFocused}`}
                     source={headerBannerSource}
-                    style={{ width: "100%", height: 140, marginTop: -1 }}
-                    contentFit="fill"
+                    style={{
+                      width: "100%",
+                      height: HEADER_BANNER_HEIGHT,
+                    }}
+                    contentFit="cover"
+                    contentPosition="top"
                     cachePolicy="memory-disk"
                     priority="high"
                   />
                 </TouchableOpacity>
               )}
-              <View style={{ marginTop: 15 }}>
+              <View style={{ marginTop: 6 }}>
                 <MemoSlidingBanners data={item.data} />
               </View>
             </View>
           );
+        case "popup_banner_carousel":
+        case "popup_banner":
+        case "app_pop_up_banner":
+          return <MemoPopUpBannerCarousel data={item.data} />;
         case "category_card_section":
           return <MemoCategoryCardSection />;
         case "home_product":
@@ -1326,10 +1558,9 @@ export default function HomeScreen() {
     [headerBannerSource, headerBannerImageUri, isFocused, headerBanners],
   );
 
-  const renderListHeader = useCallback(
-    () => <Animated.View style={{ height: promoHeight }} />,
-    [promoHeight],
-  );
+  const renderListHeader = useCallback(() => {
+    return <Animated.View style={{ height: promoHeight }} />;
+  }, [promoHeight]);
 
   if (!isConnected) {
     return (
@@ -1339,6 +1570,19 @@ export default function HomeScreen() {
         }}
       />
     );
+  }
+
+  const isHomeScreenLoading =
+    (isHomeProductsLoading ||
+      isAllBannersLoading ||
+      isHomeBannersLoading ||
+      isHeaderBannersLoading ||
+      isSequenceLoading) &&
+    (!homeProducts || homeProducts.length === 0) &&
+    (!allAppBanners || allAppBanners.length === 0) &&
+    (!slidingbanners || slidingbanners.length === 0);
+  if (isHomeScreenLoading) {
+    return <HomeScreenSkeleton />;
   }
 
   return (
@@ -1432,8 +1676,15 @@ export default function HomeScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        bounces={false}
-        overScrollMode="never"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+            progressViewOffset={Platform.OS === "android" ? HEADER_HEIGHT_BASE : 0}
+          />
+        }
         contentContainerStyle={{
           paddingTop: HEADER_HEIGHT_BASE,
           paddingBottom: 110,

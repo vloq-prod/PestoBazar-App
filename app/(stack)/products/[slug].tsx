@@ -214,9 +214,10 @@ const ProductDetails = () => {
   const { addToCart, loading: isCartLoading } = useAddToCart();
   const { saveRecentlyViewed } = useSaveRecentlyViewed();
   const { data: cartCountData } = useCartCount({
-    user_id: userId ?? 0,
-    visitor_id: visitorId!,
+    user_id: userId ? Number(userId) : undefined,
+    visitor_id: visitorId || "",
   });
+  const cartCount = cartCountData?.data ?? 0;
 
   // ─── Data Extraction ────────────────────────────────────────
   const productInfo = data?.product;
@@ -1886,18 +1887,20 @@ const ProductDetails = () => {
           >
             <View style={styles.cartIconWrap}>
               <ShoppingCart size={24} color={colors.primary} />
-              <View
-                style={[styles.cartBadge, { backgroundColor: colors.primary }]}
-              >
-                <Text
-                  style={[
-                    styles.cartBadgeText,
-                    { color: colors.textOnPrimary },
-                  ]}
+              {cartCount > 0 && (
+                <View
+                  style={[styles.cartBadge, { backgroundColor: colors.primary }]}
                 >
-                  {cartCountData?.data ?? 0}
-                </Text>
-              </View>
+                  <Text
+                    style={[
+                      styles.cartBadgeText,
+                      { color: colors.textOnPrimary },
+                    ]}
+                  >
+                    {cartCount}
+                  </Text>
+                </View>
+              )}
             </View>
             {quantity > 0 && (
               <Text style={[styles.viewCartText, { color: colors.text }]}>

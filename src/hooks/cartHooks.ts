@@ -61,21 +61,13 @@ export const useAddToCart = () => {
       }
 
       queryClient.invalidateQueries({
-        queryKey: ["cart", variables.user_id ?? 0, variables.visitor_id ?? ""],
+        queryKey: ["cart"],
       });
       queryClient.invalidateQueries({
-        queryKey: [
-          "cart-count",
-          variables.user_id ?? 0,
-          variables.visitor_id ?? "",
-        ],
+        queryKey: ["cart-count"],
       });
       queryClient.invalidateQueries({
-        queryKey: [
-          "quick-cart",
-          variables.user_id ?? 0,
-          variables.visitor_id ?? "",
-        ],
+        queryKey: ["quick-cart"],
       });
       queryClient.invalidateQueries({
         queryKey: ["cart-quantity"],
@@ -93,7 +85,7 @@ export const useAddToCart = () => {
 };
 
 interface UseCartParams {
-  user_id: number | string;
+  user_id?: number | string;
   visitor_id: string;
 }
 

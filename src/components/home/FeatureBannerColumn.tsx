@@ -50,7 +50,11 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
   // ✅ No Data
   if (!item) return null;
 
-  const imageUri = getBannerImageUrl(item);
+  const imageUri =
+    item.mobile_banner_url ||
+    getBannerImageUrl(item) ||
+    item.s3_image_url ||
+    item.s3_image_path;
   if (!imageUri) return null;
 
   const handleBannerNavigation = ({

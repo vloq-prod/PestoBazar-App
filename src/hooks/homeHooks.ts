@@ -18,8 +18,10 @@ import {
   getAppMenuCategories,
   getHomepageSectionSequence,
   getAllAppBanners,
+  getAppPopUpBanner,
 } from "../api/home.api";
 import {
+  AppHeaderBannerItem,
   BulkEnquiryRequest,
   BulkEnquiryResponse,
   CategoryWithSubcategories,
@@ -169,7 +171,7 @@ export const useHomeBanners = () => {
     loading,
     slidingbanners: banners?.sliding_banners ?? [],
     featureBanners: banners?.featured_banner ?? [],
-    homeBottomBanners: banners?.home_bottom_banners?.[0] ?? [],
+    homeBottomBanners: banners?.home_bottom_banners ?? [],
   };
 };
 
@@ -338,7 +340,7 @@ export const useHomepageSectionSequence = () => {
   };
 };
 
-// useAllAppBanners hook (returns banners with specific IDs for sequence matching)
+// useAllAppBanners hook (returns banners from /app-api/v1/app-banners)
 export const useAllAppBanners = () => {
   const query = useQuery({
     queryKey: ["all-app-banners"],
@@ -349,10 +351,95 @@ export const useAllAppBanners = () => {
     refetchOnMount: false,
   });
 
+  const rawData: any = query.data?.data;
+
+  // Support new format (separate arrays) with seamless fallback
+  const slidingBanners: AppHeaderBannerItem[] =
+    rawData?.home_sliding_banners ||
+    rawData?.sliding_banners ||
+    (Array.isArray(rawData?.data)
+      ? rawData.data.filter((b: any) =>
+          b.banner_type?.toLowerCase()?.includes("sliding"),
+        )
+      : Array.isArray(rawData)
+        ? rawData.filter((b: any) =>
+            b.banner_type?.toLowerCase()?.includes("sliding"),
+          )
+        : []);
+
+  const featuredBanners: AppHeaderBannerItem[] =
+    rawData?.featured_banners ||
+    rawData?.featured_banner ||
+    (Array.isArray(rawData?.data)
+      ? rawData.data.filter((b: any) =>
+          b.banner_type?.toLowerCase()?.includes("featured"),
+        )
+      : Array.isArray(rawData)
+        ? rawData.filter((b: any) =>
+            b.banner_type?.toLowerCase()?.includes("featured"),
+          )
+        : []);
+
+  const homeBottomBanners: AppHeaderBannerItem[] =
+    rawData?.home_bottom_banners ||
+    (Array.isArray(rawData?.data)
+      ? rawData.data.filter(
+          (b: any) =>
+            b.banner_type?.toLowerCase()?.includes("bottom") ||
+            b.redirect?.toLowerCase()?.includes("home-bottom"),
+        )
+      : Array.isArray(rawData)
+        ? rawData.filter(
+            (b: any) =>
+              b.banner_type?.toLowerCase()?.includes("bottom") ||
+              b.redirect?.toLowerCase()?.includes("home-bottom"),
+          )
+        : []);
+
+  const allBanners: AppHeaderBannerItem[] = Array.isArray(rawData?.data)
+    ? rawData.data
+    : Array.isArray(rawData)
+      ? rawData
+      : [...slidingBanners, ...featuredBanners, ...homeBottomBanners];
+
   return {
-    banners: query.data?.data?.data || [],
+    banners: allBanners,
+    slidingBanners,
+    featuredBanners,
+    homeBottomBanners,
     loading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
   };
 };
+
+// useAppPopUpBanner hook
+export const useAppPopUpBanner = () => {
+  const query = useQuery({
+    queryKey: ["app-pop-up-banner"],
+    queryFn: getAppPopUpBanner,
+    staleTime: 1000 * 60 * 15, // 15 mins
+    gcTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const allBanners = query.data?.data?.data || [];
+  const activeBanners = allBanners.filter(
+    (b: any) => b.active?.toLowerCase() === "yes" || b.active === 1 || !b.active,
+  );
+  const allPopupImages = activeBanners.flatMap(
+    (b: any) => b.popup_images || [],
+  );
+
+  return {
+    banners: allBanners,
+    activeBanners,
+    activeBanner: activeBanners[0] || null,
+    popupImages: allPopupImages,
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};
+

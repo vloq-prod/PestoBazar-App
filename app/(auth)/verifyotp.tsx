@@ -59,7 +59,7 @@ export default function VerifyOtpScreen() {
 
 
   // ── Countdown Timer ──
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
   useEffect(() => {
@@ -372,7 +372,7 @@ export default function VerifyOtpScreen() {
                 setOtpCode("");
                 otpInputRef.current?.clear();
                 setError("");
-                setTimer(60);
+                setTimer(30);
                 setCanResend(false);
                 startSmsListener();
               },

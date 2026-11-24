@@ -142,13 +142,13 @@ export default function CartScreen() {
     isFetching: isCartFetching,
     error,
   } = useCart({
-    user_id: userId ?? 0,
-    visitor_id: visitorId!,
+    user_id: userId ? Number(userId) : undefined,
+    visitor_id: visitorId || "",
   });
 
   const { data: cartCountData } = useCartCount({
-    user_id: userId ?? 0,
-    visitor_id: visitorId!,
+    user_id: userId ? Number(userId) : undefined,
+    visitor_id: visitorId || "",
   });
 
   // const cart = cartData?.data.cart;

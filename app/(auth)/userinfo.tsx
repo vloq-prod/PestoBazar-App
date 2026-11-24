@@ -69,7 +69,7 @@ export default function UserInfo() {
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
     sendOtpMutate(
-      { mobile_no: mobile, otp_channel: "sms" },
+      { mobile_no: mobile, otp_channel: "both" },
       {
         onSuccess: () => {
           router.push({
