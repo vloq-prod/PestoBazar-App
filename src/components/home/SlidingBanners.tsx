@@ -5,6 +5,7 @@ import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { triggerHaptic } from "../../utils/haptics";
 
 const SIDE_PADDING = 16;
 const ASPECT_RATIO = 0.5;
@@ -100,6 +101,7 @@ export default function SlidingBanners({ data, onBannerPress }: Props) {
           <TouchableOpacity
             activeOpacity={0.92}
             onPress={() => {
+              triggerHaptic(35);
               onBannerPress?.(item);
               handleBannerPress(item);
             }}

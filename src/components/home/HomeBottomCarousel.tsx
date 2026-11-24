@@ -6,6 +6,7 @@ import { useResponsive } from "../../utils/useResponsive";
 import { BannerItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 import { getBannerImageUrl } from "../../utils/imageUtils";
+import { triggerHaptic } from "../../utils/haptics";
 
 interface Props {
   item: BannerItem;
@@ -99,7 +100,10 @@ export default function HomeBottomBanner({ item }: Props) {
     <View style={{ paddingHorizontal: spacing(16), marginTop: spacing(14), marginBottom: spacing(6) }}>
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={handlePress}
+        onPress={() => {
+          triggerHaptic(35);
+          handlePress();
+        }}
         style={{
           width: "100%",
           height: BANNER_HEIGHT,

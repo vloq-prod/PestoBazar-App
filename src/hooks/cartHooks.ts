@@ -24,6 +24,7 @@ import {
 } from "../types/home.types";
 import { useCartStore } from "../store/cartStore";
 import { useAppVisitorStore } from "../store/auth";
+import { triggerHaptic } from "../utils/haptics";
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
@@ -31,6 +32,7 @@ export const useAddToCart = () => {
 
   const mutation = useMutation({
     mutationFn: async (payload: AddToCartRequest) => {
+      triggerHaptic(35);
       const data = await addToCart(payload);
       if (data.status === 0 || (data as any).status === "0") {
         throw new Error(data.message || "Failed to update cart");
@@ -124,7 +126,10 @@ export const useCartAction = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (payload: AddToCartRequest) => addToCart(payload),
+    mutationFn: (payload: AddToCartRequest) => {
+      triggerHaptic(35);
+      return addToCart(payload);
+    },
 
     onMutate: async (variables) => {
       const cartKey = [

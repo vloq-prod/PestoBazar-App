@@ -5,6 +5,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../theme";
 import { PopupBannerImage } from "../../types/home.types";
+import { triggerHaptic } from "../../utils/haptics";
 
 const ASPECT_RATIO = 0.5; // Clean 2:1 ratio matching modern popup banner styling (e.g. 1600x800)
 
@@ -44,6 +45,7 @@ export default function PopUpBannerCarousel({ data, onBannerPress }: Props) {
   }
 
   const handleBannerPress = (banner: PopupBannerImage) => {
+    triggerHaptic(35);
     onBannerPress?.(banner);
 
     let key = banner.app_redirect_key;

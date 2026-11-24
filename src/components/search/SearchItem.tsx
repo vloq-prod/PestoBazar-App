@@ -5,6 +5,7 @@ import { ArrowUpLeft } from "lucide-react-native";
 import { useTheme } from "../../theme";
 import { useResponsive } from "../../utils/useResponsive";
 import { useRouter } from "expo-router";
+import { triggerHaptic } from "../../utils/haptics";
 
 interface Props {
   item: any;
@@ -36,15 +37,16 @@ const SearchItem: React.FC<Props> = ({ item }) => {
 
   return (
     <TouchableOpacity
-      onPress={() =>
+      onPress={() => {
+        triggerHaptic(30);
         router.push({
           pathname: "/(stack)/products/[slug]",
           params: {
             slug: item.product_url,
             id: "slug",
           },
-        })
-      }
+        });
+      }}
       activeOpacity={0.8}
       style={{
         flexDirection: "row",

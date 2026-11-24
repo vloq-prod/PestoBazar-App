@@ -5,6 +5,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Vibration,
   type LayoutChangeEvent,
 } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -295,6 +296,16 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
   const handlePress = useCallback(
     (routeKey: string, routeName: string, isFocused: boolean) => {
+      try {
+        if (Platform.OS === "android") {
+          Vibration.vibrate(35);
+        } else {
+          Vibration.vibrate();
+        }
+      } catch {
+        // Ignore
+      }
+
       const event = navigation.emit({
         type: "tabPress",
         target: routeKey,
@@ -385,6 +396,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           accessibilityRole="button"
           accessibilityLabel="Hot deals"
           onPress={() => {
+            try {
+              if (Platform.OS === "android") {
+                Vibration.vibrate(35);
+              } else {
+                Vibration.vibrate();
+              }
+            } catch {
+              // Ignore
+            }
             if (tabBarVisible) tabBarVisible.value = 1;
             router.push("/(stack)/deals");
           }}
@@ -408,6 +428,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           .filter(Boolean)
           .join(", ")}
         onPress={() => {
+          try {
+            if (Platform.OS === "android") {
+              Vibration.vibrate(35);
+            } else {
+              Vibration.vibrate();
+            }
+          } catch {
+            // Ignore
+          }
           if (tabBarVisible) tabBarVisible.value = 1;
           router.push("/b2b");
         }}

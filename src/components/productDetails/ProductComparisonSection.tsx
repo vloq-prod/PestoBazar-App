@@ -21,6 +21,7 @@ import type {
 import SeeAllProductsButton from "../comman/SeeAllProductsButton";
 import { useAppVisitorStore } from "../../store/auth";
 import { useB2BApplicationStatus } from "../../hooks/b2bHooks";
+import { triggerHaptic } from "../../utils/haptics";
 import {
   getComparisonB2BPricing,
   formatB2BExclusivePrice,
@@ -50,6 +51,7 @@ const ProductComparisonSection = memo(({ data, isLoading = false, isB2B: isB2BPr
 
   const openProduct = useCallback(
     (product: ProductComparisonProduct) => {
+      triggerHaptic(30);
       router.push({
         pathname: "/(stack)/products/[slug]",
         params: {

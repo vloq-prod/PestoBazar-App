@@ -16,6 +16,7 @@ import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 import { trackAddToCart } from "../../lib/analytics";
 import WishlistButton from "../comman/WishlistButton";
+import { triggerHaptic } from "../../utils/haptics";
 
 interface Props {
   item: ListingItem;
@@ -143,6 +144,7 @@ const ListCard: React.FC<Props> = ({ item, onPress, onAddToCart }) => {
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={() => {
+        triggerHaptic(30);
         if (onPress) {
           onPress(item);
           return;

@@ -18,6 +18,7 @@ import { useAppVisitorStore } from "../../store/auth";
 import { useAddToCart, useProductQuantity } from "../../hooks/cartHooks";
 import { trackAddToCart } from "../../lib/analytics";
 import WishlistButton from "./WishlistButton";
+import { triggerHaptic } from "../../utils/haptics";
 
 const formatPrice = (price: string | number) => {
   const num = Number(price);
@@ -154,6 +155,7 @@ export default function ItemCard({
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={() => {
+        triggerHaptic(30);
         if (onPress) {
           onPress(item);
         } else {

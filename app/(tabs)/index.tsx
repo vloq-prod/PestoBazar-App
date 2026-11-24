@@ -17,6 +17,8 @@ import {
   useWindowDimensions,
   StyleSheet,
   RefreshControl,
+  ActivityIndicator,
+  Vibration,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useIsFocused, useFocusEffect } from "@react-navigation/native";
@@ -44,6 +46,8 @@ import Animated, {
   Extrapolation,
   runOnJS,
   Easing,
+  FadeInDown,
+  FadeOutUp,
 } from "react-native-reanimated";
 
 import HomeBottomCarousel from "../../src/components/home/HomeBottomCarousel";
@@ -57,6 +61,7 @@ import PromoBanner, {
   getPromoBannerHeight,
   PROMO_WAVE_HEIGHT,
 } from "../../src/components/home/PromoBanner";
+import { triggerHaptic } from "../../src/utils/haptics";
 import NoInternet from "../(stack)/nointernet";
 import FeatureBanner from "../../src/components/home/FeatureBannerColumn";
 import { BannerItem } from "../../src/types/home.types";
@@ -918,19 +923,32 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
+    try {
+      if (Platform.OS === "android") {
+        Vibration.vibrate(40);
+      } else {
+        Vibration.vibrate();
+      }
+    } catch {
+      // Ignore vibration error on unsupported platforms
+    }
     setRefreshing(true);
     try {
       await Promise.allSettled([
+        queryClient.invalidateQueries(),
         queryClient.refetchQueries({ type: "active" }),
-        queryClient.invalidateQueries({ queryKey: ["all-app-banners"] }),
-        queryClient.invalidateQueries({ queryKey: ["app-pop-up-banner"] }),
-        queryClient.invalidateQueries({ queryKey: ["homepage-section-sequence"] }),
-        queryClient.invalidateQueries({ queryKey: ["home-categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["banners"] }),
-        queryClient.invalidateQueries({ queryKey: ["app-main-banner"] }),
-        queryClient.invalidateQueries({ queryKey: ["app-header-banner"] }),
-        queryClient.invalidateQueries({ queryKey: ["cart-count"] }),
-        queryClient.invalidateQueries({ queryKey: ["recently-viewed"] }),
+        queryClient.refetchQueries({ queryKey: ["home-products"] }),
+        queryClient.refetchQueries({ queryKey: ["all-app-banners"] }),
+        queryClient.refetchQueries({ queryKey: ["app-pop-up-banner"] }),
+        queryClient.refetchQueries({ queryKey: ["homepage-section-sequence"] }),
+        queryClient.refetchQueries({ queryKey: ["home-categories"] }),
+        queryClient.refetchQueries({ queryKey: ["banners"] }),
+        queryClient.refetchQueries({ queryKey: ["app-main-banner"] }),
+        queryClient.refetchQueries({ queryKey: ["app-header-banner"] }),
+        queryClient.refetchQueries({ queryKey: ["deals-of-the-day"] }),
+        queryClient.refetchQueries({ queryKey: ["featured-products"] }),
+        queryClient.refetchQueries({ queryKey: ["recently-viewed"] }),
+        queryClient.refetchQueries({ queryKey: ["cart-count"] }),
       ]);
     } catch (error) {
       console.warn("Home screen refresh error:", error);
@@ -1467,6 +1485,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   activeOpacity={0.9}
                   onPress={() => {
+                    triggerHaptic(35);
                     const headerBanner = headerBanners?.[0];
                     if (!headerBanner) return;
                     if (headerBanner.banner_type === "products") {
@@ -1682,7 +1701,7 @@ export default function HomeScreen() {
             onRefresh={onRefresh}
             colors={[colors.primary]}
             tintColor={colors.primary}
-            progressViewOffset={Platform.OS === "android" ? HEADER_HEIGHT_BASE : 0}
+            progressViewOffset={Platform.OS === "android" ? insets.top + 8 : 0}
           />
         }
         contentContainerStyle={{
@@ -1697,6 +1716,33 @@ export default function HomeScreen() {
         updateCellsBatchingPeriod={50}
         removeClippedSubviews={Platform.OS === "android"}
       />
+
+      {/* BLINKIT-STYLE TOP REFRESH SPINNER */}
+      {refreshing && (
+        <Animated.View
+          entering={FadeInDown.duration(200)}
+          exiting={FadeOutUp.duration(200)}
+          style={{
+            position: "absolute",
+            top: insets.top + (Platform.OS === "android" ? 10 : 8),
+            alignSelf: "center",
+            zIndex: 9999,
+            backgroundColor: "#ffffff",
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            justifyContent: "center",
+            alignItems: "center",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.25,
+            shadowRadius: 5,
+            elevation: 12,
+          }}
+        >
+          <ActivityIndicator size="small" color={colors.primary} />
+        </Animated.View>
+      )}
 
       {/* FLOATING ELEMENTS (Animations Preserved) */}
       <AddToCartPreview horizontalPosition="center" />

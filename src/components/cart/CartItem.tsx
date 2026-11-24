@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2 } from "lucide-react-native";
 import { useResponsive } from "../../utils/useResponsive";
 import { CartItem as CartItemType } from "../../types/cart.types";
 import { useRouter } from "expo-router";
+import { triggerHaptic } from "../../utils/haptics";
 
 interface Props {
   item: CartItemType;
@@ -127,7 +128,8 @@ const CartItem = ({
         paddingHorizontal: spacing(14),
         paddingVertical: spacing(10),
       }}
-      onPress={() =>
+      onPress={() => {
+        triggerHaptic(30);
         router.push({
           pathname: "/(stack)/products/[slug]",
           params: {
@@ -135,8 +137,8 @@ const CartItem = ({
             id: item.variation_id,
             product_name: item.name,
           },
-        })
-      }
+        });
+      }}
     >
       <View style={{ flexDirection: "row", gap: spacing(12), alignItems: "center" }}>
         {/* Image */}

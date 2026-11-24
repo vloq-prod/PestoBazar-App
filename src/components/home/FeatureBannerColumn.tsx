@@ -5,6 +5,7 @@ import { useTheme } from "../../theme";
 import { BannerItem } from "../../types/home.types";
 import { useRouter } from "expo-router";
 import { getBannerImageUrl } from "../../utils/imageUtils";
+import { triggerHaptic } from "../../utils/haptics";
 
 interface Props {
   item?: BannerItem;
@@ -103,6 +104,7 @@ export default function FeatureBanner({ item, loading, onPress }: Props) {
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => {
+          triggerHaptic(35);
           onPress?.(item);
           handleBannerNavigation(item);
         }}

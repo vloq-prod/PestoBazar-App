@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Star, RotateCcw } from "lucide-react-native";
 import { getImageUrl } from "../../utils/imageUtils";
+import { triggerHaptic } from "../../utils/haptics";
 
 const formatPrice = (price: any) => {
   if (price === undefined || price === null) return "0";
@@ -88,6 +89,7 @@ const OrderItemCard = ({
   const finalTotal = taxableAmount + gstAmount;
 
   const handlePress = () => {
+    triggerHaptic(30);
     const slugStr = item.product_slug || item.slug;
     const prodId = item.product_id || item.productId;
     const varId = item.variation_id || item.variant_id;
