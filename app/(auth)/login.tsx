@@ -41,7 +41,11 @@ import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as AppleAuthentication from "expo-apple-authentication";
-import RNOtpVerify from "../../src/utils/otpVerify";
+import {
+  logSmsRetrieverHash,
+  primeSmsRetriever,
+  stopSmsOtpListener,
+} from "../../src/utils/smsOtpAutofill";
 import { trackLogin, setAnalyticsUserId } from "../../src/lib/analytics";
 import { ChevronDown } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -157,11 +161,7 @@ export default function Login() {
 
   useEffect(() => {
     if (Platform.OS === "android") {
-      RNOtpVerify.getHash()
-        .then((hashes) => {
-          console.log("🔑 [SMS RETRIEVER HASH]:", hashes);
-        })
-        .catch(() => {});
+      logSmsRetrieverHash();
     }
   }, []);
 
@@ -364,6 +364,7 @@ export default function Login() {
               params: { mobile: phone, ...(redirectTo ? { redirectTo } : {}) },
             });
           } else {
+            primeSmsRetriever(4);
             sendOtpMutate(
               { mobile_no: phone, otp_channel: "both" },
               {
@@ -377,7 +378,10 @@ export default function Login() {
                     },
                   });
                 },
-                onError: () => setError("Failed to send OTP. Try again."),
+                onError: () => {
+                  stopSmsOtpListener();
+                  setError("Failed to send OTP. Try again.");
+                },
               },
             );
           }

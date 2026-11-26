@@ -491,7 +491,7 @@ export const CategorySectionBlock: React.FC<{
   };
 
   return (
-    <View style={{ marginBottom: spacing(16) }}>
+    <View>
       <View
         style={{
           paddingHorizontal: H_PADDING,

@@ -209,7 +209,7 @@ const CustomSections: React.FC<CustomSectionsProps> = ({ targetSectionId }) => {
 
   if (isLoading) {
     return (
-      <View style={{ gap: 24, marginVertical: 10 }}>
+      <View style={{ gap: 24 }}>
         <SkeletonSection />
       </View>
     );
@@ -224,7 +224,7 @@ const CustomSections: React.FC<CustomSectionsProps> = ({ targetSectionId }) => {
   }
 
   return (
-    <View style={{ gap: 24, marginVertical: 10 }}>
+    <View style={{ gap: 24 }}>
       {sections.map((section: CustomSection) => {
         const isCategory =
           section.type === "category" ||

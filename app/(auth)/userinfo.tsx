@@ -18,6 +18,10 @@ import { useState, useCallback, useRef } from "react";
 import { useSendOtp } from "../../src/hooks/useAuthHooks";
 import { User } from "lucide-react-native";
 import AppNavbar from "../../src/components/comman/AppNavbar";
+import {
+  primeSmsRetriever,
+  stopSmsOtpListener,
+} from "../../src/utils/smsOtpAutofill";
 
 const INPUT_HEIGHT = 52;
 
@@ -68,6 +72,7 @@ export default function UserInfo() {
 
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
+    primeSmsRetriever(4);
     sendOtpMutate(
       { mobile_no: mobile, otp_channel: "both" },
       {
@@ -77,10 +82,13 @@ export default function UserInfo() {
             params: { mobile, isNewUser: "1", fullName, ...(redirectTo ? { redirectTo } : {}) },
           });
         },
-        onError: () => setErrors({ firstName: "Failed to send OTP. Try again." }),
+        onError: () => {
+          stopSmsOtpListener();
+          setErrors({ firstName: "Failed to send OTP. Try again." });
+        },
       }
     );
-  }, [firstName, lastName, mobile]);
+  }, [firstName, lastName, mobile, redirectTo, router, sendOtpMutate]);
 
   // ── Border color helpers ──────────────────────────────────
   const firstBorderColor = errors.firstName

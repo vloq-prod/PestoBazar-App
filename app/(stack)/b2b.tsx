@@ -82,6 +82,11 @@ import { setAnalyticsUserId } from "../../src/lib/analytics";
 import ResendOtpModal, { OtpChannel } from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
 import {
+  primeSmsRetriever,
+  stopSmsOtpListener,
+  subscribeSmsOtp,
+} from "../../src/utils/smsOtpAutofill";
+import {
   useB2BMasterData,
   useB2BGetRegistrationDetails,
   useB2BSaveBasicDetails,
@@ -1502,6 +1507,10 @@ export default function B2BScreen() {
   const [resendTimer, setResendTimer] = useState(60);
   const [isVerified, setIsVerified] = useState(false);
   const otpInputRef = useRef<OtpInputRef>(null);
+  const isVerifyingOtpRef = useRef(false);
+  const handleVerifyOtpRef = useRef<(inputCode?: string) => Promise<void>>(
+    async () => {},
+  );
 
   // -------------------------------------------------------------
   // Step 2: Business & GST Details State
@@ -2152,6 +2161,26 @@ export default function B2BScreen() {
     return () => clearInterval(interval);
   }, [showOtpScreen, resendTimer]);
 
+  // Android SMS Auto-Detection for B2B Step 1.2 OTP
+  useEffect(() => {
+    if (Platform.OS !== "android" || currentStep !== 1 || !showOtpScreen) {
+      return;
+    }
+
+    return subscribeSmsOtp({
+      length: 4,
+      onOtp: (detectedOtp) => {
+        setOtpCode(detectedOtp);
+        setErrors((prev) => (prev.otp ? { ...prev, otp: "" } : prev));
+        if (otpInputRef.current) {
+          otpInputRef.current.setValue(detectedOtp);
+        } else {
+          handleVerifyOtpRef.current(detectedOtp);
+        }
+      },
+    });
+  }, [currentStep, showOtpScreen]);
+
   // -------------------------------------------------------------
   // Reset / Clear Session Handler (Start Fresh)
   // -------------------------------------------------------------
@@ -2245,6 +2274,10 @@ export default function B2BScreen() {
       return;
     }
 
+    setOtpCode("");
+    otpInputRef.current?.clear();
+    primeSmsRetriever(4);
+
     try {
       const response = await saveBasicDetails({
         public_id: publicId || undefined,
@@ -2269,6 +2302,7 @@ export default function B2BScreen() {
 
         // If show_otp is false (e.g. correction flow where mobile was already verified)
         if (response.data.show_otp === false) {
+          stopSmsOtpListener();
           setIsVerified(true);
           setLastCompletedStep((prev) => Math.max(prev, 1));
           markFieldCorrected("owner_name");
@@ -2292,12 +2326,13 @@ export default function B2BScreen() {
 
         setShowOtpScreen(true);
         setResendTimer(60);
-        setOtpCode("");
         showToast(response.message || "OTP sent successfully!", "success");
       } else {
+        stopSmsOtpListener();
         showToast(response.message || "Failed to save details.", "error");
       }
     } catch (err: any) {
+      stopSmsOtpListener();
       const msg =
         err?.response?.data?.message || err?.message || "Something went wrong.";
       showToast(msg, "error");
@@ -2305,11 +2340,15 @@ export default function B2BScreen() {
   };
 
   const handleVerifyOtp = async (inputCode?: string) => {
+    if (isVerifyingOtpRef.current) return;
+
     const fullOtp = (inputCode ?? otpCode).trim();
     if (fullOtp.length !== 4) {
       showToast("Please enter complete 4-digit OTP.", "error");
       return;
     }
+
+    isVerifyingOtpRef.current = true;
 
     try {
       const response = await verifyOtp({
@@ -2596,8 +2635,12 @@ export default function B2BScreen() {
         err?.message ||
         "OTP verification failed.";
       showToast(msg, "error");
+    } finally {
+      isVerifyingOtpRef.current = false;
     }
   };
+
+  handleVerifyOtpRef.current = handleVerifyOtp;
 
   const handleOpenResendModal = () => {
     if (resendTimer > 0) return;
@@ -2606,6 +2649,12 @@ export default function B2BScreen() {
 
   const handleSelectResendChannel = async (type: OtpChannel) => {
     setShowResendModal(false);
+    setOtpCode("");
+    otpInputRef.current?.clear();
+    if (type === "sms" || type === "both") {
+      primeSmsRetriever(4);
+    }
+
     try {
       const response = await resendOtp({
         public_id: publicId,
@@ -2615,8 +2664,6 @@ export default function B2BScreen() {
 
       if (response.status === 1) {
         setResendTimer(60);
-        setOtpCode("");
-        otpInputRef.current?.clear();
         showToast(
           response.message ||
             `A new OTP has been sent via ${
@@ -2629,9 +2676,11 @@ export default function B2BScreen() {
           "success",
         );
       } else {
+        stopSmsOtpListener();
         showToast(response.message || "Failed to resend OTP.", "error");
       }
     } catch (err: any) {
+      stopSmsOtpListener();
       const msg =
         err?.response?.data?.message || err?.message || "Failed to resend OTP.";
       showToast(msg, "error");
@@ -4865,7 +4914,8 @@ export default function B2BScreen() {
                   onFilled={(code) => handleVerifyOtp(code)}
                   textInputProps={{
                     textContentType: "oneTimeCode",
-                    autoComplete: "sms-otp",
+                    autoComplete:
+                      Platform.OS === "android" ? "sms-otp" : "one-time-code",
                   }}
                   theme={{
                     containerStyle: {

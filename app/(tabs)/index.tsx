@@ -74,6 +74,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNetworkStatus } from "../../src/hooks/useNetworkHooks";
 import { useAppVisitorStore } from "../../src/store/auth";
 import { useDiyListing } from "../../src/hooks/diyHooks";
+import {
+  useCustomCategorySections,
+  useCustomProductSections,
+} from "../../src/hooks/customSection.hooks";
 
 import {
   useHomeBanners,
@@ -826,14 +830,22 @@ export default function HomeScreen() {
   const { banners: mainBanners } = useAppMainBanner();
   const { banners: headerBanners, loading: isHeaderBannersLoading } = useAppHeaderBanner();
   const { sections: homeProducts, loading: isHomeProductsLoading } = useHomeProduct(userId);
-  const { deals } = useDeals(userId);
-  const { featured } = useFeatured(userId);
+  useDeals(userId);
+  useFeatured(userId);
   const { testimonials } = useTestimonial();
   const { uspList } = useUsp();
   const { branches } = useBranch();
   const { recentlyViewed } = useRecentlyViewed(visitorId || "", userId || "");
   const { products: diyProducts } = useDiyListing({}, userId);
   const { sequence: sectionSequence, loading: isSequenceLoading } = useHomepageSectionSequence();
+  const {
+    data: customCategorySectionsRes,
+    isLoading: isCustomCategoryLoading,
+  } = useCustomCategorySections(userId);
+  const {
+    data: customProductSectionsRes,
+    isLoading: isCustomProductLoading,
+  } = useCustomProductSections(userId);
   const {
     banners: allAppBanners,
     slidingBanners: rawSliding,
@@ -1107,6 +1119,45 @@ export default function HomeScreen() {
   // ─────────────────────────────────────────────
 
   const sections = useMemo(() => {
+    const customCategorySections = customCategorySectionsRes?.data || [];
+    const customProductSections = customProductSectionsRes?.data || [];
+    const isCustomSectionsLoading =
+      isCustomCategoryLoading || isCustomProductLoading;
+
+    const hasRenderableCustomSection = (targetId?: number | null) => {
+      if (targetId !== undefined && targetId !== null) {
+        const hasMatch =
+          customCategorySections.some(
+            (s) =>
+              s.section_id === targetId &&
+              Array.isArray(s.categories) &&
+              s.categories.length > 0,
+          ) ||
+          customProductSections.some(
+            (s) =>
+              s.section_id === targetId &&
+              Array.isArray(s.products) &&
+              s.products.length > 0,
+          );
+        return hasMatch || isCustomSectionsLoading;
+      }
+
+      return (
+        isCustomSectionsLoading ||
+        customCategorySections.some(
+          (s) => Array.isArray(s.categories) && s.categories.length > 0,
+        ) ||
+        customProductSections.some(
+          (s) => Array.isArray(s.products) && s.products.length > 0,
+        )
+      );
+    };
+
+    const hasHomeProducts =
+      isHomeProductsLoading ||
+      (Array.isArray(homeProducts) &&
+        homeProducts.some((s: any) => s.products && s.products.length > 0));
+
     // Default fallback sections (used if sequence API hasn't loaded or is offline)
     const defaultSections = [
       { id: "sliding_banners", type: "sliding_banners", data: slidingBannersFromApp },
@@ -1117,13 +1168,33 @@ export default function HomeScreen() {
             data: banner.popup_images,
           }))
         : []),
-      { id: "custom_sections", type: "custom_section" },
-      { id: "feature_banner_0", type: "featured_banner", data: featureBannersFromApp?.[0] },
+      ...(hasRenderableCustomSection()
+        ? [{ id: "custom_sections", type: "custom_section" }]
+        : []),
+      ...(featureBannersFromApp?.[0]
+        ? [
+            {
+              id: "feature_banner_0",
+              type: "featured_banner",
+              data: featureBannersFromApp[0],
+            },
+          ]
+        : []),
       ...(diyProducts && diyProducts.length > 0
         ? [{ id: "diy", type: "diy", data: diyProducts }]
         : []),
-      { id: "feature_banner_1", type: "featured_banner", data: featureBannersFromApp?.[1] },
-      { id: "recently_viewed", type: "recently_viewed", data: recentlyViewed },
+      ...(featureBannersFromApp?.[1]
+        ? [
+            {
+              id: "feature_banner_1",
+              type: "featured_banner",
+              data: featureBannersFromApp[1],
+            },
+          ]
+        : []),
+      ...(recentlyViewed && recentlyViewed.length > 0
+        ? [{ id: "recently_viewed", type: "recently_viewed", data: recentlyViewed }]
+        : []),
       ...(homeBottomBannersFromApp && homeBottomBannersFromApp.length > 0
         ? homeBottomBannersFromApp.map((banner: any, idx: number) => ({
             id: `home_bottom_banner_${banner.id ?? idx}`,
@@ -1131,10 +1202,16 @@ export default function HomeScreen() {
             data: banner,
           }))
         : []),
-      { id: "testimonial", type: "testimonial", data: testimonials },
-      { id: "home_usp", type: "home_usp", data: uspList },
+      ...(testimonials && testimonials.length > 0
+        ? [{ id: "testimonial", type: "testimonial", data: testimonials }]
+        : []),
+      ...(uspList && uspList.length > 0
+        ? [{ id: "home_usp", type: "home_usp", data: uspList }]
+        : []),
       { id: "our_services", type: "our_services" },
-      { id: "branches", type: "branches", data: branches },
+      ...(branches && branches.length > 0
+        ? [{ id: "branches", type: "branches", data: branches }]
+        : []),
       { id: "footer", type: "footer" },
     ];
 
@@ -1219,11 +1296,13 @@ export default function HomeScreen() {
 
         case "testimonials":
         case "testimonial":
-          dynamicSections.push({
-            id: `testimonial_${item.id}`,
-            type: "testimonial",
-            data: testimonials,
-          });
+          if (testimonials && testimonials.length > 0) {
+            dynamicSections.push({
+              id: `testimonial_${item.id}`,
+              type: "testimonial",
+              data: testimonials,
+            });
+          }
           break;
 
         case "featured_banner": {
@@ -1341,29 +1420,35 @@ export default function HomeScreen() {
 
         case "custom_section":
         case "custom_sections":
-          dynamicSections.push({
-            id: `custom_sec_${item.id}_${item.custom_section_id ?? "all"}`,
-            type: "custom_section",
-            customSectionId: item.custom_section_id,
-          });
+          if (hasRenderableCustomSection(item.custom_section_id)) {
+            dynamicSections.push({
+              id: `custom_sec_${item.id}_${item.custom_section_id ?? "all"}`,
+              type: "custom_section",
+              customSectionId: item.custom_section_id,
+            });
+          }
           break;
 
         case "home_usp":
         case "usp":
-          dynamicSections.push({
-            id: `home_usp_${item.id}`,
-            type: "home_usp",
-            data: uspList,
-          });
+          if (uspList && uspList.length > 0) {
+            dynamicSections.push({
+              id: `home_usp_${item.id}`,
+              type: "home_usp",
+              data: uspList,
+            });
+          }
           break;
 
         case "recently_view":
         case "recently_viewed":
-          dynamicSections.push({
-            id: `recently_view_${item.id}`,
-            type: "recently_viewed",
-            data: recentlyViewed,
-          });
+          if (recentlyViewed && recentlyViewed.length > 0) {
+            dynamicSections.push({
+              id: `recently_view_${item.id}`,
+              type: "recently_viewed",
+              data: recentlyViewed,
+            });
+          }
           break;
 
         case "our_services":
@@ -1376,11 +1461,13 @@ export default function HomeScreen() {
 
         case "branches":
         case "branch":
-          dynamicSections.push({
-            id: `branches_${item.id}`,
-            type: "branches",
-            data: branches,
-          });
+          if (branches && branches.length > 0) {
+            dynamicSections.push({
+              id: `branches_${item.id}`,
+              type: "branches",
+              data: branches,
+            });
+          }
           break;
 
         case "footer":
@@ -1390,38 +1477,29 @@ export default function HomeScreen() {
           });
           break;
 
-        case "deals":
-        case "deals_of_the_day":
-          dynamicSections.push({
-            id: `deals_${item.id}`,
-            type: "deals_of_the_day",
-            data: deals,
-          });
-          break;
-
-        case "featured":
-        case "featured_products":
-          dynamicSections.push({
-            id: `featured_products_${item.id}`,
-            type: "featured_products",
-            data: featured,
-          });
-          break;
-
         case "home_product":
         case "home_products":
-          dynamicSections.push({
-            id: `home_products_${item.id}`,
-            type: "home_product",
-            data: homeProducts,
-          });
+          if (hasHomeProducts) {
+            dynamicSections.push({
+              id: `home_products_${item.id}`,
+              type: "home_product",
+              data: homeProducts,
+            });
+          }
           break;
 
         case "category_card_section":
-          dynamicSections.push({
-            id: `category_card_section_${item.id}`,
-            type: "category_card_section",
-          });
+          if (
+            isCustomCategoryLoading ||
+            customCategorySections.some(
+              (s) => Array.isArray(s.categories) && s.categories.length > 0,
+            )
+          ) {
+            dynamicSections.push({
+              id: `category_card_section_${item.id}`,
+              type: "category_card_section",
+            });
+          }
           break;
       }
     }
@@ -1465,9 +1543,12 @@ export default function HomeScreen() {
     uspList,
     recentlyViewed,
     branches,
-    deals,
-    featured,
     homeProducts,
+    isHomeProductsLoading,
+    customCategorySectionsRes?.data,
+    customProductSectionsRes?.data,
+    isCustomCategoryLoading,
+    isCustomProductLoading,
     allAppBanners,
     activeBanners,
   ]);

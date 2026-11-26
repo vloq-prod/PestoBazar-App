@@ -20,7 +20,12 @@ import { StorageUtil } from "../../src/utils/storage";
 import AppNavbar from "../../src/components/comman/AppNavbar";
 import ResendOtpModal, { OtpChannel } from "../../src/modals/auth/ResendOtpModal";
 import { OtpInput, OtpInputRef } from "react-native-otp-entry";
-import RNOtpVerify from "../../src/utils/otpVerify";
+import {
+  logSmsRetrieverHash,
+  primeSmsRetriever,
+  stopSmsOtpListener,
+  subscribeSmsOtp,
+} from "../../src/utils/smsOtpAutofill";
 import {
   trackLogin,
   trackSignUp,
@@ -55,6 +60,11 @@ export default function VerifyOtpScreen() {
   const [error, setError] = useState("");
   const otpInputRef = useRef<OtpInputRef>(null);
   const isVerifyingRef = useRef(false);
+  const otpCodeRef = useRef(otpCode);
+  otpCodeRef.current = otpCode;
+  const handleVerifyRef = useRef<(codeToVerify?: string) => Promise<void>>(
+    async () => {},
+  );
 
 
 
@@ -79,7 +89,7 @@ export default function VerifyOtpScreen() {
   const handleVerify = useCallback(async (codeToVerify?: string) => {
     if (isVerifyingRef.current) return;
 
-    const otpString = codeToVerify || otpCode;
+    const otpString = codeToVerify || otpCodeRef.current;
     if (otpString.length < OTP_LENGTH) {
       setError(`Please enter the complete ${OTP_LENGTH}-digit OTP`);
       return;
@@ -133,55 +143,29 @@ export default function VerifyOtpScreen() {
         isVerifyingRef.current = false;
       },
     });
-  }, [otpCode, mobile, visitorId, isNewUser, fullName, verifyOtpMutate, setUser, router]);
+  }, [mobile, visitorId, isNewUser, fullName, redirectTo, verifyOtpMutate, setUser, router]);
+
+  handleVerifyRef.current = handleVerify;
 
   // ── Android SMS Auto-Detection via react-native-otp-verify ──
-  const startSmsListener = useCallback(() => {
-    if (Platform.OS !== "android") return;
-
-    RNOtpVerify.getOtp()
-      .then(() => {
-        RNOtpVerify.addListener((message: string) => {
-          try {
-            if (message) {
-              const otpMatch = /(\d{4})/g.exec(message);
-              if (otpMatch && otpMatch[1]) {
-                const detectedOtp = otpMatch[1];
-                setOtpCode(detectedOtp);
-                otpInputRef.current?.setValue(detectedOtp);
-                setTimeout(() => {
-                  handleVerify(detectedOtp);
-                }, 100);
-              }
-            }
-          } catch (e) {
-            console.warn("OTP parsing error:", e);
-          }
-        });
-      })
-      .catch((err) => {
-        console.warn("SMS listener start error:", err);
-      });
-  }, [handleVerify]);
-
   useEffect(() => {
     if (Platform.OS !== "android") return;
 
-    // Log the hash for developer/testing convenience
-    RNOtpVerify.getHash()
-      .then((hashes) => {
-        console.log("🔑 [SMS RETRIEVER HASH]:", hashes);
-      })
-      .catch((err) => {
-        console.warn("Could not get SMS hash:", err);
-      });
+    logSmsRetrieverHash();
 
-    startSmsListener();
-
-    return () => {
-      RNOtpVerify.removeListener();
-    };
-  }, [startSmsListener]);
+    return subscribeSmsOtp({
+      length: OTP_LENGTH,
+      onOtp: (detectedOtp) => {
+        setOtpCode(detectedOtp);
+        setError("");
+        if (otpInputRef.current) {
+          otpInputRef.current.setValue(detectedOtp);
+        } else {
+          handleVerifyRef.current(detectedOtp);
+        }
+      },
+    });
+  }, []);
 
   // ── Resend ──
   const handleResend = useCallback(() => {
@@ -249,7 +233,7 @@ export default function VerifyOtpScreen() {
             onFilled={handleVerify}
             textInputProps={{
               textContentType: "oneTimeCode",
-              autoComplete: "sms-otp",
+              autoComplete: Platform.OS === "android" ? "sms-otp" : "one-time-code",
             }}
             theme={{
               containerStyle: { ...styles.otpContainer, gap: spacing(12) },
@@ -365,16 +349,23 @@ export default function VerifyOtpScreen() {
         onClose={() => setShowModal(false)}
         onSelect={(type: OtpChannel) => {
           setShowModal(false);
+          setOtpCode("");
+          otpInputRef.current?.clear();
+          setError("");
+          if (type === "sms" || type === "both") {
+            primeSmsRetriever(OTP_LENGTH);
+          }
           resendOtpMutate(
             { mobile_no: mobile, otp_channel: type },
             {
               onSuccess: () => {
-                setOtpCode("");
-                otpInputRef.current?.clear();
                 setError("");
                 setTimer(30);
                 setCanResend(false);
-                startSmsListener();
+              },
+              onError: () => {
+                stopSmsOtpListener();
+                setError("Failed to resend OTP. Please try again.");
               },
             },
           );
