@@ -1,6 +1,6 @@
 {
   "name": "pestobazar",
-  "version": "2.3.6",
+  "version": "2.3.7",
   "main": "expo-router/entry",
   "scripts": {
     "start": "bunx expo start",
@@ -76,15 +76,11 @@
   "resolutions": {
     "expo-constants": "~18.0.14",
     "@grpc/grpc-js": "^1.13.6",
-    "glob": "^14.0.2",
-    "minimatch": "^11.0.1",
     "postcss": "^8.5.23"
   },
   "overrides": {
     "expo-constants": "~18.0.14",
     "@grpc/grpc-js": "^1.13.6",
-    "glob": "^14.0.2",
-    "minimatch": "^11.0.1",
     "postcss": "^8.5.23"
   },
   "expo": {
